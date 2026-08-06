@@ -1,12 +1,13 @@
 {
   "hooks": {
     "PreToolUse": [
-      {
-        "matcher": "Write|Edit",
-        "hooks": [
-          { "type": "command", "command": "bun \"${CLAUDE_PLUGIN_ROOT}/hooks/guardrails.mjs\"" }
-        ]
-      }
+      { "matcher": "Write|Edit", "hooks": [ { "type": "command", "command": "bun \"${CLAUDE_PLUGIN_ROOT}/hooks/guardrails.mjs\"" } ] }
+    ],
+    "SessionStart": [
+      { "hooks": [ { "type": "command", "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/session-context.sh\"" } ] }
+    ],
+    "UserPromptSubmit": [
+      { "hooks": [ { "type": "command", "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/prompt-reminder.sh\"" } ] }
     ]
   }
 }
