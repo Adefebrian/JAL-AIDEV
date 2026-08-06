@@ -1,0 +1,10 @@
+## Root bunfig.toml for __APP_NAME__.
+## Per-workspace test preloads (e.g. happy-dom for apps/web) live in that
+## workspace's own bunfig.toml; Bun resolves the nearest bunfig.toml to each
+## test file when `bun test` walks the tree from the repo root.
+
+[install]
+peer = true
+
+[test]
+preload = ["./apps/web/src/happydom.ts"]

@@ -1,0 +1,55 @@
+/*
+ * Shared design tokens. Minimalist, no neon accents, no glow effects.
+ * One spacing scale, one radius scale, one type scale, for the whole product.
+ */
+
+:root {
+  /* Spacing scale: 4/8/12/16/24/32/48/64 */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+  --space-8: 64px;
+
+  /* Radius scale: 8/12/16/24 */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
+
+  /* Type scale */
+  --font-size-xs: 12px;
+  --font-size-sm: 14px;
+  --font-size-md: 16px;
+  --font-size-lg: 20px;
+  --font-size-xl: 28px;
+  --font-size-2xl: 36px;
+
+  /* Neutral, minimalist palette. */
+  --color-bg: #ffffff;
+  --color-surface: #f6f6f7;
+  --color-border: #e2e2e5;
+  --color-text: #14151a;
+  --color-text-muted: #62636c;
+  --color-primary: #2f5ce8;
+  --color-primary-contrast: #ffffff;
+  --color-danger: #d63b3b;
+  --color-success: #1f9d55;
+
+  --border-weight: 1px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-bg: #101114;
+    --color-surface: #17181c;
+    --color-border: #2a2b31;
+    --color-text: #f2f2f4;
+    --color-text-muted: #9799a3;
+    --color-primary: #6c8dff;
+    --color-primary-contrast: #0b0c0f;
+  }
+}
