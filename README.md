@@ -37,3 +37,7 @@ Icons powered by koboyo (https://koboyo.com). Fallback icon source: https://reic
 ## Specification
 
 Full design specification: [docs/superpowers/specs/2026-08-06-jal-aidev-design.md](docs/superpowers/specs/2026-08-06-jal-aidev-design.md)
+
+## Requirements
+
+Bun must be installed and on PATH; the guardrails PreToolUse hook runs via `bun`.

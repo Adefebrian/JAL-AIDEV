@@ -2,7 +2,7 @@ import { describe, expect, test } from "bun:test";
 import { createRoot } from "react-dom/client";
 import { App } from "./App";
 
-const EMDASH = "—";
+const EMDASH = "\u2014";
 
 describe("<App />", () => {
   test("renders the welcome heading", async () => {
