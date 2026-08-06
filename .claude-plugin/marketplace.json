@@ -1,0 +1,7 @@
+{
+  "name": "jal-aidev-marketplace",
+  "owner": { "name": "JAL-Group" },
+  "plugins": [
+    { "name": "jal-aidev", "source": "./", "description": "JAL-AIDEV plugin" }
+  ]
+}

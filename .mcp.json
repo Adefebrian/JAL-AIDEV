@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "koboyo-icons": {
+      "type": "http",
+      "url": "https://api.koboyo.com/v1-mcp",
+      "headers": { "Authorization": "Bearer ${KOBOYO_API_KEY}" }
+    }
+  }
+}
