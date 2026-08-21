@@ -2,8 +2,15 @@
  *
  * Tokens below are copied verbatim from skill jal-ui-taste: one type scale,
  * one 4/8pt spacing scale, one radius scale, one elevation scale, one set
- * of breakpoints. No inline one-off px value appears anywhere past this
- * token block, per the same skill's audit checklist.
+ * of breakpoints, and the Palette law in that skill's "Palette law and
+ * anti-slop" section. No inline one-off px value and no inline one-off
+ * color appears anywhere past this token block.
+ *
+ * Palette: warm neutral paper + warm ink, one accent hue (a considered
+ * burnt-orange/terracotta, never purple/violet/indigo), dark mode is a
+ * refined warm near-black, never pure #000. See the report at
+ * .superpowers/sdd/2026-08-21-jal-aidev-v0.2.0/ux-redesign-report.md for
+ * the full rationale.
  */
 
 :root {
@@ -11,7 +18,7 @@
   --text-caption: 13px;
   --text-caption-lh: 1.4;
   --text-body: 16px;
-  --text-body-lh: 1.6;
+  --text-body-lh: 1.65;
   --text-subhead: 20px;
   --text-subhead-lh: 1.5;
   --text-h4: 25px;
@@ -19,11 +26,11 @@
   --text-h3: 31px;
   --text-h3-lh: 1.25;
   --text-h2: 39px;
-  --text-h2-lh: 1.2;
+  --text-h2-lh: 1.18;
   --text-h1: 49px;
-  --text-h1-lh: 1.15;
+  --text-h1-lh: 1.12;
   --text-display: 61px;
-  --text-display-lh: 1.1;
+  --text-display-lh: 1.08;
 
   /* Spacing (4/8pt rhythm) */
   --space-1: 4px;
@@ -43,47 +50,61 @@
   --radius-xl: 24px;
   --radius-full: 9999px;
 
-  /* Elevation */
+  /* Elevation: neutral only, reserved for real stacking (menu, drawer,
+     modal). Never used as ambient decoration or a glow stand-in. */
   --elevation-0: none;
-  --elevation-1: 0 1px 2px rgba(0, 0, 0, 0.06), 0 1px 1px rgba(0, 0, 0, 0.04);
-  --elevation-2: 0 4px 12px rgba(0, 0, 0, 0.08);
-  --elevation-3: 0 12px 32px rgba(0, 0, 0, 0.14);
+  --elevation-1: 0 1px 2px rgba(20, 16, 12, 0.05), 0 1px 1px rgba(20, 16, 12, 0.04);
+  --elevation-2: 0 6px 20px rgba(20, 16, 12, 0.10);
+  --elevation-3: 0 16px 40px rgba(20, 16, 12, 0.16);
 
   /* Layout constants */
   --header-height: 64px;
   --tab-bar-height: 64px;
-  --content-max: 1120px;
+  --content-max: 1140px;
   --border-weight: 1px;
-  --motion-fast: 120ms ease;
-  --motion-med: 200ms ease;
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --motion-fast: 120ms var(--ease-out);
+  --motion-med: 200ms var(--ease-out);
 
-  /* Color, light (default) */
-  --color-bg: #f7f7f5;
-  --color-surface: #ffffff;
+  /* Font stack: system-ui / Inter-like, no external CDN dependency. */
+  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", "Inter", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+
+  /* Color, light (default). Warm off-white paper, warm near-black ink,
+     one accent hue: a considered burnt-orange/terracotta. Never a pure
+     #ffffff surface, never purple/violet/indigo. */
+  --color-bg: #f7f4ee;
+  --color-surface: #fdfbf8;
   --color-surface-raised: #ffffff;
-  --color-ink: #14161a;
-  --color-ink-muted: #5b6169;
-  --color-border: #e5e5e1;
-  --color-accent: #2e4de0;
-  --color-accent-hover: #4863e8;
-  --color-accent-ink: #ffffff;
-  --color-accent-soft: #edf0fd;
+  --color-ink: #1c1815;
+  --color-ink-muted: #6f6656;
+  --color-border: #e7e0d2;
+  --color-border-strong: #d8cfbd;
+  --color-accent: #b3491f;
+  --color-accent-hover: #92391a;
+  --color-accent-ink: #fffaf6;
+  --color-accent-soft: #f2e2d3;
   --color-danger: #b3261e;
+  --color-success: #3f7a4f;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --color-bg: #0b0d10;
-    --color-surface: #14171c;
-    --color-surface-raised: #191d23;
-    --color-ink: #f2f3f5;
-    --color-ink-muted: #9aa1ac;
-    --color-border: #262b33;
-    --color-accent: #5878ff;
-    --color-accent-hover: #7591ff;
-    --color-accent-ink: #0b0d10;
-    --color-accent-soft: #1a2140;
-    --color-danger: #ff8a80;
+    /* Dark mode: a refined warm near-black, not #000, with off-white ink
+       and the same accent hue lightened for contrast on a dark surface. */
+    --color-bg: #17130f;
+    --color-surface: #1e1811;
+    --color-surface-raised: #241d15;
+    --color-ink: #f1e9dc;
+    --color-ink-muted: #a99d89;
+    --color-border: #332a1f;
+    --color-border-strong: #423627;
+    --color-accent: #e28349;
+    --color-accent-hover: #ec9862;
+    --color-accent-ink: #17130f;
+    --color-accent-soft: #3a2a1b;
+    --color-danger: #f0917f;
+    --color-success: #7fbb8d;
   }
 }
 
@@ -100,15 +121,22 @@ body {
 body {
   background: var(--color-bg);
   color: var(--color-ink);
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  font-family: var(--font-sans);
   font-size: var(--text-body);
   line-height: var(--text-body-lh);
   -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
 
 a {
   color: var(--color-accent);
   text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
 }
 
 h1,
@@ -118,6 +146,7 @@ h4 {
   margin: 0;
   font-weight: 600;
   color: var(--color-ink);
+  letter-spacing: -0.01em;
 }
 
 p {
@@ -175,13 +204,15 @@ button {
   font-weight: 600;
   border: var(--border-weight) solid transparent;
   cursor: pointer;
-  transition: background var(--motion-fast), border-color var(--motion-fast), transform var(--motion-fast);
+  transition: background var(--motion-fast), border-color var(--motion-fast), color var(--motion-fast), transform var(--motion-fast);
 }
 
 .btn:active {
   transform: translateY(1px);
 }
 
+/* The one primary CTA per view: the only large accent fill on the whole
+   page, per the Palette law's "highlighter, not a fill" rule. */
 .btn-primary {
   background: var(--color-accent);
   color: var(--color-accent-ink);
@@ -194,7 +225,7 @@ button {
 .btn-ghost {
   background: transparent;
   color: var(--color-ink);
-  border-color: var(--color-border);
+  border-color: var(--color-border-strong);
 }
 
 .btn-ghost:hover {
@@ -221,8 +252,8 @@ button {
   top: 0;
   z-index: 20;
   padding-top: env(safe-area-inset-top);
-  background: color-mix(in srgb, var(--color-bg) 92%, transparent);
-  backdrop-filter: blur(8px);
+  background: color-mix(in srgb, var(--color-bg) 90%, transparent);
+  backdrop-filter: blur(10px);
   border-bottom: var(--border-weight) solid var(--color-border);
 }
 
@@ -230,7 +261,7 @@ button {
   max-width: var(--content-max);
   margin: 0 auto;
   height: var(--header-height);
-  padding: 0 var(--space-4);
+  padding: 0 var(--space-6);
   display: flex;
   align-items: center;
   gap: var(--space-6);
@@ -242,6 +273,7 @@ button {
   gap: var(--space-2);
   color: var(--color-ink);
   flex-shrink: 0;
+  font-weight: 600;
 }
 
 .brand-mark {
@@ -259,7 +291,7 @@ button {
 .top-nav {
   display: none;
   align-items: center;
-  gap: var(--space-6);
+  gap: var(--space-8);
   flex: 1;
 }
 
@@ -267,10 +299,12 @@ button {
   color: var(--color-ink-muted);
   font-size: var(--text-caption);
   font-weight: 600;
+  position: relative;
 }
 
 .nav-link:hover {
   color: var(--color-ink);
+  text-decoration: none;
 }
 
 .top-nav-cta {
@@ -303,8 +337,8 @@ button {
   position: fixed;
   inset: 0;
   z-index: 30;
-  background: color-mix(in srgb, var(--color-bg) 96%, transparent);
-  backdrop-filter: blur(6px);
+  background: color-mix(in srgb, var(--color-bg) 97%, transparent);
+  backdrop-filter: blur(8px);
   padding: calc(var(--header-height) + var(--space-6)) var(--space-6) var(--space-6);
 }
 
@@ -333,7 +367,7 @@ button {
 .app-main {
   max-width: var(--content-max);
   margin: 0 auto;
-  padding: 0 var(--space-4) var(--space-12);
+  padding: 0 var(--space-6) var(--space-16);
 }
 
 .tab-bar {
@@ -345,26 +379,28 @@ button {
 /* -------------------------------------------------------------- */
 
 .hero {
-  padding: var(--space-16) 0 var(--space-12);
+  padding: var(--space-24) 0 var(--space-16);
 }
 
 .hero-inner {
   display: flex;
   flex-direction: column;
-  gap: var(--space-6);
-  max-width: 720px;
+  gap: var(--space-8);
+  max-width: 760px;
 }
 
 .hero h1 {
   font-size: var(--text-h2);
   line-height: var(--text-h2-lh);
-  letter-spacing: -0.01em;
+  letter-spacing: -0.02em;
+  font-weight: 650;
 }
 
 .hero-body {
   font-size: var(--text-subhead);
   line-height: var(--text-subhead-lh);
   color: var(--color-ink-muted);
+  max-width: 640px;
 }
 
 .hero-actions {
@@ -378,32 +414,36 @@ button {
   margin-left: var(--space-1);
 }
 
+/* Stat row: no colored numerals. A quiet hairline-topped block, ink
+   numeral, muted tracked label. The metric earns attention through
+   position and size, never through color, per the Palette law. */
 .stat-row {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: var(--space-4);
-  margin-top: var(--space-4);
+  gap: var(--space-6);
+  margin-top: var(--space-6);
+  padding-top: var(--space-6);
+  border-top: var(--border-weight) solid var(--color-border);
 }
 
 .stat-chip {
   display: flex;
   flex-direction: column;
   gap: var(--space-1);
-  padding: var(--space-4);
-  border-radius: var(--radius-md);
-  border: var(--border-weight) solid var(--color-border);
-  background: var(--color-surface);
 }
 
 .stat-value {
-  font-size: var(--text-h4);
-  font-weight: 700;
-  color: var(--color-accent);
+  font-size: var(--text-h3);
+  font-weight: 650;
+  color: var(--color-ink);
+  letter-spacing: -0.01em;
 }
 
 .stat-label {
   font-size: var(--text-caption);
   color: var(--color-ink-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
 /* -------------------------------------------------------------- */
@@ -411,7 +451,7 @@ button {
 /* -------------------------------------------------------------- */
 
 .section {
-  padding: var(--space-12) 0;
+  padding: var(--space-16) 0;
   border-top: var(--border-weight) solid var(--color-border);
 }
 
@@ -436,14 +476,15 @@ button {
 }
 
 /* -------------------------------------------------------------- */
-/* Bento grid, per jal-frontend-rules                              */
+/* Bento grid, per jal-frontend-rules: hairline borders, neutral   */
+/* surface, no shadow at rest, no colored fills.                   */
 /* -------------------------------------------------------------- */
 
 .bento {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  grid-auto-rows: minmax(160px, auto);
-  gap: var(--space-4);
+  grid-auto-rows: minmax(168px, auto);
+  gap: var(--space-6);
 }
 
 .bento-lg {
@@ -479,6 +520,11 @@ button {
   display: flex;
   flex-direction: column;
   gap: var(--space-2);
+  transition: border-color var(--motion-med);
+}
+
+.bento-item:hover {
+  border-color: var(--color-border-strong);
 }
 
 .bento-item h3 {
@@ -503,9 +549,11 @@ button {
   color: var(--color-ink);
 }
 
+/* A single hairline accent bar, not an accent-colored fill: the one
+   quiet touch of color this card is allowed, per the Palette law. */
 .overview-why {
-  background: var(--color-accent-soft);
-  border-color: transparent;
+  background: var(--color-surface);
+  border-left: 2px solid var(--color-accent);
 }
 
 /* Install steps: numbered wide cards, one per row on desktop. */
@@ -560,7 +608,7 @@ button {
 
 .code-block pre {
   margin: 0;
-  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+  font-family: var(--font-mono);
   font-size: var(--text-caption);
   line-height: var(--text-body-lh);
   white-space: pre-wrap;
@@ -587,15 +635,18 @@ button {
 }
 
 .copy-btn-done {
-  border-color: #34c759;
-  color: #34c759;
+  border-color: var(--color-success);
+  color: var(--color-success);
 }
 
+/* Neutral inline code: no accent-colored pill. Restraint keeps the one
+   accent hue reserved for links, the primary CTA, and focus rings. */
 .inline-code {
-  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+  font-family: var(--font-mono);
   font-size: var(--text-caption);
-  background: var(--color-accent-soft);
-  color: var(--color-accent);
+  background: var(--color-bg);
+  color: var(--color-ink);
+  border: var(--border-weight) solid var(--color-border);
   border-radius: var(--radius-sm);
   padding: var(--space-1) var(--space-2);
   display: inline-block;
@@ -622,17 +673,34 @@ button {
   gap: var(--space-1);
 }
 
+/* The head tier is marked by a hairline accent rule and a slightly
+   deeper neutral surface, not an accent-colored fill or border. */
 .hierarchy-head {
-  border-color: var(--color-accent);
-  background: var(--color-accent-soft);
+  border-top: 2px solid var(--color-accent);
+  background: var(--color-surface-raised);
 }
 
 .hierarchy-tier {
   font-size: var(--text-caption);
   font-weight: 700;
-  color: var(--color-accent);
+  color: var(--color-ink-muted);
   text-transform: uppercase;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.06em;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+/* A small accent square beside the label: the visual anchor the
+   Palette law calls out, used once per row, never as a fill. */
+.hierarchy-tier::before {
+  content: "";
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  background: var(--color-accent);
+  border-radius: 1px;
+  flex-shrink: 0;
 }
 
 .hierarchy-row p {
@@ -655,7 +723,7 @@ button {
 }
 
 .agent-slug {
-  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+  font-family: var(--font-mono);
   font-size: var(--text-body);
 }
 
@@ -678,7 +746,7 @@ button {
 }
 
 .cmd-name {
-  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+  font-family: var(--font-mono);
   font-size: var(--text-body);
 }
 
@@ -707,7 +775,7 @@ button {
   font-size: var(--text-caption);
   font-weight: 600;
   color: var(--color-ink-muted);
-  border: var(--border-weight) solid var(--color-border);
+  border: var(--border-weight) solid var(--color-border-strong);
   border-radius: var(--radius-full);
   padding: var(--space-1) var(--space-3);
   white-space: nowrap;
@@ -731,6 +799,8 @@ button {
   position: relative;
 }
 
+/* A neutral counter badge, ink text on a bordered neutral circle,
+   instead of an accent-filled pill on every single step. */
 .study-steps li::before {
   content: counter(step);
   position: absolute;
@@ -739,8 +809,9 @@ button {
   width: 24px;
   height: 24px;
   border-radius: var(--radius-full);
-  background: var(--color-accent-soft);
-  color: var(--color-accent);
+  background: var(--color-surface);
+  border: var(--border-weight) solid var(--color-border-strong);
+  color: var(--color-ink-muted);
   font-size: var(--text-caption);
   font-weight: 700;
   display: flex;
@@ -804,7 +875,7 @@ button {
 
 .app-footer {
   border-top: var(--border-weight) solid var(--color-border);
-  padding: var(--space-8) var(--space-4) var(--space-16);
+  padding: var(--space-8) var(--space-6) var(--space-16);
   max-width: var(--content-max);
   margin: 0 auto;
   display: flex;
@@ -812,6 +883,14 @@ button {
   gap: var(--space-2);
   color: var(--color-ink-muted);
   font-size: var(--text-caption);
+}
+
+.app-footer a {
+  color: var(--color-ink-muted);
+}
+
+.app-footer a:hover {
+  color: var(--color-accent);
 }
 
 /* -------------------------------------------------------------- */
@@ -838,10 +917,18 @@ button {
     flex: 0 0 auto;
   }
 
+  .app-header-inner {
+    padding: 0 var(--space-4);
+  }
+
   .scroll-region {
     flex: 1 1 auto;
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
+  }
+
+  .app-main {
+    padding: 0 var(--space-4) var(--space-12);
   }
 
   .tab-bar {
@@ -872,6 +959,10 @@ button {
 
   .tab-item-active {
     color: var(--color-accent);
+  }
+
+  .hero {
+    padding: var(--space-16) 0 var(--space-12);
   }
 
   .hero h1 {
@@ -913,7 +1004,7 @@ button {
 
   .stat-row {
     grid-template-columns: repeat(3, 1fr);
-    gap: var(--space-2);
+    gap: var(--space-3);
   }
 
   .stat-value {
@@ -970,7 +1061,8 @@ button {
   }
 
   .hero h1 {
-    font-size: var(--text-h1);
+    font-size: var(--text-display);
+    line-height: var(--text-display-lh);
   }
 }
 
@@ -987,4 +1079,3 @@ button {
     grid-template-columns: 1fr;
   }
 }
-
