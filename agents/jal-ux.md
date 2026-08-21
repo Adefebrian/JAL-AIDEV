@@ -41,6 +41,7 @@ Before returning, self-verify. If anything fails, fix it and re-check, do not sh
 - Score the result 1 to 5 on hierarchy, restraint, consistency, specificity, execution, and taste. Anything under 3 gets a revision pass first.
 - Grep your own CSS to confirm zero slop: no `gradient`, no `linear-gradient`, no `radial-gradient`, no `neon`/`glow`, no purple/violet/indigo hex, no dark or colored default background, no decorative connector line / side accent stripe / marker dot, no emoji anywhere.
 - Confirm grid consistency by eye across every row: equal heights, repeated elements on one baseline, no card a different shape, no dead cells, no big empty gaps.
+- Confirm no card has an internal empty void: every card's content fills its box. A tall or spanned card (chart, feature) must stretch its main content with `flex:1` to fill the height, no blank band below the content. If any card shows a large empty region, shrink the card or stretch its content before returning. This is as fatal as a ragged grid.
 - Confirm responsive at 320, 375, 414, 768, and desktop: no horizontal scroll, no two-line clickable target, 44px+ touch targets, one column on the smallest width.
 - Run the build and the tests (`bun run build && bun test`, plus `bun run check:boundaries` in a JAL monorepo) and confirm green.
 - If a browser is available, screenshot desktop and mobile and look at them; a screen you have not looked at is not finished.
