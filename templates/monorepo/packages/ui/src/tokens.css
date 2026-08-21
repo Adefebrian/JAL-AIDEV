@@ -28,28 +28,28 @@
   --font-size-xl: 28px;
   --font-size-2xl: 36px;
 
-  /* Neutral, minimalist palette. */
+  /* Neutral, minimalist, white-first palette. Per jal-frontend-rules the
+     default background is always a white (never dark or colored). Near
+     monochrome: one ink primary (black on white, Apple/Vercel posture),
+     no gradient, no chromatic accent fill. A dark mode, if a product ever
+     ships one, is added deliberately, never auto-triggered from the OS. */
   --color-bg: #ffffff;
-  --color-surface: #f6f6f7;
-  --color-border: #e2e2e5;
-  --color-text: #14151a;
-  --color-text-muted: #62636c;
-  --color-primary: #2f5ce8;
+  --color-surface: #fafaf8;
+  --color-border: #eae8e2;
+  --color-border-strong: #ddd9cf;
+  --color-text: #16150f;
+  --color-text-muted: #6b675d;
+  --color-primary: #16150f;
+  --color-primary-hover: #322f27;
   --color-primary-contrast: #ffffff;
-  --color-danger: #d63b3b;
-  --color-success: #1f9d55;
+  --color-danger: #b3261e;
+  --color-success: #1f7a45;
+  --color-focus: #16150f;
 
   --border-weight: 1px;
-}
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --color-bg: #101114;
-    --color-surface: #17181c;
-    --color-border: #2a2b31;
-    --color-text: #f2f2f4;
-    --color-text-muted: #9799a3;
-    --color-primary: #6c8dff;
-    --color-primary-contrast: #0b0c0f;
-  }
+  /* Restrained motion: transform and opacity only, one easing, short. */
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --dur-fast: 120ms;
+  --dur-med: 200ms;
 }

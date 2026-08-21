@@ -162,16 +162,20 @@ Elevation (shadow depth communicates stacking order, nothing else):
 - **Touch targets 44px+**: every tappable element on mobile is at least 44x44px including padding, not just the visible glyph. Two targets never sit closer than 8px apart, per the `space-2` token, to avoid mis-taps.
 - **Empty, loading, and error states**: every view that can be empty, loading, or errored ships a deliberate design for all three, never a blank screen, a bare spinner with no context, or a raw error string. Empty states explain what belongs there and how to fill it; error states explain what happened and offer a next action, not just "something went wrong."
 
-## Design-taste engines this skill may lean on
+## Design principles (JAL-native, self-contained)
 
-For extra ideation, references, or a second pass on a hard layout problem, this skill may draw on the installed design-taste skills:
+JAL-AIDEV does not depend on any external design skill. Do NOT load `hallmark`, `design-taste-frontend`, `ui-ux-pro-max`, `high-end-visual-design`, or any other outside skill to build a JAL frontend. The anti-slop principles below are copied into this skill so the plugin is self-contained and every teammate gets the same bar with nothing extra installed. These principles sit alongside the Palette law and the Absolute bans above; all of it is JAL law.
 
-- `design-taste-frontend` for anti-slop landing pages, portfolios, and redesigns.
-- `ui-ux-pro-max` for style libraries, color palettes, font pairings, and stack-specific UI patterns.
-- `high-end-visual-design` for the specific fonts, spacing, shadow, and card conventions that make a screen feel expensive.
-- `hallmark` for anti-AI-slop audits and redesign extraction from a URL or screenshot.
+- **Structural variety.** Two different JAL screens must not share the same shape. Do not fall back to the same hero, then three feature cards, then a CTA band, then a footer on every page. Vary the macrostructure so each surface reads as its own product, not a color-swap of one template.
+- **Pre-emit self-critique.** Before you show any screen, score it 1 to 5 on six axes: hierarchy (is the most important thing obviously first), restraint (could anything be removed), consistency (one type scale, one spacing rhythm, one accent), specificity (does it fit this product or any product), execution (spacing, alignment, states), and taste (does it clear the Apple/Vercel bar). Anything under 3 gets a revision pass before it ships. Never hand over a screen you have not scored.
+- **Honest copy.** Never fabricate a metric, testimonial, logo, user count, or review. Use a real number, or a clearly labeled placeholder, or a layout that does not need the number. Invented proof is slop the moment it is written.
+- **Locked tokens.** Every color and every font-family references a named token (`var(--color-...)`, `var(--font-...)`). No inline hex, no inline `rgb()`/`oklch()`, no one-off `font-family` mid-file. If a value is missing, add it to the token block first, then reference it.
+- **No re-drawn chrome.** Never hand-build a fake browser bar (URL pill plus traffic-light dots), a fake phone frame, a fake code-window title bar, or fake IDE chrome. Use a real screenshot in a bordered figure, or let the content stand alone.
+- **Mobile verified at 320, 375, 414, and 768px.** No horizontal scroll at any width. No clickable target that wraps to two lines. Image-bearing grid tracks use `minmax(0, 1fr)`, never bare `1fr`. Headings wrap inside long words. Every layout collapses cleanly to one column on the smallest width. This is a floor, not a wish.
+- **Eight states on every interactive element.** default, hover, focus-visible, active, disabled, loading, error, success. A button or input that ships fewer than eight states is unfinished. Focus rings show instantly and never animate.
+- **Cut motion before adding it.** Most screens have too much. Motion earns its place only when it carries information (a state change, a spatial relationship). Animate transform and opacity only, with the named easings, and collapse to a short opacity crossfade under `prefers-reduced-motion`. Restraint reads as expensive; decoration reads as slop.
 
-These are references, not authorities. Every token, breakpoint, and banned pattern in this file and in `jal-frontend-rules` is JAL law and overrides anything one of these engines suggests. If an engine's output disagrees with this skill (a different type scale, any gradient, a glow effect, a dark default background, a decorative line), this skill wins, no exception without Brian's sign-off per `jal-standards`.
+If any outside reference (a library example, a generated mock, a teammate's snippet) disagrees with this file or `jal-frontend-rules`, this file wins, no exception without Brian's sign-off per `jal-standards`.
 
 ## Audit checklist: fine-tuning or refactoring an existing frontend
 
