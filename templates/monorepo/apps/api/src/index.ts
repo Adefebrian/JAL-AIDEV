@@ -1,14 +1,8 @@
-import { Hono } from "hono";
 import { loadEnv } from "@__APP_NAME__/config";
-import { applyHardening } from "./middleware/hardening";
-
-const app = new Hono();
-
-applyHardening(app);
-
-app.get("/health", (c) => c.json({ ok: true }));
+import { app } from "./core/app";
 
 export { app };
+export type { AppType } from "./core/app";
 export default app;
 
 // Fail-fast env validation and the actual listen call only happen when this

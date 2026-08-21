@@ -12,7 +12,8 @@
     "test": "turbo run test",
     "typecheck": "turbo run typecheck",
     "lint": "turbo run lint",
-    "dev": "turbo run dev --parallel"
+    "dev": "turbo run dev --parallel",
+    "check:boundaries": "bun tools/check-boundaries.ts"
   },
   "devDependencies": {
     "turbo": "^2.5.0",
