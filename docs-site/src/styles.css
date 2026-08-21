@@ -1,0 +1,975 @@
+/* docs-site/src/styles.css
+ *
+ * Tokens below are copied verbatim from skill jal-ui-taste: one type scale,
+ * one 4/8pt spacing scale, one radius scale, one elevation scale, one set
+ * of breakpoints. No inline one-off px value appears anywhere past this
+ * token block, per the same skill's audit checklist.
+ */
+
+:root {
+  /* Type scale (base 16px, ratio 1.25) */
+  --text-caption: 13px;
+  --text-caption-lh: 1.4;
+  --text-body: 16px;
+  --text-body-lh: 1.6;
+  --text-subhead: 20px;
+  --text-subhead-lh: 1.5;
+  --text-h4: 25px;
+  --text-h4-lh: 1.3;
+  --text-h3: 31px;
+  --text-h3-lh: 1.25;
+  --text-h2: 39px;
+  --text-h2-lh: 1.2;
+  --text-h1: 49px;
+  --text-h1-lh: 1.15;
+  --text-display: 61px;
+  --text-display-lh: 1.1;
+
+  /* Spacing (4/8pt rhythm) */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-12: 48px;
+  --space-16: 64px;
+  --space-24: 96px;
+
+  /* Radius */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
+  --radius-full: 9999px;
+
+  /* Elevation */
+  --elevation-0: none;
+  --elevation-1: 0 1px 2px rgba(0, 0, 0, 0.06), 0 1px 1px rgba(0, 0, 0, 0.04);
+  --elevation-2: 0 4px 12px rgba(0, 0, 0, 0.08);
+  --elevation-3: 0 12px 32px rgba(0, 0, 0, 0.14);
+
+  /* Layout constants */
+  --header-height: 64px;
+  --tab-bar-height: 64px;
+  --content-max: 1120px;
+  --border-weight: 1px;
+  --motion-fast: 120ms ease;
+  --motion-med: 200ms ease;
+
+  /* Color, light (default) */
+  --color-bg: #f7f7f5;
+  --color-surface: #ffffff;
+  --color-surface-raised: #ffffff;
+  --color-ink: #14161a;
+  --color-ink-muted: #5b6169;
+  --color-border: #e5e5e1;
+  --color-accent: #2e4de0;
+  --color-accent-hover: #4863e8;
+  --color-accent-ink: #ffffff;
+  --color-accent-soft: #edf0fd;
+  --color-danger: #b3261e;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-bg: #0b0d10;
+    --color-surface: #14171c;
+    --color-surface-raised: #191d23;
+    --color-ink: #f2f3f5;
+    --color-ink-muted: #9aa1ac;
+    --color-border: #262b33;
+    --color-accent: #5878ff;
+    --color-accent-hover: #7591ff;
+    --color-accent-ink: #0b0d10;
+    --color-accent-soft: #1a2140;
+    --color-danger: #ff8a80;
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background: var(--color-bg);
+  color: var(--color-ink);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  font-size: var(--text-body);
+  line-height: var(--text-body-lh);
+  -webkit-font-smoothing: antialiased;
+}
+
+a {
+  color: var(--color-accent);
+  text-decoration: none;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  margin: 0;
+  font-weight: 600;
+  color: var(--color-ink);
+}
+
+p {
+  margin: 0;
+}
+
+ol,
+ul {
+  margin: 0;
+  padding: 0;
+}
+
+button {
+  font-family: inherit;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition-duration: 0.001ms !important;
+    animation-duration: 0.001ms !important;
+  }
+}
+
+/* -------------------------------------------------------------- */
+/* Icons: one shared rule, so every icon in the page shares size  */
+/* and stroke weight, per jal-frontend-rules.                     */
+/* -------------------------------------------------------------- */
+
+.icon {
+  height: 1.25rem;
+  width: auto;
+  display: block;
+  color: currentColor;
+  flex-shrink: 0;
+}
+
+/* -------------------------------------------------------------- */
+/* Buttons                                                         */
+/* -------------------------------------------------------------- */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  height: 44px;
+  padding: 0 var(--space-6);
+  border-radius: var(--radius-md);
+  font-size: var(--text-body);
+  font-weight: 600;
+  border: var(--border-weight) solid transparent;
+  cursor: pointer;
+  transition: background var(--motion-fast), border-color var(--motion-fast), transform var(--motion-fast);
+}
+
+.btn:active {
+  transform: translateY(1px);
+}
+
+.btn-primary {
+  background: var(--color-accent);
+  color: var(--color-accent-ink);
+}
+
+.btn-primary:hover {
+  background: var(--color-accent-hover);
+}
+
+.btn-ghost {
+  background: transparent;
+  color: var(--color-ink);
+  border-color: var(--color-border);
+}
+
+.btn-ghost:hover {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+}
+
+.btn-sm {
+  height: 36px;
+  padding: 0 var(--space-4);
+  font-size: var(--text-caption);
+}
+
+/* -------------------------------------------------------------- */
+/* App shell: header, scroll region, bottom tab bar                */
+/* -------------------------------------------------------------- */
+
+.page-shell {
+  display: block;
+}
+
+.app-header {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  padding-top: env(safe-area-inset-top);
+  background: color-mix(in srgb, var(--color-bg) 92%, transparent);
+  backdrop-filter: blur(8px);
+  border-bottom: var(--border-weight) solid var(--color-border);
+}
+
+.app-header-inner {
+  max-width: var(--content-max);
+  margin: 0 auto;
+  height: var(--header-height);
+  padding: 0 var(--space-4);
+  display: flex;
+  align-items: center;
+  gap: var(--space-6);
+}
+
+.brand {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  color: var(--color-ink);
+  flex-shrink: 0;
+}
+
+.brand-mark {
+  font-size: var(--text-subhead);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.brand-tag {
+  font-size: var(--text-caption);
+  color: var(--color-ink-muted);
+  display: none;
+}
+
+.top-nav {
+  display: none;
+  align-items: center;
+  gap: var(--space-6);
+  flex: 1;
+}
+
+.nav-link {
+  color: var(--color-ink-muted);
+  font-size: var(--text-caption);
+  font-weight: 600;
+}
+
+.nav-link:hover {
+  color: var(--color-ink);
+}
+
+.top-nav-cta {
+  display: none;
+}
+
+.menu-btn {
+  margin-left: auto;
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-sm);
+  border: none;
+  background: transparent;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-1);
+  cursor: pointer;
+}
+
+.menu-btn span {
+  width: 20px;
+  height: 2px;
+  background: var(--color-ink);
+  border-radius: var(--radius-full);
+}
+
+.drawer {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  background: color-mix(in srgb, var(--color-bg) 96%, transparent);
+  backdrop-filter: blur(6px);
+  padding: calc(var(--header-height) + var(--space-6)) var(--space-6) var(--space-6);
+}
+
+.drawer nav {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  max-width: var(--content-max);
+  margin: 0 auto;
+}
+
+.drawer-link {
+  padding: var(--space-4);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  border: var(--border-weight) solid var(--color-border);
+  color: var(--color-ink);
+  font-size: var(--text-subhead);
+  font-weight: 600;
+}
+
+.scroll-region {
+  display: block;
+}
+
+.app-main {
+  max-width: var(--content-max);
+  margin: 0 auto;
+  padding: 0 var(--space-4) var(--space-12);
+}
+
+.tab-bar {
+  display: none;
+}
+
+/* -------------------------------------------------------------- */
+/* Hero                                                             */
+/* -------------------------------------------------------------- */
+
+.hero {
+  padding: var(--space-16) 0 var(--space-12);
+}
+
+.hero-inner {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+  max-width: 720px;
+}
+
+.hero h1 {
+  font-size: var(--text-h2);
+  line-height: var(--text-h2-lh);
+  letter-spacing: -0.01em;
+}
+
+.hero-body {
+  font-size: var(--text-subhead);
+  line-height: var(--text-subhead-lh);
+  color: var(--color-ink-muted);
+}
+
+.hero-actions {
+  display: flex;
+  gap: var(--space-4);
+  flex-wrap: wrap;
+}
+
+.btn-ghost::after {
+  content: "\2192";
+  margin-left: var(--space-1);
+}
+
+.stat-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-4);
+  margin-top: var(--space-4);
+}
+
+.stat-chip {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: var(--space-4);
+  border-radius: var(--radius-md);
+  border: var(--border-weight) solid var(--color-border);
+  background: var(--color-surface);
+}
+
+.stat-value {
+  font-size: var(--text-h4);
+  font-weight: 700;
+  color: var(--color-accent);
+}
+
+.stat-label {
+  font-size: var(--text-caption);
+  color: var(--color-ink-muted);
+}
+
+/* -------------------------------------------------------------- */
+/* Section shell shared by every content section                   */
+/* -------------------------------------------------------------- */
+
+.section {
+  padding: var(--space-12) 0;
+  border-top: var(--border-weight) solid var(--color-border);
+}
+
+.section h2 {
+  font-size: var(--text-h3);
+  line-height: var(--text-h3-lh);
+  margin-bottom: var(--space-3);
+}
+
+.section-lead {
+  font-size: var(--text-subhead);
+  line-height: var(--text-subhead-lh);
+  color: var(--color-ink-muted);
+  max-width: 640px;
+  margin-bottom: var(--space-8);
+}
+
+.section-note {
+  margin-top: var(--space-6);
+  font-size: var(--text-caption);
+  color: var(--color-ink-muted);
+}
+
+/* -------------------------------------------------------------- */
+/* Bento grid, per jal-frontend-rules                              */
+/* -------------------------------------------------------------- */
+
+.bento {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  grid-auto-rows: minmax(160px, auto);
+  gap: var(--space-4);
+}
+
+.bento-lg {
+  grid-column: span 2;
+  grid-row: span 2;
+}
+
+.bento-wide {
+  grid-column: span 2;
+  grid-row: span 1;
+}
+
+.bento-tall {
+  grid-column: span 1;
+  grid-row: span 2;
+}
+
+.bento-sm {
+  grid-column: span 1;
+  grid-row: span 1;
+}
+
+.bento-full {
+  grid-column: span 4;
+}
+
+.bento-item {
+  border-radius: var(--radius-md);
+  border: var(--border-weight) solid var(--color-border);
+  background: var(--color-surface);
+  padding: var(--space-6);
+  box-shadow: var(--elevation-0);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.bento-item h3 {
+  font-size: var(--text-subhead);
+  line-height: var(--text-subhead-lh);
+}
+
+.bento-item p {
+  color: var(--color-ink-muted);
+  font-size: var(--text-body);
+}
+
+/* Overview section: explicit areas so the 2x2 hero card and the four
+   small cards tile with zero dead space, per jal-frontend-rules. */
+.overview-lead {
+  justify-content: center;
+}
+
+.lead-text {
+  font-size: var(--text-subhead);
+  line-height: var(--text-subhead-lh);
+  color: var(--color-ink);
+}
+
+.overview-why {
+  background: var(--color-accent-soft);
+  border-color: transparent;
+}
+
+/* Install steps: numbered wide cards, one per row on desktop. */
+.install-step {
+  display: flex;
+  flex-direction: row;
+  gap: var(--space-6);
+  align-items: flex-start;
+}
+
+.step-number {
+  flex: 0 0 auto;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-full);
+  background: var(--color-accent);
+  color: var(--color-accent-ink);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: var(--text-caption);
+}
+
+.step-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+/* -------------------------------------------------------------- */
+/* Code blocks                                                     */
+/* -------------------------------------------------------------- */
+
+.code-block {
+  position: relative;
+  background: var(--color-ink);
+  color: var(--color-bg);
+  border-radius: var(--radius-sm);
+  padding: var(--space-4);
+  margin-top: var(--space-2);
+  overflow-x: auto;
+}
+
+.code-label {
+  font-size: var(--text-caption);
+  color: var(--color-ink-muted);
+  margin-bottom: var(--space-2);
+}
+
+.code-block pre {
+  margin: 0;
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+  font-size: var(--text-caption);
+  line-height: var(--text-body-lh);
+  white-space: pre-wrap;
+  word-break: break-word;
+  padding-right: var(--space-16);
+}
+
+.copy-btn {
+  position: absolute;
+  top: var(--space-2);
+  right: var(--space-2);
+  height: 28px;
+  padding: 0 var(--space-3);
+  border-radius: var(--radius-sm);
+  border: var(--border-weight) solid color-mix(in srgb, var(--color-bg) 30%, transparent);
+  background: transparent;
+  color: var(--color-bg);
+  font-size: var(--text-caption);
+  cursor: pointer;
+}
+
+.copy-btn:hover {
+  background: color-mix(in srgb, var(--color-bg) 12%, transparent);
+}
+
+.copy-btn-done {
+  border-color: #34c759;
+  color: #34c759;
+}
+
+.inline-code {
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+  font-size: var(--text-caption);
+  background: var(--color-accent-soft);
+  color: var(--color-accent);
+  border-radius: var(--radius-sm);
+  padding: var(--space-1) var(--space-2);
+  display: inline-block;
+}
+
+/* -------------------------------------------------------------- */
+/* Agent hierarchy                                                 */
+/* -------------------------------------------------------------- */
+
+.hierarchy {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  align-items: stretch;
+}
+
+.hierarchy-row {
+  border-radius: var(--radius-md);
+  border: var(--border-weight) solid var(--color-border);
+  background: var(--color-surface);
+  padding: var(--space-6);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.hierarchy-head {
+  border-color: var(--color-accent);
+  background: var(--color-accent-soft);
+}
+
+.hierarchy-tier {
+  font-size: var(--text-caption);
+  font-weight: 700;
+  color: var(--color-accent);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.hierarchy-row p {
+  color: var(--color-ink-muted);
+}
+
+.hierarchy-connector {
+  width: var(--border-weight);
+  height: var(--space-6);
+  background: var(--color-border);
+  margin: 0 auto;
+}
+
+.hierarchy-tier-specialists {
+  margin-top: var(--space-2);
+}
+
+.specialists-grid {
+  margin-top: var(--space-2);
+}
+
+.agent-slug {
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+  font-size: var(--text-body);
+}
+
+.agent-card p {
+  font-size: var(--text-caption);
+}
+
+/* -------------------------------------------------------------- */
+/* Commands                                                         */
+/* -------------------------------------------------------------- */
+
+.cmd-group-title {
+  font-size: var(--text-subhead);
+  color: var(--color-ink-muted);
+  margin: var(--space-8) 0 var(--space-4);
+}
+
+.cmd-group-title:first-of-type {
+  margin-top: 0;
+}
+
+.cmd-name {
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+  font-size: var(--text-body);
+}
+
+.cmd-hint {
+  font-size: var(--text-caption);
+  color: var(--color-ink-muted);
+  font-weight: 400;
+}
+
+/* -------------------------------------------------------------- */
+/* Study cases                                                      */
+/* -------------------------------------------------------------- */
+
+.study-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.study-card-head h3 {
+  font-size: var(--text-h4);
+}
+
+.badge-optional {
+  font-size: var(--text-caption);
+  font-weight: 600;
+  color: var(--color-ink-muted);
+  border: var(--border-weight) solid var(--color-border);
+  border-radius: var(--radius-full);
+  padding: var(--space-1) var(--space-3);
+  white-space: nowrap;
+}
+
+.study-steps {
+  list-style: none;
+  counter-reset: step;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin-top: var(--space-2);
+}
+
+.study-steps li {
+  counter-increment: step;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding-left: var(--space-8);
+  position: relative;
+}
+
+.study-steps li::before {
+  content: counter(step);
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 24px;
+  height: 24px;
+  border-radius: var(--radius-full);
+  background: var(--color-accent-soft);
+  color: var(--color-accent);
+  font-size: var(--text-caption);
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.step-note {
+  color: var(--color-ink-muted);
+  font-size: var(--text-caption);
+}
+
+/* -------------------------------------------------------------- */
+/* FAQ                                                              */
+/* -------------------------------------------------------------- */
+
+.faq-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  max-width: 760px;
+}
+
+.faq-item {
+  border-radius: var(--radius-md);
+  border: var(--border-weight) solid var(--color-border);
+  background: var(--color-surface);
+  padding: var(--space-4) var(--space-6);
+}
+
+.faq-item summary {
+  cursor: pointer;
+  font-weight: 600;
+  font-size: var(--text-body);
+  list-style: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+
+.faq-item summary::after {
+  content: "+";
+  color: var(--color-ink-muted);
+  font-size: var(--text-h4);
+  flex-shrink: 0;
+}
+
+.faq-item[open] summary::after {
+  content: "\2212";
+}
+
+.faq-item p {
+  margin-top: var(--space-3);
+  color: var(--color-ink-muted);
+}
+
+/* -------------------------------------------------------------- */
+/* Footer                                                           */
+/* -------------------------------------------------------------- */
+
+.app-footer {
+  border-top: var(--border-weight) solid var(--color-border);
+  padding: var(--space-8) var(--space-4) var(--space-16);
+  max-width: var(--content-max);
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  color: var(--color-ink-muted);
+  font-size: var(--text-caption);
+}
+
+/* -------------------------------------------------------------- */
+/* Breakpoints, per jal-ui-taste                                   */
+/*   mobile  < 640px  : single column, app-shell, bottom tab bar   */
+/*   tablet  640-1024 : 2-column bento, top nav returns             */
+/*   desktop > 1024   : full 4-column bento                        */
+/* -------------------------------------------------------------- */
+
+@media (max-width: 639.98px) {
+  html,
+  body {
+    height: 100%;
+    overflow: hidden;
+  }
+
+  .page-shell {
+    display: flex;
+    flex-direction: column;
+    height: 100dvh;
+  }
+
+  .app-header {
+    flex: 0 0 auto;
+  }
+
+  .scroll-region {
+    flex: 1 1 auto;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .tab-bar {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: stretch;
+    justify-content: space-around;
+    border-top: var(--border-weight) solid var(--color-border);
+    background: var(--color-surface);
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  .tab-item {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-1);
+    min-height: 56px;
+    color: var(--color-ink-muted);
+    font-size: var(--text-caption);
+  }
+
+  .tab-item .icon {
+    height: 1.25rem;
+  }
+
+  .tab-item-active {
+    color: var(--color-accent);
+  }
+
+  .hero h1 {
+    font-size: var(--text-h3);
+  }
+
+  .bento,
+  .cmd-grid,
+  .study-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .bento-lg,
+  .bento-wide,
+  .bento-tall,
+  .bento-full {
+    grid-column: span 1;
+    grid-row: span 1;
+  }
+
+  .install-step {
+    flex-direction: column;
+  }
+
+  .stat-row {
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--space-2);
+  }
+
+  .stat-value {
+    font-size: var(--text-subhead);
+  }
+}
+
+@media (min-width: 640px) and (max-width: 1023.98px) {
+  .bento,
+  .cmd-grid,
+  .study-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .bento-lg {
+    grid-column: span 2;
+    grid-row: span 2;
+  }
+
+  .bento-wide,
+  .bento-full {
+    grid-column: span 2;
+  }
+
+  .bento-tall,
+  .bento-sm {
+    grid-column: span 1;
+  }
+
+  .top-nav {
+    display: none;
+  }
+
+  .brand-tag {
+    display: inline;
+  }
+}
+
+@media (min-width: 1024px) {
+  .top-nav {
+    display: flex;
+  }
+
+  .top-nav-cta {
+    display: inline-flex;
+  }
+
+  .menu-btn {
+    display: none;
+  }
+
+  .brand-tag {
+    display: inline;
+  }
+
+  .hero h1 {
+    font-size: var(--text-h1);
+  }
+}
+
+/* v0.1.0 has exactly 3 commands: give that group its own 3-column grid so
+   it always tiles with zero dead space, instead of leaving one empty cell
+   in the 4-column bento used everywhere else. The doubled class keeps
+   this above the responsive .cmd-grid rules regardless of source order. */
+.cmd-grid.cmd-grid-3 {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+@media (max-width: 639.98px) {
+  .cmd-grid.cmd-grid-3 {
+    grid-template-columns: 1fr;
+  }
+}
+
