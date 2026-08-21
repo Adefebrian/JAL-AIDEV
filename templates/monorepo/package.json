@@ -12,9 +12,15 @@
     "test": "turbo run test",
     "typecheck": "turbo run typecheck",
     "lint": "turbo run lint",
-    "dev": "turbo run dev --parallel"
+    "dev": "turbo run dev --parallel",
+    "check:boundaries": "bun tools/check-boundaries.ts",
+    "migrate": "bun tools/migrate.ts"
+  },
+  "dependencies": {
+    "pg": "^8.13.0"
   },
   "devDependencies": {
+    "@types/pg": "^8.11.0",
     "turbo": "^2.5.0",
     "typescript": "^5.7.0"
   }

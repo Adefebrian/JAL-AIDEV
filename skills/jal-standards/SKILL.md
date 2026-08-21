@@ -16,12 +16,37 @@ This is the single source of truth for how JAL projects are built. Every other s
 - Use Docker for containerization and local parity with production.
 - Use Redis for caching, rate limiting, and ephemeral state.
 
+## Runtime: Bun Only
+
+- Bun is the only JS/TS runtime. It is both runtime and package manager for every JAL project.
+- Never use node, deno, ts-node, tsx, or nodemon, in any script, Dockerfile, CI job, or package.json.
+- Every run, build, test, and script entry point invokes bun directly.
+
 ## Stack: Forbidden
 
 - Never use Vite. Bun is the build tool and dev server.
 - Never use Next.js or any heavy SSR framework that taxes server CPU or RAM.
 - Never use webpack or Create React App.
+- Never use node, deno, ts-node, tsx, or nodemon. Bun replaces all of them.
 - Never introduce any technology outside the approved stack without reporting it to Brian for confirmation first. Propose, wait, then use.
+
+## Polyglot: Go and Rust
+
+- Go and Rust are allowed only as compiled gRPC sidecar services under services/. Never as a JS/TS runtime substitute.
+- Justify the sidecar to Brian first and get a yes before writing it. Opt-in per project, never a default.
+- Reserve Go or Rust for CPU-bound or latency-critical hot paths that Bun cannot serve fast enough. Everything else stays in Bun/Hono/TypeScript.
+- Bun/Hono owns the proto contract. The sidecar implements it, it does not define it.
+- See skill jal-polyglot for the detailed workflow.
+
+## Architecture: Modular Monolith
+
+- Modular monolith is mandatory. Do not split a JAL project into microservices without Brian's sign-off.
+- Domain modules live under apps/api/src/modules/<domain>/, one directory per domain.
+- Each module exposes exactly one public index.ts. Everything else in the module is private to it.
+- Cross-module imports go through the owning module's index.ts only. Never reach into another module's internals.
+- Infra dependencies, Postgres, Redis, S3, AI providers, sit behind ports/adapters in src/core/. Modules depend on the port, not the concrete client.
+- Every project is a Turborepo monorepo, no exceptions.
+- See skill jal-architecture for module anatomy and detail.
 
 ## Animation (Only If Needed)
 
@@ -48,6 +73,8 @@ This is the single source of truth for how JAL projects are built. Every other s
 - Never hardcode secrets, keys, or credentials in code or config files.
 - Run the installed hunt-* skills for deep security scans before shipping.
 - Keep every project resource-light and server-optimized. Do not default to heavy frameworks or unnecessary background processes.
+- Run red team passes via skill jal-redteam-ops.
+- Run blue team passes via skill jal-blueteam-ops.
 
 ## AI Default
 
@@ -57,7 +84,7 @@ This is the single source of truth for how JAL projects are built. Every other s
 
 ## Deploy / Infra
 
-- Deploy through Coolify at deploy.jalgroup.id.
+- The only permitted deploy target is Coolify at deploy.jalgroup.id. No other target, no exceptions.
 - Use self-hosted PostgreSQL for the database layer.
 - Use S3-compatible object storage at s3.datacenter.jalgroup.id.
 - Run CI/CD on GitHub Actions with a self-hosted gh runner and Turborepo.

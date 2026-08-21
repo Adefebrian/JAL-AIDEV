@@ -22,3 +22,6 @@ jobs:
 
       - name: Typecheck, lint, test, build
         run: bunx turbo typecheck lint test build
+
+      - name: Module boundary check
+        run: bun run check:boundaries

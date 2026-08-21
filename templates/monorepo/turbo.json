@@ -16,6 +16,10 @@
     "lint": {
       "outputs": []
     },
+    "check:boundaries": {
+      "cache": false,
+      "outputs": []
+    },
     "dev": {
       "cache": false,
       "persistent": true
