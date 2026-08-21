@@ -51,3 +51,7 @@ This checklist is the baseline, not the ceiling. Before shipping anything handli
 - LLM integration (relevant given the gpt-4o-mini default): `hunt-llm-ai` for prompt injection and data exfiltration paths through the AI feature.
 
 `jal-security` (the agent) owns running these continuously and reporting fast-fix findings back through `/jal-review`. Any finding severe enough to block ship gets logged to `.jal/memory/` so the same class of gap does not recur in the next project.
+
+## Red team / blue team ops
+
+This checklist and the hunt-* deep scans above are the baseline security posture. For a structured offensive pass, scope it and run it through `jal-redteam-ops` (scope, recon, hunt-*/bug-bounty mapping, exploit-or-disprove, evidence, responsible reporting). For the defensive response, hardening beyond this baseline, detection and logging, triage of red-team findings, and verifying a fix actually closes the gap, run it through `jal-blueteam-ops`. Every exploited finding from a red team pass gets handed to the blue team pass before it counts as resolved.
