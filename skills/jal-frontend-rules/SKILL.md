@@ -89,6 +89,45 @@ Hard rejects, no exceptions without Brian's sign-off:
 - No gradients in any JAL project, of any kind, anywhere: no gradient background, fill, text, or border. Gradients read as slop. Use a flat, considered solid color instead, always.
 - This overrides the old feralui.dev-only allowance. There is no gradient exception without Brian's explicit sign-off.
 
+## Form controls: normalize or it looks amateur
+
+Native `input`, `select`, `textarea`, and `input type="date"` size themselves differently. Unnormalized, they render at different heights in one row. Required:
+
+```css
+:root { --control-h: 44px; }
+
+.field input,
+.field select,
+.field input[type="date"] {
+  box-sizing: border-box;
+  height: var(--control-h);
+  padding: 0 var(--space-3);
+  font: inherit;
+  font-size: 16px;            /* below 16px iOS zooms on focus */
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  color: var(--color-text);
+}
+
+.field select,
+.field input[type="date"] {
+  -webkit-appearance: none;   /* platform chrome silently adds height */
+  appearance: none;
+}
+
+.field textarea { min-height: calc(var(--control-h) * 2); }
+
+/* A row of fields: equal tracks, bottom-aligned, helper slot reserves space
+   so a validation error never shifts the layout. */
+.field-row { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-4); align-items: end; }
+.field-hint { min-height: 20px; }
+```
+
+- Every control in a row must report the SAME computed height and SAME top offset. Measure with `getBoundingClientRect()` before shipping, do not eyeball it. A 13px height difference between an input and a select is the classic botched form.
+- Supply your own select chevron (inline SVG or background image), never a decorative bar.
+- Validation changes color and text only, never layout.
+
 ## Spacing/sizing consistency checklist
 
 Before shipping any screen, check:

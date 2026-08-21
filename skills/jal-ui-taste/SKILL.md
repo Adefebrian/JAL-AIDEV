@@ -146,6 +146,17 @@ Elevation (shadow depth communicates stacking order, nothing else):
 - Align every element to the grid. A component that is 2px off the nearest 4pt line is a bug, not a rounding error to shrug off.
 - Component chrome (padding, radius, border weight) is identical across every instance of the same component tier. Visual weight varies only by size and content, exactly as `jal-frontend-rules` requires for Bento cards, and the same principle applies to buttons, inputs, and list rows.
 
+### Form control consistency (fatal to get wrong, and the most commonly botched)
+
+A native `input`, `select`, `textarea`, and `input type="date"` all size themselves differently. Left unnormalized they render at different heights in the same row, which reads as amateur work. Normalize every control explicitly.
+
+- **One control height token.** Define `--control-h` (44px, which also satisfies the touch target) and apply it to every `input`, `select`, and date/time input as `height` (use `min-height` for `textarea`). Set `box-sizing: border-box` so padding cannot change it.
+- **Kill platform chrome sizing.** Every `select` and date/time input gets `appearance: none` (plus `-webkit-appearance: none`), because platform styling silently adds height and padding that a text input does not have. Supply your own chevron for a select (an inline SVG or background image, never a decorative bar).
+- **Identical chrome across control types.** Same padding token, same `border-radius` token, same 1px hairline border, same `font-size` (16px minimum, smaller triggers zoom on iOS), same `font-family` (`inherit`, never the platform default), same focus-visible ring. A select must be visually indistinguishable from a text input except for its chevron.
+- **A row of fields uses equal grid tracks.** `grid-template-columns: repeat(N, minmax(0, 1fr))` with `align-items: end`, and every field wrapper has the same internal structure: label, control, helper slot. Never let one field be a different width or sit at a different vertical offset than its neighbors.
+- **Reserve space for helper and error text.** Give the helper/error slot a fixed `min-height` so showing a validation error does not shift the row, resize the card, or push neighboring fields out of alignment. Validation state changes color and text, never layout.
+- **Verify by measurement, not by eye.** Every control in the same row must report the SAME computed height and the SAME top offset. Measure them (`getBoundingClientRect`) before shipping. A 1px difference is a bug; 13px is what a botched form looks like.
+
 ### Card and grid consistency (this is fatal to get wrong)
 
 Repeated cards or items in a grid MUST share one consistent shape. Uneven card shapes in a grid are the single most damaging tidiness failure and are forbidden.
