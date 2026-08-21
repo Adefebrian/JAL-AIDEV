@@ -146,6 +146,15 @@ Elevation (shadow depth communicates stacking order, nothing else):
 - Align every element to the grid. A component that is 2px off the nearest 4pt line is a bug, not a rounding error to shrug off.
 - Component chrome (padding, radius, border weight) is identical across every instance of the same component tier. Visual weight varies only by size and content, exactly as `jal-frontend-rules` requires for Bento cards, and the same principle applies to buttons, inputs, and list rows.
 
+### Card and grid consistency (this is fatal to get wrong)
+
+Repeated cards or items in a grid MUST share one consistent shape. Uneven card shapes in a grid are the single most damaging tidiness failure and are forbidden.
+
+- **Equal card heights per row.** Cards in the same row are the same height (CSS grid stretch, or `grid-auto-rows: 1fr`). Never let one card in a row be taller than its neighbors.
+- **Align repeated internal elements to the same baseline.** When every card in a grid contains the same kind of element (a code block, a primary CTA, a price, a meta row, a thumbnail), that element sits at the SAME position in every card. Pin it: make the card a flex column and give the shared bottom element `margin-top: auto` so it rests on one baseline across the whole row, no matter how long the text above it runs. A CTA or code block that floats at a different height in each card is the classic ragged-grid tell.
+- **Constrain variable-length content so it does not reshape the card.** A one-line command or code snippet is `white-space: nowrap` with its own `overflow-x: auto`, so a long value scrolls inside a fixed-height block instead of wrapping to three lines and making that one card taller. Long descriptions are either clamped to a fixed line count or absorbed by a bottom-pinned action row. Content length must never change a card's shape.
+- **A grid reads as one system, not a pile of different cards.** Before shipping any card grid, scan across a row: do the borders, heights, internal element positions, and code-block sizes line up? If any card is a different shape, it is a bug, fix it before shipping.
+
 ## Gradients: banned
 
 - No gradients, of any kind, anywhere: no gradient background, fill, text, or border, static or animated. Not from feralui.dev, not hand-rolled, not anywhere. This is absolute.

@@ -1,6 +1,6 @@
 {
   "name": "jal-aidev",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "description": "JAL engineering constitution + Pawang agent crew + no-Vite Bun monorepo scaffolder.",
   "author": { "name": "Brian", "email": "brian@jalgroup.id" },
   "homepage": "https://github.com/JAL-Group/JAL-AIDEV"

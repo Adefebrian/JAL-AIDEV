@@ -198,7 +198,7 @@ function renderCommands(): string {
   <p class="section-lead">Every command below is a slash command inside Claude Code. Type it, fill in the argument, read the result.</p>
 
   <h3 class="cmd-group-title">v0.1.0</h3>
-  <div class="bento cmd-grid cmd-grid-3">${v1.map(renderCommandCard).join("")}</div>
+  <div class="bento cmd-grid">${v1.map(renderCommandCard).join("")}</div>
 
   <h3 class="cmd-group-title">v0.2.0</h3>
   <div class="bento cmd-grid">${v2.map(renderCommandCard).join("")}</div>

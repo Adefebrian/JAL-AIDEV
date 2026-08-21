@@ -434,9 +434,11 @@ button {
 /* Section shell shared by every content section                   */
 /* -------------------------------------------------------------- */
 
+/* Sections are separated by generous whitespace alone, not by divider
+   lines. 64px top and bottom gives a consistent 128px rhythm between
+   sections, tidy and premium without a rule drawn between every block. */
 .section {
   padding: var(--space-16) 0;
-  border-top: var(--border-weight) solid var(--color-border);
 }
 
 .section h2 {
@@ -467,7 +469,7 @@ button {
 .bento {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  grid-auto-rows: minmax(168px, auto);
+  grid-auto-rows: minmax(0, auto);
   gap: var(--space-6);
 }
 
@@ -591,14 +593,26 @@ button {
   margin-bottom: var(--space-2);
 }
 
+/* One line, never wrapped: every code block is the same height so cards in
+   a grid share one consistent shape. A long command scrolls horizontally
+   inside its own block rather than growing the card taller than its
+   neighbors. */
 .code-block pre {
   margin: 0;
   font-family: var(--font-mono);
   font-size: var(--text-caption);
   line-height: var(--text-body-lh);
-  white-space: pre-wrap;
-  word-break: break-word;
-  padding-right: var(--space-16);
+  white-space: nowrap;
+  overflow-x: auto;
+  padding-right: var(--space-12);
+}
+
+/* In a card grid, the code block is pinned to the bottom of the card so
+   every card's code block sits on the same baseline regardless of how long
+   the description above it runs. This is what keeps the grid consistent. */
+.cmd-card .code-block,
+.overview-why .code-block {
+  margin-top: auto;
 }
 
 .copy-btn {
@@ -1036,16 +1050,12 @@ button {
   }
 }
 
-/* v0.1.0 has exactly 3 commands: give that group its own 3-column grid so
-   it always tiles with zero dead space, instead of leaving one empty cell
-   in the 4-column bento used everywhere else. The doubled class keeps
-   this above the responsive .cmd-grid rules regardless of source order. */
-.cmd-grid.cmd-grid-3 {
-  grid-template-columns: repeat(3, 1fr);
-}
-
-@media (max-width: 639.98px) {
-  .cmd-grid.cmd-grid-3 {
-    grid-template-columns: 1fr;
-  }
+/* Both command groups (v0.1.0 and v0.2.0) share one auto-fill track size
+   so every command card is exactly the same width across both groups, and
+   each group tiles edge to edge. auto-fill (not auto-fit) keeps the track
+   width identical whether the group has 3 cards or 12, so the two groups
+   line up as one system instead of two different card sizes. */
+.cmd-grid {
+  grid-template-columns: repeat(auto-fill, minmax(236px, 1fr));
+  grid-auto-rows: 1fr;
 }

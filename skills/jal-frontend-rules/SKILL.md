@@ -28,6 +28,7 @@ Base recipe:
 
 Rules:
 - Every row must be fully occupied. If the card count does not tile evenly, resize one card (span 2 instead of 1) rather than leave dead space.
+- Cards in a grid must share ONE consistent shape (this is fatal to get wrong). Cards in a row are equal height (`grid-auto-rows: 1fr` or grid stretch). Any repeated internal element (a code block, a CTA, a price, a meta row) is pinned to the same baseline in every card: make the card `display:flex; flex-direction:column` and give that shared element `margin-top:auto` so it rests on one line across the row. Variable content is constrained so it cannot reshape the card: one-line code is `white-space:nowrap; overflow-x:auto` (scrolls, never wraps to a taller block); long text is clamped or absorbed by the bottom-pinned row. A grid must read as one system, never a pile of different-shaped cards.
 - Use `grid-template-areas` for hero-style asymmetric layouts (one big feature card plus small utility cards) instead of manually counting spans when the layout is bespoke.
 - Never mix gap sizes within one grid. One `gap` value per breakpoint.
 - Card corner radius, padding, and border weight must be identical across every card in a given grid. Visual weight varies only by size and content, never by inconsistent chrome.
