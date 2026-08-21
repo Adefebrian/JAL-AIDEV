@@ -3,18 +3,26 @@
 // the one place in the codebase that is allowed to know both "modules" and
 // "adapters" at once; a module itself never reaches for an adapter or a raw
 // infra client directly (see ../modules/example and tools/check-boundaries.ts).
+//
+// The route registrations below are chained (`.get(...).route(...)`) rather
+// than called as separate statements. Hono's RPC typing (`hc<AppType>`, see
+// apps/web/src/client.ts) only accumulates a route's schema into the type of
+// the variable that the call is assigned to; a bare `app.get(...)` statement
+// whose return value is discarded still registers the route at runtime but
+// leaves the compile-time type of `app` unchanged. Chaining is required for
+// AppType to actually describe the routes.
 import { Hono } from "hono";
 import { createRedisCacheAdapter } from "./adapters/redis";
 import { applyHardening } from "./hardening";
 import { createExampleModule } from "../modules/example";
 
-const app = new Hono();
+const base = new Hono();
 
-applyHardening(app);
+applyHardening(base);
 
-app.get("/health", (c) => c.json({ ok: true }));
-
-app.route("/example", createExampleModule({ cache: createRedisCacheAdapter() }));
+const app = base
+  .get("/health", (c) => c.json({ ok: true }))
+  .route("/example", createExampleModule({ cache: createRedisCacheAdapter() }));
 
 export { app };
 export type AppType = typeof app;

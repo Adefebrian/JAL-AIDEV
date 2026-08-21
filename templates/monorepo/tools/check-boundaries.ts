@@ -13,6 +13,14 @@ const files = [...new Glob("modules/**/*.ts").scanSync(root)];
 
 const RAW_INFRA = ["pg", "postgres", "ioredis", "redis", "@aws-sdk/client-s3"];
 
+// The shared lib/* wrappers (apps/api/src/lib/{db,redis,s3,ai}.ts) hold the
+// actual raw infra client construction (`new Pool(...)`, `new Redis(...)`,
+// etc). core/adapters/*.ts is the one place allowed to import them, wrapping
+// each one behind a core/ports/*.ts port. A module that imports lib/* directly
+// skips that port entirely, so it is a boundary violation just like importing
+// the raw infra package itself (see RAW_INFRA above).
+const LIB_WRAPPER_RE = /(?:^|\/)lib\/(db|redis|s3|ai)(?:\.ts)?$/;
+
 const violations: string[] = [];
 
 for (const rel of files) {
@@ -42,6 +50,10 @@ for (const rel of files) {
 
     if (RAW_INFRA.includes(spec)) {
       violations.push(`${rel}: raw infra import "${spec}"; use a core port instead`);
+    }
+
+    if (LIB_WRAPPER_RE.test(spec)) {
+      violations.push(`${rel}: direct import of shared lib wrapper "${spec}"; use a core port instead`);
     }
   }
 }
