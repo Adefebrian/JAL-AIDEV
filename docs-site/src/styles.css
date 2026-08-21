@@ -896,6 +896,21 @@ button {
     flex-direction: column;
   }
 
+  /* jal-ui-taste requires every mobile touch target at 44x44px minimum,
+     including padding, not just the visible glyph. The visible chip stays
+     compact (readable next to a one-line command), the hit area grows to
+     44px via display:flex + min-height/min-width instead, so the tap
+     target expands without the label looking oversized. */
+  .copy-btn {
+    min-height: 44px;
+    min-width: 44px;
+    height: auto;
+    padding: var(--space-2) var(--space-3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
   .stat-row {
     grid-template-columns: repeat(3, 1fr);
     gap: var(--space-2);

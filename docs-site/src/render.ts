@@ -205,7 +205,7 @@ function renderCommands(): string {
   <div class="bento cmd-grid cmd-grid-3">${v1.map(renderCommandCard).join("")}</div>
 
   <h3 class="cmd-group-title">v0.2.0</h3>
-  <div class="bento cmd-grid cmd-grid-4">${v2.map(renderCommandCard).join("")}</div>
+  <div class="bento cmd-grid">${v2.map(renderCommandCard).join("")}</div>
 </section>`;
 }
 
