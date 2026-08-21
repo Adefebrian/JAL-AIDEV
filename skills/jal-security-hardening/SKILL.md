@@ -17,6 +17,9 @@ Run through this on every new API and re-check it on every PR that touches routi
 
 **Redis-backed rate limiting**
 - Every public-facing route gets a rate limit, keyed by IP + route, backed by Redis (never in-memory, in-memory counters reset on every deploy and do not work across multiple instances).
+- **Never key the limit on the left-most `X-Forwarded-For` value.** That segment is attacker-controlled, so a client can rotate it per request and get unlimited attempts. Key on the socket peer address, or on a hop your own proxy appends at the right-hand end of the chain, and only trust `X-Forwarded-For` at all when the request came from a proxy you control. Verify with a test that sends a changing `X-Forwarded-For` and still gets throttled.
+- **Key on the matched route pattern, not the raw path.** Keying on the raw URL lets an attacker mint unlimited distinct keys for one endpoint (`/login?a=1`, `/login?a=2`, trailing slashes, casing, path params), which resets the counter every request.
+- **Decide fail-open vs fail-closed deliberately and write it down.** A limiter that fails open when Redis is unreachable means an outage removes all rate limiting; that may be acceptable, but it must be a stated choice, and any environment running without Redis has no protection at all.
 - Auth and OTP-style endpoints get a stricter limit than general API traffic.
 - Return `429` with a `Retry-After` header on limit breach, never a silent drop.
 

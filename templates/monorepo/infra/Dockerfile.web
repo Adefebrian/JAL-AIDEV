@@ -27,8 +27,12 @@ WORKDIR /app
 ENV NODE_ENV=production
 COPY --from=build /repo/apps/web/dist ./dist
 COPY --from=build /repo/apps/web/server.ts ./server.ts
+COPY --from=build /repo/apps/web/serve.ts ./serve.ts
 COPY --from=deps /repo/node_modules ./node_modules
 
 EXPOSE 3000
 USER bun
-CMD ["bun", "server.ts"]
+# serve.ts, not server.ts: server.ts is a pure module whose default export is
+# the Hono app, and Bun auto-serves a default export with a `fetch` method when
+# it is the entrypoint. See the comments in both files.
+CMD ["bun", "serve.ts"]

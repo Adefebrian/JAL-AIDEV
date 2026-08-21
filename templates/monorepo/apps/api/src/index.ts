@@ -3,8 +3,6 @@ import { app } from "./core/app";
 
 export { app };
 export type { AppType } from "./core/app";
-export default app;
-
 // Fail-fast env validation and the actual listen call only happen when this
 // file is executed directly (the real runtime entrypoint), never when it is
 // imported (e.g. by index.test.ts via `app.request(...)`). This keeps

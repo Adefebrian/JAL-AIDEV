@@ -5,8 +5,8 @@
   "type": "module",
   "scripts": {
     "build": "bun run build.ts",
-    "dev": "bun --watch build.ts",
-    "serve": "bun server.ts",
+    "dev": "bun run build.ts && bun serve.ts",
+    "serve": "bun serve.ts",
     "test": "bun test",
     "typecheck": "tsc --noEmit",
     "lint": "echo 'no lint configured for apps/web' && exit 0"

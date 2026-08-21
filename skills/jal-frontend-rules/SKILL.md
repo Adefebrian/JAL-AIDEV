@@ -118,9 +118,12 @@ Native `input`, `select`, `textarea`, and `input type="date"` size themselves di
 
 .field textarea { min-height: calc(var(--control-h) * 2); }
 
-/* A row of fields: equal tracks, bottom-aligned, helper slot reserves space
-   so a validation error never shifts the layout. */
-.field-row { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-4); align-items: end; }
+/* A row of fields: equal tracks, TOP-aligned, helper slot reserves space so a
+   validation error never shifts the layout. Use `start`, never `end`: bottom
+   anchoring lets a two-line error in one field push that control up relative
+   to its neighbors, recreating the misalignment this rule prevents. */
+.field-row { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-4); align-items: start; }
+.field { display: grid; align-content: start; }
 .field-hint { min-height: 20px; }
 ```
 

@@ -14,6 +14,6 @@ import type { AppType } from "@__APP_NAME__/api/src/core/app";
 // Vite dev server (see README "Stack"), so nothing defines `env` on
 // `ImportMeta` here. Read it defensively through a local cast instead of
 // widening the global `ImportMeta` type just for one optional override.
-const apiUrl = (import.meta as unknown as { env?: { API_URL?: string } }).env?.API_URL ?? "http://localhost:3000";
+const apiUrl = (import.meta as unknown as { env?: { API_URL?: string } }).env?.API_URL ?? "http://localhost:3001";
 
 export const api = hc<AppType>(apiUrl);
