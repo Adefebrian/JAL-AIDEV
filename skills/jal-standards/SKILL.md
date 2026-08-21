@@ -60,11 +60,14 @@ This is the single source of truth for how JAL projects are built. Every other s
 
 - Never use an em-dash character anywhere in frontend content. Use commas, colons, or periods instead.
 - Never use eyebrow labels, glow effects, neon, or any other AI-slop visual pattern.
+- The default background is always white, off-white, broken white, or light beige. Never a dark or colored default background. Black is ink only; a dark background is allowed only inside a dedicated, explicitly requested dark mode.
+- Never use gradients, of any kind, anywhere. Flat neutral surfaces only. This overrides any older feralui.dev allowance.
+- Never use emoji or emoticons on any surface. Use a real koboyo/reicon icon when a glyph is needed.
+- Never draw decorative lines or marks: no connector lines between cards/tiers, no side/top/bottom accent stripes on panels, no marker dots or squares beside headings or labels. Rank and group with spacing, order, and type. Only functional hairline neutral dividers between structural regions are allowed.
 - Default to a Bento Grid layout unless the content genuinely calls for something else.
-- Keep the design modern, minimalist, and clean. No decoration without purpose.
+- Keep the design modern, minimalist, and clean, Apple/Google grade. No decoration without purpose.
 - Design mobile-first and make every surface super mobile-friendly with a dedicated app-like mobile presentation.
-- Keep layout, sizing, spacing, and padding consistent across the whole product. No large empty gaps.
-- Use gradients only from https://feralui.dev/gradients, and only when the design actually needs one.
+- Keep layout, sizing, spacing, and padding consistent across the whole product. No large empty gaps and no dead grid cells.
 - Source icons from the koboyo MCP first. Fall back to https://reicon.dev/ only when koboyo has no match.
 
 ## Backend / Security

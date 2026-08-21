@@ -20,7 +20,7 @@ Output layout:
 ```
 apps/web/     React + TS SPA, built with Bun.build(), served by Hono static server.
 apps/api/     Hono on Bun: Postgres + Redis + S3 clients, security middleware, gpt-4o-mini client.
-packages/ui/  Shared React components: bento primitives, tokens, icon wrapper, gradient presets.
+packages/ui/  Shared React components: bento primitives, tokens, icon wrapper (no gradient presets, no decorative-line helpers).
 packages/config/ shared tsconfig, eslint config, env schema.
 infra/        Per-app Dockerfile (multi-stage, slim), docker-compose for local PG + Redis.
 .github/workflows/ci.yml

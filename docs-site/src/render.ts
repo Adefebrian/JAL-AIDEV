@@ -94,10 +94,8 @@ function renderOverview(): string {
   return `
 <section class="section" id="overview">
   <h2>${escapeHtml(OVERVIEW.title)}</h2>
+  <p class="section-lead">${escapeHtml(OVERVIEW.lead)}</p>
   <div class="bento overview-grid">
-    <article class="bento-item bento-lg overview-lead">
-      <p class="lead-text">${escapeHtml(OVERVIEW.lead)}</p>
-    </article>
     ${points}
     <article class="bento-item bento-sm overview-why">
       <h3>${escapeHtml(OVERVIEW.whyTitle)}</h3>
@@ -170,13 +168,11 @@ function renderAgents(): string {
       <h3 class="agent-slug">${principal ? escapeHtml(principal.slug) : ""}</h3>
       <p>${principal ? escapeHtml(principal.line) : ""}</p>
     </article>
-    <div class="hierarchy-connector" aria-hidden="true"></div>
     <article class="hierarchy-row hierarchy-lead">
       <span class="hierarchy-tier">Orchestrator</span>
       <h3 class="agent-slug">${lead ? escapeHtml(lead.slug) : ""}</h3>
       <p>${lead ? escapeHtml(lead.line) : ""}</p>
     </article>
-    <div class="hierarchy-connector" aria-hidden="true"></div>
     <span class="hierarchy-tier hierarchy-tier-specialists">Specialists</span>
     <div class="bento specialists-grid">${specialistCards}</div>
   </div>

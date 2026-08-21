@@ -70,42 +70,26 @@
   --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", "Inter", Roboto, "Helvetica Neue", Arial, sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
 
-  /* Color, light (default). Warm off-white paper, warm near-black ink,
-     one accent hue: a considered burnt-orange/terracotta. Never a pure
-     #ffffff surface, never purple/violet/indigo. */
-  --color-bg: #f7f4ee;
-  --color-surface: #fdfbf8;
+  /* Color, light only. White-first per JAL frontend law: the default
+     background is a broken white, cards are pure white separated by a
+     hairline border. Near-monochrome, one ink-black primary action, no
+     chromatic accent fill, no gradient, no glow. Black is used for ink
+     only; it is never the light default background (a dark background is
+     allowed only inside a dedicated dark mode, which this site does not
+     ship). */
+  --color-bg: #fbfaf8;
+  --color-surface: #ffffff;
   --color-surface-raised: #ffffff;
-  --color-ink: #1c1815;
-  --color-ink-muted: #6f6656;
-  --color-border: #e7e0d2;
-  --color-border-strong: #d8cfbd;
-  --color-accent: #b3491f;
-  --color-accent-hover: #92391a;
-  --color-accent-ink: #fffaf6;
-  --color-accent-soft: #f2e2d3;
+  --color-ink: #191714;
+  --color-ink-muted: #6f6a61;
+  --color-border: #eae7e0;
+  --color-border-strong: #ddd9cf;
+  --color-accent: #191714;
+  --color-accent-hover: #322d26;
+  --color-accent-ink: #ffffff;
+  --color-accent-soft: #f1efe9;
   --color-danger: #b3261e;
   --color-success: #3f7a4f;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    /* Dark mode: a refined warm near-black, not #000, with off-white ink
-       and the same accent hue lightened for contrast on a dark surface. */
-    --color-bg: #17130f;
-    --color-surface: #1e1811;
-    --color-surface-raised: #241d15;
-    --color-ink: #f1e9dc;
-    --color-ink-muted: #a99d89;
-    --color-border: #332a1f;
-    --color-border-strong: #423627;
-    --color-accent: #e28349;
-    --color-accent-hover: #ec9862;
-    --color-accent-ink: #17130f;
-    --color-accent-soft: #3a2a1b;
-    --color-danger: #f0917f;
-    --color-success: #7fbb8d;
-  }
 }
 
 * {
@@ -549,11 +533,12 @@ button {
   color: var(--color-ink);
 }
 
-/* A single hairline accent bar, not an accent-colored fill: the one
-   quiet touch of color this card is allowed, per the Palette law. */
-.overview-why {
-  background: var(--color-surface);
-  border-left: 2px solid var(--color-accent);
+/* No side accent line on any panel or card (forbidden by jal-frontend
+   rules). The Why card is a normal card; it reads as a conclusion through
+   its position and copy, not a colored stripe. The overview grid auto
+   fills so there is never a dead empty cell. */
+.overview-grid {
+  grid-template-columns: repeat(auto-fit, minmax(248px, 1fr));
 }
 
 /* Install steps: numbered wide cards, one per row on desktop. */
@@ -673,11 +658,11 @@ button {
   gap: var(--space-1);
 }
 
-/* The head tier is marked by a hairline accent rule and a slightly
-   deeper neutral surface, not an accent-colored fill or border. */
+/* No accent bar or top rule on the head card. It reads as the head
+   through its position at the top and its label alone. No decorative
+   lines anywhere in the hierarchy. */
 .hierarchy-head {
-  border-top: 2px solid var(--color-accent);
-  background: var(--color-surface-raised);
+  background: var(--color-surface);
 }
 
 .hierarchy-tier {
@@ -691,27 +676,12 @@ button {
   gap: var(--space-2);
 }
 
-/* A small accent square beside the label: the visual anchor the
-   Palette law calls out, used once per row, never as a fill. */
-.hierarchy-tier::before {
-  content: "";
-  display: inline-block;
-  width: 6px;
-  height: 6px;
-  background: var(--color-accent);
-  border-radius: 1px;
-  flex-shrink: 0;
-}
-
+/* No marker square, no connector line. Decorative dots, squares, and
+   vertical/horizontal connector rules are forbidden (jal-frontend rules):
+   they read as slop and break the clean minimal look. Tier order alone
+   communicates the hierarchy, with vertical spacing between rows. */
 .hierarchy-row p {
   color: var(--color-ink-muted);
-}
-
-.hierarchy-connector {
-  width: var(--border-weight);
-  height: var(--space-6);
-  background: var(--color-border);
-  margin: 0 auto;
 }
 
 .hierarchy-tier-specialists {

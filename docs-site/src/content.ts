@@ -127,7 +127,7 @@ export const CONSTITUTION = {
     {
       title: "Frontend law",
       body:
-        "No em dash, no eyebrow labels, no glow or neon. Bento grid by default, mobile app-shell on phones, one spacing and type scale everywhere, gradients only from feralui.dev and only when needed.",
+        "No em dash, no eyebrow labels, no glow, no neon, no gradients. Bento grid by default, mobile app-shell on phones, one spacing and one type scale everywhere. Default background stays white or off-white, never a dark or colored fill.",
     },
     {
       title: "gpt-4o-mini by default",
@@ -167,7 +167,7 @@ export const AGENTS: Agent[] = [
   {
     slug: "jal-frontend",
     tier: "specialist",
-    line: "Builds the UI: Bento grid layouts, the mobile app-shell, koboyo or reicon icons, feralui gradients.",
+    line: "Builds the UI: Bento grid layouts, the mobile app-shell, koboyo or reicon icons, white-first and no gradients.",
   },
   {
     slug: "jal-ux",

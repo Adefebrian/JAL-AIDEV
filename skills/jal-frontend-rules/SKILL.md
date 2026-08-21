@@ -1,6 +1,6 @@
 ---
 name: jal-frontend-rules
-description: Bento Grid recipes, mobile app-shell layout, banned visual patterns (emdash, eyebrow, glow, neon), koboyo/reicon icon sourcing, feralui.dev gradients, spacing checklist. Use when building or reviewing any JAL frontend, React UI, or Bento layout.
+description: Bento Grid recipes, mobile app-shell layout, banned visual patterns (emdash, eyebrow, glow, neon, gradients, emoji, decorative lines, dark default backgrounds), white-first palette, koboyo/reicon icon sourcing, spacing checklist. Use when building or reviewing any JAL frontend, React UI, or Bento layout.
 ---
 
 # JAL Frontend Rules
@@ -69,6 +69,10 @@ Hard rejects, no exceptions without Brian's sign-off:
 - Eyebrow labels (small uppercase kicker text above a heading, e.g. "FEATURES" above "Everything you need"). Delete it, let the heading stand alone.
 - Glow effects (`box-shadow` with large blur + saturated color, `filter: drop-shadow` halos).
 - Neon color accents, oversaturated pinks/cyans/purples used as decoration rather than semantic state.
+- Dark or colored default backgrounds. The default background is always white, off-white, broken white, or light beige. Black is ink only; a dark background is allowed only inside a dedicated, explicitly requested dark mode, never as the light default and never auto-triggered from the OS color scheme.
+- Gradients of any kind, anywhere (background, fill, text, border). Flat neutral surfaces only.
+- Emoji or emoticons anywhere in UI copy, headings, labels, buttons, or empty states. Use a real koboyo/reicon icon instead.
+- Decorative lines and marks: connector lines drawn between cards/tiers/sections, side/top/bottom accent stripes on panels or cards, and marker dots/squares/glyphs beside a heading or label. Group and rank with spacing, order, and type, not drawn lines. Only functional hairline neutral dividers between structural regions are allowed.
 - Any other now-common AI-slop pattern: gratuitous blur blobs in the background, fake grain overlays, decorative squiggles with no meaning. If it does not communicate information or hierarchy, cut it.
 
 ## Icons
@@ -78,12 +82,10 @@ Hard rejects, no exceptions without Brian's sign-off:
 3. Never hand-draw or hand-pick a third icon source. Consistency of icon family matters more than finding the "perfect" glyph.
 4. Wrap icons in a shared `Icon` component (`packages/ui`) so size, stroke width, and color token are enforced centrally, not per usage.
 
-## Gradients: feralui.dev/gradients is the only source
+## Gradients: banned
 
-- Every gradient (static or animated) in a JAL project must come from https://feralui.dev/gradients. No hand-rolled `linear-gradient` stops, no generated-on-the-fly color math.
-- Use a gradient only when it does real work: a hero background that needs depth, a CTA button that needs to stand out as the primary action, a data-viz accent. Never as default card chrome or default text fill.
-- If a screen has more than one gradient, they must come from the same feralui.dev palette family so they read as one system.
-- Default to solid brand colors. Reach for a gradient only when a reviewer would notice its absence.
+- No gradients in any JAL project, of any kind, anywhere: no gradient background, fill, text, or border. Gradients read as slop. Use a flat, considered solid color instead, always.
+- This overrides the old feralui.dev-only allowance. There is no gradient exception without Brian's explicit sign-off.
 
 ## Spacing/sizing consistency checklist
 

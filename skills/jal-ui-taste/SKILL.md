@@ -1,6 +1,6 @@
 ---
 name: jal-ui-taste
-description: The JAL high-taste frontend design system, Apple/Google-grade UX-first taste, a modular type scale, a 4/8pt spacing rhythm, radius and elevation tokens, mobile/tablet/desktop breakpoints with the mobile app-shell, visual-consistency rules, gradient discipline (feralui.dev only), UX heuristics, and an audit checklist for tuning or refactoring an existing frontend. Use when building any new JAL UI, redesigning a screen, reviewing a frontend PR for taste, or auditing an existing product for visual and UX debt.
+description: The JAL high-taste frontend design system, Apple/Google-grade UX-first taste, a modular type scale, a 4/8pt spacing rhythm, radius and elevation tokens, mobile/tablet/desktop breakpoints with the mobile app-shell, visual-consistency rules, a white-first palette law, a hard no-gradient/no-emoji/no-decorative-line rule, UX heuristics, and an audit checklist for tuning or refactoring an existing frontend. Use when building any new JAL UI, redesigning a screen, reviewing a frontend PR for taste, or auditing an existing product for visual and UX debt.
 ---
 
 # JAL UI Taste
@@ -22,7 +22,7 @@ Every LLM defaults to the same look when nobody stops it: a dominant black or ne
 - Body text is ink, near-black on light surfaces (`oklch(18–22% 0.01 <hue>)`), near-white on dark surfaces (`oklch(92–96% 0.006 <hue>)`). Never pure `#000` or pure `#fff` for either surface or ink.
 - Most of any given view is neutral. Color is rare, deliberate, and small in area.
 
-**Exactly one accent hue.** Pick one. A second, desaturated semantic color (a success green, a danger red) is permitted only for real state, never for decoration. The accent is used on at most a handful of elements per screen: a primary CTA, links, an active nav indicator, a focus ring, a small square or hairline beside a heading. It is a highlighter, not a fill.
+**Exactly one accent hue.** Pick one. A second, desaturated semantic color (a success green, a danger red) is permitted only for real state, never for decoration. The accent is used on at most a handful of elements per screen: a primary CTA, links, an active nav indicator, a focus ring. It is a highlighter, not a fill. It is never a marker square, dot, or hairline placed beside a heading or label (see the decorative-line ban below).
 
 - **The accent is never purple, violet, or indigo.** That hue family is the single most recognizable AI-slop tell (it is the default nearly every model reaches for). Pick something else: a warm terracotta or signal orange, a considered blue that is clearly blue and not violet, a forest green, an ochre. Anything except the purple/violet/indigo family as the *default* choice.
 - The accent never fills a large area. Cap it at roughly 3% of any viewport's pixels. A giant accent-filled hero band, an accent-filled card grid, or an accent-colored stat number is the fill violation, not the highlight use.
@@ -33,7 +33,7 @@ Every LLM defaults to the same look when nobody stops it: a dominant black or ne
 
 - Glow effects of any kind: radial glow blobs behind text or cards, neon edge lighting, blurred colored drop-shadows standing in for elevation.
 - Purple-on-black as a page's dominant identity, in any variation (violet-on-near-black, indigo-on-charcoal, etc.).
-- A gradient applied to more than a rare, single, quiet touch. Every gradient, when one is genuinely warranted, comes from https://feralui.dev/gradients per the Gradient discipline section below, never hand-rolled, never covering more than one hero band or one CTA.
+- Gradients of any kind, anywhere: no gradient background, no gradient fill, no gradient text, no gradient border, on any surface. A flat neutral is always the answer. This is absolute and overrides any earlier feralui.dev allowance in older docs.
 - Saturated accent fill covering a large surface area: full-bleed accent-colored hero sections, accent-filled card backgrounds used as the default card treatment, accent-colored borders around every card on a grid.
 - Any shadow that is not neutral. If a shadow exists at all, it uses the elevation tokens below (neutral, low-opacity black or ink), reserved for genuine stacking (a menu over content, a modal over a scrim), never as ambient decoration or a stand-in for a glow.
 
@@ -51,6 +51,17 @@ Every LLM defaults to the same look when nobody stops it: a dominant black or ne
 - A Bento layout fills completely at every breakpoint: no oversized empty bands, no dead gaps patched with a stray margin. If content does not tile cleanly, resize the spans, do not leave a hole.
 
 This section is strict on purpose: it exists because a prior JAL surface shipped the exact forbidden look (black background, saturated purple accent, glowing cards, oversized colored stat numbers, weak layout) and it read as AI-slop, not as a JAL product. Every subsequent build and every audit checks against this section first.
+
+### Absolute bans (Brian, non-negotiable)
+
+These override every other guideline and every older doc. No exceptions without Brian's explicit sign-off.
+
+- **White-first background.** The default background of any screen is white, off-white, broken white, or a light beige, one of the whites, always. Never a dark or a colored default background. Black is used for ink (text) only. A black or near-black background is allowed only inside a dedicated dark mode that the user explicitly asked for, never as the light default and never auto-triggered from the OS `prefers-color-scheme` unless the product explicitly ships a dark theme. If in doubt, the background is white.
+- **No gradients at all.** Anywhere. See the banned list above. There is no feralui exception anymore.
+- **No emoji or emoticons.** Never in UI copy, headings, labels, buttons, empty states, or anywhere on any JAL surface. Use a real icon from koboyo or reicon.dev when a glyph is needed.
+- **No decorative lines or marks.** Forbidden: a vertical or horizontal connector line drawn between cards, tiers, or sections; a colored accent stripe on the side, top, or bottom of a panel or card (border-left/right/top accent bars); a marker dot, square, or bullet-glyph placed beside a heading, label, or tier name as decoration. Hierarchy and grouping are communicated by spacing, order, and typography, not by drawn lines or marks. The only lines allowed are functional hairline (1px, low-contrast neutral) dividers that genuinely separate structural regions (for example a header underline or a footer top border), never an accent-colored or decorative one.
+
+A screen that violates any of these four is rebuilt, not patched over.
 
 ## Type scale
 
@@ -135,13 +146,11 @@ Elevation (shadow depth communicates stacking order, nothing else):
 - Align every element to the grid. A component that is 2px off the nearest 4pt line is a bug, not a rounding error to shrug off.
 - Component chrome (padding, radius, border weight) is identical across every instance of the same component tier. Visual weight varies only by size and content, exactly as `jal-frontend-rules` requires for Bento cards, and the same principle applies to buttons, inputs, and list rows.
 
-## Gradient discipline
+## Gradients: banned
 
-- Every gradient, static or animated, comes from https://feralui.dev/gradients. No hand-rolled `linear-gradient` stops, no generated-on-the-fly color math, no exceptions.
-- A gradient must do real work: a hero background that needs depth, a primary CTA that needs to stand out, a data-viz accent. It is never default card chrome and never default text fill.
-- Never ship a gradient that reads as muddy or unclear, colors that fight each other, a transition with no clear direction, contrast so low the gradient disappears on most displays. If a gradient does not read cleanly at a glance, pick a different one from feralui.dev, do not tweak stops by hand to "fix" it.
-- No glow, no neon, no AI-slop gradient use: no radial glow blobs behind text, no oversaturated pink-to-cyan halo effects, no gradient text fill applied to body copy for decoration. These are the exact patterns `jal-frontend-rules` bans outright.
-- If a screen uses more than one gradient, they come from the same feralui.dev palette family so they read as one system, never two unrelated gradients competing on the same view.
+- No gradients, of any kind, anywhere: no gradient background, fill, text, or border, static or animated. Not from feralui.dev, not hand-rolled, not anywhere. This is absolute.
+- The answer to "this surface feels flat" is better spacing, hierarchy, and one considered accent, never a gradient.
+- Depth, when a surface genuinely needs it, comes from a hairline neutral border or a single subtle neutral elevation token reserved for real stacking, never from a gradient or a glow.
 
 ## UX heuristics
 
@@ -149,7 +158,7 @@ Elevation (shadow depth communicates stacking order, nothing else):
 - **Affordance**: every interactive element looks interactive, buttons look pressable, links are visually distinct from static text, disabled states are visibly disabled (reduced opacity or muted tone), not just inert.
 - **Immediate feedback**: every action gets a visible response within roughly 100ms, a pressed state, a spinner past 300 to 400ms, a toast or inline confirmation on completion. Silence after a tap reads as broken, even when the request is still in flight.
 - **Restrained motion**: animate only to clarify a state change (an item entering, a panel expanding, a page transitioning), never as ambient decoration. Per `jal-standards`, reach for Lenis, GSAP, or Framer Motion only when the interaction genuinely needs it, and honor `prefers-reduced-motion` on every animation added.
-- **Accessibility and contrast AA+**: text and meaningful icons meet WCAG AA contrast at minimum (4.5:1 for normal text, 3:1 for large text) against their background, including on top of any feralui.dev gradient. Never rely on color alone to convey state, pair it with an icon, label, or shape change.
+- **Accessibility and contrast AA+**: text and meaningful icons meet WCAG AA contrast at minimum (4.5:1 for normal text, 3:1 for large text) against their background. Never rely on color alone to convey state, pair it with an icon, label, or shape change.
 - **Touch targets 44px+**: every tappable element on mobile is at least 44x44px including padding, not just the visible glyph. Two targets never sit closer than 8px apart, per the `space-2` token, to avoid mis-taps.
 - **Empty, loading, and error states**: every view that can be empty, loading, or errored ships a deliberate design for all three, never a blank screen, a bare spinner with no context, or a raw error string. Empty states explain what belongs there and how to fill it; error states explain what happened and offer a next action, not just "something went wrong."
 
@@ -162,7 +171,7 @@ For extra ideation, references, or a second pass on a hard layout problem, this 
 - `high-end-visual-design` for the specific fonts, spacing, shadow, and card conventions that make a screen feel expensive.
 - `hallmark` for anti-AI-slop audits and redesign extraction from a URL or screenshot.
 
-These are references, not authorities. Every token, breakpoint, gradient source, and banned pattern in this file and in `jal-frontend-rules` is JAL law and overrides anything one of these engines suggests. If an engine's output disagrees with this skill (a different type scale, a hand-rolled gradient, a glow effect), this skill wins, no exception without Brian's sign-off per `jal-standards`.
+These are references, not authorities. Every token, breakpoint, and banned pattern in this file and in `jal-frontend-rules` is JAL law and overrides anything one of these engines suggests. If an engine's output disagrees with this skill (a different type scale, any gradient, a glow effect, a dark default background, a decorative line), this skill wins, no exception without Brian's sign-off per `jal-standards`.
 
 ## Audit checklist: fine-tuning or refactoring an existing frontend
 
@@ -176,12 +185,13 @@ Run this top to bottom on any existing screen or component before or during a re
 - [ ] Shadows only appear where real stacking exists, and match an elevation token, none used as ambient decoration.
 - [ ] The screen has a working mobile app-shell (sticky header, independent scroll region, bottom tab bar), not a shrunk desktop layout.
 - [ ] Bento grid rows are fully occupied at every breakpoint per `jal-frontend-rules`, no dead space patched with a gap.
-- [ ] All gradients trace back to https://feralui.dev/gradients, and none read as muddy, low-contrast, or glow-like.
+- [ ] No gradients anywhere (no gradient background, fill, text, or border). No emoji. No decorative lines, connectors, side accent stripes, or marker dots.
+- [ ] Default background is white, off-white, broken white, or light beige, never dark or colored (dark only inside an explicitly requested dark mode).
 - [ ] No eyebrow labels, no neon accents, no fake grain or blur-blob decoration anywhere on the screen.
 - [ ] Icons are sourced from koboyo first, reicon only as fallback, all wrapped in the shared `Icon` component.
 - [ ] One primary action is visually obvious on the screen, everything else is clearly secondary or tertiary.
 - [ ] Every interactive element has a visible affordance and a feedback state (hover where applicable, pressed, disabled, loading).
-- [ ] Contrast passes AA at minimum for every text and icon element, checked specifically over any gradient background.
+- [ ] Contrast passes AA at minimum for every text and icon element against its background.
 - [ ] Every touch target on mobile is 44x44px or larger with adequate spacing from its neighbors.
 - [ ] Empty, loading, and error states exist and are deliberately designed for every view that can hit them, not left as defaults.
 - [ ] No em-dash anywhere in the copy or code comments on the screen.
