@@ -1,16 +1,29 @@
 // docs-site/src/content.test.ts
 //
 // This project renders the whole page as static HTML strings (see
-// render.ts), there is no <App /> component to mount, so this is the
-// "content test" alternative called out in the task brief instead of an
-// App.test.tsx. It asserts against the exact same renderPage() output
-// build.ts writes to dist/index.html, so a passing test here is a real
-// guarantee about what ships, not a guarantee about a parallel copy of
-// the copy.
+// render.ts), there is no <App /> component to mount, so this is a content
+// test instead of an App.test.tsx. It asserts against the exact same
+// renderPage() output build.ts writes to dist/index.html, so a passing test
+// here is a real guarantee about what ships.
+//
+// Where the plugin sources sit next to this site (the repo checkout), the
+// agent list, command list, plugin version, and UI check rule names are
+// also cross-checked against them, so the site cannot silently drift from
+// agents/*.md, commands/*.md, .claude-plugin/plugin.json, or the audit.
 import { describe, expect, test } from "bun:test";
-import { readdirSync, readFileSync, statSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import { join } from "node:path";
-import { AGENTS, COMMANDS, SECTION_MARKERS, STUDY_CASES } from "./content";
+import {
+  AGENTS,
+  COMMANDS,
+  COMMAND_MAP,
+  JEV_CATALOG,
+  NAV,
+  PLUGIN_VERSION,
+  SECTION_MARKERS,
+  STUDY_CASES,
+  UI_RULES,
+} from "./content";
 import { renderPage } from "./render";
 
 // Built from a code point rather than a literal character, so this
@@ -18,61 +31,115 @@ import { renderPage } from "./render";
 // file" scan a few tests below.
 const EMDASH = String.fromCharCode(0x2014);
 
+const REPO_ROOT = join(import.meta.dir, "..", "..");
+
 const REQUIRED_STUDY_CASE_TITLES = [
   "Build a SaaS dashboard from zero",
   "Add a Rust gRPC image-processing sidecar",
   "Ship a feature safely as a small team",
 ];
 
+const CURRENT_COMMANDS = ["/jal-new", "/jal-build", "/jal-ui", "/jal-fix", "/jal-check", "/jal-ship", "/jal-docs"];
+
+// Commands that no longer exist as slash commands in v0.4.0. They may
+// appear on the page only inside the old command, new command map.
+const RETIRED_COMMANDS = [
+  "/jal-scaffold",
+  "/jal-orchestrate",
+  "/jal-module",
+  "/jal-service",
+  "/jal-migrate",
+  "/jal-adr",
+  "/jal-immersive",
+  "/jal-debug",
+  "/jal-review",
+  "/jal-audit",
+  "/jal-pentest",
+  "/jal-pr",
+  "/jal-release",
+  "/jal-deploy",
+];
+
 describe("docs site content", () => {
   const html = renderPage();
 
-  test("contains all 7 required section markers", () => {
+  test("contains all 12 section markers", () => {
+    expect(Object.keys(SECTION_MARKERS)).toHaveLength(12);
     for (const marker of Object.values(SECTION_MARKERS)) {
       expect(html).toContain(marker);
     }
-    expect(Object.keys(SECTION_MARKERS)).toHaveLength(7);
   });
 
-  test("contains the 3 required study case titles", () => {
+  test("contains the required study case titles, and every study case uses a current command", () => {
     for (const title of REQUIRED_STUDY_CASE_TITLES) {
       expect(html).toContain(title);
     }
-  });
-
-  test("study cases data has at least 3 entries, matching the required titles", () => {
-    expect(STUDY_CASES.length).toBeGreaterThanOrEqual(3);
-    const titles = STUDY_CASES.map((c) => c.title);
-    for (const required of REQUIRED_STUDY_CASE_TITLES) {
-      expect(titles).toContain(required);
+    for (const studyCase of STUDY_CASES) {
+      for (const step of studyCase.steps) {
+        const first = step.command.split(" ")[0];
+        expect(CURRENT_COMMANDS).toContain(first);
+      }
     }
   });
 
-  test("install section covers marketplace add, plugin install, and the settings.json snippet", () => {
-    expect(html).toContain("/plugin marketplace add JAL-Group/JAL-AIDEV");
-    expect(html).toContain("/plugin install jal-aidev");
+  test("install section covers marketplace add, the full-name install, update, and the settings.json snippet", () => {
+    expect(html).toContain("claude plugin marketplace add JAL-Group/JAL-AIDEV");
+    expect(html).toContain("claude plugin install jal-aidev@jal-aidev-marketplace");
+    expect(html).toContain("claude plugin update jal-aidev@jal-aidev-marketplace");
     expect(html).toContain("enabledPlugins");
-    expect(html).toContain("jal-aidev@jal-aidev-marketplace");
   });
 
-  test("renders all 14 agents, principal above lead above the 12 specialists", () => {
-    expect(AGENTS).toHaveLength(14);
+  test("renders all 17 agents: one head, one lead, one judge, 14 specialists", () => {
+    expect(AGENTS).toHaveLength(17);
     expect(AGENTS.filter((a) => a.tier === "head")).toHaveLength(1);
     expect(AGENTS.filter((a) => a.tier === "lead")).toHaveLength(1);
-    expect(AGENTS.filter((a) => a.tier === "specialist")).toHaveLength(12);
+    expect(AGENTS.filter((a) => a.tier === "judge")).toHaveLength(1);
+    expect(AGENTS.filter((a) => a.tier === "specialist")).toHaveLength(14);
     for (const agent of AGENTS) {
       expect(html).toContain(agent.slug);
+      expect(agent.jev.length).toBeGreaterThan(0);
     }
   });
 
-  test("renders all 15 commands (3 from v0.1.0, 12 from v0.2.0) with an example each", () => {
-    expect(COMMANDS).toHaveLength(15);
-    expect(COMMANDS.filter((c) => c.version === "v0.1.0")).toHaveLength(3);
-    expect(COMMANDS.filter((c) => c.version === "v0.2.0")).toHaveLength(12);
+  test("renders the 7 current commands at the plugin version, each with its examples", () => {
+    expect(COMMANDS.map((c) => c.name)).toEqual(CURRENT_COMMANDS);
     for (const command of COMMANDS) {
+      expect(command.version).toBe(PLUGIN_VERSION);
       expect(html).toContain(command.name);
-      expect(html).toContain(command.example);
+      expect(command.examples.length).toBeGreaterThan(0);
+      for (const example of command.examples) {
+        expect(example.startsWith(command.name)).toBe(true);
+        expect(html).toContain(example.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"));
+      }
     }
+  });
+
+  test("the old command, new command map maps every retired command to a current one", () => {
+    const mapped = COMMAND_MAP.flatMap((entry) => entry.old.map((old) => old.split(" ")[0]));
+    for (const retired of RETIRED_COMMANDS) {
+      expect(mapped).toContain(retired);
+    }
+    for (const entry of COMMAND_MAP) {
+      expect(CURRENT_COMMANDS).toContain(entry.now);
+    }
+  });
+
+  test("the JEV catalog areas add up to the real catalog size", () => {
+    const catalog = readFileSync(join(import.meta.dir, "..", "..", "skills", "jal-jev", "references", "catalog.md"), "utf8");
+    const real = [...catalog.matchAll(/^### `[a-z]+\.[a-z_]+`/gm)].length;
+    expect(JEV_CATALOG.reduce((sum, entry) => sum + entry.count, 0)).toBe(real);
+    expect(html).toContain(`${real} decisions in total`);
+  });
+
+  test("the UI check lists exactly 20 rules", () => {
+    expect(UI_RULES).toHaveLength(20);
+    expect(new Set(UI_RULES.map((r) => r.rule)).size).toBe(20);
+    for (const rule of UI_RULES) expect(html).toContain(rule.rule);
+  });
+
+  test("the bottom tab bar has 3 to 5 destinations", () => {
+    expect(NAV.length).toBeGreaterThanOrEqual(3);
+    expect(NAV.length).toBeLessThanOrEqual(5);
   });
 
   test("covers the FAQ topics: bun on PATH, private repo auth, boundary-check failures", () => {
@@ -85,8 +152,48 @@ describe("docs site content", () => {
     expect(html).not.toContain(EMDASH);
   });
 
+  test("never renders an emoji", () => {
+    expect(/\p{Extended_Pictographic}/u.test(html)).toBe(false);
+  });
+
   test("never mentions condom, in case a spaghetti/protection metaphor gets out of hand", () => {
     expect(html.toLowerCase()).not.toContain("condom");
+  });
+});
+
+describe("site facts match the plugin sources", () => {
+  const agentsDir = join(REPO_ROOT, "agents");
+  const commandsDir = join(REPO_ROOT, "commands");
+  const pluginJson = join(REPO_ROOT, ".claude-plugin", "plugin.json");
+  const auditTs = join(REPO_ROOT, "mcp", "jal-design", "audit.ts");
+
+  test.if(existsSync(agentsDir))("every agents/*.md is on the page and nothing else", () => {
+    const slugs = readdirSync(agentsDir)
+      .filter((f) => f.endsWith(".md"))
+      .map((f) => f.replace(/\.md$/, ""))
+      .sort();
+    expect(AGENTS.map((a) => a.slug).sort()).toEqual(slugs);
+  });
+
+  test.if(existsSync(commandsDir))("every commands/*.md is on the page and nothing else", () => {
+    const names = readdirSync(commandsDir)
+      .filter((f) => f.endsWith(".md"))
+      .map((f) => `/${f.replace(/\.md$/, "")}`)
+      .sort();
+    expect(COMMANDS.map((c) => c.name).sort()).toEqual(names);
+  });
+
+  test.if(existsSync(pluginJson))("the site version matches .claude-plugin/plugin.json", () => {
+    const version = JSON.parse(readFileSync(pluginJson, "utf-8")).version as string;
+    expect(PLUGIN_VERSION).toBe(`v${version}`);
+  });
+
+  test.if(existsSync(auditTs))("every rule the UI audit can report is listed", () => {
+    const source = readFileSync(auditTs, "utf-8");
+    const found = new Set<string>();
+    for (const m of source.matchAll(/pushV\("([a-z-]+)"/g)) found.add(m[1]);
+    for (const m of source.matchAll(/rule: "([a-z-]+)"/g)) found.add(m[1]);
+    expect(UI_RULES.map((r) => r.rule).sort()).toEqual([...found].sort());
   });
 });
 

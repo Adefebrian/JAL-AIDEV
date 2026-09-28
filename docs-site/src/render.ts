@@ -5,18 +5,40 @@
 // so a virtual DOM would not earn its keep here (see README for the
 // reasoning). build.ts calls renderPage() once and writes the result into
 // the shell from src/index.html.
+//
+// Layout components, all defined in styles.css:
+// - .bento / .bento-item: hairline cards on a grid. Used only where the
+//   cards in one row carry comparable content, and any card with a footer
+//   (an example block, a JEV line) pins that footer to the bottom so a row
+//   never shows an empty band.
+// - .rows / .row: a bordered list of records, title on the left and body on
+//   the right from tablet up. Used for anything that reads as a list of
+//   rules or facts, so uneven copy lengths never leave dead card space.
+// - .stack: cards stacked one per row (install steps, study cases).
 import {
   AGENTS,
+  AGENT_TIER_LABEL,
+  BRAND,
   COMMANDS,
+  COMMANDS_INTRO,
+  COMMAND_MAP,
   CONSTITUTION,
+  DESIGN_SYSTEM,
+  DOCS,
   FAQ,
   FOOTER,
   HERO,
+  IMMERSIVE,
   INSTALL,
+  JEV,
+  JEV_CATALOG,
   NAV,
   OVERVIEW,
-  STUDY_CASES,
   SECTION_MARKERS,
+  STUDY_CASES,
+  TOP_NAV,
+  UI_CHECK,
+  UI_RULES,
   type Agent,
   type Command,
 } from "./content";
@@ -26,12 +48,39 @@ function escapeHtml(input: string): string {
   return input
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;");
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
 }
 
-function codeBlock(code: string, filename?: string): string {
-  const label = filename ? `<div class="code-label">${escapeHtml(filename)}</div>` : "";
-  return `<div class="code-block">${label}<pre><code>${escapeHtml(code)}</code></pre><button type="button" class="copy-btn" data-copy="${escapeHtml(code)}">Copy</button></div>`;
+// Escapes text, then renders `backtick` spans as inline code.
+function richText(input: string): string {
+  return escapeHtml(input).replace(/`([^`]+)`/g, '<code class="inline-code">$1</code>');
+}
+
+function codeBlock(code: string, opts: { filename?: string; copy?: boolean; wrap?: boolean } = {}): string {
+  const label = opts.filename ? `<div class="code-label">${escapeHtml(opts.filename)}</div>` : "";
+  const copy = opts.copy
+    ? `<button type="button" class="copy-btn" data-copy="${escapeHtml(code)}">Copy</button>`
+    : "";
+  const wrapClass = opts.wrap ? " code-wrap" : "";
+  return `<div class="code-block${wrapClass}">${label}<div class="code-row"><pre><code>${escapeHtml(code)}</code></pre>${copy}</div></div>`;
+}
+
+function rows(items: { title: string; body: string; meta?: string; mono?: boolean }[], extraClass = ""): string {
+  const inner = items
+    .map((item) => {
+      const titleClass = item.mono ? "row-title row-title-mono" : "row-title";
+      const meta = item.meta ? `<span class="row-meta">${escapeHtml(item.meta)}</span>` : "";
+      return `<div class="row"><div class="row-head"><h3 class="${titleClass}">${escapeHtml(item.title)}</h3>${meta}</div><p class="row-body">${richText(item.body)}</p></div>`;
+    })
+    .join("");
+  const cls = extraClass ? `rows ${extraClass}` : "rows";
+  return `<div class="${cls}">${inner}</div>`;
+}
+
+function sectionHead(title: string, lead?: string): string {
+  const leadHtml = lead ? `<p class="section-lead">${richText(lead)}</p>` : "";
+  return `<h2>${escapeHtml(title)}</h2>${leadHtml}`;
 }
 
 const ALL_SECTIONS: { id: string; label: string }[] = [
@@ -40,22 +89,29 @@ const ALL_SECTIONS: { id: string; label: string }[] = [
   { id: "constitution", label: SECTION_MARKERS.constitution },
   { id: "agents", label: SECTION_MARKERS.agents },
   { id: "commands", label: SECTION_MARKERS.commands },
+  { id: "jev", label: SECTION_MARKERS.jev },
+  { id: "design-system", label: SECTION_MARKERS.designSystem },
+  { id: "immersive", label: SECTION_MARKERS.immersive },
+  { id: "ui-check", label: SECTION_MARKERS.uiCheck },
+  { id: "docs", label: SECTION_MARKERS.docs },
   { id: "study-cases", label: SECTION_MARKERS.studyCases },
   { id: "faq", label: SECTION_MARKERS.faq },
 ];
 
 function renderHeader(): string {
-  const links = NAV.map((item) => `<a class="nav-link" href="#${item.id}">${item.label}</a>`).join("");
-  const drawerLinks = ALL_SECTIONS.map((s) => `<a class="drawer-link" href="#${s.id}" data-drawer-link>${s.label}</a>`).join("");
+  const links = TOP_NAV.map((item) => `<a class="nav-link" href="#${item.id}">${escapeHtml(item.label)}</a>`).join("");
+  const drawerLinks = ALL_SECTIONS.map(
+    (s) => `<a class="drawer-link" href="#${s.id}" data-drawer-link>${escapeHtml(s.label)}</a>`,
+  ).join("");
   return `
 <header class="app-header">
   <div class="app-header-inner">
     <a class="brand" href="#overview">
-      <span class="brand-mark">JAL-AIDEV</span>
-      <span class="brand-tag">${escapeHtml(HERO.kicker)}</span>
+      <span class="brand-mark">${escapeHtml(BRAND.name)}</span>
+      <span class="brand-tag">${escapeHtml(BRAND.tag)}</span>
     </a>
     <nav class="top-nav" aria-label="Sections">${links}</nav>
-    <a class="btn btn-primary btn-sm top-nav-cta" href="#install">Get started</a>
+    <a class="btn btn-primary top-nav-cta" href="#install">Get started</a>
     <button type="button" class="menu-btn" aria-label="Open menu" aria-expanded="false" data-menu-toggle>
       <span></span><span></span><span></span>
     </button>
@@ -68,40 +124,40 @@ function renderHeader(): string {
 
 function renderHero(): string {
   const stats = HERO.stats
-    .map((stat) => `<div class="stat-chip"><span class="stat-value">${stat.value}</span><span class="stat-label">${stat.label}</span></div>`)
+    .map(
+      (stat) =>
+        `<div class="stat-chip"><span class="stat-value">${escapeHtml(stat.value)}</span><span class="stat-label">${escapeHtml(stat.label)}</span></div>`,
+    )
     .join("");
   return `
 <section class="hero" id="hero">
   <div class="hero-inner">
     <h1>${escapeHtml(HERO.title)}</h1>
-    <p class="hero-body">${escapeHtml(HERO.body)}</p>
+    <p class="hero-body">${richText(HERO.body)}</p>
     <div class="hero-actions">
-      <a class="btn btn-primary" href="${HERO.primaryCta.href}">${HERO.primaryCta.label}</a>
-      <a class="btn btn-ghost" href="${HERO.secondaryCta.href}">${HERO.secondaryCta.label}</a>
+      <a class="btn btn-primary" href="${HERO.primaryCta.href}">${escapeHtml(HERO.primaryCta.label)}</a>
+      <a class="btn btn-ghost" href="${HERO.secondaryCta.href}">${escapeHtml(HERO.secondaryCta.label)}</a>
     </div>
     <div class="stat-row">${stats}</div>
   </div>
 </section>`;
 }
 
-function renderOverview(): string {
-  const points = OVERVIEW.points
-    .map(
-      (point) =>
-        `<article class="bento-item bento-sm"><h3>${escapeHtml(point.title)}</h3><p>${escapeHtml(point.body)}</p></article>`,
-    )
+function textCards(items: { title: string; body: string }[]): string {
+  return items
+    .map((item) => `<article class="bento-item"><h3>${escapeHtml(item.title)}</h3><p>${richText(item.body)}</p></article>`)
     .join("");
+}
+
+function renderOverview(): string {
   return `
 <section class="section" id="overview">
-  <h2>${escapeHtml(OVERVIEW.title)}</h2>
-  <p class="section-lead">${escapeHtml(OVERVIEW.lead)}</p>
-  <div class="bento overview-grid">
-    ${points}
-    <article class="bento-item bento-sm overview-why">
-      <h3>${escapeHtml(OVERVIEW.whyTitle)}</h3>
-      <p>${escapeHtml(OVERVIEW.why)}</p>
-    </article>
-  </div>
+  ${sectionHead(OVERVIEW.title, OVERVIEW.lead)}
+  <div class="bento trio-grid">${textCards(OVERVIEW.points)}</div>
+  <article class="bento-item callout">
+    <h3>${escapeHtml(OVERVIEW.whyTitle)}</h3>
+    <p>${richText(OVERVIEW.why)}</p>
+  </article>
 </section>`;
 }
 
@@ -109,99 +165,164 @@ function renderInstall(): string {
   const steps = INSTALL.steps
     .map(
       (step, index) => `
-    <article class="bento-item bento-full install-step">
+    <article class="bento-item install-step">
       <div class="step-number">${index + 1}</div>
       <div class="step-body">
         <h3>${escapeHtml(step.title)}</h3>
-        <p>${escapeHtml(step.body)}</p>
-        ${codeBlock(step.code, step.filename)}
+        <p>${richText(step.body)}</p>
+        ${codeBlock(step.code, { filename: step.filename, copy: true })}
       </div>
     </article>`,
     )
     .join("");
   return `
 <section class="section" id="install">
-  <h2>${escapeHtml(INSTALL.title)}</h2>
-  <p class="section-lead">${escapeHtml(INSTALL.lead)}</p>
-  <div class="bento install-grid">${steps}</div>
-  <p class="section-note">${escapeHtml(INSTALL.note)}</p>
+  ${sectionHead(INSTALL.title, INSTALL.lead)}
+  <div class="stack">${steps}</div>
+  <p class="section-note">${richText(INSTALL.note)}</p>
 </section>`;
 }
 
 function renderConstitution(): string {
-  const [first, ...rest] = CONSTITUTION.items;
-  const restCards = rest
-    .map(
-      (item) => `<article class="bento-item bento-sm"><h3>${escapeHtml(item.title)}</h3><p>${escapeHtml(item.body)}</p></article>`,
-    )
-    .join("");
   return `
 <section class="section" id="constitution">
-  <h2>${escapeHtml(CONSTITUTION.title)}</h2>
-  <p class="section-lead">${escapeHtml(CONSTITUTION.lead)}</p>
-  <div class="bento">
-    <article class="bento-item bento-wide">
-      <h3>${escapeHtml(first.title)}</h3>
-      <p>${escapeHtml(first.body)}</p>
-    </article>
-    ${restCards}
-  </div>
+  ${sectionHead(CONSTITUTION.title, CONSTITUTION.lead)}
+  ${rows(CONSTITUTION.items)}
 </section>`;
 }
 
+function renderLeaderRow(agent: Agent | undefined): string {
+  if (!agent) return "";
+  return `
+    <article class="bento-item agent-card agent-card-leader">
+      <h3 class="agent-slug">${escapeHtml(agent.slug)}</h3>
+      <p><strong class="agent-tier">${escapeHtml(AGENT_TIER_LABEL[agent.tier])}.</strong> ${richText(agent.line)}</p>
+      <p class="agent-jev">JEV: ${escapeHtml(agent.jev)}</p>
+    </article>`;
+}
+
 function renderAgentCard(agent: Agent): string {
-  return `<article class="bento-item bento-sm agent-card"><h4 class="agent-slug">${escapeHtml(agent.slug)}</h4><p>${escapeHtml(agent.line)}</p></article>`;
+  return `
+    <article class="bento-item agent-card">
+      <h3 class="agent-slug">${escapeHtml(agent.slug)}</h3>
+      <p>${richText(agent.line)}</p>
+      <p class="agent-jev">JEV: ${escapeHtml(agent.jev)}</p>
+    </article>`;
 }
 
 function renderAgents(): string {
   const principal = AGENTS.find((agent) => agent.tier === "head");
   const lead = AGENTS.find((agent) => agent.tier === "lead");
+  const judge = AGENTS.find((agent) => agent.tier === "judge");
   const specialists = AGENTS.filter((agent) => agent.tier === "specialist");
-  const specialistCards = specialists.map(renderAgentCard).join("");
   return `
 <section class="section" id="agents">
-  <h2>${SECTION_MARKERS.agents}</h2>
-  <p class="section-lead">One head, one orchestrator, twelve specialists. Direction flows down, findings and status flow back up.</p>
-  <div class="hierarchy">
-    <article class="hierarchy-row hierarchy-head">
-      <span class="hierarchy-tier">Head</span>
-      <h3 class="agent-slug">${principal ? escapeHtml(principal.slug) : ""}</h3>
-      <p>${principal ? escapeHtml(principal.line) : ""}</p>
-    </article>
-    <article class="hierarchy-row hierarchy-lead">
-      <span class="hierarchy-tier">Orchestrator</span>
-      <h3 class="agent-slug">${lead ? escapeHtml(lead.slug) : ""}</h3>
-      <p>${lead ? escapeHtml(lead.line) : ""}</p>
-    </article>
-    <span class="hierarchy-tier hierarchy-tier-specialists">Specialists</span>
-    <div class="bento specialists-grid">${specialistCards}</div>
+  ${sectionHead(
+    SECTION_MARKERS.agents,
+    `${AGENTS.length} agents: one head, one orchestrator, one judge, and ${specialists.length} specialists. Direction flows down, findings flow back up, and each card lists the JEV decisions that agent asks.`,
+  )}
+  <div class="stack">
+    ${renderLeaderRow(principal)}
+    ${renderLeaderRow(lead)}
+    ${renderLeaderRow(judge)}
   </div>
+  <h3 class="sub-title">Specialists</h3>
+  <div class="bento pair-grid">${specialists.map(renderAgentCard).join("")}</div>
 </section>`;
 }
 
 function renderCommandCard(command: Command): string {
-  const hint = command.argumentHint ? ` <span class="cmd-hint">${escapeHtml(command.argumentHint)}</span>` : "";
+  const wide = command.wide ? " cmd-card-wide" : "";
   return `
-<article class="bento-item bento-sm cmd-card">
-  <h4 class="cmd-name">${escapeHtml(command.name)}${hint}</h4>
-  <p>${escapeHtml(command.what)}</p>
-  ${codeBlock(command.example)}
+<article class="bento-item cmd-card${wide}">
+  <h3 class="cmd-name">${escapeHtml(command.name)}</h3>
+  <p class="cmd-hint">${escapeHtml(command.argumentHint)}</p>
+  <p class="cmd-purpose">${escapeHtml(command.purpose)}</p>
+  <p>${richText(command.what)}</p>
+  ${codeBlock(command.examples.join("\n"), { filename: command.examples.length > 1 ? "Examples" : "Example", wrap: true })}
 </article>`;
 }
 
 function renderCommands(): string {
-  const v1 = COMMANDS.filter((command) => command.version === "v0.1.0");
-  const v2 = COMMANDS.filter((command) => command.version === "v0.2.0");
+  const mapRows = COMMAND_MAP.map((entry) => {
+    const old = entry.old.map((name) => `<code class="inline-code">${escapeHtml(name)}</code>`).join(" ");
+    return `<div class="row"><div class="row-head"><h3 class="row-title row-title-mono">${escapeHtml(entry.now)}</h3></div><p class="row-body chip-line">${old}</p></div>`;
+  }).join("");
   return `
 <section class="section" id="commands">
-  <h2>${SECTION_MARKERS.commands}</h2>
-  <p class="section-lead">Every command below is a slash command inside Claude Code. Type it, fill in the argument, read the result.</p>
+  ${sectionHead(SECTION_MARKERS.commands, COMMANDS_INTRO.lead)}
+  <div class="bento cmd-grid">${COMMANDS.map(renderCommandCard).join("")}</div>
 
-  <h3 class="cmd-group-title">v0.1.0</h3>
-  <div class="bento cmd-grid">${v1.map(renderCommandCard).join("")}</div>
+  <h3 class="sub-title">${escapeHtml(COMMANDS_INTRO.engineTitle)}</h3>
+  <p class="sub-lead">${richText(COMMANDS_INTRO.engineLead)}</p>
+  ${rows(COMMANDS_INTRO.waves)}
 
-  <h3 class="cmd-group-title">v0.2.0</h3>
-  <div class="bento cmd-grid">${v2.map(renderCommandCard).join("")}</div>
+  <h3 class="sub-title">${escapeHtml(COMMANDS_INTRO.mapTitle)}</h3>
+  <p class="sub-lead">${richText(COMMANDS_INTRO.mapLead)}</p>
+  <div class="rows">${mapRows}</div>
+  <p class="section-note">${richText(COMMANDS_INTRO.mapNote)}</p>
+</section>`;
+}
+
+function renderJev(): string {
+  const total = JEV_CATALOG.reduce((sum, entry) => sum + entry.count, 0);
+  return `
+<section class="section" id="jev">
+  ${sectionHead(JEV.title, JEV.lead)}
+  ${rows(JEV.principles)}
+  <h3 class="sub-title">${escapeHtml(JEV.catalogTitle)}</h3>
+  <p class="sub-lead">${richText(JEV.catalogLead)}</p>
+  ${rows(JEV_CATALOG.map((entry) => ({ title: entry.area, meta: `${entry.count} ${entry.count === 1 ? "decision" : "decisions"}`, body: entry.covers })))}
+  <p class="section-note">${total} decisions in total.</p>
+</section>`;
+}
+
+function renderDesignSystem(): string {
+  return `
+<section class="section" id="design-system">
+  ${sectionHead(DESIGN_SYSTEM.title, DESIGN_SYSTEM.lead)}
+  <div class="bento trio-grid">${textCards(DESIGN_SYSTEM.sources)}</div>
+  ${rows(DESIGN_SYSTEM.points)}
+</section>`;
+}
+
+function renderImmersive(): string {
+  const earned = IMMERSIVE.earned.map((line) => `<li>${richText(line)}</li>`).join("");
+  return `
+<section class="section" id="immersive">
+  ${sectionHead(IMMERSIVE.title, IMMERSIVE.lead)}
+  <article class="bento-item callout">
+    <h3>${escapeHtml(IMMERSIVE.earnedTitle)}</h3>
+    <ul class="plain-list">${earned}</ul>
+    <p>${richText(IMMERSIVE.never)}</p>
+  </article>
+  <h3 class="sub-title">${escapeHtml(IMMERSIVE.zonesTitle)}</h3>
+  <div class="bento trio-grid">${textCards(IMMERSIVE.zones)}</div>
+  <h3 class="sub-title">${escapeHtml(IMMERSIVE.safetyTitle)}</h3>
+  ${rows(IMMERSIVE.safety)}
+</section>`;
+}
+
+function renderUiCheck(): string {
+  const widths = UI_CHECK.widths.map((w) => `<span class="width-chip">${w}px</span>`).join("");
+  return `
+<section class="section" id="ui-check">
+  ${sectionHead(UI_CHECK.title, UI_CHECK.lead)}
+  <div class="width-line">${widths}</div>
+  ${rows(UI_RULES.map((r) => ({ title: r.rule, body: r.catches, mono: true })))}
+  <article class="bento-item callout">
+    <h3>${escapeHtml(UI_CHECK.runTitle)}</h3>
+    <p>${richText(UI_CHECK.runBody)}</p>
+    ${codeBlock(UI_CHECK.runCode, { copy: true })}
+  </article>
+</section>`;
+}
+
+function renderDocs(): string {
+  return `
+<section class="section" id="docs">
+  ${sectionHead(DOCS.title, DOCS.lead)}
+  ${rows(DOCS.points)}
 </section>`;
 }
 
@@ -210,25 +331,29 @@ function renderStudyCases(): string {
     const steps = studyCase.steps
       .map(
         (step) =>
-          `<li><code class="inline-code">${escapeHtml(step.command)}</code><span class="step-note">${escapeHtml(step.note)}</span></li>`,
+          `<li><code class="inline-code step-cmd">${escapeHtml(step.command)}</code><span class="step-note">${richText(step.note)}</span></li>`,
       )
       .join("");
     const badge = studyCase.optional ? '<span class="badge-optional">Optional</span>' : "";
     return `
-<article class="bento-item bento-lg study-card">
-  <div class="study-card-head">
-    <h3>${escapeHtml(studyCase.title)}</h3>
-    ${badge}
+<article class="bento-item study-card" id="${studyCase.id}">
+  <div class="study-intro">
+    <div class="study-card-head">
+      <h3>${escapeHtml(studyCase.title)}</h3>
+      ${badge}
+    </div>
+    <p>${richText(studyCase.summary)}</p>
   </div>
-  <p>${escapeHtml(studyCase.summary)}</p>
   <ol class="study-steps">${steps}</ol>
 </article>`;
   }).join("");
   return `
 <section class="section" id="study-cases">
-  <h2>${SECTION_MARKERS.studyCases}</h2>
-  <p class="section-lead">Four real walkthroughs, the exact commands in the exact order, so a new project has a map before it starts.</p>
-  <div class="bento study-grid">${cards}</div>
+  ${sectionHead(
+    SECTION_MARKERS.studyCases,
+    `${STUDY_CASES.length} real walkthroughs, the exact commands in the exact order, so a new project has a map before it starts.`,
+  )}
+  <div class="stack">${cards}</div>
 </section>`;
 }
 
@@ -238,13 +363,13 @@ function renderFaq(): string {
       (item) => `
 <details class="faq-item">
   <summary>${escapeHtml(item.q)}</summary>
-  <p>${escapeHtml(item.a)}</p>
+  <p>${richText(item.a)}</p>
 </details>`,
     )
     .join("");
   return `
 <section class="section" id="faq">
-  <h2>${escapeHtml(FAQ.title)}</h2>
+  ${sectionHead(FAQ.title)}
   <div class="faq-list">${items}</div>
 </section>`;
 }
@@ -262,7 +387,7 @@ function renderTabBar(): string {
     (item) => `
   <a class="tab-item" href="#${item.id}" data-tab="${item.id}">
     ${iconSvg(item.icon as IconName)}
-    <span>${item.label}</span>
+    <span>${escapeHtml(item.label)}</span>
   </a>`,
   ).join("");
   return `<nav class="tab-bar" aria-label="Quick jump">${items}</nav>`;
@@ -287,6 +412,11 @@ export function renderPage(): string {
     renderConstitution(),
     renderAgents(),
     renderCommands(),
+    renderJev(),
+    renderDesignSystem(),
+    renderImmersive(),
+    renderUiCheck(),
+    renderDocs(),
     renderStudyCases(),
     renderFaq(),
     "</main>",

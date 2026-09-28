@@ -1,8 +1,10 @@
 # JAL-AIDEV docs site
 
-The public docs site for the JAL-AIDEV plugin: what it is, how to install it,
-the constitution in plain words, the agent crew, every command, four real
-study-case walkthroughs, and an FAQ.
+The docs site for the JAL-AIDEV plugin (v0.4.0): what it is, how to install
+it, the constitution in plain words, the 17-agent crew, the seven commands
+and the old-to-new command map, JEV as the judge, the one design system
+(JAL Core), the immersive and 3D layer, the 20-rule UI check, JAL Docs
+publishing, six study-case walkthroughs, and an FAQ.
 
 ## Stack
 
@@ -21,14 +23,17 @@ or a virtual DOM to earn a framework's weight.
   FAQ), per skill `jal-frontend-rules`.
 - `src/render.ts`: turns `content.ts` into the final HTML string.
 - `src/index.html`: the shell the rendered content is spliced into.
-- `src/styles.css`: the whole design system, tokens copied from skill
-  `jal-ui-taste` (type scale, 4/8pt spacing, radius, elevation,
-  breakpoints), the Bento grid recipe, and the mobile app-shell.
+- `src/styles.css`: the whole design system, tokens from skill
+  `jal-ui-taste` and JAL Core (type scale, 4/8pt spacing, radius, one 44px
+  control height, breakpoints), the Bento card grid, the rows list, and
+  the mobile app-shell (pinned header plus a 4-tab bottom bar under 640px).
 - `src/app.ts`: the progressive-enhancement layer, bundled by `build.ts`.
-- `src/content.test.ts`: asserts the 7 required section markers, the
-  required study case titles, the install snippet, all 14 agents, all 15
-  commands, and that no em dash appears anywhere in the rendered page or
-  in any source file under this directory.
+- `src/content.test.ts`: asserts the 12 section markers, the study cases
+  (every step uses a current command), the install snippet, all 17 agents,
+  the 7 commands, the old-to-new map, the 45 JEV decisions, the 20 UI check
+  rules, and that no em dash or emoji appears anywhere. When the plugin
+  sources sit next to this directory it also cross-checks the agents,
+  commands, plugin version, and audit rule names against them.
 
 ## Commands
 

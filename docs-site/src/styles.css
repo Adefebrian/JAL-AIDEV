@@ -1,22 +1,26 @@
 /* docs-site/src/styles.css
  *
- * Tokens below are copied verbatim from skill jal-ui-taste: one type scale,
- * one 4/8pt spacing scale, one radius scale, one elevation scale, one set
- * of breakpoints, and the Palette law in that skill's "Palette law and
- * anti-slop" section. No inline one-off px value and no inline one-off
- * color appears anywhere past this token block.
+ * Tokens below follow skill jal-ui-taste and JAL Core: one type scale, one
+ * 4/8pt spacing scale, one radius scale, one set of breakpoints, one 44px
+ * control height, and the Palette law. No inline one-off px value and no
+ * inline one-off color appears past this token block.
  *
- * Palette: warm neutral paper + warm ink, one accent hue (a considered
- * burnt-orange/terracotta, never purple/violet/indigo), dark mode is a
- * refined warm near-black, never pure #000. See the report at
- * .superpowers/sdd/2026-08-21-jal-aidev-v0.2.0/ux-redesign-report.md for
- * the full rationale.
+ * Palette: warm neutral paper and warm ink, near-monochrome, never purple,
+ * violet, or indigo. Depth comes from tonal steps and hairline borders only:
+ * no shadows, no gradients, no backdrop blur, no side stripes.
+ *
+ * Layout components (see render.ts for where each is used):
+ *   .bento / .bento-item  hairline cards on a grid, footers pinned to the
+ *                         bottom so a row never shows an empty band
+ *   .rows / .row          a bordered list of records for rules and facts
+ *   .stack                cards stacked one per row
  */
 
 :root {
   /* Type scale (base 16px, ratio 1.25) */
   --text-caption: 13px;
   --text-caption-lh: 1.4;
+  --text-small: 14px;
   --text-body: 16px;
   --text-body-lh: 1.65;
   --text-subhead: 20px;
@@ -27,8 +31,6 @@
   --text-h3-lh: 1.25;
   --text-h2: 39px;
   --text-h2-lh: 1.18;
-  --text-h1: 49px;
-  --text-h1-lh: 1.12;
   --text-display: 61px;
   --text-display-lh: 1.08;
 
@@ -46,21 +48,17 @@
   /* Radius */
   --radius-sm: 8px;
   --radius-md: 12px;
-  --radius-lg: 16px;
-  --radius-xl: 24px;
   --radius-full: 9999px;
 
-  /* Elevation: neutral only, reserved for real stacking (menu, drawer,
-     modal). Never used as ambient decoration or a glow stand-in. */
-  --elevation-0: none;
-  --elevation-1: 0 1px 2px rgba(20, 16, 12, 0.05), 0 1px 1px rgba(20, 16, 12, 0.04);
-  --elevation-2: 0 6px 20px rgba(20, 16, 12, 0.10);
-  --elevation-3: 0 16px 40px rgba(20, 16, 12, 0.16);
-
   /* Layout constants */
+  --control-height: 44px;
   --header-height: 64px;
-  --tab-bar-height: 64px;
+  --tab-min-height: 56px;
+  --step-badge: 32px;
+  --counter-badge: 24px;
+  --row-title-col: 260px;
   --content-max: 1140px;
+  --measure: 680px;
   --border-weight: 1px;
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
   --motion-fast: 120ms var(--ease-out);
@@ -70,16 +68,12 @@
   --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", "Inter", Roboto, "Helvetica Neue", Arial, sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
 
-  /* Color, light only. White-first per JAL frontend law: the default
-     background is a broken white, cards are pure white separated by a
-     hairline border. Near-monochrome, one ink-black primary action, no
-     chromatic accent fill, no gradient, no glow. Black is used for ink
-     only; it is never the light default background (a dark background is
-     allowed only inside a dedicated dark mode, which this site does not
-     ship). */
+  /* Color, light only. White-first per JAL frontend law: the page is a
+     broken white, cards are pure white separated by a hairline border, code
+     sits on one tonal step. One ink-black primary action. */
   --color-bg: #fbfaf8;
   --color-surface: #ffffff;
-  --color-surface-raised: #ffffff;
+  --color-tone: #f4f2ed;
   --color-ink: #191714;
   --color-ink-muted: #6f6a61;
   --color-border: #eae7e0;
@@ -87,8 +81,6 @@
   --color-accent: #191714;
   --color-accent-hover: #322d26;
   --color-accent-ink: #ffffff;
-  --color-accent-soft: #f1efe9;
-  --color-danger: #b3261e;
   --color-success: #3f7a4f;
 }
 
@@ -160,8 +152,7 @@ button {
 }
 
 /* -------------------------------------------------------------- */
-/* Icons: one shared rule, so every icon in the page shares size  */
-/* and stroke weight, per jal-frontend-rules.                     */
+/* Icons: one shared rule, so every icon shares size and weight.   */
 /* -------------------------------------------------------------- */
 
 .icon {
@@ -173,7 +164,7 @@ button {
 }
 
 /* -------------------------------------------------------------- */
-/* Buttons                                                         */
+/* Buttons: one control height everywhere                          */
 /* -------------------------------------------------------------- */
 
 .btn {
@@ -181,22 +172,16 @@ button {
   align-items: center;
   justify-content: center;
   gap: var(--space-2);
-  height: 44px;
+  height: var(--control-height);
   padding: 0 var(--space-6);
   border-radius: var(--radius-md);
   font-size: var(--text-body);
   font-weight: 600;
   border: var(--border-weight) solid transparent;
   cursor: pointer;
-  transition: background var(--motion-fast), border-color var(--motion-fast), color var(--motion-fast), transform var(--motion-fast);
+  transition: background var(--motion-fast), border-color var(--motion-fast), color var(--motion-fast);
 }
 
-.btn:active {
-  transform: translateY(1px);
-}
-
-/* The one primary CTA per view: the only large accent fill on the whole
-   page, per the Palette law's "highlighter, not a fill" rule. */
 .btn-primary {
   background: var(--color-accent);
   color: var(--color-accent-ink);
@@ -204,6 +189,7 @@ button {
 
 .btn-primary:hover {
   background: var(--color-accent-hover);
+  text-decoration: none;
 }
 
 .btn-ghost {
@@ -214,13 +200,7 @@ button {
 
 .btn-ghost:hover {
   border-color: var(--color-accent);
-  color: var(--color-accent);
-}
-
-.btn-sm {
-  height: 36px;
-  padding: 0 var(--space-4);
-  font-size: var(--text-caption);
+  text-decoration: none;
 }
 
 /* -------------------------------------------------------------- */
@@ -236,8 +216,7 @@ button {
   top: 0;
   z-index: 20;
   padding-top: env(safe-area-inset-top);
-  background: color-mix(in srgb, var(--color-bg) 90%, transparent);
-  backdrop-filter: blur(10px);
+  background: var(--color-bg);
   border-bottom: var(--border-weight) solid var(--color-border);
 }
 
@@ -260,30 +239,36 @@ button {
   font-weight: 600;
 }
 
+.brand:hover {
+  text-decoration: none;
+}
+
 .brand-mark {
   font-size: var(--text-subhead);
   font-weight: 700;
   letter-spacing: -0.01em;
 }
 
+/* The brand tagline is plain muted text beside the wordmark, sentence
+   case, never an uppercase tracked kicker. */
 .brand-tag {
   font-size: var(--text-caption);
   color: var(--color-ink-muted);
+  font-weight: 400;
   display: none;
 }
 
 .top-nav {
   display: none;
   align-items: center;
-  gap: var(--space-8);
+  gap: var(--space-6);
   flex: 1;
 }
 
 .nav-link {
   color: var(--color-ink-muted);
-  font-size: var(--text-caption);
+  font-size: var(--text-small);
   font-weight: 600;
-  position: relative;
 }
 
 .nav-link:hover {
@@ -297,8 +282,8 @@ button {
 
 .menu-btn {
   margin-left: auto;
-  width: 44px;
-  height: 44px;
+  width: var(--control-height);
+  height: var(--control-height);
   border-radius: var(--radius-sm);
   border: none;
   background: transparent;
@@ -317,13 +302,18 @@ button {
   border-radius: var(--radius-full);
 }
 
+/* The drawer opens below the header, so the menu button that closes it
+   stays visible and tappable. */
 .drawer {
   position: fixed;
-  inset: 0;
+  top: calc(var(--header-height) + env(safe-area-inset-top));
+  right: 0;
+  bottom: 0;
+  left: 0;
   z-index: 30;
-  background: color-mix(in srgb, var(--color-bg) 97%, transparent);
-  backdrop-filter: blur(8px);
-  padding: calc(var(--header-height) + var(--space-6)) var(--space-6) var(--space-6);
+  overflow-y: auto;
+  background: var(--color-bg);
+  padding: var(--space-6);
 }
 
 .drawer nav {
@@ -335,12 +325,12 @@ button {
 }
 
 .drawer-link {
-  padding: var(--space-4);
+  padding: var(--space-3) var(--space-4);
   border-radius: var(--radius-md);
   background: var(--color-surface);
   border: var(--border-weight) solid var(--color-border);
   color: var(--color-ink);
-  font-size: var(--text-subhead);
+  font-size: var(--text-body);
   font-weight: 600;
 }
 
@@ -363,7 +353,7 @@ button {
 /* -------------------------------------------------------------- */
 
 .hero {
-  padding: var(--space-24) 0 var(--space-16);
+  padding: var(--space-24) 0 var(--space-12);
 }
 
 .hero-inner {
@@ -384,7 +374,7 @@ button {
   font-size: var(--text-subhead);
   line-height: var(--text-subhead-lh);
   color: var(--color-ink-muted);
-  max-width: 640px;
+  max-width: var(--measure);
 }
 
 .hero-actions {
@@ -393,19 +383,12 @@ button {
   flex-wrap: wrap;
 }
 
-.btn-ghost::after {
-  content: "\2192";
-  margin-left: var(--space-1);
-}
-
-/* Stat row: no colored numerals. A quiet hairline-topped block, ink
-   numeral, muted tracked label. The metric earns attention through
-   position and size, never through color, per the Palette law. */
+/* Stat row: ink numerals, muted sentence-case labels. The metric earns
+   attention through position and size, never through color. */
 .stat-row {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: var(--space-6);
-  margin-top: var(--space-6);
   padding-top: var(--space-6);
   border-top: var(--border-weight) solid var(--color-border);
 }
@@ -414,95 +397,103 @@ button {
   display: flex;
   flex-direction: column;
   gap: var(--space-1);
+  min-width: 0;
 }
 
 .stat-value {
   font-size: var(--text-h3);
+  line-height: var(--text-h3-lh);
   font-weight: 650;
   color: var(--color-ink);
   letter-spacing: -0.01em;
 }
 
 .stat-label {
-  font-size: var(--text-caption);
+  font-size: var(--text-small);
   color: var(--color-ink-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
 }
 
 /* -------------------------------------------------------------- */
-/* Section shell shared by every content section                   */
+/* Section shell: spacing between blocks lives here, in one place  */
 /* -------------------------------------------------------------- */
 
-/* Sections are separated by generous whitespace alone, not by divider
-   lines. 64px top and bottom gives a consistent 128px rhythm between
-   sections, tidy and premium without a rule drawn between every block. */
 .section {
   padding: var(--space-16) 0;
+  scroll-margin-top: var(--header-height);
 }
 
 .section h2 {
   font-size: var(--text-h3);
   line-height: var(--text-h3-lh);
-  margin-bottom: var(--space-3);
+}
+
+.section > * + * {
+  margin-top: var(--space-6);
+}
+
+.section > h2 + .section-lead {
+  margin-top: var(--space-3);
+}
+
+.section > .section-lead + * {
+  margin-top: var(--space-8);
+}
+
+.section > .sub-title {
+  margin-top: var(--space-12);
+}
+
+.section > .sub-title + .sub-lead {
+  margin-top: var(--space-2);
+}
+
+.section > .sub-lead + * {
+  margin-top: var(--space-6);
+}
+
+.section > .section-note {
+  margin-top: var(--space-4);
 }
 
 .section-lead {
   font-size: var(--text-subhead);
   line-height: var(--text-subhead-lh);
   color: var(--color-ink-muted);
-  max-width: 640px;
-  margin-bottom: var(--space-8);
+  max-width: var(--measure);
+}
+
+.sub-title {
+  font-size: var(--text-subhead);
+  line-height: var(--text-subhead-lh);
+}
+
+.sub-lead {
+  color: var(--color-ink-muted);
+  max-width: var(--measure);
 }
 
 .section-note {
-  margin-top: var(--space-6);
-  font-size: var(--text-caption);
+  font-size: var(--text-small);
   color: var(--color-ink-muted);
+  max-width: var(--measure);
 }
 
 /* -------------------------------------------------------------- */
-/* Bento grid, per jal-frontend-rules: hairline borders, neutral   */
-/* surface, no shadow at rest, no colored fills.                   */
+/* Bento cards: hairline border, neutral surface, no shadow         */
 /* -------------------------------------------------------------- */
 
 .bento {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  grid-auto-rows: minmax(0, auto);
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--space-6);
 }
 
-.bento-lg {
-  grid-column: span 2;
-  grid-row: span 2;
-}
-
-.bento-wide {
-  grid-column: span 2;
-  grid-row: span 1;
-}
-
-.bento-tall {
-  grid-column: span 1;
-  grid-row: span 2;
-}
-
-.bento-sm {
-  grid-column: span 1;
-  grid-row: span 1;
-}
-
-.bento-full {
-  grid-column: span 4;
-}
-
 .bento-item {
+  min-width: 0;
   border-radius: var(--radius-md);
   border: var(--border-weight) solid var(--color-border);
   background: var(--color-surface);
   padding: var(--space-6);
-  box-shadow: var(--elevation-0);
   display: flex;
   flex-direction: column;
   gap: var(--space-2);
@@ -520,41 +511,99 @@ button {
 
 .bento-item p {
   color: var(--color-ink-muted);
-  font-size: var(--text-body);
 }
 
-/* Overview section: explicit areas so the 2x2 hero card and the four
-   small cards tile with zero dead space, per jal-frontend-rules. */
-.overview-lead {
-  justify-content: center;
+/* A single wide card that closes or frames a section. */
+.callout {
+  max-width: 100%;
 }
 
-.lead-text {
-  font-size: var(--text-subhead);
-  line-height: var(--text-subhead-lh);
+.plain-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin: var(--space-2) 0;
+}
+
+.plain-list li {
   color: var(--color-ink);
 }
 
-/* No side accent line on any panel or card (forbidden by jal-frontend
-   rules). The Why card is a normal card; it reads as a conclusion through
-   its position and copy, not a colored stripe. The overview grid auto
-   fills so there is never a dead empty cell. */
-.overview-grid {
-  grid-template-columns: repeat(auto-fit, minmax(248px, 1fr));
+/* Cards stacked one per row. A block container on purpose: each card is
+   its own row, so no card is ever stretched to match a neighbor. */
+.stack > * + * {
+  margin-top: var(--space-4);
 }
 
-/* Install steps: numbered wide cards, one per row on desktop. */
-.install-step {
+/* -------------------------------------------------------------- */
+/* Rows: a bordered list of records                                 */
+/* -------------------------------------------------------------- */
+
+.rows {
+  border: var(--border-weight) solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+}
+
+.row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-1);
+  padding: var(--space-4);
+}
+
+.row + .row {
+  border-top: var(--border-weight) solid var(--color-border);
+}
+
+.row-head {
+  min-width: 0;
+}
+
+.row-title {
+  font-size: var(--text-body);
+  line-height: var(--text-body-lh);
+  overflow-wrap: anywhere;
+}
+
+.row-title-mono {
+  font-family: var(--font-mono);
+  font-weight: 600;
+  font-size: var(--text-small);
+}
+
+.row-meta {
+  display: block;
+  font-size: var(--text-small);
+  color: var(--color-ink-muted);
+}
+
+.row-body {
+  min-width: 0;
+  color: var(--color-ink-muted);
+}
+
+.chip-line {
   display: flex;
-  flex-direction: row;
-  gap: var(--space-6);
+  flex-wrap: wrap;
+  gap: var(--space-2);
   align-items: flex-start;
+}
+
+/* -------------------------------------------------------------- */
+/* Install steps                                                    */
+/* -------------------------------------------------------------- */
+
+.install-step {
+  flex-direction: column;
+  gap: var(--space-4);
 }
 
 .step-number {
   flex: 0 0 auto;
-  width: 32px;
-  height: 32px;
+  width: var(--step-badge);
+  height: var(--step-badge);
   border-radius: var(--radius-full);
   background: var(--color-accent);
   color: var(--color-accent-ink);
@@ -566,7 +615,7 @@ button {
 }
 
 .step-body {
-  flex: 1;
+  flex: 1 1 auto;
   display: flex;
   flex-direction: column;
   gap: var(--space-2);
@@ -574,17 +623,17 @@ button {
 }
 
 /* -------------------------------------------------------------- */
-/* Code blocks                                                     */
+/* Code blocks: one tonal step, copy button beside the code         */
 /* -------------------------------------------------------------- */
 
 .code-block {
-  position: relative;
-  background: var(--color-ink);
-  color: var(--color-bg);
+  display: block;
+  min-width: 0;
+  background: var(--color-tone);
+  border: var(--border-weight) solid var(--color-border);
   border-radius: var(--radius-sm);
-  padding: var(--space-4);
+  padding: var(--space-3);
   margin-top: var(--space-2);
-  overflow-x: auto;
 }
 
 .code-label {
@@ -593,44 +642,51 @@ button {
   margin-bottom: var(--space-2);
 }
 
-/* One line, never wrapped: every code block is the same height so cards in
-   a grid share one consistent shape. A long command scrolls horizontally
-   inside its own block rather than growing the card taller than its
-   neighbors. */
+.code-row {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
 .code-block pre {
+  flex: 1 1 auto;
+  min-width: 0;
   margin: 0;
   font-family: var(--font-mono);
   font-size: var(--text-caption);
   line-height: var(--text-body-lh);
-  white-space: nowrap;
+  color: var(--color-ink);
   overflow-x: auto;
-  padding-right: var(--space-12);
+  padding: var(--space-2) 0;
 }
 
-/* In a card grid, the code block is pinned to the bottom of the card so
-   every card's code block sits on the same baseline regardless of how long
-   the description above it runs. This is what keeps the grid consistent. */
-.cmd-card .code-block,
-.overview-why .code-block {
-  margin-top: auto;
+.code-block pre code {
+  font-family: inherit;
+}
+
+/* Wrapped code (command examples): long lines wrap instead of scrolling. */
+.code-wrap pre {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
 }
 
 .copy-btn {
-  position: absolute;
-  top: var(--space-2);
-  right: var(--space-2);
-  height: 28px;
-  padding: 0 var(--space-3);
+  flex: 0 0 auto;
+  height: var(--control-height);
+  padding: 0 var(--space-4);
   border-radius: var(--radius-sm);
-  border: var(--border-weight) solid color-mix(in srgb, var(--color-bg) 30%, transparent);
-  background: transparent;
-  color: var(--color-bg);
+  border: var(--border-weight) solid var(--color-border-strong);
+  background: var(--color-surface);
+  color: var(--color-ink);
   font-size: var(--text-caption);
+  font-weight: 600;
   cursor: pointer;
+  transition: border-color var(--motion-fast), color var(--motion-fast);
 }
 
 .copy-btn:hover {
-  background: color-mix(in srgb, var(--color-bg) 12%, transparent);
+  border-color: var(--color-accent);
 }
 
 .copy-btn-done {
@@ -638,111 +694,106 @@ button {
   color: var(--color-success);
 }
 
-/* Neutral inline code: no accent-colored pill. Restraint keeps the one
-   accent hue reserved for links, the primary CTA, and focus rings. */
+/* Neutral inline code chip. Long tokens break rather than overflow. */
 .inline-code {
   font-family: var(--font-mono);
   font-size: var(--text-caption);
-  background: var(--color-bg);
+  background: var(--color-tone);
   color: var(--color-ink);
   border: var(--border-weight) solid var(--color-border);
   border-radius: var(--radius-sm);
-  padding: var(--space-1) var(--space-2);
-  display: inline-block;
+  padding: 0 var(--space-1);
+  overflow-wrap: anywhere;
 }
 
 /* -------------------------------------------------------------- */
-/* Agent hierarchy                                                 */
+/* Agents                                                           */
 /* -------------------------------------------------------------- */
-
-.hierarchy {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-4);
-  align-items: stretch;
-}
-
-.hierarchy-row {
-  border-radius: var(--radius-md);
-  border: var(--border-weight) solid var(--color-border);
-  background: var(--color-surface);
-  padding: var(--space-6);
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-1);
-}
-
-/* No accent bar or top rule on the head card. It reads as the head
-   through its position at the top and its label alone. No decorative
-   lines anywhere in the hierarchy. */
-.hierarchy-head {
-  background: var(--color-surface);
-}
-
-.hierarchy-tier {
-  font-size: var(--text-caption);
-  font-weight: 700;
-  color: var(--color-ink-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-}
-
-/* No marker square, no connector line. Decorative dots, squares, and
-   vertical/horizontal connector rules are forbidden (jal-frontend rules):
-   they read as slop and break the clean minimal look. Tier order alone
-   communicates the hierarchy, with vertical spacing between rows. */
-.hierarchy-row p {
-  color: var(--color-ink-muted);
-}
-
-.hierarchy-tier-specialists {
-  margin-top: var(--space-2);
-}
-
-.specialists-grid {
-  margin-top: var(--space-2);
-}
 
 .agent-slug {
   font-family: var(--font-mono);
+}
+
+.bento-item h3.agent-slug {
   font-size: var(--text-body);
 }
 
-.agent-card p {
+.agent-tier {
+  color: var(--color-ink);
+  font-weight: 600;
+}
+
+/* The JEV line is the card footer: pinned to the bottom so cards in one
+   row line up and never show an empty band under the footer. */
+.bento-item p.agent-jev {
+  margin-top: auto;
+  padding-top: var(--space-2);
+  font-family: var(--font-mono);
   font-size: var(--text-caption);
+  line-height: var(--text-caption-lh);
+  color: var(--color-ink-muted);
+  overflow-wrap: anywhere;
 }
 
 /* -------------------------------------------------------------- */
 /* Commands                                                         */
 /* -------------------------------------------------------------- */
 
-.cmd-group-title {
-  font-size: var(--text-subhead);
-  color: var(--color-ink-muted);
-  margin: var(--space-8) 0 var(--space-4);
-}
-
-.cmd-group-title:first-of-type {
-  margin-top: 0;
-}
-
-.cmd-name {
+.bento-item h3.cmd-name {
   font-family: var(--font-mono);
-  font-size: var(--text-body);
+  font-size: var(--text-subhead);
 }
 
-.cmd-hint {
+.bento-item p.cmd-hint {
+  font-family: var(--font-mono);
   font-size: var(--text-caption);
-  color: var(--color-ink-muted);
-  font-weight: 400;
+  line-height: var(--text-caption-lh);
+  overflow-wrap: anywhere;
+}
+
+.bento-item p.cmd-purpose {
+  color: var(--color-ink);
+  font-weight: 600;
+}
+
+/* The example block is the card footer, pinned to the bottom. */
+.cmd-card .code-block {
+  margin-top: auto;
+}
+
+/* -------------------------------------------------------------- */
+/* UI check                                                         */
+/* -------------------------------------------------------------- */
+
+.width-line {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.width-chip {
+  font-family: var(--font-mono);
+  font-size: var(--text-caption);
+  border: var(--border-weight) solid var(--color-border-strong);
+  border-radius: var(--radius-full);
+  padding: var(--space-1) var(--space-3);
+  background: var(--color-surface);
 }
 
 /* -------------------------------------------------------------- */
 /* Study cases                                                      */
 /* -------------------------------------------------------------- */
+
+.study-card {
+  gap: var(--space-4);
+}
+
+.study-intro {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-width: 0;
+}
 
 .study-card-head {
   display: flex;
@@ -751,8 +802,8 @@ button {
   gap: var(--space-2);
 }
 
-.study-card-head h3 {
-  font-size: var(--text-h4);
+.bento-item .study-card-head h3 {
+  font-size: var(--text-subhead);
 }
 
 .badge-optional {
@@ -770,28 +821,29 @@ button {
   counter-reset: step;
   display: flex;
   flex-direction: column;
-  gap: var(--space-3);
-  margin-top: var(--space-2);
+  gap: var(--space-4);
+  min-width: 0;
 }
 
 .study-steps li {
   counter-increment: step;
   display: flex;
   flex-direction: column;
+  align-items: flex-start;
   gap: var(--space-1);
   padding-left: var(--space-8);
   position: relative;
+  min-width: 0;
 }
 
-/* A neutral counter badge, ink text on a bordered neutral circle,
-   instead of an accent-filled pill on every single step. */
+/* A neutral counter badge, ink text on a bordered neutral circle. */
 .study-steps li::before {
   content: counter(step);
   position: absolute;
   left: 0;
   top: 0;
-  width: 24px;
-  height: 24px;
+  width: var(--counter-badge);
+  height: var(--counter-badge);
   border-radius: var(--radius-full);
   background: var(--color-surface);
   border: var(--border-weight) solid var(--color-border-strong);
@@ -803,9 +855,13 @@ button {
   justify-content: center;
 }
 
+.step-cmd {
+  max-width: 100%;
+}
+
 .step-note {
   color: var(--color-ink-muted);
-  font-size: var(--text-caption);
+  font-size: var(--text-small);
 }
 
 /* -------------------------------------------------------------- */
@@ -823,7 +879,7 @@ button {
   border-radius: var(--radius-md);
   border: var(--border-weight) solid var(--color-border);
   background: var(--color-surface);
-  padding: var(--space-4) var(--space-6);
+  padding: var(--space-2) var(--space-4);
 }
 
 .faq-item summary {
@@ -831,16 +887,21 @@ button {
   font-weight: 600;
   font-size: var(--text-body);
   list-style: none;
+  min-height: var(--control-height);
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: var(--space-4);
 }
 
+.faq-item summary::-webkit-details-marker {
+  display: none;
+}
+
 .faq-item summary::after {
   content: "+";
   color: var(--color-ink-muted);
-  font-size: var(--text-h4);
+  font-size: var(--text-subhead);
   flex-shrink: 0;
 }
 
@@ -848,8 +909,13 @@ button {
   content: "\2212";
 }
 
+/* A closed answer takes no layout at all. */
+.faq-item:not([open]) > p {
+  display: none;
+}
+
 .faq-item p {
-  margin-top: var(--space-3);
+  margin: var(--space-2) 0 var(--space-2);
   color: var(--color-ink-muted);
 }
 
@@ -866,7 +932,7 @@ button {
   flex-direction: column;
   gap: var(--space-2);
   color: var(--color-ink-muted);
-  font-size: var(--text-caption);
+  font-size: var(--text-small);
 }
 
 .app-footer a {
@@ -880,8 +946,8 @@ button {
 /* -------------------------------------------------------------- */
 /* Breakpoints, per jal-ui-taste                                   */
 /*   mobile  < 640px  : single column, app-shell, bottom tab bar   */
-/*   tablet  640-1024 : 2-column bento, top nav returns             */
-/*   desktop > 1024   : full 4-column bento                        */
+/*   tablet  640-1024 : two-column grids, rows go two-column       */
+/*   desktop >= 1024  : three and four column grids, top nav       */
 /* -------------------------------------------------------------- */
 
 @media (max-width: 639.98px) {
@@ -915,6 +981,14 @@ button {
     padding: 0 var(--space-4) var(--space-12);
   }
 
+  .app-footer {
+    padding: var(--space-8) var(--space-4) var(--space-8);
+  }
+
+  .drawer {
+    padding: var(--space-4);
+  }
+
   .tab-bar {
     flex: 0 0 auto;
     display: flex;
@@ -926,104 +1000,89 @@ button {
   }
 
   .tab-item {
-    flex: 1;
+    flex: 1 1 0;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     gap: var(--space-1);
-    min-height: 56px;
+    min-height: var(--tab-min-height);
     color: var(--color-ink-muted);
     font-size: var(--text-caption);
   }
 
-  .tab-item .icon {
-    height: 1.25rem;
+  .tab-item:hover {
+    text-decoration: none;
   }
 
   .tab-item-active {
     color: var(--color-accent);
+    font-weight: 600;
   }
 
   .hero {
-    padding: var(--space-16) 0 var(--space-12);
+    padding: var(--space-12) 0 var(--space-8);
   }
 
   .hero h1 {
     font-size: var(--text-h3);
+    line-height: var(--text-h3-lh);
   }
 
-  .bento,
-  .cmd-grid,
-  .study-grid {
-    grid-template-columns: 1fr;
+  .hero-body,
+  .section-lead {
+    font-size: var(--text-body);
+    line-height: var(--text-body-lh);
   }
 
-  .bento-lg,
-  .bento-wide,
-  .bento-tall,
-  .bento-full {
-    grid-column: span 1;
-    grid-row: span 1;
+  .section {
+    padding: var(--space-12) 0;
   }
 
-  .install-step {
-    flex-direction: column;
+  .section h2 {
+    font-size: var(--text-h4);
+    line-height: var(--text-h4-lh);
   }
 
-  /* jal-ui-taste requires every mobile touch target at 44x44px minimum,
-     including padding, not just the visible glyph. The visible chip stays
-     compact (readable next to a one-line command), the hit area grows to
-     44px via display:flex + min-height/min-width instead, so the tap
-     target expands without the label looking oversized. */
-  .copy-btn {
-    min-height: 44px;
-    min-width: 44px;
-    height: auto;
-    padding: var(--space-2) var(--space-3);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-
-  .stat-row {
-    grid-template-columns: repeat(3, 1fr);
-    gap: var(--space-3);
+  .bento-item {
+    padding: var(--space-4);
   }
 
   .stat-value {
-    font-size: var(--text-subhead);
+    font-size: var(--text-h4);
+    line-height: var(--text-h4-lh);
   }
 }
 
-@media (min-width: 640px) and (max-width: 1023.98px) {
-  .bento,
-  .cmd-grid,
-  .study-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-
-  .bento-lg {
-    grid-column: span 2;
-    grid-row: span 2;
-  }
-
-  .bento-wide,
-  .bento-full {
-    grid-column: span 2;
-  }
-
-  .bento-tall,
-  .bento-sm {
-    grid-column: span 1;
-  }
-
-  .top-nav {
-    display: none;
+@media (min-width: 640px) {
+  .stat-row {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 
   .brand-tag {
     display: inline;
+  }
+
+  .pair-grid,
+  .cmd-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .cmd-card-wide {
+    grid-column: span 2;
+  }
+
+  .install-step {
+    flex-direction: row;
+    gap: var(--space-6);
+  }
+}
+
+@media (min-width: 768px) {
+  .row {
+    grid-template-columns: minmax(0, var(--row-title-col)) minmax(0, 1fr);
+    column-gap: var(--space-8);
+    padding: var(--space-4) var(--space-6);
   }
 }
 
@@ -1040,22 +1099,19 @@ button {
     display: none;
   }
 
-  .brand-tag {
-    display: inline;
-  }
-
   .hero h1 {
     font-size: var(--text-display);
     line-height: var(--text-display-lh);
   }
-}
 
-/* Both command groups (v0.1.0 and v0.2.0) share one auto-fill track size
-   so every command card is exactly the same width across both groups, and
-   each group tiles edge to edge. auto-fill (not auto-fit) keeps the track
-   width identical whether the group has 3 cards or 12, so the two groups
-   line up as one system instead of two different card sizes. */
-.cmd-grid {
-  grid-template-columns: repeat(auto-fill, minmax(236px, 1fr));
-  grid-auto-rows: 1fr;
+  .trio-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .study-card {
+    display: grid;
+    grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+    column-gap: var(--space-8);
+    align-items: start;
+  }
 }
