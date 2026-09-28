@@ -27,7 +27,7 @@ Every agent that runs under this engine follows this contract, and the lead past
 
 | Role | Catalog IDs it uses |
 |---|---|
-| jal-lead | `sec.input_screen`, `orch.playbooks`, `orch.route`, `orch.model`, `orch.parallel`, `orch.loop_exit`, `orch.escalate`, `mem.promote` |
+| jal-lead | `sec.input_screen`, `orch.playbooks`, `orch.route`, `orch.model`, `orch.parallel`, `orch.loop_exit`, `orch.escalate`, `mem.promote`, `mem.reference_screen` |
 | jal-principal | `orch.route`, `orch.escalate`, `rev.ship`, `sec.ship_block` |
 | jal-ux | `ui.experience`, `ui.direction_screen`, `ui.density`, `ui.region_gate`, `ui.component_recipe`, `ui.designmd_screen`, `ui.final_taste`, `ui.heuristics`, `ui.finish_disposition`, `motion.*` |
 | jal-immersive | `ui.direction_screen`, `imm.gate`, `imm.recipe`, `imm.tech`, `imm.tier`, `imm.taste`, `motion.*`, `ui.heuristics`, `ui.finish_disposition` |
@@ -37,7 +37,7 @@ Every agent that runs under this engine follows this contract, and the lead past
 | jal-qa | `qa.check_depth`, `qa.failure_class`, `qa.test_selection`, `qa.coverage`, `qa.release_go` |
 | jal-reviewer | `rev.risk`, `rev.ship`, `be.api_quality`, `qa.coverage` |
 | jal-devops | `qa.release_go`, `be.migration_risk`, `orch.escalate` |
-| jal-researcher | `sec.input_screen` |
+| jal-researcher | `sec.input_screen`, `mem.reference_screen` |
 | jal-docs | `docs.plan`, `docs.claim`, `docs.publish` |
 
 ## The engine
@@ -134,7 +134,14 @@ Workers never touch git state because an agent's `git checkout` once silently re
 - At most 3 fix rounds per finding. A survivor goes to Brian.
 - Every softer stop-and-ask goes through `orch.escalate`.
 
-### 9. Memory
+### 9. Memory and learning
+
+JAL-AIDEV gets better with every run:
+- UI builds append to `.jal/memory/design-log.jsonl`, and the next run reads it through `design_history` as JEV evidence.
+- Learnings proven across builds or projects become plugin pull requests (`references/learn.md`).
+- "Learn this reference: <url>" in any command runs the `learn` playbook.
+- Hard law never changes through learning.
+
 
 `mem.promote` runs once per new learning:
 - Project gotchas go to `.jal/memory/` (skill `jal-memory`).
@@ -151,6 +158,7 @@ Workers never touch git state because an agent's `git checkout` once silently re
 | `/jal-check` | Check the project: review, tests, UI, security, and optionally a deep audit and pentest | jal-lead | `review-gate`, `audit`, `pentest` (depth by `qa.check_depth`) |
 | `/jal-ship` | Get it out: pull request, release, deploy or rollback | jal-lead with jal-devops | `review-gate` (always), `pr`, `release`, `deploy` |
 | `/jal-docs` | Write or update documentation | jal-docs | the jal-docs pipeline |
+| any command | "Learn this reference: <url>", or a learning proven across builds | jal-lead with jal-researcher | `learn` |
 
 ## Hard lines no playbook or JEV call can cross
 

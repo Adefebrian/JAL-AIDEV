@@ -113,11 +113,11 @@ describe("jal-design MCP server (stdio)", () => {
     client.send({ jsonrpc: "2.0", method: "notifications/initialized" });
   });
 
-  test("tools/list returns exactly docs_verify, jev_decide, noyzzi_get, noyzzi_list, and ui_audit with schemas", async () => {
+  test("tools/list returns exactly the jal-design tools with schemas", async () => {
     const res = await client.request("tools/list", {});
     expect(res.error).toBeUndefined();
     const names = res.result.tools.map((t: any) => t.name).sort();
-    expect(names).toEqual(["docs_verify", "jev_decide", "noyzzi_get", "noyzzi_list", "ui_audit"]);
+    expect(names).toEqual(["design_history", "docs_verify", "jev_decide", "noyzzi_get", "noyzzi_list", "ui_audit"]);
     for (const tool of res.result.tools) {
       expect(tool.inputSchema).toBeDefined();
       expect(tool.inputSchema.type).toBe("object");

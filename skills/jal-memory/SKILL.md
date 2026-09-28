@@ -67,4 +67,29 @@ Do not write a memory file for:
 
 `.jal/memory/` is committed alongside the code it describes because the learning belongs to the project and the team, not to one agent's session or one person's local machine. A new teammate cloning the repo, or a fresh agent session starting cold on the same project, gets the same accumulated context as everyone who worked on it before. Claude's personal `~/.claude` memory persists across a user's own sessions and projects; it never substitutes for this, and nothing here should be duplicated there.
 
+## Design learning log (every UI build)
+
+JAL-AIDEV learns from its own builds. At the return step of every `/jal-ui` build, jal-ux, jal-immersive, and jal-frontend append one JSON line per section to `.jal/memory/design-log.jsonl` (committed with the build):
+
+```json
+{"ts":"2026-09-29T10:00:00Z","product":"Halo","surface":"immersive","section_kind":"hero","direction":"single_signal_ledger","stack":["three.studio_object","mu.R02","gsap.scrub"],"taste":2.4,"disposition":"ship","audit_failures":["reduced-motion"],"kept":true}
+```
+
+- `stack` is every recipe ID layered in the section, in layer order.
+- `taste` is the `ui.final_taste` or `imm.taste` score.
+- `disposition` is the `ui.finish_disposition` verdict.
+- `audit_failures` lists every `ui_audit` rule that failed before the final PASS.
+
+At candidate assembly, the next run calls the `design_history` tool (`jal-design` MCP). It passes the result as `evidence.history` to `ui.direction_screen`, `ui.component_recipe`, and `imm.recipe`, so JEV sees which stacks worked on similar sections and which failed. History informs JEV; it never overrides law or JEV's call for the current brief.
+
+## Growing the plugin itself
+
+A learning that holds across projects belongs in the plugin, so the whole team gets it:
+- `mem.promote` with `universal_skill` and the evidence of at least two builds or two projects.
+- Examples: a recipe stack that repeatedly ships with taste 2.5 or higher, a failure pattern the audit keeps catching, a sharper JEV criterion.
+
+It becomes a pull request to `JAL-Group/JAL-AIDEV` through `jal-orchestration` `references/learn.md` (branch `learn/<yyyymmdd>-<slug>`). Brian reviews and merges. New references are taught the same way: say "learn this reference: <url>" in any command.
+
+Learning never touches hard law, the hook bans, or the audit rules.
+
 `jal-lead` writes to `.jal/memory/` as the closing step of its plan-build-gate loop whenever the loop surfaces a learning worth keeping, and updates `INDEX.md` in the same commit.

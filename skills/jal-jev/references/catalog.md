@@ -21,7 +21,7 @@ Index:
 | Security | `sec.severity`, `sec.false_positive`, `sec.ship_block`, `sec.input_screen` |
 | QA | `qa.check_depth`, `qa.failure_class`, `qa.test_selection`, `qa.coverage`, `qa.release_go` |
 | Review | `rev.risk`, `rev.ship` |
-| Memory | `mem.promote` |
+| Memory | `mem.promote`, `mem.reference_screen` |
 | Docs | `docs.plan`, `docs.claim`, `docs.publish` |
 
 ---
@@ -454,7 +454,7 @@ Index:
 - Candidates that need a gradient, shadow, glow, blur, dark default, overlap, purple, invented claims, or missing assets are dropped and replaced before asking.
 - Presets whose gate fails are dropped (see `jal-design-system` `references/directions.md`).
 
-**State fields:** `proposal.mode`, `proposal.rut`, `proposal.candidates` (each with `key`, `rank`, `form`, `preset`, `why`, `first_viewport`, `lawful_expression`), `evidence` (content and assets on hand, and claims that must not be invented).
+**State fields:** `proposal.mode`, `proposal.rut`, `proposal.candidates` (each with `key`, `rank`, `form`, `preset`, `why`, `first_viewport`, `lawful_expression`), `evidence` (content and assets on hand, and claims that must not be invented). Also `evidence.history`: the `design_history` summary for this section kind (top stacks by mean taste, stacks to avoid), which JEV weighs but which never overrides the current brief.
 
 **Questions** (repeat the `c1_*` pair as `c2_*` through `c7_*` in one call):
 ```json
@@ -579,7 +579,7 @@ Index:
 - noyzzi hover effects and sections are candidates only on marketing surfaces, and only with the noyzzi exemption applied to that section.
 - Recipes on the DROP list are never candidates.
 
-**State fields:** `evidence.section` (job, message, action, container), `evidence.mode` (`product_ui` or `marketing`), `evidence.tier` (from `motion.intensity`), `evidence.direction` (the direction contract), `proposal.candidates` (3 to 6 recipe IDs, each with source and one line: for example `core.table`, `mu.R02` text motion, `mu.R13` sliding indicator, `an.R21` FLIP list, `nz.effect.halftone-print`, `bang.staged_reveal`, `md.nav_bar`).
+**State fields:** `evidence.section` (job, message, action, container), `evidence.mode` (`product_ui` or `marketing`), `evidence.tier` (from `motion.intensity`), `evidence.direction` (the direction contract), `proposal.candidates` (3 to 6 recipe IDs, each with source and one line: for example `core.table`, `mu.R02` text motion, `mu.R13` sliding indicator, `an.R21` FLIP list, `nz.fx.halftone-print`, `bang.staged_reveal`, `md.nav_bar`). Also `evidence.history`: the `design_history` summary for this section kind (top stacks by mean taste, stacks to avoid), which JEV weighs but which never overrides the current brief.
 
 **Questions:**
 ```json
@@ -890,7 +890,7 @@ The agent fills `criteria` with the real candidate IDs and lines. Keys must matc
 - The shortlist has 2 to 6 candidates, including at least one JAL-native and one C0 or C1 control, and at most three noyzzi pieces.
 - Each proposed layer must pass the mechanical combination rules before it is asked about: summed cost within the tier budget, one scroll owner, one pointer effect per element, a shared surface or the noyzzi boundary, and canvases within the tier's canvas count (usually one per viewport, for GPU cost). Not asked when only one candidate exists.
 
-**State fields:** `product`, `proposal.section` (kind, job, message, beats, surface of neighbouring sections), `proposal.candidates` (for each: pool ID, source, surface, cost tier, mobile fallback, law note, what it shows), `evidence.direction` (the direction contract), `evidence.page_recipes` (recipes already chosen for other sections), `constraints.cost_ceiling`.
+**State fields:** `product`, `proposal.section` (kind, job, message, beats, surface of neighbouring sections), `proposal.candidates` (for each: pool ID, source, surface, cost tier, mobile fallback, law note, what it shows), `evidence.direction` (the direction contract), `evidence.page_recipes` (recipes already chosen for other sections), `constraints.cost_ceiling`. Also `evidence.history`: the `design_history` summary for this section kind (top stacks by mean taste, stacks to avoid), which JEV weighs but which never overrides the current brief.
 
 **Questions** (the `recipe` criteria are generated per section: one key per candidate pool ID, each with a when-right description):
 ```json
@@ -1707,7 +1707,7 @@ The agent fills `criteria` with the real candidate IDs and lines. Keys must matc
 - A learning that contradicts `jal-standards` is not a learning; it is a violation to fix or an escalation. Not asked.
 - A new skill or agent needs Brian's approval through jal-principal; `universal_skill` means propose an edit to an existing skill, and a brand new skill goes through `orch.escalate`.
 
-**State fields:** `proposal.learning` (the learning in two or three lines), `evidence.context` (the project and the situation it came from), `evidence.existing` (any memory file or skill that already covers it).
+**State fields:** `proposal.learning` (the learning in two or three lines), `evidence.context` (the project and the situation it came from), `evidence.existing` (any memory file or skill that already covers it), `evidence.history` (for design learnings, the `design_history` summary: runs, mean taste, shipped, rebuilt).
 
 **Questions:**
 ```json
@@ -1730,6 +1730,51 @@ The agent fills `criteria` with the real candidate IDs and lines. Keys must matc
 
 **Thresholds and actions:**
 - `durable` under 0.5: discard.
-- `universal_skill`: propose the edit to the owning skill in the report; jal-principal approves before it lands.
+- `universal_skill`: with evidence from at least two builds or two projects (for design learnings, the `design_history` of each), open a plugin pull request per `jal-orchestration` `references/learn.md`. Brian reviews and merges. With less evidence, write it to project memory and let it accumulate.
 - `project_memory`: write one `.jal/memory/` file and an `INDEX.md` line per skill `jal-memory`.
 - `discard`: nothing written.
+
+### `mem.reference_screen`
+
+**Purpose:** decide whether a new reference (a repo, docs site, design library, or motion kit) is worth teaching JAL-AIDEV, and where it fits.
+
+**Caller:** jal-researcher or the lead at step 3 of `jal-orchestration` `references/learn.md`.
+
+**Precheck (decides without JEV):**
+- A license or terms that forbid the intended use (for example GPL code JAL wants to copy, or a site that bans extraction) limits the plan to clean-room knowledge or a manual sample. Not asked.
+- A reference whose whole value is a banned pattern (gradient kits, glow effects, dark-by-default templates) is out, unless it is noyzzi. Not asked.
+
+**State fields:** `proposal.reference` (name, URL, license, a summary of what it offers), `evidence.jal` (what JAL already covers in the same area, from `source-map.md` and `recipe-index.md`).
+
+**Questions:**
+```json
+{
+  "slop": { "type": "noul", "instructions": "Yes means the reference in state.proposal.reference is AI-slop or generic template design (gradient-heavy, glow, neon, purple, dark by default, heavy shadows, emoji, interchangeable layouts) at its core. Yes means drop." },
+  "fit": {
+    "type": "score",
+    "instructions": "Score how much the reference would make JAL-AIDEV better, given what state.evidence.jal already covers.",
+    "criteria": [
+      "0 Nothing new: JAL already covers it as well or better.",
+      "1 Marginal: a few small ideas.",
+      "2 Useful: clear new techniques, components, or rules for at least one JAL layer.",
+      "3 Major: a substantial new capability or a clearly stronger reference for a JAL layer."
+    ]
+  },
+  "layer": {
+    "type": "choice",
+    "instructions": "Pick the JAL layer this reference strengthens most.",
+    "criteria": {
+      "design_system": "Tokens, layout doctrine, component anatomy, states, theming (jal-design-system).",
+      "taste_craft": "Taste, critique, directions, anti-slop craft rules (craft.md, directions.md, jal-ui-taste).",
+      "motion_components": "Component motion, text motion, micro-interactions (jal-motion).",
+      "immersive": "3D, WebGL, WebGPU, shaders, particles, scroll storytelling (jal-immersive).",
+      "engineering": "Backend, architecture, security, QA, or tooling (the owning engineering skill)."
+    }
+  }
+}
+```
+
+**Thresholds and actions:**
+- `slop` 0.5 or above: drop, with a one-line report.
+- `fit` under 1.5: drop, with a one-line report.
+- Otherwise, integrate into `layer` per `learn.md` and propose the plugin pull request.

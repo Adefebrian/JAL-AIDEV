@@ -12,13 +12,13 @@ Before writing any animation: name what state it communicates in one sentence. I
 ## 1. Approved stack, nothing else
 
 - **Lenis** for smooth scroll.
-- **GSAP** for orchestrated timelines and scroll-linked motion. Every GSAP plugin is free (since the 2024 Webflow licensing change) and allowed: ScrollTrigger, SplitText, Flip, MorphSVG, CustomEase, and the rest. JAL law still decides what each is used for (no DrawSVG ornaments, no ScrollSmoother next to Lenis, no bounce or elastic eases); the per-plugin filter is in `skills/jal-ui (immersive mode)/references/scroll-choreography.md`.
+- **GSAP** for orchestrated timelines and scroll-linked motion. Every GSAP plugin is free (since the 2024 Webflow licensing change) and allowed: ScrollTrigger, SplitText, Flip, MorphSVG, CustomEase, and the rest. JAL law still decides what each is used for (no DrawSVG ornaments, no ScrollSmoother next to Lenis, no bounce or elastic eases); the per-plugin filter is in `skills/jal-immersive/references/scroll-choreography.md`.
 - **Framer Motion** for React component, gesture, layout (FLIP), and exit animation (`AnimatePresence`).
 - **CSS transitions and WAAPI** (`element.animate()`) for simple, single-property, non-orchestrated motion. Prefer this over a library whenever a plain transition does the job, it costs nothing over the wire.
 
-- **Three.js** (WebGL and WebGPU), **React Three Fiber**, and **drei** for 3D and immersive sections, approved in v0.4.0 and governed by `skills/jal-ui (immersive mode)/SKILL.md` (lazy `import()`, poster first, DPR cap 2, disposal).
+- **Three.js** (WebGL and WebGPU), **React Three Fiber**, and **drei** for 3D and immersive sections, approved in v0.4.0 and governed by `skills/jal-immersive/SKILL.md` (lazy `import()`, poster first, DPR cap 2, disposal).
 - **Tailwind**, approved in v0.4.0, wired to JAL tokens through `bun-plugin-tailwind`. It styles; it never becomes a second token set.
-- **The JAL frame core** (`packages/ui/src/frames/`) for frame-driven compositions and product demo "videos" played live in the browser. See `skills/jal-ui (immersive mode)/references/frames.md`.
+- **The JAL frame core** (`packages/ui/src/frames/`) for frame-driven compositions and product demo "videos" played live in the browser. See `skills/jal-immersive/references/frames.md`.
 
 Lottie, any ffmpeg/Node/Python export pipeline, and AE-bridge style tooling are **not approved**. Remotion and `@remotion/*` are banned (webpack, Node, Chromium, company license); the frame core replaces them. Bang-motion's own workflow (fixed-stage HTML export, Puppeteer/ffmpeg frame dumps, nebula/bloom backgrounds) is explicitly not ported, per its source digest. Anything outside this list needs Brian's explicit yes before adoption, name what it replaces and why.
 
@@ -104,7 +104,7 @@ If `CustomEase` is unavailable in a given build, the nearest core-only substitut
 
 Richer choreography is allowed here: asymmetric in/out at the showcase durations, staged reveals, scroll-linked camera language, and the choreography bang-motion proved out (camera-follows-click, shot-size staging, deterministic timelines), rebuilt in Lenis/GSAP/Framer Motion/CSS/WAAPI only. Full recipe, stagger values, the shot-size vocabulary, the anti-slide mechanical checks, and worked GSAP timeline examples live in `references/showcase.md`, read it before building any hero or demo reel.
 
-For scroll and time choreography (ScrollTrigger pin, scrub, snap, batch, SplitText, Flip, Lenis synced with ScrollTrigger and the R3F frame loop, scroll camera paths, intensity tiers 0 to 3, and the JEV `motion.intensity`, `motion.choreography`, `motion.pin` calls) read `skills/jal-ui (immersive mode)/references/scroll-choreography.md`. For a frame-driven demo piece with play, pause, scrub, and a reduced-motion poster, read `skills/jal-ui (immersive mode)/references/frames.md`.
+For scroll and time choreography (ScrollTrigger pin, scrub, snap, batch, SplitText, Flip, Lenis synced with ScrollTrigger and the R3F frame loop, scroll camera paths, intensity tiers 0 to 3, and the JEV `motion.intensity`, `motion.choreography`, `motion.pin` calls) read `skills/jal-immersive/references/scroll-choreography.md`. For a frame-driven demo piece with play, pause, scrub, and a reduced-motion poster, read `skills/jal-immersive/references/frames.md`.
 
 The short version: one continuous world, never a slideshow of crossfading `<section>` blocks; the camera (a parent transform) does the moving, not every element animating itself independently; entrances slower and eased-out, exits faster and eased-in, at roughly the same 70% ratio as product UI; every showcase piece still opens on a white or off-white base and still obeys every rule in section 7.
 

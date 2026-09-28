@@ -81,7 +81,7 @@ Each item is refused as a category default. JAL treats all of them as bans; the 
 | Decorative grid, stripe, blueprint, or grain backgrounds | ornament | a subject that is a canvas, map, blueprint, or measuring tool, and then structural |
 | Auto-scrolling marquee as filler | motion with no job | real content, pausable, static under reduced motion (spec in `jal-motion`) |
 | Pulsing status dot, blinking cursor as decoration | JAL bans marker dots; loops with no job | a real live state, with text |
-| Animating an image on hover | the image is content, not a control | never; the container gets the feedback |
+| Animating an image on hover | the image is content, not a control | Off by default; the container gets the feedback. Allowed only when JEV `ui.component_recipe` (or `imm.recipe`) picks an image-hover recipe for a marketing or immersive gallery where the image is the subject: noyzzi effects, a scale of 1.04 or less (`an.R27`), or `three.img_hover`. Never in product UI. |
 | Justified text, all-caps body text | readability | never |
 | Light or dark picked by category habit | JAL law: light by default | an explicit dark-mode brief |
 | Borrowing a reference's skin over a standard marketing grid | new clothes on the old layout | never; borrow structure, see `directions.md` |
@@ -276,7 +276,7 @@ Output: disposition line, then persistence, fidelity, ceiling, `material_fixes` 
 | 19 | Examples in Tailwind classes | Tailwind only through the approved `bun-plugin-tailwind` wiring to JAL tokens | Translate every value to JAL tokens (`--space-*`, `--control-h`, `--text-*`). |
 | 20 | Names Three.js, OGL, regl, deck.gl, TanStack Virtual, tour and tooltip libraries | Approved stack only | Three.js and R3F are approved for `jal-immersive`. Tours, tooltips, and virtual lists are built in React on JAL Core; any other library is a `be.new_tech` escalation. |
 | 21 | Theme scrollbars (craft) versus never reinvent affordances (operate) | Not specified | Theme scrollbar color, selection, caret, accent-color, underline offset from tokens; never replace native scroll behavior. |
-| 22 | Hover lift `translateY(-2px)` | Transform allowed, no shadow | Only as a state change on an interactive container, never on an image, never with a shadow change. |
+| 22 | Hover lift `translateY(-2px)` | Transform allowed, no shadow | Only as a state change on an interactive container, never with a shadow change. On images it is allowed only through a JEV-picked image-hover recipe (see the ban list). |
 | 23 | Committed first viewport, drenched onboarding screens | Accent under 3%, no accent-filled hero | Drama from scale, type, media, and layout, never from color area. |
 | 24 | Monospace allowed for code, data, measurement | Not banned | Agreement; add "no mono as technical costume". |
 | 25 | Live mode, comp-led builds, a localhost decision page, image generation | No image-generation pipeline; Bun only | Code-led path only: ambition lives in the written direction contract and one named signature moment, audited at finish. |

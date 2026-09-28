@@ -73,7 +73,7 @@ export const HERO = {
   stats: [
     { value: "17", label: "specialist agents" },
     { value: "7", label: "commands" },
-    { value: "46", label: "JEV decisions" },
+    { value: "47", label: "JEV decisions" },
     { value: "20", label: "UI check rules" },
   ],
 };
@@ -480,7 +480,7 @@ export const JEV = {
       body: "New tech outside the approved stack, a change of the default LLM, and scope changes that move a deadline go to Brian. JEV can help frame the tradeoff; it never approves them.",
     },
   ],
-  catalogTitle: "The 46 catalog decisions",
+  catalogTitle: "The 47 catalog decisions",
   catalogLead:
     "The standard decisions live in the `jal-jev` skill, each with its exact question, the check that runs before it, and the threshold that turns the answer into an action.",
 };
@@ -495,7 +495,7 @@ export const JEV_CATALOG: { area: string; count: number; covers: string }[] = [
   { area: "QA", count: 5, covers: "How deep to check, what class a failure is, which tests to run, whether coverage is enough, and whether a release may go." },
   { area: "Review", count: 2, covers: "How risky a change is, and the final ship call." },
   { area: "Docs", count: 3, covers: "The docs plan, whether a claim is proven by the code, and whether the page is ready to publish." },
-  { area: "Memory", count: 1, covers: "Whether a new learning goes into project memory, into a skill, or nowhere." },
+  { area: "Memory and learning", count: 2, covers: "Whether a new learning goes into project memory, a plugin pull request, or nowhere; and whether a new reference is worth teaching JAL-AIDEV." },
 ];
 
 export const DESIGN_SYSTEM = {

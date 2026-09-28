@@ -80,6 +80,20 @@ const TOOLS: ToolDef[] = [
     },
   },
   {
+    name: "design_history",
+    description:
+      "Read the project design learning log (.jal/memory/design-log.jsonl) and return which recipe stacks scored best and which failed on similar sections. Pass the result as evidence.history to ui.direction_screen, ui.component_recipe, and imm.recipe so every build learns from the last.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        repo_path: { type: "string", description: "Absolute path of the project repo." },
+        section_kind: { type: "string", description: "Filter, e.g. hero, feature_grid, data_table." },
+        surface: { type: "string", enum: ["product_ui", "marketing", "immersive"] },
+      },
+      required: ["repo_path"],
+    },
+  },
+  {
     name: "noyzzi_list",
     description:
       "List the noyzzi.com catalogue (30 hero sections, 22 image hover effects, 26 3D elements) with slug, name, source URL, surface, and JAL law note. Use it to assemble imm.recipe candidates.",
@@ -212,6 +226,13 @@ async function handleDocsVerify(args: any) {
   return { content: [{ type: "text", text: JSON.stringify(report, null, 2) }], isError: report.status === "FAIL" };
 }
 
+async function handleDesignHistory(args: any) {
+  if (!args || typeof args.repo_path !== "string") throw new Error("design_history requires { repo_path }");
+  const { designHistory } = await import("./design-history.ts");
+  const h = designHistory(args.repo_path, { section_kind: args.section_kind, surface: args.surface });
+  return { content: [{ type: "text", text: JSON.stringify(h, null, 2) }] };
+}
+
 async function handleToolsCall(id: JsonRpcId, params: any): Promise<void> {
   const name = params?.name;
   const args = params?.arguments ?? {};
@@ -226,6 +247,10 @@ async function handleToolsCall(id: JsonRpcId, params: any): Promise<void> {
     }
     if (name === "docs_verify") {
       respond(id, await handleDocsVerify(args));
+      return;
+    }
+    if (name === "design_history") {
+      respond(id, await handleDesignHistory(args));
       return;
     }
     if (name === "noyzzi_list") {
