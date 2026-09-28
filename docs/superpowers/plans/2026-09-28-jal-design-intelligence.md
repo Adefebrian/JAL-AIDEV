@@ -75,4 +75,4 @@ MCP tool names (verify after install): `mcp__plugin_jal-aidev_jal-design__jev_de
    - Evidence-only: every doc claim must trace to evidence (file tree, code, tests, git log and diffs, ADRs, .jal/decisions). JEV gates each claim with a noul "supported by this evidence?" and drops unsupported claims; JEV also picks update-existing vs new-page vs no-change per section.
    - Publishing to malasbaca is an outward write to another repo: default to a branch plus PR, not a direct push to main, unless Brian says otherwise.
 4. **Command compaction.** Fold the command set into as few entry points as possible (ideally one) that route by intent, JEV-routed. The docs command from item 3 folds in too.
-5. **SEO / GEO agent.** Integration and optimization for search and generative-engine visibility.
+5. **SEO / GEO agent. BLOCKED: do not start.** Brian will supply the instructions first. Do not design, scaffold, or execute anything for it until those arrive.
