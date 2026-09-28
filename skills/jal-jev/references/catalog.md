@@ -14,7 +14,7 @@ Index:
 | Domain | IDs |
 |--------|-----|
 | Orchestration | `orch.route`, `orch.playbooks`, `orch.parallel`, `orch.model`, `orch.escalate`, `orch.loop_exit` |
-| UI/UX | `ui.experience`, `ui.direction_screen`, `ui.density`, `ui.region_gate`, `ui.designmd_screen`, `ui.final_taste`, `ui.heuristics`, `ui.finish_disposition`, `ui.text_reveal_granularity`, `ui.number_motion`, `ui.geo_visual` |
+| UI/UX | `ui.experience`, `ui.direction_screen`, `ui.density`, `ui.region_gate`, `ui.designmd_screen`, `ui.final_taste`, `ui.heuristics`, `ui.finish_disposition`, `ui.component_recipe`, `ui.text_reveal_granularity`, `ui.number_motion`, `ui.geo_visual` |
 | Motion | `motion.intensity`, `motion.choreography`, `motion.pin`, `motion.demo_medium` |
 | Immersive | `imm.gate`, `imm.recipe`, `imm.tech`, `imm.tier`, `imm.taste` |
 | Backend | `be.placement`, `be.api_quality`, `be.migration_risk`, `be.new_tech` |
@@ -566,6 +566,46 @@ Index:
   - If `recapture` is the primary answer, or the runner-up with probability 0.3 or more, recapture first.
   - Otherwise take the stricter of the primary and the runner-up. From strictest to least strict: rebuild, fix, ship.
 - Evidence from the user against a `ship` verdict reopens a full review.
+
+### `ui.component_recipe`
+
+**Purpose:** pick the component and motion recipe for one section or component of a product or marketing screen, from every integrated source, so no source is left unused and no pick comes from taste alone.
+
+**Caller:** jal-ux at pipeline step 7b (and jal-frontend when jal-ux is not on the task), once per section after `ui.region_gate` and `motion.intensity`, batched per screen.
+
+**Precheck (decides without JEV):**
+- The JAL Core component spec (`jal-design-system` `references/components.md`) is always a candidate. It is the default for product UI controls, tables, forms, and navigation, and is not asked for those.
+- Recipes above the section's `motion.intensity` tier are removed from the candidates (the tier table in `jal-motion` `references/components.md` section 7).
+- noyzzi hover effects and sections are candidates only on marketing surfaces, and only with the noyzzi exemption applied to that section.
+- Recipes on the DROP list are never candidates.
+
+**State fields:** `evidence.section` (job, message, action, container), `evidence.mode` (`product_ui` or `marketing`), `evidence.tier` (from `motion.intensity`), `evidence.direction` (the direction contract), `proposal.candidates` (3 to 6 recipe IDs, each with source and one line: for example `core.table`, `mu.R02` text motion, `mu.R13` sliding indicator, `an.R21` FLIP list, `nz.effect.halftone-print`, `bang.staged_reveal`, `md.nav_bar`).
+
+**Questions:**
+```json
+{
+  "recipe": {
+    "type": "choice",
+    "instructions": "Pick the recipe that best serves this section's job for the audience and direction in state, at or below its motion tier. Prefer the one that makes the content clearer; a recipe earns its place only if the section would communicate less without it.",
+    "criteria": {
+      "<candidate_id_1>": "<one line from the candidate list: what it does and why it fits>",
+      "<candidate_id_2>": "<one line>",
+      "<candidate_id_3>": "<one line>"
+    }
+  },
+  "combine": {
+    "type": "noul",
+    "instructions": "Yes means the runner-up recipe adds a different, non-competing layer to the top pick in this section (for example a text reveal on a section whose layout recipe is a FLIP list), with one visual owner per viewport. No means use the top pick alone."
+  }
+}
+```
+
+The agent fills `criteria` with the real candidate IDs and lines. Keys must match `proposal.candidates`.
+
+**Thresholds and actions:**
+- Confidence 0.5 or above: build the chosen recipe.
+- Low confidence: take the top pick unless the runner-up is the JAL Core spec, in which case take the spec (calmer is the safe default).
+- `combine` 0.6 or above: add the runner-up as a second layer, if it stays within the motion tier.
 
 ### `ui.text_reveal_granularity`
 

@@ -7,7 +7,7 @@ cat <<'EOF'
 - Every project: automatic security hardening, resource-light, server-optimized.
 - Only default LLM: OpenAI gpt-4o-mini.
 - Routing: every non-trivial task runs on the jal-orchestration engine: jal-principal directs, jal-lead dispatches truly parallel specialists in waves (jal-ux, jal-immersive, jal-frontend, jal-backend, jal-systems, jal-architect, jal-security, jal-redteam, jal-blueteam, jal-reviewer, jal-qa, jal-devops, jal-researcher, jal-docs), jal-jev frames novel decisions. Commands (7): /jal-new start a project, /jal-build build or change anything, /jal-ui screens, redesigns, and immersive 3D sites, /jal-fix fix a bug, /jal-check one PASS or FAIL (quick, full, deep), /jal-ship PR, release, deploy, rollback, /jal-docs write or update docs.
-- JEV is every agent's decision helper: every soft call goes through the jev_decide tool using the jal-jev decision catalog (45 IDs). A JEV veto is final. Decisions are logged in .jal/decisions/. On UNVERIFIED BY JEV, use own judgment and stamp the report.
+- JEV is every agent's decision helper: every soft call goes through the jev_decide tool using the jal-jev decision catalog (46 IDs). A JEV veto is final. Decisions are logged in .jal/decisions/. On UNVERIFIED BY JEV, use own judgment and stamp the report.
 - UI is proven, not promised: the ui_audit tool must PASS at 320, 375, 414, 768, and 1280 before any screen is called done. SKIPPED is never a pass.
 - Hard law (jal-standards, the write-time guardrail hook, ui_audit, the checks in the review gate (/jal-check)) is mechanical and never overridable, not by JEV and not by any agent.
 EOF

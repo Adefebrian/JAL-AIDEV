@@ -84,13 +84,21 @@ The old commands still exist as internal playbooks inside `skills/jal-orchestrat
 - `jal-design-system` also holds the craft floor (`references/craft.md`, from impeccable) and the visual directions with the seeded direction pick (`references/directions.md`, from impeccable and refero), so every product gets a fresh, deliberate look instead of the obvious first idea.
 - `jal-immersive`: the immersive and 3D core. Three.js (WebGL and WebGPU/TSL), React Three Fiber and drei, shaders, particles, clean-room effects (rain, puddles, sand, grass, ocean), performance tiers, poster-first loading, GSAP and Lenis scroll choreography, the JAL frame core for live product demos, and the noyzzi catalogue. JEV picks and combines recipes per section.
 - `jal-motion`: restrained product motion plus richer showcase choreography, and 167 component motion recipes from Magic UI and Animata (plain CSS and Tailwind), always with reduced-motion support.
-- `jal-jev`: the decision catalog, 45 standard decisions (orchestration, UI, motion, immersive, backend, security, QA, review, memory, docs) with their exact questions and thresholds.
+- `jal-jev`: the decision catalog, 46 standard decisions (orchestration, UI, motion, immersive, backend, security, QA, review, memory, docs) with their exact questions and thresholds.
 - `jal-frontend-rules`: the CSS recipes that keep UI tidy.
 
 - `jal-orchestration`: the one engine behind every command: waves of truly parallel agents, JEV as every agent's decision helper, verification and commits by the lead, and the playbooks the old commands became.
 - `jal-docs`: how documentation is written for JAL Docs from evidence only.
 
 Also: `jal-scaffold`, `jal-architecture`, `jal-rpc`, `jal-polyglot`, `jal-security-hardening`, `jal-redteam-ops`, `jal-blueteam-ops`, `jal-qa-automation`, `jal-git-safety`, `jal-memory`, `jal-adr`, `jal-release`.
+
+## Design references
+
+Every reference is integrated as knowledge (no extra packages) and is used by a pipeline step, not just stored. JEV picks among them per section, and the build report names the recipe and source for every section. The full map is in `skills/jal-design-system/references/source-map.md`.
+
+- **Design system and UIUX:** Meta Astryx (foundation), IBM Carbon (data and forms), Google Material (state layers, mobile navigation), impeccable (craft floor, critique, seeded direction pick), refero (visual directions, type statistics), designmd.ai (screened supplementary kits).
+- **Components and motion:** Magic UI and Animata (167 recipes), bang-motion (showcase choreography), GSAP skills (scroll choreography), the JAL frame core (Remotion's idea, rebuilt).
+- **Immersive and 3D:** noyzzi (sections, hover effects, 3D elements), Threejs-Awesome-Graphics-Agent-Skills, webgpu-claude-skill, threejs-game-skills, nixie-fx, ai-dev-kit, three.js and pmndrs, plus clean-room rebuilds of the GPL or unlicensed effects.
 
 ## Bundled tools (MCP)
 

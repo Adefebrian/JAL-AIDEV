@@ -12,6 +12,7 @@ There is one design system. Every JAL product, from an ops console to a phone-fi
 - `references/craft.md`: the craft floor (measure, tracking, heading rhythm, browser surfaces, with numbers), the anti-pattern ban list, type, color, layout, motion, state, and copy rules, the critique workflow (Nielsen's 10, personas, P0 to P3), the fresh-context finish reviewer, and the JAL conflicts with impeccable.
 - `references/directions.md`: the variety mechanism (5 to 7 candidates, JEV screen, seeded draw), the six variation axes, the `docs/design/direction.md` contract template, and the 13 visual directions as JAL Core knob sets.
 - `references/sources.md`: provenance. Source value to JAL Core translation tables for Astryx, Carbon, and Material, and every pattern each one had that JAL law removed.
+- `references/source-map.md`: every UIUX, motion, and immersive reference Brian supplied, the file that holds it, and the pipeline step that uses it.
 
 Read order for any UI task: `jal-standards` (law), `jal-ui-taste` (tokens, section concept law, audit), `jal-frontend-rules` (recipes), then this skill, `foundations.md`, and the component specs you need. `jal-motion` owns motion detail.
 

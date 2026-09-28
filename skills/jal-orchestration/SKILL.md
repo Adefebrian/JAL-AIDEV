@@ -29,9 +29,9 @@ Every agent that runs under this engine follows this contract, and the lead past
 |---|---|
 | jal-lead | `sec.input_screen`, `orch.playbooks`, `orch.route`, `orch.model`, `orch.parallel`, `orch.loop_exit`, `orch.escalate`, `mem.promote` |
 | jal-principal | `orch.route`, `orch.escalate`, `rev.ship`, `sec.ship_block` |
-| jal-ux | `ui.experience`, `ui.direction_screen`, `ui.density`, `ui.region_gate`, `ui.designmd_screen`, `ui.final_taste`, `ui.heuristics`, `ui.finish_disposition`, `motion.*` |
+| jal-ux | `ui.experience`, `ui.direction_screen`, `ui.density`, `ui.region_gate`, `ui.component_recipe`, `ui.designmd_screen`, `ui.final_taste`, `ui.heuristics`, `ui.finish_disposition`, `motion.*` |
 | jal-immersive | `ui.direction_screen`, `imm.gate`, `imm.recipe`, `imm.tech`, `imm.tier`, `imm.taste`, `motion.*`, `ui.heuristics`, `ui.finish_disposition` |
-| jal-frontend | `ui.region_gate`, `ui.final_taste`, `ui.text_reveal_granularity`, `ui.number_motion`, `ui.geo_visual`, `motion.intensity` |
+| jal-frontend | `ui.region_gate`, `ui.component_recipe`, `ui.final_taste`, `ui.text_reveal_granularity`, `ui.number_motion`, `ui.geo_visual`, `motion.intensity` |
 | jal-architect, jal-backend, jal-systems | `be.placement`, `be.api_quality`, `be.migration_risk`, `be.new_tech` |
 | jal-security, jal-redteam, jal-blueteam | `sec.severity`, `sec.false_positive`, `sec.ship_block`, `sec.input_screen` |
 | jal-qa | `qa.check_depth`, `qa.failure_class`, `qa.test_selection`, `qa.coverage`, `qa.release_go` |

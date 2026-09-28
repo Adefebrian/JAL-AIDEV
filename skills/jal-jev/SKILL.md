@@ -112,5 +112,5 @@ A call is about 400ms and costs fractions of a cent. Gate generously: any soft c
 
 ## References
 
-- `references/catalog.md`: the 45 catalog decisions with purpose, caller, precheck, state fields, question JSON, thresholds, and actions.
+- `references/catalog.md`: the 46 catalog decisions with purpose, caller, precheck, state fields, question JSON, thresholds, and actions.
 - Agent `jal-jev`: dispatch for a novel decision with no catalog entry, careful state framing, or an impartial verdict.
