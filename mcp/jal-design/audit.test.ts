@@ -43,6 +43,8 @@ const ALL_RULES = [
   "overflow-parent",
   "clipped-text",
   "icon-text-collision",
+  "form-width-cap",
+  "mobile-app-shell",
 ];
 
 describe("runAudit", () => {
@@ -113,6 +115,17 @@ describe("runAudit", () => {
       const rulesFound = new Set(report.violations.map((v) => v.rule));
       expect(rulesFound.has("card-empty-band")).toBe(true);
       expect(rulesFound.has("card-row-mismatch")).toBe(false);
+    },
+    30000,
+  );
+
+  test(
+    "a bottom tab bar with only two destinations emits mobile-app-shell below 640px, not at 1280px",
+    async () => {
+      const small = await runAudit(`${baseUrl}/shell-two-tabs.html`, { widths: [375] });
+      expect(small.violations.map((v) => v.rule)).toContain("mobile-app-shell");
+      const wide = await runAudit(`${baseUrl}/shell-two-tabs.html`, { widths: [1280] });
+      expect(wide.violations.map((v) => v.rule)).not.toContain("mobile-app-shell");
     },
     30000,
   );

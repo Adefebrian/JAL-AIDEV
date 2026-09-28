@@ -108,9 +108,10 @@ EmptyState: icon (24), title, one sentence, one primary action; fills its region
 
 ### AppShell and mobile navigation bar
 From: Astryx AppShell, Material navigation bar anatomy.
-- **Below 640:** sticky header with `safe-area-inset-top`, independently scrolling content, fixed bottom tab bar. The bar: 3 to 5 equal-width destinations, each an icon (24) above a label (11 / 500 / 16 or 13 / 500 / 20), the whole destination one target of at least 44 by 44; `surface`, one 1px `border` hairline on its top edge as the structural boundary, height 64 plus `env(safe-area-inset-bottom)`, no shadow. Content pads its bottom by the bar height so nothing hides under it.
+- **Implementation:** the shared `AppShell` component in `packages/ui` (grid sized to `100dvh`: header row, content region that scrolls on its own, tab bar row; nothing `position: fixed`). Never hand-roll a shell.
+- **Below 640:** pinned header with `safe-area-inset-top`, independently scrolling content, bottom tab bar. The bar: 3 to 5 equal-width destinations, each an icon (24) above a label (11 / 500 / 16 or 13 / 500 / 20), the whole destination one target of at least 44 by 44; `surface`, one 1px `border` hairline on its top edge as the structural boundary, height 64 plus `env(safe-area-inset-bottom)`, no shadow. The bar is its own grid row, so nothing can hide under it.
 - **Bar states:** inactive `ink-muted`; active = `layer-2` pill 64 by 32 behind the icon (radius 9999) + label weight 600 `ink`, `aria-current="page"`; pressed 12% on the pill + `scale(0.98)`; focus-visible outline around the destination; count badges carry text, never a bare dot.
-- **640 to 1023:** top nav or a collapsible side nav. **1024 and up:** side nav with a fixed width budget. The destinations stay the same at every width.
+- **640 and up:** the same destinations move into the header row as top nav (44 items, active `layer-2`). A side nav with a fixed width budget is allowed from 1024 when the product has more than 5 destinations. The destinations stay the same at every width.
 
 ### Tabs and SegmentedControl
 From: Astryx, with Carbon tab detail.

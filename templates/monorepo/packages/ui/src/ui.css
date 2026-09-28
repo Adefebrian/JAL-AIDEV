@@ -621,6 +621,128 @@ button[data-state="success"],
   }
 }
 
+/* App-shell (AppShell.tsx). A grid sized to the viewport: the document
+   never scrolls, the content region scrolls on its own, nothing is fixed,
+   so nothing can hide under the bar. Below 640px: header row, content,
+   bottom tab bar. From 640px the destinations join the header row. */
+.shell {
+  display: grid;
+  height: 100dvh;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  grid-template-areas:
+    "header actions"
+    "main main"
+    "nav nav";
+  background: var(--color-page);
+}
+.shell-header,
+.shell-actions {
+  display: flex;
+  align-items: center;
+  min-height: 56px;
+  padding-top: env(safe-area-inset-top);
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-page);
+}
+.shell-header { grid-area: header; min-width: 0; padding-inline: var(--space-16px); }
+.shell-actions { grid-area: actions; gap: var(--space-8px); padding-inline-end: var(--space-16px); }
+.shell-actions:empty { padding-inline-end: 0; }
+.shell-title {
+  margin: 0;
+  min-width: 0;
+  font-size: var(--text-1);
+  line-height: var(--line-1);
+  font-weight: var(--weight-semibold);
+  overflow-wrap: anywhere;
+}
+.shell-main {
+  grid-area: main;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.shell-nav {
+  grid-area: nav;
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(0, 1fr);
+  padding-bottom: env(safe-area-inset-bottom);
+  border-top: 1px solid var(--color-border);
+  background: var(--color-surface);
+}
+.shell-nav-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-4px);
+  min-width: 0;
+  min-height: 64px;
+  padding: var(--space-8px) var(--space-4px);
+  color: var(--color-ink-muted);
+  font-size: var(--text-n1);
+  line-height: var(--line-n1);
+  font-weight: var(--weight-medium);
+  text-decoration: none;
+  -webkit-tap-highlight-color: transparent;
+}
+.shell-nav-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 64px;
+  height: 32px;
+  border-radius: var(--radius-pill);
+}
+.shell-nav-label { max-width: 100%; overflow-wrap: anywhere; text-align: center; }
+.shell-nav-item[aria-current="page"] { color: var(--color-ink); font-weight: var(--weight-semibold); }
+.shell-nav-item[aria-current="page"] .shell-nav-icon { background: var(--color-layer-2); }
+/* Label-only destination: the active pill sits behind the label instead. */
+.shell-nav-item:not(:has(.shell-nav-icon)) .shell-nav-label { padding: var(--space-4px) var(--space-12px); border-radius: var(--radius-pill); }
+.shell-nav-item[aria-current="page"]:not(:has(.shell-nav-icon)) .shell-nav-label { background: var(--color-layer-2); }
+.shell-nav-item:active .shell-nav-icon { transform: scale(0.98); }
+@media (hover: hover) {
+  .shell-nav-item:hover { color: var(--color-ink); }
+}
+
+@media (min-width: 640px) {
+  .shell {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    grid-template-rows: auto minmax(0, 1fr);
+    grid-template-areas:
+      "header nav actions"
+      "main main main";
+  }
+  .shell-nav {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: var(--space-4px);
+    padding: env(safe-area-inset-top) var(--space-8px) 0;
+    border-top: 0;
+    border-bottom: 1px solid var(--color-border);
+    background: var(--color-page);
+  }
+  .shell-nav-item {
+    flex-direction: row;
+    min-height: var(--control-h);
+    padding: 0 var(--space-12px);
+    border-radius: var(--radius-8);
+    font-size: var(--text-0);
+    line-height: var(--line-0);
+  }
+  .shell-nav-icon { width: auto; height: auto; background: none; }
+  .shell-nav-item[aria-current="page"] { background: var(--color-layer-2); }
+  .shell-nav-item[aria-current="page"] .shell-nav-icon { background: none; }
+  .shell-nav-item:not(:has(.shell-nav-icon)) .shell-nav-label { padding: 0; }
+  .shell-nav-item[aria-current="page"]:not(:has(.shell-nav-icon)) .shell-nav-label { background: none; }
+  @media (hover: hover) {
+    .shell-nav-item:hover { background: var(--state-hover); }
+    .shell-nav-item[aria-current="page"]:hover { background: var(--color-layer-2); }
+  }
+}
+
 /* Honor reduced motion everywhere: collapse to a near-instant change,
    never a slide or scale, transform-based motion included. */
 @media (prefers-reduced-motion: reduce) {

@@ -662,6 +662,68 @@ const AUDIT_SCRIPT = `
     });
   })();
 
+  // form-width-cap: from 1024px a text-entry control never runs wider than
+  // the JAL form cap (640px). A wider field means the frame skipped region
+  // width budgets and stretched a form across the page. Controls inside a
+  // table, grid, or toolbar are exempt (they live in a fill region).
+  (function checkFormWidthCap() {
+    var vw = window.visualViewport ? window.visualViewport.width : window.innerWidth;
+    if (vw < 1024) return;
+    var skipTypes = ["checkbox", "radio", "hidden", "range", "color", "submit", "button", "reset", "image", "file"];
+    Array.prototype.forEach.call(document.querySelectorAll("input, select, textarea"), function (el) {
+      if (!isVisible(el)) return;
+      var type = (el.getAttribute("type") || "").toLowerCase();
+      if (skipTypes.indexOf(type) >= 0) return;
+      if (el.closest("table, [role=grid], [role=toolbar]")) return;
+      var w = el.getBoundingClientRect().width;
+      if (w > 640.5) {
+        pushV("form-width-cap", cssPath(el), "width=" + w.toFixed(1) + "px exceeds the 640px form cap at viewport " + vw + "px");
+      }
+    });
+  })();
+
+  // mobile-app-shell: below 640px every screen is an app-shell, a pinned
+  // top header plus a bottom tab bar of 3 to 5 destinations, each at least
+  // 44x44. "Pinned" means position fixed or sticky, or the document itself
+  // does not scroll (a grid shell whose content region scrolls on its own).
+  (function checkAppShell() {
+    var vv = window.visualViewport;
+    var vw = vv ? vv.width : window.innerWidth;
+    if (vw >= 640) return;
+    var vh = vv ? vv.height : window.innerHeight;
+    var docScrolls = document.documentElement.scrollHeight > vh + 1;
+    function pinned(el) {
+      var p = getComputedStyle(el).position;
+      return p === "fixed" || p === "sticky" || !docScrolls;
+    }
+    var header = Array.prototype.filter.call(document.querySelectorAll("header, [role=banner]"), function (el) {
+      if (!isVisible(el)) return false;
+      return el.getBoundingClientRect().top <= 1 && pinned(el);
+    })[0];
+    if (!header) {
+      pushV("mobile-app-shell", "body", "no pinned top header (header or [role=banner] at top 0, sticky, fixed, or inside a non-scrolling shell)");
+    }
+    var nav = Array.prototype.filter.call(document.querySelectorAll("nav, [role=navigation]"), function (el) {
+      if (!isVisible(el)) return false;
+      var r = el.getBoundingClientRect();
+      return r.bottom >= vh - 1 && r.top >= vh * 0.75 && pinned(el);
+    })[0];
+    if (!nav) {
+      pushV("mobile-app-shell", "body", "no bottom tab bar (nav pinned to the bottom edge of the viewport)");
+      return;
+    }
+    var items = Array.prototype.filter.call(nav.querySelectorAll("a[href], button"), isVisible);
+    if (items.length < 3 || items.length > 5) {
+      pushV("mobile-app-shell", cssPath(nav), "bottom tab bar has " + items.length + " destinations, needs 3 to 5");
+    }
+    items.forEach(function (item) {
+      var r = item.getBoundingClientRect();
+      if (r.width < 44 || r.height < 44) {
+        pushV("mobile-app-shell", cssPath(item), "tab bar target " + r.width.toFixed(1) + "x" + r.height.toFixed(1) + "px is under 44x44");
+      }
+    });
+  })();
+
   // eyebrow-label
   (function checkEyebrows() {
     Array.prototype.forEach.call(document.querySelectorAll("h1, h2, h3"), function (h) {

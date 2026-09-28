@@ -15,11 +15,12 @@ const spanClass: Record<BentoSpan, string> = {
 export interface BentoProps {
   children: ReactNode;
   className?: string;
+  id?: string;
 }
 
-export function Bento({ children, className }: BentoProps) {
+export function Bento({ children, className, id }: BentoProps) {
   const classes = ["bento", className].filter(Boolean).join(" ");
-  return <div className={classes}>{children}</div>;
+  return <div id={id} className={classes}>{children}</div>;
 }
 
 export interface BentoItemProps {

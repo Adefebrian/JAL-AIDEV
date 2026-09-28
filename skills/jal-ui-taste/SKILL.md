@@ -430,6 +430,8 @@ No screen is called done until `ui_audit` reports **PASS**. Call the `ui_audit` 
 - `overflow-parent`: no child extends past its parent's box unless the parent is a scroll container.
 - `clipped-text`: no text is cut off by its box without an ellipsis and a reachable full value.
 - `icon-text-collision`: no icon inside a control touches or overlaps the control's text.
+- `form-width-cap`: from 1024px no text input, select, or textarea outside a table, grid, or toolbar is wider than 640px. A wider field means the frame skipped region width budgets.
+- `mobile-app-shell`: below 640px the screen has a pinned top header and a bottom tab bar of 3 to 5 destinations, each at least 44 by 44 (use the shared `AppShell`).
 
 `FAIL` lists each violation with selector, width, and measured values: fix every one and re-run. `SKIPPED` (Chrome not found) is never a PASS: set `CHROME_PATH` or install Chrome and re-run; if that is impossible, report the screen as not verified. The audit proves the mechanical floor; the self-critique, the JEV verdict, and your own eyes on the 375 and 1280 screenshots prove the taste.
 

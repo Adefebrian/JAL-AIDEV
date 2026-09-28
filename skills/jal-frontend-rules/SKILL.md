@@ -71,33 +71,22 @@ Mobile is not "the desktop site, but narrower." Below 640px ship a dedicated app
 └─────────────────────┘
 ```
 
-```css
-.shell { min-height: 100dvh; background: var(--color-page); color: var(--color-ink); }
-.shell-header {
-  position: sticky; top: 0; z-index: 10;
-  padding: calc(var(--space-8px) + env(safe-area-inset-top)) var(--space-16px) var(--space-8px);
-  background: var(--color-page);
-  border-bottom: 1px solid var(--color-border);   /* structural divider, full width, neutral */
-}
-.shell-main { padding: var(--space-16px); padding-bottom: calc(var(--control-h) + var(--space-24px) + env(safe-area-inset-bottom)); }
-.tabbar {
-  position: fixed; inset-inline: 0; bottom: 0; z-index: 10;
-  display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr);
-  padding: var(--space-4px) var(--space-8px) calc(var(--space-4px) + env(safe-area-inset-bottom));
-  background: var(--color-surface);
-  border-top: 1px solid var(--color-border);      /* structural divider, full width, neutral */
-}
-.tabbar a {
-  display: grid; justify-items: center; align-content: center; gap: var(--space-2px);
-  min-height: var(--control-h); border-radius: var(--radius-8);
-  font-size: var(--text-n1); line-height: var(--line-n1); color: var(--color-ink-muted);
-}
-.tabbar a[aria-current="page"] { background: var(--color-layer-2); color: var(--color-ink); font-weight: var(--weight-semibold); }
-@media (min-width: 640px) {
-  .tabbar { display: none; }
-  .shell-main { padding: var(--space-24px); }
-}
+Use the shared `AppShell` component from `packages/ui` (`AppShell.tsx`, styles `.shell*` in `ui.css`); never hand-roll a shell per app.
+
+```tsx
+<AppShell title="Leave" current={current} destinations={[
+  { id: "new", label: "New", href: "#new", icon: <Icon>{/* koboyo glyph */}</Icon> },
+  { id: "requests", label: "Requests", href: "#requests", icon: ... },
+  { id: "summary", label: "Summary", href: "#summary", icon: ... },
+]}>
+  {/* screen content */}
+</AppShell>
 ```
+
+- The shell is a grid sized to `100dvh`: header row, content region with its own `overflow-y: auto`, tab bar row. The document never scrolls and nothing is `position: fixed`, so no content can hide under the bar and the overlap audit stays clean.
+- Below 640px: bottom tab bar of 3 to 5 destinations, icon (24) in a 64 by 32 pill over a label, 64px tall targets, `safe-area-inset-bottom`. Active = `layer-2` pill + weight 600 `ink` + `aria-current="page"`.
+- From 640px the same destinations move into the header row as top nav (44px items, active `layer-2`). They never disappear.
+- `ui_audit` rule `mobile-app-shell` fails any screen below 640px without a pinned header and a 3 to 5 item bottom tab bar.
 
 - Bottom tab bar (3 to 5 items max) replaces top nav on mobile. Fixed position, `padding-bottom: env(safe-area-inset-bottom)`, icon + label per tab, active state via tonal fill, ink, and weight, never an underline or a side bar.
 - Content area scrolls independently of the shell; header and tab bar never scroll away unless the interaction explicitly calls for it (e.g. hide-on-scroll for a feed).

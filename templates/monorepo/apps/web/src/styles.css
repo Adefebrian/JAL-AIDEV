@@ -11,14 +11,17 @@
   padding: var(--space-32px) var(--space-16px);
 }
 
-.app h1 {
+/* Anchored sections scroll inside the shell content region. */
+.app-hero, .app-bento, .app-demo { scroll-margin-top: var(--space-16px); }
+
+.app-hero h1 {
   font-size: var(--text-5);
   line-height: var(--line-5);
   font-weight: var(--weight-semibold);
   margin: 0 0 var(--space-8px);
 }
 
-.app > p {
+.app-hero p {
   color: var(--color-ink-muted);
   margin: 0 0 var(--space-24px);
 }

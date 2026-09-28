@@ -1,8 +1,28 @@
-import { useState } from "react";
-import { Bento, BentoItem } from "@__APP_NAME__/ui";
+import { useEffect, useState } from "react";
+import { AppShell, Bento, BentoItem } from "@__APP_NAME__/ui";
 import { api } from "./client";
 
+// Every screen lives inside the JAL Core app-shell: bottom tab bar below
+// 640px, top nav from 640px. Destinations here are the page sections.
+const DESTINATIONS = [
+  { id: "overview", label: "Overview", href: "#overview" },
+  { id: "stack", label: "Stack", href: "#stack" },
+  { id: "demo", label: "Demo", href: "#demo" },
+];
+
+function useCurrentSection(fallback: string): string {
+  const read = () => (typeof location === "undefined" ? "" : location.hash.slice(1)) || fallback;
+  const [current, setCurrent] = useState(read);
+  useEffect(() => {
+    const onHash = () => setCurrent(read());
+    addEventListener("hashchange", onHash);
+    return () => removeEventListener("hashchange", onHash);
+  }, []);
+  return current;
+}
+
 export function App() {
+  const current = useCurrentSection("overview");
   // Demo call through the typed Hono RPC client (see ./client.ts): the
   // response shape here is checked against apps/api's real route types at
   // build time, not hand-typed. Wired to a button click rather than fired on
@@ -39,10 +59,13 @@ export function App() {
   const resultText = itemCount !== null ? `Example items: ${itemCount}` : loadFailed ? "Could not reach the API." : "";
 
   return (
-    <main className="app">
-      <h1>Welcome to __APP_NAME__</h1>
-      <p>A Bun only monorepo: Hono API, React SPA bundled with Bun.build, no Vite, no Next.js.</p>
-      <Bento className="app-bento">
+    <AppShell title="__APP_NAME__" destinations={DESTINATIONS} current={current}>
+      <div className="app">
+      <section id="overview" className="app-hero">
+        <h1>Welcome to __APP_NAME__</h1>
+        <p>A Bun only monorepo: Hono API, React SPA bundled with Bun.build, no Vite, no Next.js.</p>
+      </section>
+      <Bento id="stack" className="app-bento">
         <BentoItem span="sm">
           <h2>Fast by default</h2>
           <p>Bun runs the app, builds the app, and tests the app, one runtime end to end.</p>
@@ -56,7 +79,7 @@ export function App() {
           <p>TypeScript across apps and packages, validated env, zero plain JavaScript.</p>
         </BentoItem>
       </Bento>
-      <section className="app-demo">
+      <section id="demo" className="app-demo">
         <h2>Typed RPC, proven live</h2>
         <p>Call the API through the typed Hono client and print what comes back.</p>
         <button type="button" className="btn btn-primary" onClick={loadItemCount}>
@@ -64,6 +87,7 @@ export function App() {
         </button>
         <p className="app-demo-result">{resultText}</p>
       </section>
-    </main>
+      </div>
+    </AppShell>
   );
 }
