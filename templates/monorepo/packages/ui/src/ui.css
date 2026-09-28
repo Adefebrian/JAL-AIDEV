@@ -1,14 +1,16 @@
 /*
  * JAL Core component CSS. Built on tokens.css only: every value below is a
- * var() reference, never an inline hex, px, or font. Import tokens.css
+ * var() reference, never an inline hex or font size. Import tokens.css
  * before this file.
  *
- * Covers: base reset, form-control normalization (one 44px control-h for
- * every input/select/date input/button, measured not eyeballed), field-row
- * layout, the button component with all interactive states, and the Bento
- * grid primitive. White-first, no gradient, no shadow other than a
- * spread-only focus ring (we use `outline`, so there is none at all here),
- * no side-stripe accents, no emoji.
+ * Covers: base reset, the no-overlap prevention layer (tidiness rule
+ * number 1), form-control normalization (one 44px control-h for every
+ * input, select, date input, and button, measured not eyeballed),
+ * checkbox and radio, field-row layout, the button component with all
+ * eight states, and the mobile-first Bento grid primitive.
+ *
+ * White-first, no gradient, no shadow (focus is an outline, so there is
+ * no box-shadow at all here), no side border or accent bar, no emoji.
  */
 
 *,
@@ -28,13 +30,14 @@ body {
   background: var(--color-page);
   color: var(--color-ink);
   font-family:
-    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   font-size: var(--text-0);
   line-height: var(--line-0);
 }
 
-/* Focus is always visible, never a color-only cue, never a shadow: a
-   spread-only outline, offset so it never reads as a fill or a stripe. */
+/* Focus is always visible, never a color-only cue, never a shadow: an
+   outline, offset so it never reads as a fill or a stripe. Instant, never
+   animated. */
 :focus-visible {
   outline: 2px solid var(--color-focus);
   outline-offset: 2px;
@@ -45,60 +48,124 @@ body {
 }
 
 /* ---------------------------------------------------------------------
- * Form controls: one height token (--control-h, 44px) for every input,
- * select, date/time input, and button. Identical box-sizing, padding,
- * radius, border, font-size (16px, blocks iOS focus zoom), and font-family
- * across every control type, so a row of mixed controls always lines up.
+ * No overlap, nothing outside its box. Every grid and flex child may
+ * shrink below its content width; media never pushes out of its box;
+ * long words and URLs wrap inside their box. The only boxes allowed to
+ * hold wider content scroll it inside themselves (.scroll-x).
  * ------------------------------------------------------------------- */
-input,
-select,
-textarea,
-button {
+:where(.grid, .bento, .bento-item, .field-row, .field, .row, .stack, .cluster) > * {
+  min-width: 0;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-16px);
+}
+
+:where(img, video) {
+  max-width: 100%;
+  height: auto;
+}
+
+:where(canvas, svg, iframe) {
+  max-width: 100%;
+}
+
+:where(h1, h2, h3, h4, p, li, dd, td, .row-title) {
+  overflow-wrap: anywhere;
+}
+
+/* Deliberate truncation only: pair with the full value in title or
+   aria-label so nothing is silently cut off. */
+.truncate {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.scroll-x {
+  max-width: 100%;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+}
+
+/* ---------------------------------------------------------------------
+ * Text controls: one height token (--control-h, 44px) for every input,
+ * select, and date or time input. Identical box-sizing, padding, radius,
+ * 1px --color-border-control boundary on all four sides (3:1), font-size
+ * (16px, blocks iOS focus zoom), and font-family across every control
+ * type, so a row of mixed controls always lines up. Every control fills
+ * its track (width 100%), never its content, so a row cannot overflow.
+ * Base selectors sit in :where() (zero specificity) so the select
+ * chevron lane and the .control-icon-* lanes always win over the base
+ * padding.
+ * ------------------------------------------------------------------- */
+:where(input:not([type="checkbox"]):not([type="radio"]), select, textarea) {
   box-sizing: border-box;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
   font: inherit;
-  font-family: inherit;
   font-size: var(--text-0);
+  line-height: var(--line-0);
   color: var(--color-ink);
-  background: var(--color-surface);
-  border: var(--border-weight) solid var(--color-border-strong);
+  background-color: var(--color-surface);
+  border: var(--border-weight) solid var(--color-border-control);
   border-radius: var(--radius-8);
   padding: 0 var(--space-12px);
   transition:
     background-color var(--dur-150) var(--ease-standard),
-    border-color var(--dur-150) var(--ease-standard),
-    color var(--dur-150) var(--ease-standard);
+    border-color var(--dur-150) var(--ease-standard);
 }
 
-input,
-select {
+:where(input:not([type="checkbox"]):not([type="radio"]), select) {
   height: var(--control-h);
+  text-overflow: ellipsis;
 }
 
-input[type="date"],
-input[type="time"],
-input[type="datetime-local"] {
-  height: var(--control-h);
+:where(
+    input[type="date"],
+    input[type="time"],
+    input[type="datetime-local"],
+    input[type="month"],
+    input[type="week"],
+    select
+  ) {
   appearance: none;
   -webkit-appearance: none;
 }
 
+/* Select: the chevron gets a reserved lane. The value stops 40px from
+   the inline end (12px chevron inset + 12px chevron + 16px gap), so the
+   longest value ellipsizes before it can touch the chevron. The fill is a
+   literal hex baked into the data URI (a CSS var cannot be read inside an
+   encoded asset); it mirrors --color-ink-muted (#474747) and must be
+   updated by hand if that token ever changes. Flat SVG, no gradient. */
 select {
-  appearance: none;
-  -webkit-appearance: none;
-  padding-right: var(--space-32px);
-  /* Flat SVG chevron, no gradient. The fill is a literal hex baked into the
-     data URI (a CSS var cannot be read inside an encoded asset); it mirrors
-     --color-ink-muted (#474747) and must be updated by hand if that token
-     value ever changes. */
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6' fill='none'%3E%3Cpath d='M1 1L5 5L9 1' stroke='%23474747' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  padding-inline-end: var(--space-40px);
+  white-space: nowrap;
+  overflow: hidden;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8' fill='none'%3E%3Cpath d='M1.5 1.75L6 6.25L10.5 1.75' stroke='%23474747' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
-  background-position: calc(100% - 14px) center;
-  background-size: 10px 6px;
+  background-position: right var(--space-12px) center;
+  background-size: var(--space-12px) var(--space-8px);
+}
+
+[dir="rtl"] select {
+  background-position: left var(--space-12px) center;
+}
+
+select[multiple],
+select[size]:not([size="1"]) {
+  height: auto;
+  padding-inline-end: var(--space-12px);
+  background-image: none;
 }
 
 textarea {
-  min-height: var(--control-h);
-  padding-block: var(--space-8px);
+  min-height: calc(var(--control-h) * 2);
+  padding-block: var(--space-12px);
   resize: vertical;
 }
 
@@ -107,86 +174,241 @@ textarea::placeholder {
   color: var(--color-ink-subtle);
 }
 
-input:hover,
-select:hover,
-textarea:hover {
-  border-color: var(--color-border-strong);
+/* Icon lanes inside a control wrapper: icon size (20px) plus a 12px gap,
+   reserved, so a leading search icon or trailing clear button never sits
+   on the value. */
+.control-wrap {
+  position: relative;
+  min-width: 0;
+}
+
+.control-wrap > .icon {
+  position: absolute;
+  top: 50%;
+  translate: 0 -50%;
+  pointer-events: none;
+  color: var(--color-ink-muted);
+}
+
+.control-wrap > .icon-start {
+  inset-inline-start: var(--space-12px);
+}
+
+.control-wrap > .icon-end {
+  inset-inline-end: var(--space-12px);
+}
+
+.control-icon-start {
+  padding-inline-start: var(--space-40px);
+}
+
+.control-icon-end {
+  padding-inline-end: var(--space-40px);
+}
+
+/* ---------------------------------------------------------------------
+ * Checkbox and radio: same --color-border-control boundary, drawn on all
+ * four sides. 20px box inside a 44px-tall .choice label, so the whole
+ * label is the touch target. Checked fill is ink; the glyph is a flat
+ * SVG in the data URI (white mirrors --color-surface).
+ * ------------------------------------------------------------------- */
+input[type="checkbox"],
+input[type="radio"] {
+  appearance: none;
+  -webkit-appearance: none;
+  flex: 0 0 auto;
+  width: var(--space-20px);
+  height: var(--space-20px);
+  margin: 0;
+  background-color: var(--color-surface);
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: var(--space-12px) var(--space-12px);
+  border: var(--border-weight) solid var(--color-border-control);
+  cursor: pointer;
+  transition:
+    background-color var(--dur-100) var(--ease-standard),
+    border-color var(--dur-100) var(--ease-standard);
+}
+
+input[type="checkbox"] {
+  border-radius: var(--radius-4);
+}
+
+input[type="radio"] {
+  border-radius: var(--radius-pill);
+}
+
+input[type="checkbox"]:checked {
+  background-color: var(--color-ink);
+  border-color: var(--color-ink);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12' fill='none'%3E%3Cpath d='M2 6.25L4.75 9L10 3' stroke='%23ffffff' stroke-width='1.75' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+}
+
+input[type="checkbox"]:indeterminate {
+  background-color: var(--color-ink);
+  border-color: var(--color-ink);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12' fill='none'%3E%3Cpath d='M2.5 6H9.5' stroke='%23ffffff' stroke-width='1.75' stroke-linecap='round'/%3E%3C/svg%3E");
+}
+
+input[type="radio"]:checked {
+  background-color: var(--color-ink);
+  border-color: var(--color-ink);
+  background-size: var(--space-8px) var(--space-8px);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='8' viewBox='0 0 8 8'%3E%3Ccircle cx='4' cy='4' r='4' fill='%23ffffff'/%3E%3C/svg%3E");
+}
+
+.choice {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-12px);
+  min-height: var(--control-h);
+  min-width: 0;
+  cursor: pointer;
+}
+
+/* Control states. Hover is a state layer, gated to real pointers and to
+   enabled controls only. Focus turns the boundary ink and adds the focus
+   outline. Invalid is a danger boundary on all four sides plus the
+   message in the field hint slot, never color alone. */
+@media (hover: hover) {
+  input:enabled:hover,
+  select:enabled:hover,
+  textarea:enabled:hover {
+    background-color: var(--state-hover);
+  }
+
+  input[type="checkbox"]:enabled:checked:hover,
+  input[type="checkbox"]:enabled:indeterminate:hover,
+  input[type="radio"]:enabled:checked:hover {
+    background-color: var(--color-primary-hover);
+  }
+}
+
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  border-color: var(--color-ink);
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+input[aria-invalid="true"],
+select[aria-invalid="true"],
+textarea[aria-invalid="true"] {
+  border-color: var(--color-danger);
 }
 
 input:disabled,
 select:disabled,
 textarea:disabled {
   color: var(--state-disabled-content);
-  background: var(--state-disabled-container);
+  background-color: var(--state-disabled-container);
   border-color: var(--color-border);
-  cursor: not-allowed;
+  cursor: default;
 }
 
-/* Field layout: rows top-align (never center or stretch), each field
-   reserves a fixed helper/error slot so a row never jumps height when a
-   hint appears or disappears on one field but not its neighbors. */
+input[type="checkbox"]:disabled:checked,
+input[type="checkbox"]:disabled:indeterminate,
+input[type="radio"]:disabled:checked {
+  background-color: var(--state-disabled-content);
+  border-color: var(--state-disabled-content);
+}
+
+/* ---------------------------------------------------------------------
+ * Field layout. A row is a grid of equal minmax(0, 1fr) tracks, TOP
+ * aligned, so a row can never be wider than its container: one column on
+ * phone, two from 640px, and 3 or 4 from 1024px only when the row opts in
+ * with data-cols. Each field reserves a fixed helper/error slot so a row
+ * never jumps height when a hint appears on one field but not the next.
+ * ------------------------------------------------------------------- */
 .field-row {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-start;
-  align-content: flex-start;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-items: start;
   gap: var(--space-16px);
 }
 
+@media (min-width: 640px) {
+  .field-row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .field-row[data-cols="1"] {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  .field-row[data-cols="3"] {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .field-row[data-cols="4"] {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
 .field {
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  align-content: flex-start;
-  gap: var(--space-4px);
-  flex: 1 1 200px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-content: start;
+  gap: var(--space-6px);
   min-width: 0;
 }
 
-.field > label {
+.field > label,
+.field-label {
   font-size: var(--text-n1);
   line-height: var(--line-n1);
   font-weight: var(--weight-medium);
-  color: var(--color-ink-muted);
+  color: var(--color-ink);
 }
 
 .field-hint {
-  min-height: var(--line-n2);
+  min-height: var(--line-n1);
   margin: 0;
-  font-size: var(--text-n2);
-  line-height: var(--line-n2);
-  color: var(--color-ink-subtle);
+  font-size: var(--text-n1);
+  line-height: var(--line-n1);
+  color: var(--color-ink-muted);
 }
 
-.field-hint[data-tone="danger"] {
+.field-hint[data-tone="danger"],
+.field-hint[data-state="error"] {
   color: var(--color-danger);
 }
 
-.field-hint[data-tone="success"] {
+.field-hint[data-tone="success"],
+.field-hint[data-state="success"] {
   color: var(--color-success);
 }
 
 /* ---------------------------------------------------------------------
- * Buttons. A bare <button> defaults to the primary (ink) treatment, same
- * as before, so existing markup needs no class. `.btn-secondary` and
- * `.btn-ghost` are explicit opt-ins for a lighter weight action. `.btn` is
- * the same base for a non-<button> element (e.g. a link styled as a
- * button). All eight states: default, hover, focus-visible, active,
- * disabled, loading, error, success.
+ * Buttons. A bare <button> defaults to the primary (ink) treatment, so
+ * existing markup needs no class. `.btn-secondary` and `.btn-ghost` are
+ * explicit opt-ins for a lighter action. `.btn` is the same base for a
+ * non-<button> element (a link styled as a button). All eight states:
+ * default, hover, focus-visible, active, disabled, loading, error,
+ * success. A clickable target never wraps to two lines and never grows
+ * past its container.
  * ------------------------------------------------------------------- */
 button,
 .btn {
+  box-sizing: border-box;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: var(--space-8px);
   height: var(--control-h);
+  max-width: 100%;
   padding: 0 var(--space-16px);
-  border-radius: var(--radius-8);
+  font: inherit;
   font-size: var(--text-0);
+  line-height: var(--line-0);
   font-weight: var(--weight-medium);
+  white-space: nowrap;
+  border-radius: var(--radius-8);
   cursor: pointer;
   position: relative;
+  text-decoration: none;
   transition:
     background-color var(--dur-150) var(--ease-standard),
     border-color var(--dur-150) var(--ease-standard),
@@ -202,34 +424,10 @@ button,
   border: var(--border-weight) solid var(--color-primary);
 }
 
-button:hover,
-.btn:hover,
-.btn-primary:hover {
-  background: var(--color-primary-hover);
-  border-color: var(--color-primary-hover);
-}
-
-button:active,
-.btn:active,
-.btn-primary:active {
-  background: var(--color-primary-active);
-  border-color: var(--color-primary-active);
-  transform: translateY(1px);
-}
-
 .btn-secondary {
   background: var(--color-surface);
   color: var(--color-ink);
   border: var(--border-weight) solid var(--color-border-strong);
-}
-
-.btn-secondary:hover {
-  background: var(--state-hover);
-}
-
-.btn-secondary:active {
-  background: var(--state-pressed);
-  transform: translateY(1px);
 }
 
 .btn-ghost {
@@ -238,39 +436,67 @@ button:active,
   border: var(--border-weight) solid transparent;
 }
 
-.btn-ghost:hover {
-  background: var(--state-hover);
+.btn-block {
+  width: 100%;
 }
 
-.btn-ghost:active {
+@media (hover: hover) {
+  button:enabled:hover,
+  .btn:not(:disabled):not([aria-disabled="true"]):hover,
+  .btn-primary:not(:disabled):not([aria-disabled="true"]):hover {
+    background: var(--color-primary-hover);
+    border-color: var(--color-primary-hover);
+  }
+
+  .btn-secondary:not(:disabled):not([aria-disabled="true"]):hover,
+  .btn-ghost:not(:disabled):not([aria-disabled="true"]):hover {
+    background: var(--state-hover);
+  }
+}
+
+button:enabled:active,
+.btn:not(:disabled):not([aria-disabled="true"]):active {
+  background: var(--color-primary-active);
+  border-color: var(--color-primary-active);
+  transform: scale(0.98);
+}
+
+.btn-secondary:not(:disabled):not([aria-disabled="true"]):active,
+.btn-ghost:not(:disabled):not([aria-disabled="true"]):active {
   background: var(--state-pressed);
-  transform: translateY(1px);
 }
 
 button:disabled,
 .btn:disabled,
+.btn[aria-disabled="true"],
 .btn[data-state="disabled"] {
   color: var(--state-disabled-content);
   background: var(--state-disabled-container);
-  border-color: var(--color-border);
-  cursor: not-allowed;
+  border-color: transparent;
+  cursor: default;
   transform: none;
 }
 
-/* Loading: label hides, a spread-only ring spinner takes its place.
-   Transform-only motion (rotate), honors prefers-reduced-motion below. */
+/* Loading: the label hides and a ring spinner takes its place, so the
+   width never changes. Transform-only motion (rotate), collapsed under
+   reduced motion below. */
 button[data-state="loading"],
-.btn[data-state="loading"] {
+.btn[data-state="loading"],
+button[aria-busy="true"],
+.btn[aria-busy="true"] {
   color: transparent;
   pointer-events: none;
+  cursor: progress;
 }
 
 button[data-state="loading"]::after,
-.btn[data-state="loading"]::after {
+.btn[data-state="loading"]::after,
+button[aria-busy="true"]::after,
+.btn[aria-busy="true"]::after {
   content: "";
   position: absolute;
-  width: 16px;
-  height: 16px;
+  width: var(--space-16px);
+  height: var(--space-16px);
   border-radius: var(--radius-pill);
   border: 2px solid var(--color-primary-contrast);
   border-top-color: transparent;
@@ -278,7 +504,9 @@ button[data-state="loading"]::after,
 }
 
 .btn-secondary[data-state="loading"]::after,
-.btn-ghost[data-state="loading"]::after {
+.btn-ghost[data-state="loading"]::after,
+.btn-secondary[aria-busy="true"]::after,
+.btn-ghost[aria-busy="true"]::after {
   border-color: var(--color-ink);
   border-top-color: transparent;
 }
@@ -292,6 +520,8 @@ button[data-state="loading"]::after,
   }
 }
 
+/* Error and success pair the color with an icon and a word in the label;
+   the boundary is a full four-side border, never one edge. */
 button[data-state="error"],
 .btn[data-state="error"] {
   background: var(--color-danger-surface);
@@ -307,17 +537,19 @@ button[data-state="success"],
 }
 
 /* ---------------------------------------------------------------------
- * Bento grid primitive. One gap value per breakpoint; every card in a
- * grid shares the same corner radius, padding, and border weight; visual
- * weight varies only by span. `.bento-item-footer` is an explicit opt-in
- * for the one repeated trailing element (CTA, meta row) a card wants
- * pinned to a shared baseline; nothing gets margin-top:auto by default,
- * so short cards never grow an accidental internal void.
+ * Bento grid primitive, mobile-first. One column below 640px, two from
+ * 640px (tablet 640 to 1023), four from 1024px (desktop). Tracks are
+ * minmax(0, 1fr) so no tile can be pushed wider than the grid. One gap
+ * value; every tile shares the same radius, padding, and full four-side
+ * hairline; visual weight varies only by span, never by a colored edge.
+ * `.bento-item-footer` is the explicit opt-in for the one repeated
+ * trailing element (CTA, meta row) pinned to a shared baseline; nothing
+ * gets margin-top:auto by default, so short tiles never grow a void.
  * ------------------------------------------------------------------- */
 .bento {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  grid-auto-rows: minmax(160px, auto);
+  grid-template-columns: minmax(0, 1fr);
+  grid-auto-rows: auto; /* rows follow content: no fixed floor that opens a void in a short tile */
   gap: var(--space-16px);
 }
 
@@ -325,18 +557,20 @@ button[data-state="success"],
   display: flex;
   flex-direction: column;
   gap: var(--space-8px);
+  min-width: 0;
   border-radius: var(--radius-12);
   border: var(--border-weight) solid var(--color-border);
   background: var(--color-surface);
   padding: var(--space-16px);
-  transition:
-    border-color var(--dur-200) var(--ease-standard),
-    transform var(--dur-200) var(--ease-standard);
 }
 
-.bento-item:hover {
-  border-color: var(--color-border-strong);
-  transform: translateY(-2px);
+/* Only an interactive tile responds to hover, with a state layer. Never
+   a lift, never a shadow, never a colored edge. */
+@media (hover: hover) {
+  a.bento-item:hover,
+  button.bento-item:hover {
+    background: var(--state-hover);
+  }
 }
 
 .bento-item h2 {
@@ -355,55 +589,51 @@ button[data-state="success"],
   margin-top: auto;
 }
 
-.bento-lg {
-  grid-column: span 2;
-  grid-row: span 2;
-}
-
-.bento-wide {
-  grid-column: span 2;
-  grid-row: span 1;
-}
-
-.bento-tall {
-  grid-column: span 1;
-  grid-row: span 2;
-}
-
-.bento-sm {
-  grid-column: span 1;
-  grid-row: span 1;
-}
-
-/* Tablet: 2-column Bento, 640px to 1023px. */
-@media (max-width: 1023px) {
+@media (min-width: 640px) {
   .bento {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
-
-/* Mobile app-shell: single column below 640px, every span collapses to
-   one cell so no card is ever a different shape on the smallest width. */
-@media (max-width: 639px) {
-  .bento {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
   .bento-lg,
-  .bento-wide,
-  .bento-tall,
+  .bento-wide {
+    grid-column: span 2;
+  }
+}
+
+@media (min-width: 1024px) {
+  .bento {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+  .bento-lg {
+    grid-column: span 2;
+    grid-row: span 2;
+  }
+  .bento-wide {
+    grid-column: span 2;
+    grid-row: span 1;
+  }
+  .bento-tall {
+    grid-column: span 1;
+    grid-row: span 2;
+  }
   .bento-sm {
     grid-column: span 1;
     grid-row: span 1;
   }
 }
 
-/* Honor reduced-motion everywhere: collapse to a near-instant crossfade,
-   never a slide/scale, transform-based motion included. */
+/* Honor reduced motion everywhere: collapse to a near-instant change,
+   never a slide or scale, transform-based motion included. */
 @media (prefers-reduced-motion: reduce) {
-  * {
+  *,
+  *::before,
+  *::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
+  }
+  button:enabled:active,
+  .btn:active {
+    transform: none;
   }
 }

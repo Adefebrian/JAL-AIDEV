@@ -119,8 +119,13 @@
   --color-surface: #ffffff;
   --color-layer-1: #f5f5f4;
   --color-layer-2: #efefed;
-  --color-border: #e5e5e3;
-  --color-border-strong: #d4d4d1;
+  --color-border: #e5e5e3;        /* card, tile, row, divider hairline */
+  --color-border-strong: #d4d4d1; /* overlay edge, emphasized hairline */
+  /* Interactive control boundaries ONLY (input, select, date and time
+     input, textarea, checkbox, radio, switch track). WCAG 1.4.11 3:1:
+     3.28:1 on surface, 3.14:1 on page, 3.01:1 on layer-1. Never on cards,
+     tiles, or dividers, those keep --color-border. */
+  --color-border-control: #8f8e89;
 
   --color-ink: #1b1b1b;
   --color-ink-muted: #474747;
@@ -142,6 +147,19 @@
   --color-success-surface: #ebf4ee;
   --color-info: #3d5a73;
   --color-info-surface: #ecf1f4;
+
+  /* Status borders: a mid tone of each status hue, drawn as ONE full 1px
+     border on all four sides of a status surface (notice, toast, banner).
+     Never a side stripe, never a top or bottom accent bar. Decorative: the
+     status icon and a title that names the state carry the meaning. */
+  --color-danger-border: color-mix(in oklab, var(--color-danger) 24%, var(--color-border));
+  --color-warning-border: color-mix(in oklab, var(--color-warning) 24%, var(--color-border));
+  --color-success-border: color-mix(in oklab, var(--color-success) 24%, var(--color-border));
+  --color-info-border: color-mix(in oklab, var(--color-info) 24%, var(--color-border));
+
+  /* Dialog backdrop only. A translucent ink wash, flat, never a blur, a
+     gradient, or a shadow. Nothing else on the page uses it. */
+  --color-scrim: color-mix(in oklab, var(--color-ink) 40%, transparent);
 
   /* Legacy aliases (pre-v0.3.0 names). */
   --color-bg: var(--color-page);
@@ -184,11 +202,15 @@
    * an @media condition, so these exist for JS/tooling reference and as
    * the single source of truth the audit and skills point back to. Media
    * queries in CSS repeat the literal px values below.
-   *   --bp-sm: 640px   (app-shell below this)
-   *   --bp-md: 768px   (tablet: 2-column Bento)
-   *   --bp-lg: 1024px  (desktop: 4-column Bento, table row density applies)
-   *   --bp-xl: 1280px
-   *   --bp-2xl: 1536px
+   * Mobile-first, min-width only.
+   *   base  0 to 639px  mobile app-shell: single column, bottom tab bar
+   *   --bp-sm: 640px    tablet (640 to 1023): 2-column Bento, top nav
+   *                     returns, bottom tab bar drops
+   *   --bp-md: 768px    tablet wide: regions may divide, forms may go 2 across
+   *   --bp-lg: 1024px   desktop (1024 and up): 4-column Bento, side nav
+   *                     allowed, table row density applies
+   *   --bp-xl: 1280px   content cap reached, page centers
+   *   --bp-2xl: 1536px  extra room goes to fill regions, never wider prose
    * ------------------------------------------------------------------- */
   --bp-sm: 640px;
   --bp-md: 768px;

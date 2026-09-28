@@ -1,27 +1,23 @@
 ---
-description: Invoke jal-ux to audit then fine-tune or rebuild a frontend to the JAL taste standard, from scratch or existing.
-argument-hint: <scope>
+description: Build a new screen or redesign an existing one to the JAL standard, tidy, modern, mobile-first, and checked automatically.
+argument-hint: <what to build, or which screen to redesign>
 ---
 
-Target scope: $ARGUMENTS
+What to work on: $ARGUMENTS
 
-Dispatch agent `jal-ux` to bring `$1` (the full scope: $ARGUMENTS) up to the JAL taste standard, per `agents/jal-ux.md`. This may be a fresh build or an audit-and-tune pass on an existing frontend, decide which based on whether `$1` already has UI to review.
+## What happens
 
-## Steps, in order
+1. It works out whether this is a new screen or a redesign of one that already exists. For a redesign it checks the current screen first and lists what is wrong before changing anything.
+2. It plans every section before drawing it: what the section is for, the one message it carries, and the one action it offers. Sections with no clear purpose are left out.
+3. It picks the design system that fits the product, and decides for each section whether it belongs and how it should be laid out. These calls are made by the JEV judge, not by guesswork.
+4. It builds phone first, then tablet, then desktop, on the shared JAL design tokens: white background, one quiet accent at most, nothing overlapping, nothing sticking out of its box, no shadows, no gradients, no side lines on cards.
+5. It proves the result with the automatic UI check at phone, tablet, and desktop widths, fixes anything the check finds, and repeats until it passes.
+6. It reports back what it built, each decision it made and how confident it was, and the result of the UI check.
 
-1. **Read skill `jal-ui-taste`** in full before touching any file: the modular type scale, 4/8pt spacing rhythm, radius and elevation tokens, mobile/tablet/desktop breakpoints and the mobile app-shell, visual-consistency rules, gradient discipline, UX heuristics, and the audit checklist. Do not re-derive any of this from memory.
-2. **Audit `$1` against the taste checklist:**
-   - Type scale and spacing/radius scale consistency.
-   - Responsive behavior at mobile, tablet, and desktop breakpoints.
-   - Visual consistency across screens (shared tokens, no one-off styles).
-   - Gradient discipline: feralui.dev gradients only, nothing else.
-   - UX heuristics (feedback, error states, empty states, discoverability).
-   - Contrast at WCAG AA minimum.
-   - Touch targets at 44px minimum on interactive elements.
-   - If `$1` has no existing UI, skip straight to a from-scratch build against the same checklist.
-3. **Report the audit findings** before changing anything, file and screen for each violation, so the scope of the fix pass is explicit.
-4. **Apply fixes, or build fresh** if there was nothing to audit. Every screen touched must use koboyo or reicon icons, never inline emoji or a different icon set, and feralui gradients only where a gradient is used at all.
-5. **No em dash, anywhere,** in copy, code comments, or UI text. Reference skill `jal-frontend-rules` for this and the rest of the banned-pattern list (no eyebrow labels, no glow, no neon).
-6. **Verify against skill `jal-frontend-rules`** as the final gate: re-run the em-dash and banned-pattern scan against the touched files, confirm it is clean before reporting done.
+## Run it
 
-Report the audit findings, what was fixed or built, and the final `jal-frontend-rules` verification result. Stay terse.
+Dispatch agent `jal-ux` with the full request: $ARGUMENTS
+
+`jal-ux` runs its pipeline from `agents/jal-ux.md` in order, with no step skipped: read the brief or audit the existing UI, write a concept for every section, JEV `ui.lens`, the Astryx frame and region workflow, JEV `ui.region_gate` per section and major component, an optional designmd reference only after JEV `ui.designmd_screen` passes, build on JAL Core tokens mobile-first, motion per `jal-motion`, the hard-law self-check, `ui_audit` at 320, 375, 414, 768, and 1280 until PASS (`SKIPPED` is never a pass), JEV `ui.final_taste`, screenshots at 375 and 1280, then the decision log.
+
+Report back, terse: mode (new or redesign), the section concepts, each JEV decision with confidence and the action taken (stamp `UNVERIFIED BY JEV` where it applies), what was built or changed by file, the final `ui_audit` result per width, and build and test status.
