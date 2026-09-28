@@ -14,7 +14,9 @@ Index:
 | Domain | IDs |
 |--------|-----|
 | Orchestration | `orch.route`, `orch.parallel`, `orch.model`, `orch.escalate`, `orch.loop_exit` |
-| UI/UX | `ui.density`, `ui.region_gate`, `ui.designmd_screen`, `ui.final_taste` |
+| UI/UX | `ui.direction_screen`, `ui.density`, `ui.region_gate`, `ui.designmd_screen`, `ui.final_taste`, `ui.heuristics`, `ui.finish_disposition`, `ui.text_reveal_granularity`, `ui.number_motion`, `ui.geo_visual` |
+| Motion | `motion.intensity`, `motion.choreography`, `motion.pin`, `motion.demo_medium` |
+| Immersive | `imm.gate`, `imm.recipe`, `imm.tech`, `imm.tier`, `imm.taste` |
 | Backend | `be.placement`, `be.api_quality`, `be.migration_risk`, `be.new_tech` |
 | Security | `sec.severity`, `sec.false_positive`, `sec.ship_block`, `sec.input_screen` |
 | QA | `qa.failure_class`, `qa.test_selection`, `qa.coverage`, `qa.release_go` |
@@ -373,6 +375,610 @@ Index:
 **Thresholds and actions:**
 - `taste` under 2: revise before returning, targeting the weakest regions, then re-audit and re-ask.
 - `taste` 2 or above: return the screen with the decision log.
+
+---
+
+### `ui.direction_screen`
+
+**Purpose:** screen direction candidates before the seeded draw. JEV screens; it never picks.
+
+**Caller:** jal-ux at the `/jal-ui` direction step, and jal-immersive at `/jal-immersive` step 2, for a new product, a new surface, or a redesign without a direction contract.
+
+**Precheck (decides without JEV):**
+- The agent has 5 to 7 ranked candidates spanning 3 or more material families. Each is expressed as a form, a preset, a first viewport, and a lawful expression.
+- Candidates that need a gradient, shadow, glow, blur, dark default, overlap, purple, invented claims, or missing assets are dropped and replaced before asking.
+- Presets whose gate fails are dropped (see `jal-design-system` `references/directions.md`).
+
+**State fields:** `proposal.mode`, `proposal.rut`, `proposal.candidates` (each with `key`, `rank`, `form`, `preset`, `why`, `first_viewport`, `lawful_expression`), `evidence` (content and assets on hand, and claims that must not be invented).
+
+**Questions** (repeat the `c1_*` pair as `c2_*` through `c7_*` in one call):
+```json
+{
+  "c1_slop": {
+    "type": "noul",
+    "instructions": "Yes means candidate c1 in state.proposal.candidates is slop for this product: the category rut named in state.proposal.rut or its predictable opposite, a generic template skin over a stock layout, dependent on something JAL law strips (state.law), or needing invented claims or assets not listed in state.evidence. Yes means drop. Do not judge familiarity or rank."
+  },
+  "c1_fit": {
+    "type": "score",
+    "instructions": "Score how well candidate c1 carries this product's real task and truth for the audience in state, expressed as JAL Core knob values under state.law. Judge audience recognition and product clarity together; ignore its rank.",
+    "criteria": [
+      "0 Foreign or obscuring: the audience has no relationship to this form, or it hides the offer, task, or primary action.",
+      "1 Skin: recognizable, but only a surface over a standard layout, no structural gain.",
+      "2 Supports: the audience knows this form and its structure maps onto the product's content and primary action.",
+      "3 Native and explains: the audience lives with this form daily and its structure itself shows how the product works."
+    ]
+  }
+}
+```
+
+**Thresholds and actions:**
+- Drop a candidate when `slop` is 0.5 or more (a veto), or when `fit` is under 1.5.
+- Survivors keep their original rank. Never sort them by score.
+- The seeded draw (`references/directions.md`) runs over the survivors ranked 3 to 7.
+- If fewer than 4 survive, or none ranked 3 or lower survives, refill the dropped slots once and re-screen. If the pool is still empty, build the best-ranked survivor and log `fallback: empty pool`.
+- A rank 1 or 2 survivor whose fit beats the drawn candidate by 1.0 or more may be shown once as an alternate in attended runs. It never leads.
+- Low confidence on a key: treat it as a drop only when slop is 0.4 or more.
+
+### `ui.heuristics`
+
+**Purpose:** Nielsen's 10 heuristics plus a specificity check on a built or existing screen.
+
+**Caller:** the fresh-context reviewer in the finish review (`jal-design-system` `references/craft.md`), and jal-ux in critique mode.
+
+**Precheck (decides without JEV):**
+- A `ui_audit` result is attached. Mechanical violations are law failures and are not re-judged here.
+
+**State fields:** `proposal` (a structured screen description: regions in order, container, message, action, states present, and sample error and empty copy), `evidence` (the `ui_audit` summary, persona findings, and visitor mode).
+
+**Questions:**
+```json
+{
+  "specific": {"type": "noul", "instructions": "Yes means the screen in state.proposal is authored for state.product: an unrelated product could not reuse its composition and language unchanged. No means it is category-interchangeable."},
+  "h1_status": {"type": "score", "instructions": "Score visibility of system status in state.proposal: loading, confirmation, progress, current location, inline validation.", "criteria": ["0 None: the user guesses what happened.", "1 Rare: most actions give no visible response.", "2 Partial: some states shown, major gaps.", "3 Good: most actions confirm, minor gaps.", "4 Excellent: every action confirms and progress is always visible."]},
+  "h2_real_world": {"type": "score", "instructions": "Score match between the copy and order in state.proposal and the user's own language and real-world order.", "criteria": ["0 Jargon throughout.", "1 Mostly confusing, needs domain expertise.", "2 Plain language mixed with leaked jargon.", "3 Mostly natural, a rare unexplained term.", "4 Fluent in the user's language throughout."]},
+  "h3_control": {"type": "score", "instructions": "Score user control and freedom: undo, cancel, back, clear filters, a way out of long flows.", "criteria": ["0 Users get trapped.", "1 Exits are obscure.", "2 Main flows escapable, edge cases not.", "3 Most actions can be exited or undone.", "4 Undo, cancel, back, and escape everywhere."]},
+  "h4_consistency": {"type": "score", "instructions": "Score consistency of terms, components, and behavior across the surface, with JAL Core component specs, and with platform conventions.", "criteria": ["0 Feels stitched from different products.", "1 Many look-alikes behave differently.", "2 Main flows match, details diverge.", "3 Mostly consistent, nothing confusing.", "4 One cohesive, predictable system."]},
+  "h5_prevention": {"type": "score", "instructions": "Score error prevention: constraints, sensible defaults, undo or a named confirmation for destructive actions, draft recovery, double-submit blocking.", "criteria": ["0 Errors are easy to make.", "1 Few safeguards.", "2 Common errors caught, edges slip.", "3 Most error paths blocked.", "4 Errors nearly impossible."]},
+  "h6_recognition": {"type": "score", "instructions": "Score recognition over recall: visible options, labeled icons, recent items, inline hints, at most 4 options per decision point.", "criteria": ["0 Heavy memorization.", "1 Most features hidden.", "2 Main actions visible, secondary hidden.", "3 Most things discoverable.", "4 Nothing needs memorizing."]},
+  "h7_efficiency": {"type": "score", "instructions": "Score flexibility and efficiency: shortcuts, bulk actions, power paths that do not complicate the basics. If state.evidence says the mode is persuade or experience, answer 2 and it is treated as n/a.", "criteria": ["0 One rigid path.", "1 Few alternatives.", "2 Some shortcuts.", "3 Good accelerators.", "4 Multiple paths and power features."]},
+  "h8_minimal": {"type": "score", "instructions": "Score aesthetic and minimalist design under JAL law: only necessary information, clear hierarchy, one primary action per region, purposeful emphasis, no decorative clutter.", "criteria": ["0 Everything competes equally.", "1 Cluttered.", "2 Main content clear, periphery noisy.", "3 Focused with minor noise.", "4 Every element earns its place."]},
+  "h9_recovery": {"type": "score", "instructions": "Score error recovery: plain-language errors that name what failed, sit near the source, give the fix, and keep the user's work.", "criteria": ["0 Cryptic or missing errors.", "1 Vague errors, no guidance.", "2 Names the problem, not the fix.", "3 Problem plus next step.", "4 Pinpoints, suggests, preserves work."]},
+  "h10_help": {"type": "score", "instructions": "Score help and documentation: contextual, task-focused, reachable without leaving the flow, including empty states that teach. If state.evidence says the mode is persuade or experience, answer 2 and it is treated as n/a.", "criteria": ["0 No help anywhere.", "1 Hard to find or irrelevant.", "2 Basic, not contextual.", "3 Good, mostly task-focused.", "4 The right help at the right moment."]}
+}
+```
+
+**Thresholds and actions:**
+- Total the scores over the applicable max. On persuade and experience surfaces, drop h7 and h10 from both.
+- Bands:
+
+  | Share of max | Band |
+  |---|---|
+  | 90% or more | excellent |
+  | 70% or more | good |
+  | 50% or more | acceptable |
+  | 30% or more | poor |
+  | below 30% | critical |
+
+- Any heuristic under 2 becomes a priority issue with a P level.
+- `specific` under 0.5 is a P1 finding, whatever the total.
+- The band goes into `ui.finish_disposition` as evidence. It does not replace that decision.
+
+### `ui.finish_disposition`
+
+**Purpose:** the finish verdict from a fresh-context reviewer.
+
+**Caller:** a new reviewer subagent with no access to the build conversation, after `ui_audit` PASS, `ui.final_taste` (or `imm.taste`) of 2 or more, and `ui.heuristics`.
+
+**Precheck (decides without JEV):**
+- Captures at 375 and 1280 exist.
+- Obviously invalid captures go straight to recapture, without asking.
+
+**State fields:** `proposal.contract` (thesis, own world, story, first viewport, form plus seed key), `proposal.matrix` (element, status as match, adaptation, missing, contradicted, or added, and a note; the TYPE, ACCENT, and GROUND rows are mandatory), `proposal.material_fixes` (at most 8), `evidence` (the `ui_audit` summary, the heuristics band, and whether this is round 1 or 2).
+
+**Questions:**
+```json
+{
+  "disposition": {
+    "type": "choice",
+    "instructions": "Pick the finish disposition for the build in state.proposal, judged by a fresh-context reviewer against its own direction contract (state.proposal.contract) and the fidelity matrix (state.proposal.matrix), never against the effort visible in the build. JAL law is already proven by ui_audit in state.evidence and is not re-judged.",
+    "criteria": {
+      "ship": "No contradicted or missing rows in the matrix and no material fixes; the first viewport keeps the contract's promise and passes the memory test.",
+      "fix": "The concept holds, but there are specific material fixes (up to eight) that one batch can close without replacing whole regions.",
+      "rebuild": "The concept failed in the build: the first viewport or the focal element contradicts the contract, or contradiction is the norm rather than the exception, so patches would only launder a rejected page.",
+      "recapture": "The evidence cannot support a verdict: a capture is blank, cropped, not taken from the top, taken mid-animation, at the wrong width, or a required state is missing."
+    }
+  }
+}
+```
+
+**Thresholds and actions:**
+- `ship`: report the verdict at its real scope.
+- `fix`: apply all fixes in one batch, recapture the same widths, and ask again, marking each fix resolved, partial, or unresolved.
+- `rebuild`: re-derive the named regions from the contract, then run a full review.
+- `recapture`: redo the evidence. It does not count as a round.
+- At most two fix or rebuild rounds. Anything still open after round 2 goes to Brian as a table.
+- Low confidence:
+  - If `recapture` is the primary answer, or the runner-up with probability 0.3 or more, recapture first.
+  - Otherwise take the stricter of the primary and the runner-up. From strictest to least strict: rebuild, fix, ship.
+- Evidence from the user against a `ship` verdict reopens a full review.
+
+### `ui.text_reveal_granularity`
+
+**Purpose:** pick how a headline is split for its entrance (R02 or R03).
+
+**Caller:** jal-ux, jal-frontend, jal-immersive, after `motion.intensity` for the region.
+
+**Precheck (decides without JEV):** region intensity below 2 means `whole` without asking; reduced motion always renders `whole`; body copy and product labels are never split.
+
+**State fields:** `proposal` (the headline text, character and word counts, lines at 375 and 1280), `evidence` (the page's other signature moves, the display face and size).
+
+**Questions:**
+```json
+{
+  "granularity": {
+    "type": "choice",
+    "instructions": "Choose how the headline in state.proposal is split for its entrance, given its length, its line count at each width, the other signature moves in state.evidence, and the 1200ms hero budget in state.law.",
+    "criteria": {
+      "whole": "Over 60 characters, or 3 or more lines at 375px, or the page already has a stronger signature move. Animate as one block with micro-scale-fade or fade-through.",
+      "per_line": "Two or more lines where each line is a meaningful phrase. Use R03 line mask reveal with --stagger-line (80ms).",
+      "per_word": "Three to eight words on one or two lines where word rhythm matters. Use per-word-crossfade with --stagger-word (40ms).",
+      "per_character": "A short brand word or phrase under 24 characters where letterforms are the point. Use per-character-rise with --stagger-char (20ms)."
+    }
+  }
+}
+```
+
+**Threshold:** act on the primary at confidence 0.5 or above; below 0.5 take the coarser of the top two (whole, then per_line, then per_word, then per_character), since coarser is always lawful and cheaper. Unverified: apply the criteria yourself and stamp the report.
+
+### `ui.number_motion`
+
+**Purpose:** pick how a displayed number arrives or changes (R07, R08, or static).
+
+**Caller:** jal-ux, jal-frontend, jal-immersive when a stat, counter, price, or KPI is placed.
+
+**Precheck (decides without JEV):** numbers in forms, tables, and financial statements are static; reduced motion is always static; a value that changes while visible never uses R07.
+
+**State fields:** `proposal` (the number, its role, whether it updates live), `evidence` (region intensity, surrounding motion).
+
+**Questions:**
+```json
+{
+  "number_motion": {
+    "type": "choice",
+    "instructions": "Choose how the number in state.proposal is shown, given whether it updates while visible, its role, and the region intensity in state.evidence.",
+    "criteria": {
+      "static": "The number is read for exact value (price, balance, KPI in a product surface) or the region intensity is below 2. Render the final value.",
+      "count_up": "A marketing stat seen once on entrance, region intensity 2 or more. Use R07 over --dur-600 with reserved width.",
+      "odometer": "The number changes while visible (live counter, ticking total, price that updates). Use R08, digits roll over --dur-300."
+    }
+  }
+}
+```
+
+**Threshold:** act on the primary at confidence 0.5 or above; below 0.5 use `static`.
+
+### `ui.geo_visual`
+
+**Purpose:** pick the visual for a locations or global-reach story (R44 globe, R38 dotted map, or a static list).
+
+**Caller:** jal-immersive and jal-ux when a section shows offices, coverage, routes, or customers by region.
+
+**Precheck (decides without JEV):** product surfaces never get R44; low `imm.tier`, reduced motion, and missing WebGL render the R44 poster; fewer than 3 locations is a static list.
+
+**State fields:** `proposal` (the locations and what the section claims), `evidence` (region intensity, page signature moves, audience devices).
+
+**Questions:**
+```json
+{
+  "geo_visual": {
+    "type": "choice",
+    "instructions": "Choose the visual for the locations in state.proposal, judged by whether rotation or spatial spread carries information the visitor would otherwise miss, against the page's other signature moves in state.evidence.",
+    "criteria": {
+      "globe": "Global reach across continents is the claim, the section is a marketing hero or story beat at intensity 2 or more, and no other signature move shares the viewport. Use R44 with poster first and a pause control.",
+      "dotted_map": "Several regions matter and the reader compares them side by side, or the page already has a signature move. Use R38, static SVG generated at build time.",
+      "list": "Locations are few, or exact addresses and names matter more than spread. Use a static list or R41 tiles."
+    }
+  }
+}
+```
+
+**Threshold:** act on `globe` only at confidence 0.6 or above (it is the costliest); otherwise take the next option in order dotted_map, list.
+
+---
+
+## Motion
+
+### `motion.intensity`
+
+**Purpose:** set how much motion one section carries.
+
+**Caller:** jal-ux or jal-immersive, once per section, before any motion is written.
+
+**Precheck (decides without JEV):**
+- `prefers-reduced-motion` handling is fixed by law (crossfade of 150ms or less) and never asked.
+- Product UI surfaces (app screens, forms, tables, settings) are capped at tier 1. Not asked above that.
+- Legal, pricing tables, docs, and forms are tier 0. Not asked.
+- At most one section per page may be tier 3; if a tier-3 section already exists, cap this one at 2.
+
+**State fields:** `product`, `evidence.section` (name, role on the page, content type: headline, feature list, proof, demo, CTA), `evidence.position` (index on page, hero or not), `evidence.audience` (first-time visitor or repeat user), `constraints.tier_cap`.
+
+**Questions:**
+```json
+{
+  "intensity": {
+    "type": "score",
+    "instructions": "Score how much motion this section should carry on a JAL showcase page, given state.evidence.section and state.evidence.position. Motion must communicate something about the content; decoration is never a reason. Respect state.constraints.tier_cap.",
+    "criteria": [
+      "0 Still: content is read, not experienced. No motion beyond state layers.",
+      "1 Quiet: one entrance per section, opacity plus a short translate, played once on enter.",
+      "2 Staged: a sequenced reveal of the section's parts, line reveals on the headline, at most one light scroll-linked element, no pinning.",
+      "3 Cinematic: a pinned or camera-style scroll sequence that explains an ordered story; reserved for the hero or one flagship section."
+    ]
+  }
+}
+```
+
+**Thresholds and actions:**
+- Round the weighted score to the nearest tier, then clamp to `constraints.tier_cap`.
+- Low confidence: take the lower of the top two tiers (less motion is the safe default).
+
+### `motion.choreography`
+
+**Purpose:** pick the scroll choreography pattern for one section.
+
+**Caller:** jal-ux or jal-immersive, after `motion.intensity`, only for sections at tier 1 or above.
+
+**Precheck (decides without JEV):**
+- Tier 1 sections are `reveal`. Not asked.
+- `pinned_sequence` and `horizontal_track` are only offered at tier 3; drop them from criteria otherwise.
+- `horizontal_track` is never offered below 1024px width; mobile falls back to `stagger_sequence`.
+- Reduced motion ignores the answer and renders the static final state.
+
+**State fields:** `evidence.section`, `evidence.item_count` (cards, steps, or panels), `evidence.order_matters` (bool), `evidence.tier`, `constraints.viewports`.
+
+**Questions:**
+```json
+{
+  "choreography": {
+    "type": "choice",
+    "instructions": "Pick the one scroll choreography pattern for this section, given state.evidence and state.evidence.tier. Only transform and opacity may move, nothing may overlap other content, and one parent transform should do the moving where possible.",
+    "criteria": {
+      "reveal": "Independent items (cards, logos, proof points) that simply appear as they enter, batched with a small stagger, played once.",
+      "stagger_sequence": "A small group whose parts read in a set order (headline, then body, then action), played once as a timeline when the section enters.",
+      "scrub": "One element or parent transform whose position or scale should track reading progress, such as a product frame easing into place, without holding the page.",
+      "pinned_sequence": "Three or more ordered steps that must be read in the same place, advanced by scroll with snapping to each step.",
+      "horizontal_track": "A wide set of peer panels, such as a gallery or timeline, browsed sideways while the section is held, desktop only."
+    }
+  }
+}
+```
+
+**Thresholds and actions:**
+- Confidence 0.5 or above: build the chosen pattern per `jal-immersive` `references/scroll-choreography.md`.
+- Low confidence between a pinned option and a non-pinned option: take the non-pinned one.
+
+### `motion.pin`
+
+**Purpose:** confirm whether a section chosen as `pinned_sequence` or `horizontal_track` should actually pin.
+
+**Caller:** whoever writes the ScrollTrigger (jal-immersive, jal-ux, or jal-frontend), before writing it.
+
+**Precheck (decides without JEV):**
+- Never pin below 768px width, forms, tables, or anything with its own inner scroll. Not asked.
+- Never pin two adjacent sections. Not asked.
+- `pinSpacing` stays true. Not asked.
+
+**State fields:** `evidence.section`, `evidence.step_count`, `evidence.fits_viewport` (does the pinned content fit 100svh at every width it pins at, without inner scroll), `evidence.neighbours` (pinned or not).
+
+**Questions:**
+```json
+{
+  "pin": {
+    "type": "noul",
+    "instructions": "Yes means holding this section in place while scroll advances its steps serves the reader: the steps are ordered, each needs the same frame to be understood, and the content fits the viewport without inner scroll. No means the section should scroll normally and its steps should reveal in flow."
+  }
+}
+```
+
+**Thresholds and actions:**
+- 0.6 or above: pin, with scroll length sized to step count and `snap: "labels"`.
+- Under 0.6, or low confidence: do not pin; downgrade to `stagger_sequence`.
+
+### `motion.demo_medium`
+
+**Purpose:** choose how a product demo section is delivered.
+
+**Caller:** jal-ux or jal-immersive for any section whose role is "demo".
+
+**Precheck (decides without JEV):**
+- Remotion is banned. A demo that must also ship outside the site is an escalation to Brian, not an option here.
+- Every option ships a pause control if it runs longer than 5 seconds, and a static poster under reduced motion. Not asked.
+
+**State fields:** `evidence.demo_goal` (what the viewer should understand), `evidence.channels` (on-site only, or also social, email, store listings), `evidence.interactivity` (should the viewer scrub or click), `constraints.viewports`.
+
+**Questions:**
+```json
+{
+  "medium": {
+    "type": "choice",
+    "instructions": "Pick how this product demo is delivered, given state.evidence. Prefer the option with the fewest new dependencies that still meets the demo goal.",
+    "criteria": {
+      "live_dom": "A GSAP timeline animating the real JAL components in the page, scroll-scrubbed or played with a pause control. Best when the demo lives only on the site and should stay crisp and editable.",
+      "poster_steps": "A short stepper of static screens that crossfade on scroll or click. Best when the story is a few states and motion adds little.",
+      "frame_core": "A frame-driven composition on the JAL frame core (packages/ui/src/frames) played live by its Player with play, pause, and scrub. Best for a timed, cinematic walkthrough that should feel like a video but stay crisp, light, and editable."
+    }
+  }
+}
+```
+
+**Thresholds and actions:**
+- Confidence 0.5 or above: build the chosen medium.
+- Low confidence: take `live_dom` unless the runner-up is `poster_steps`, in which case take `poster_steps`.
+
+---
+
+## Immersive
+
+### `imm.gate`
+
+**Purpose:** decide whether a section earns immersion at all, and for a noyzzi 3D element, whether the object carries meaning and where it sits.
+
+**Caller:** jal-immersive at workflow step 3, once per section, before `imm.recipe`. Batch all sections of one page with key prefixes (`hero_earn`, `hero_value`, `story_earn`, ...).
+
+**Precheck (decides without JEV):**
+- Product UI chrome, app screens, forms, tables, dashboards, settings, docs, pricing tables, and legal never get immersion. Not asked.
+- A section with no job, message, or DOM text equivalent is deleted or rewritten first. Not asked.
+- If the page already has a tier-3 section, this section is capped at tier 2 and cannot be cinematic. Not asked.
+- Visitor mode `task` limits immersion to the hero. Other sections are not asked.
+
+**State fields:** `product`, `task`, `proposal.section` (key, job, one message, primary action, beats, what the immersion would show), `evidence.alternatives` (what a still, CSS, GSAP on DOM, or the poster alone would achieve), `evidence.visitor_mode`, `evidence.audience_devices`, `proposal.element` (only for a noyzzi 3D element: id, law note, intended meaning).
+
+**Questions:**
+```json
+{
+  "earn": {
+    "type": "noul",
+    "instructions": "Yes means section state.proposal.section should be immersive (a live canvas, a 3D scene, or a rich interactive effect). Yes only if form, viewpoint, continuous change, a brand signature, or direct interaction carries the section's one message better than every option in state.evidence.alternatives. No means build it with DOM, CSS, or GSAP only."
+  },
+  "value": {
+    "type": "score",
+    "instructions": "Score how much the immersive version adds to the visitor's understanding of this section's message versus the best option in state.evidence.alternatives, for the visitor mode in state.evidence.visitor_mode.",
+    "criteria": [
+      "0 Decorative: nothing is lost if replaced by the poster image.",
+      "1 Nice: slightly more engaging, same understanding.",
+      "2 Explanatory: shows form, scale, assembly, or change that a still cannot.",
+      "3 Essential: the visitor must rotate, configure, explore, or touch to get the point."
+    ]
+  },
+  "object_meaning": {
+    "type": "noul",
+    "instructions": "Ask only when state.proposal.element is set. Yes means the noyzzi 3D element carries meaning for this product (brand mark, product metaphor, or the section's subject) and the section would be weaker without it. No means it is decoration."
+  },
+  "placement": {
+    "type": "choice",
+    "instructions": "Ask only when state.proposal.element is set. Pick where the element should sit on this page.",
+    "criteria": {
+      "hero": "It is the brand's signature and the page opens on it.",
+      "section": "It illustrates one feature or story beat further down the page.",
+      "none": "It does not fit this page."
+    }
+  }
+}
+```
+
+**Thresholds and actions:**
+- Immersive only if `earn` is 0.5 or above and `value` is 2 or above. Otherwise build with DOM, CSS, or GSAP. This is a veto.
+- Element questions: `object_meaning` under 0.6, or `placement` `none`, drops the element.
+- Low confidence: no immersion (the poster-grade static version ships).
+
+### `imm.recipe`
+
+**Purpose:** pick the recipe, or recipes, for one gated section from its assembled candidates (SKILL.md section 5), and whether to combine the top two.
+
+**Caller:** jal-immersive at workflow step 3, after `imm.gate` passes for the section. One call per section.
+
+**Precheck (decides without JEV):**
+- Candidates come only from the pool and pass the hard filter: approved tech only, within the cost ceiling, a mobile fallback when mobile is a target, not the adjacent section's recipe, mechanically feasible.
+- The shortlist has 2 to 6 candidates, including at least one JAL-native and one C0 or C1 control, and at most three noyzzi pieces.
+- `combine` is only acted on if the combination rules hold (one canvas, shared surface or noyzzi boundary, summed cost in tier, one scroll owner, one pointer effect per element). Not asked when only one candidate exists.
+
+**State fields:** `product`, `proposal.section` (kind, job, message, beats, surface of neighbouring sections), `proposal.candidates` (for each: pool ID, source, surface, cost tier, mobile fallback, law note, what it shows), `evidence.direction` (the direction contract), `evidence.page_recipes` (recipes already chosen for other sections), `constraints.cost_ceiling`.
+
+**Questions** (the `recipe` criteria are generated per section: one key per candidate pool ID, each with a when-right description):
+```json
+{
+  "recipe": {
+    "type": "choice",
+    "instructions": "Pick the one recipe from state.proposal.candidates that best carries the message of section state.proposal.section for the direction in state.evidence.direction, varies from state.evidence.page_recipes, and stays within state.constraints.cost_ceiling. Judge fit to the message and the audience, not novelty.",
+    "criteria": {
+      "nz.section.gaze": "A calm paper-field hero where a light canvas-drawn field responding to the visitor sets an editorial, crafted tone on the page white.",
+      "three.matcap_clay": "The subject is one object whose form is the message, shown as a quiet clay render on white at very low cost.",
+      "mu.R02": "The headline itself is the message; a line or word reveal carries it without any canvas."
+    }
+  },
+  "combine": {
+    "type": "noul",
+    "instructions": "Yes means build the primary recipe with the runner-up layered in the same section (for example kinetic type over a paper field), because together they carry the message better than either alone and neither competes for attention. No means build the primary alone."
+  },
+  "surface": {
+    "type": "choice",
+    "instructions": "Ask only when state.proposal.candidates span paper and dark surfaces. Pick the surface for this section given the brand and the rest of the page in state.",
+    "criteria": {
+      "paper": "The page is white or off-white and this section should feel continuous with it.",
+      "dark": "The brand wants one contained dark moment here and accepts the noyzzi exemption inside this section only."
+    }
+  },
+  "hover_family": {
+    "type": "choice",
+    "instructions": "Ask only when the section kind is gallery_hover. Pick the hover effect family for this image gallery, given the brand in state.product and the hero recipe in state.evidence.page_recipes.",
+    "criteria": {
+      "calm": "Premium, editorial, finance, health, or any brand where motion should be felt more than seen.",
+      "editorial_grade": "Fashion, lifestyle, photography, or culture brands where a colour grade tells the story.",
+      "expressive": "Creative studios, product launches, portfolios that want visible, fluid motion.",
+      "loud": "Gaming, music, events, youth, or campaigns where novelty is the point."
+    }
+  },
+  "motion_budget": {
+    "type": "score",
+    "instructions": "Ask only when the section kind is gallery_hover. Score how much motion this page can carry before the gallery hover competes with the hero.",
+    "criteria": [
+      "0 None: the hero is already busy, use static images.",
+      "1 Low: one subtle hover only.",
+      "2 Medium: a visible hover is fine.",
+      "3 High: the page is built around motion."
+    ]
+  }
+}
+```
+
+**Thresholds and actions:**
+- Confidence 0.5 or above: build `recipe`.
+- `combine` 0.6 or above and the combination rules hold: layer the runner-up. Otherwise the primary alone.
+- `surface` `dark`: the section is wrapped `data-jal-exempt="noyzzi"` and must hold a noyzzi piece; a JAL-native recipe never goes dark.
+- Gallery: `motion_budget` under 1 means no hover effect (static images); `loud` with `motion_budget` under 2 downgrades to `expressive`; the chosen recipe must match the family.
+- Low confidence on `recipe`: take the lighter-cost of primary and runner-up; if equal, the JAL-native one.
+
+### `imm.tech`
+
+**Purpose:** pick the rendering technique and the integration stack for a section before building (plan stage), and the post-processing stack after the first captures (post stage).
+
+**Caller:** jal-immersive at workflow step 4 (plan stage: `tech` and `stack` in one call) and at step 10 after the first captures (post stage: `post`, same ID, `state.stage` set to `"post"` with the capture evidence).
+
+**Precheck (decides without JEV):**
+- `imm.recipe` fixes a floor: a C0 recipe is `css_dom`, a recipe that needs compute is `webgpu_tsl`. Not asked when the recipe allows only one technique.
+- `webgpu_tsl` always ships a WebGL2 or poster fallback. Not asked.
+- Any R3F use pins R3F 9.x with React `>=19 <19.4`. A fact, not a question.
+- Post stage: bloom, chromatic aberration, glitch, scanlines, lens flare, and heavy vignette are rejected by law. If the background pixel check fails, fix it with `alpha` or `toneMapped={false}` before asking. The mobile reduced tier always gets `none`. `aa_grade` and `aa_focus` on WebGL need `@react-three/postprocessing` approved, or three's own addons.
+
+**State fields:** plan stage: `proposal.scene` (recipe, subject, triangle estimate, material needs, particle count, compute need), `evidence.devices`, `evidence.bundle_budget`, `evidence.react_coupling` (how much React UI state drives the scene), `evidence.scene_count` (distinct 3D regions on the page). Post stage: `stage`, `evidence.captures` (visible aliasing, banding, focus problems), `evidence.metrics` (p95 frame time and headroom).
+
+**Questions (plan stage):**
+```json
+{
+  "tech": {
+    "type": "choice",
+    "instructions": "Pick the lightest technique that delivers the recipe in state.proposal.scene on the devices in state.evidence.devices within state.evidence.bundle_budget.",
+    "criteria": {
+      "css_dom": "Depth, parallax, reveals, or hover that CSS transforms, layered images, SVG, or GSAP on DOM deliver convincingly; no free viewpoint and no per-pixel effect.",
+      "canvas_2d": "A flat generative field, line drawing, or up to a few thousand dots with no depth or lighting; one 2D canvas and typed arrays are enough.",
+      "webgl": "Real-time geometry, PBR materials, image shaders, or particles up to a few hundred thousand points, with interaction or a scroll-driven camera; three WebGLRenderer, no GPU compute.",
+      "webgpu_tsl": "Needs GPU compute (tens of thousands of simulated elements with state), storage buffers, or TSL node features, and a WebGL2 or poster fallback is acceptable."
+    }
+  },
+  "stack": {
+    "type": "choice",
+    "instructions": "Only acted on when tech is webgl or webgpu_tsl. Pick how the scene is integrated into the React page, given state.evidence.react_coupling, state.evidence.scene_count, and state.evidence.bundle_budget.",
+    "criteria": {
+      "vanilla_three": "One self-contained scene mounted by a single React component that owns a canvas ref; little or no React state flows into the scene; smallest bundle; imperative teardown is easy to audit.",
+      "r3f": "Several declarative 3D components, React UI state that drives the scene (configurator, tabs, hover), Suspense loading, or drei helpers that save real work (Bounds, PresentationControls, useGLTF).",
+      "r3f_views": "Two or more 3D regions embedded in the page layout; one shared canvas with drei View tracking DOM elements, to stay under the WebGL context limit."
+    }
+  }
+}
+```
+
+**Questions (post stage):**
+```json
+{
+  "post": {
+    "type": "choice",
+    "instructions": "Pick the smallest post-processing stack that fixes a problem visible in state.evidence.captures, within the frame-time headroom in state.evidence.metrics.",
+    "criteria": {
+      "none": "Captures read cleanly with renderer tone mapping and native MSAA; no visible aliasing, banding, or focus confusion.",
+      "aa_only": "Visible jaggies or shimmer on edges or thin lines that MSAA does not fix; add SMAA, or TRAA on WebGPU with a slow camera.",
+      "aa_grade": "Aliasing fix plus a brand-colour LUT or anti-banding dither, because captures show off-brand colour or banding on pale surfaces.",
+      "aa_focus": "Aliasing fix plus subtle depth of field, because the subject competes with a busy background and focus must guide the eye; small bokeh, never over text."
+    }
+  }
+}
+```
+
+**Thresholds and actions:**
+- `tech`: follow it; low confidence takes the lighter of primary and runner-up.
+- `stack`: follow it; low confidence takes `vanilla_three` when `scene_count` is 1, otherwise `r3f_views`.
+- `post`: follow it; if p95 headroom is under 3 ms step down one option; low confidence takes `none`.
+
+### `imm.tier`
+
+**Purpose:** set the quality tier to ship per device class, against the budget table in `performance.md`.
+
+**Caller:** jal-immersive at workflow step 5 (planning, with cost-tier estimates) and again after the first real-GPU measurement at step 10 (binding). Batch device classes in one call with prefixed keys (`desktop_tier`, `mobile_tier`, `low_tier`).
+
+**Precheck (decides without JEV):**
+- The binding call needs measured numbers from a real GPU (renderer string not SwiftShader). Without them, only the planning call is allowed, and its answer is provisional.
+- `prefers-reduced-motion`, `saveData`, and no WebGL2 are always `static` (poster). Not asked.
+- DPR never exceeds 2 in any tier. Not asked.
+- A section with no mobile fallback is `static` on mobile. Not asked.
+
+**State fields:** `evidence.device_class` (desktop, mid mobile, low mobile), `evidence.metrics` (draw calls, triangles, textures, texture memory, p50 and p95 frame time, DPR, per class), `evidence.budget_table` (the rows for that class), `proposal.fallback` (what the reduced tier cuts and what it preserves).
+
+**Questions (one class shown; prefix per class):**
+```json
+{
+  "desktop_tier": {
+    "type": "choice",
+    "instructions": "Pick the quality tier to ship for the device class in state.evidence.device_class, given state.evidence.metrics against state.evidence.budget_table and the cuts in state.proposal.fallback.",
+    "criteria": {
+      "full": "Within budget at the tier DPR with p95 frame time under 16.7 ms: ship as authored.",
+      "reduced": "Over budget but fixable by the DPR floor, cheaper or fake shadows, no post pass, fewer instances or particles, or smaller textures, while the scene still carries its message.",
+      "static": "Cannot hold the budget without losing the scene's point: show the poster and DOM content only."
+    }
+  }
+}
+```
+
+**Thresholds and actions:**
+- Follow `tier` per class. `reduced` applies the ladder in `performance.md` section 4 in order and records what each cut preserves and loses.
+- Low confidence: take the lower tier.
+- The runtime `PerformanceMonitor` may step a device down one tier after load, never up.
+
+### `imm.taste`
+
+**Purpose:** the taste verdict on a built immersive section, whether it is worth its cost over the poster, and whether its motion is calm.
+
+**Caller:** jal-immersive at workflow step 11, after `ui_audit` PASS and the captures, before the fresh-context `ui.finish_disposition`. Batch all immersive sections of the page with prefixes.
+
+**Precheck (decides without JEV):**
+- `ui_audit` PASS at 320, 375, 414, 768, 1280 including `reduced-motion`. Any FAIL means fix and re-audit. Not asked.
+- Poster present; reduced-motion capture shows stills; background pixels equal the DOM white outside noyzzi sections; no bloom, glow, neon, or purple in JAL-authored canvases. Any failure means fix first.
+
+**State fields:** `evidence.captures` (described poster, beats, near and far, reduced-motion, mobile), `evidence.metrics` (bundle size of the scene chunk, p95 frame time per tier, draw calls), `evidence.contract` (the direction contract and the section concept), `evidence.decisions` (the section's `imm.*` and `motion.*` results).
+
+**Questions:**
+```json
+{
+  "taste": {
+    "type": "score",
+    "instructions": "Score the built immersive section in state against Apple and Google grade taste under JAL law: restraint, clarity of form and material on a light page (or the noyzzi piece's own quality inside its section), camera composition, motion purpose, and how well it serves the section's one message in state.evidence.contract.",
+    "criteria": [
+      "0 Broken: unreadable, janky, or visually fights the page.",
+      "1 Gimmick: works but feels like a tech demo; motion or material has no purpose.",
+      "2 Solid: clean forms, calm lighting, purposeful beats, ready to ship.",
+      "3 Exceptional: reference quality; the scene makes the message obvious and feels effortless."
+    ]
+  },
+  "keep": {
+    "type": "noul",
+    "instructions": "Yes means keep the live scene in this section. No means replace it with its poster and DOM content, because the built result in state.evidence.captures does not add enough over the poster to justify its bundle size and runtime cost in state.evidence.metrics."
+  },
+  "motion_calm": {
+    "type": "score",
+    "instructions": "Score how calm and purposeful the built motion of this section is on a white-first JAL page, from the beats described in state.evidence.captures.",
+    "criteria": [
+      "0 Restless: constant movement, velocity effects, or camera travel that reveals nothing.",
+      "1 Busy: purposeful beats but too many or too fast; the eye has no resting points.",
+      "2 Calm: every movement reveals a beat and then settles; clear resting frames.",
+      "3 Effortless: motion feels inevitable; removing any beat would lose meaning."
+    ]
+  }
+}
+```
+
+**Thresholds and actions:**
+- `keep` under 0.5: replace the scene with its poster and DOM content. This is a veto.
+- `taste` under 2 or `motion_calm` under 2: revise (reduce beats first, then materials and camera), re-capture, re-ask. At most two rounds, then report.
+- `taste` and `motion_calm` 2 or above and `keep` passing: hand to the fresh-context reviewer for `ui.finish_disposition`.
+- Low confidence on `keep`: replace with the poster.
 
 ---
 

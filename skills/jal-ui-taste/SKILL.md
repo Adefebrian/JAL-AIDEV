@@ -12,14 +12,17 @@ The bar is Apple- or Google-grade: quiet confidence, obvious hierarchy, zero dec
 ## The build loop (every screen, in order)
 
 1. Read the brief. Call `jev_decide` for the density pick (Decision layer, point 1). Open `jal-design-system` and the component specs you will place.
-2. Set the frame: shell, region list, and each region's width budget (Layout doctrine, step 1).
-3. Write the section concept for every section (Section concept law). Call `jev_decide` for the region and component gate (point 2). Delete what JEV drops.
-4. Lock tokens from the Core tokens section. No value outside those tables.
-5. Build mobile-first: the app-shell below 640px first, then tablet, then desktop. Same tokens at every width, only layout changes.
-6. Give every interactive element all eight states. Motion from `jal-motion`, restrained.
-7. Self-critique (six axes, 1 to 5), then run `ui_audit` until it reports PASS (Mechanical proof).
-8. Call `jev_decide` for the final taste verdict (point 4). Revise if it scores under 2.
-9. Screenshot 375 and 1280 and look at them. Log every JEV decision and the audit result in the build report.
+2. Set the direction (`jal-design-system` `references/directions.md`). If the target repo has `docs/design/direction.md`, inherit it. For a new product, a new surface, or a redesign: write 5 to 7 candidates from the audience's world, screen them with `jev_decide` (point 5, `ui.direction_screen`), then run the seeded draw over the survivors ranked 3 to 7 (seed from the product name plus the screen, so reruns are stable). JEV screens; it never picks the direction.
+3. Write the direction contract to `docs/design/direction.md` before any code: audience, job, direction (form plus preset), type personality, accent role, density, motion intensity, first viewport, and the seed key. The contract sets knob values inside JAL Core only; it never changes the law, the components, or the token tables.
+4. Set the frame: shell, region list, and each region's width budget (Layout doctrine, step 1).
+5. Write the section concept for every section (Section concept law). Call `jev_decide` for the region and component gate (point 2). Delete what JEV drops.
+6. Lock tokens from the Core tokens section, plus the contract's knob overrides. No value outside those tables.
+7. Build mobile-first: the app-shell below 640px first, then tablet, then desktop. Same tokens at every width, only layout changes.
+8. Give every interactive element all eight states. Motion from `jal-motion`, restrained.
+9. Self-critique (six axes, 1 to 5) and the Craft floor check, then run `ui_audit` until it reports PASS (Mechanical proof).
+10. Call `jev_decide` for the final taste verdict (point 4). Revise if it scores under 2.
+11. Screenshot 375 and 1280 and look at them. Then the fresh-context finish review: a new subagent with no transcript scores `ui.heuristics` (point 6) and returns `ui.finish_disposition` (point 7): ship, fix, rebuild, or recapture. At most two fix rounds; open items after round 2 go to Brian.
+12. Log every JEV decision, the seed key, and the audit result in the build report.
 
 ## Hard law (absolute, Brian, non-negotiable)
 
@@ -90,7 +93,7 @@ Every LLM defaults to the same look when nobody stops it: a dominant black or ne
 
 **At most one accent hue.** The primary action is ink on white by default, and that is the preferred posture. A project may add exactly one brand accent. A desaturated status color (success, warning, danger, info) is permitted only for real state, never for decoration. The accent is used on at most a handful of elements per screen: a primary CTA, links, an active nav indicator (tonal, never a bar), a focus ring. It is a highlighter, not a fill. It is never a marker square, dot, stripe, or hairline placed beside a heading or label.
 
-- **The accent is never purple, violet, or indigo** (roughly OKLCH hue 250 to 320 with meaningful chroma). That family is the single most recognizable AI-slop tell. Pick something else: a warm terracotta or signal orange, a blue that is clearly blue and not violet, a forest green, an ochre.
+- **The accent is never purple, violet, or indigo** (HSL hue 250 to 320 with saturation above 20%, the band `ui_audit` enforces; keep an accent outside 235 to 330, and a 225 to 235 cobalt needs a written reason in the direction contract). That family is the single most recognizable AI-slop tell. The default is no accent at all (`--color-accent` equals ink). When a product needs one, the direction contract picks it from product meaning: a blue that is clearly blue and not violet, a forest or signal green, a teal, an ochre. Terracotta is no longer a suggested default: on a beige ground with a serif display it is a known AI tell (see `craft.md` section 14).
 - The accent never fills a large area. Cap it at roughly 3% of any viewport's pixels. A giant accent-filled hero band, an accent-filled card grid, or an accent-colored stat number is the fill violation, not the highlight use.
 - Giant colored stat numbers are banned outright. A metric is ink at a normal-to-large type step with a small ink-muted label underneath, never a huge saturated numeral competing for attention.
 - No gradient text fill on headings or body copy, ever. That is decoration standing in for a design decision.
@@ -119,6 +122,19 @@ Every LLM defaults to the same look when nobody stops it: a dominant black or ne
 - A Bento region fills completely at every breakpoint: no oversized empty bands, no dead gaps patched with a stray margin. If content does not tile cleanly, resize the spans or change the container, do not leave a hole.
 
 This section is strict on purpose: a prior JAL surface shipped the exact forbidden look (black background, saturated purple accent, glowing cards, oversized colored stat numbers, weak layout) and it read as AI-slop, not as a JAL product. Every build and every audit checks against the Hard law and this section first.
+
+## Craft floor
+
+The minimum quality every render clears, checked in one batched pass at 375 and 1280. The full floor, with the numbers, the ported detector thresholds, and the reasons, is in `jal-design-system` `references/craft.md`. The short form:
+
+- **Measure** 65 to 75ch for body prose; over 80ch fails. **Leading** 1.5 on body, never under 1.3 on wrapping text.
+- **Tracking** from the `--tracking-*` tokens: display -0.03em, headings -0.02em, titles -0.01em, body 0. Floor -0.04em; body never above +0.05em; no tracked caps.
+- **Display** tops at `--text-6` on product screens; `--text-display-1..3` only on marketing and immersive heroes, one per page, about 8 words at most.
+- **Heading rhythm**: more space above a heading than below it, 2x as the target.
+- **Browser surfaces** themed from tokens: `::selection`, `caret-color`, `accent-color`, `scrollbar-color`, underline offset, `cursor: pointer` on enabled controls and default on disabled, `tabular-nums` in every table, price, and counter.
+- **Bans** on top of the Hard law: icon tile above a heading, big-number hero, identical feature-card grids as page structure, numbered section labels, pill badge above a headline, full-sentence display headline, image hover transforms, decorative grid or stripe backgrounds, mono as costume.
+- **Claude's own prior**: warm subjects drift to cream, italic serif, and lamplight. Treat that first palette as spent.
+- **Critique** uses Nielsen's 10 scored 0 to 4 (`ui.heuristics`), five personas, and P0 to P3; the finish is judged by a fresh-context reviewer (`ui.finish_disposition`), two fix rounds at most.
 
 ## Section concept law
 
@@ -168,7 +184,7 @@ Generated with formulas, not hand lists. A project changes a generator input onl
 
 ### Type
 
-Formula: `size(step) = round(16 x 1.2^step)`, steps -2 to 6. Line height: `lh(size) = 4 x round(min(1.5 x size, size + 8) / 4)`, which keeps body at 1.5 and tightens headings toward 1.17, all on the 4px grid.
+Formula: `size(step) = round(16 x 1.2^step)`, steps -2 to 6, plus the hero-only display set at steps 7 to 9. Line height: `lh(size) = 4 x round(min(1.5 x size, size + 8) / 4)`, which keeps body at 1.5, tightens headings toward 1.17, and display toward 1.1, all on the 4px grid.
 
 | Size token | Line token | Step | Size | Line height | Weight | Role and typical use |
 |---|---|---|---|---|---|---|
@@ -180,13 +196,29 @@ Formula: `size(step) = round(16 x 1.2^step)`, steps -2 to 6. Line height: `lh(si
 | `--text-3` | `--line-3` | 3 | 28px | 36px | 600 | h3: section headings |
 | `--text-4` | `--line-4` | 4 | 33px | 40px | 600 | h2: page-level headings |
 | `--text-5` | `--line-5` | 5 | 40px | 48px | 600 | h1: major page title, hero headline |
-| `--text-6` | `--line-6` | 6 | 48px | 56px | 500 | display: landing hero only, one per page at most |
+| `--text-6` | `--line-6` | 6 | 48px | 56px | 500 | display: landing hero only, one per page at most; the ceiling on product and app screens |
+| `--text-display-1` | `--line-display-1` | 7 | 57px | 64px | 500 | marketing or immersive hero only; the largest allowed below 640px |
+| `--text-display-2` | `--line-display-2` | 8 | 69px | 76px | 500 | marketing or immersive hero only, from 768px |
+| `--text-display-3` | `--line-display-3` | 9 | 83px | 92px | 500 | marketing or immersive hero only, from 1024px |
 
+- The display set (steps 7 to 9) is generated by the same two formulas. It exists for Persuade and Experience surfaces (landing, campaign, showcase, `/jal-immersive`) only: one display element per page, about 8 words at most, never on an app screen, never a fluid `clamp()`. The hero component picks the step per breakpoint with literal `min-width` media queries. A direction may set display weight 600 in place of 500.
 - Weights are `--weight-regular` 400, `--weight-medium` 500, `--weight-semibold` 600, and nothing else.
 - Every size a component uses comes from this table, always paired with its matching line token. No inline `font-size: 22px` because it "looked right": pick the nearest step and adjust weight or ink instead.
 - Base 16 keeps mobile legibility and prevents iOS focus zoom: every input, select, and textarea is `--text-0` (16px) or larger.
 - Never apply body line-height to a display headline; never apply heading line-height to body copy.
 - Numbers that update live use `font-variant-numeric: tabular-nums` so the box does not jitter.
+
+Tracking tokens (letter-spacing in em, so they scale with the size they sit on):
+
+| Token | Value | Applies to |
+|---|---|---|
+| `--tracking-display` | -0.03em | `--text-6` and `--text-display-1..3` |
+| `--tracking-heading` | -0.02em | `--text-3` to `--text-5` (28 to 40px) |
+| `--tracking-title` | -0.01em | `--text-1` and `--text-2` (19 and 23px) |
+| `--tracking-body` | 0em | `--text-0` and smaller, controls, table data |
+
+- Floor -0.04em, never tighter. Body text never above +0.05em. There is no caps token: JAL has no all-caps text role, so uppercase text is never tracked out.
+- A direction may move `--tracking-display` between -0.01 and -0.04em and `--tracking-heading` between 0 and -0.02em, recorded in its contract. Title and body are fixed.
 
 ### Spacing
 
@@ -249,6 +281,8 @@ Formula: `--radius = 4px x step`, steps 1, 2, 3, 4, 7, plus pill.
 | `--color-primary-hover` | `color-mix(in oklab, white 8%, var(--color-ink) 92%)` | primary hover state layer | |
 | `--color-primary-active` | `color-mix(in oklab, white 12%, var(--color-ink) 88%)` | primary pressed state layer | |
 | `--color-focus` | `var(--color-ink)` (or the one accent) | focus outline | at least 3:1 |
+| `--color-accent` | `var(--color-ink)` | the one product hue; neutral (equal to ink) until a direction contract sets a hue and its single role (`none`, `filled_primary`, `signal_only`, `text_and_icon`); about 3% of any viewport at most; HSL hue outside 235 to 330 | at least 4.5:1 on surface for text use |
+| `--color-accent-contrast` | `var(--color-surface)` | text and icon on an accent fill | at least 4.5:1 on the accent |
 | `--color-success` / `--color-success-surface` | `#1f7a45` / `#ebf4ee` | real success state only | 5.4:1 on surface, 4.8:1 on its surface |
 | `--color-warning` / `--color-warning-surface` | `#8a5a1f` / `#f6efe4` | real warning state only | 5.9:1 on surface, 5.2:1 on its surface |
 | `--color-danger` / `--color-danger-surface` | `#b3261e` / `#f7ebea` | real error and destructive state only | 6.5:1 on surface, 5.6:1 on its surface |
@@ -260,10 +294,9 @@ Derived tokens (declare them in `tokens.css` before first use if the project doe
 |---|---|---|---|
 | `--color-<status>-border` | `color-mix(in oklab, var(--color-<status>) 24%, var(--color-border))` | the full four-side hairline of a status notice | decorative, the icon and title carry meaning |
 | `--color-scrim` | `color-mix(in oklab, var(--color-ink) 40%, transparent)` | dialog backdrop only | |
-| `--color-accent` / `--color-accent-contrast` | one brand hue, never purple-family | only when the brand requires an accent | at least 4.5:1 for text use |
 
 - `--color-border-control` is for interactive control boundaries only. Cards, tiles, row containers, and dividers keep the light `--color-border` hairline (`#e5e5e3`); overlays keep `--color-border-strong`. On focus, a control's border turns to `--color-ink` and the focus outline is added.
-- The accent, when added, replaces `--color-primary` and `--color-focus` only where the brand requires it. Ink on white stays the default.
+- The accent, when a direction sets one, replaces `--color-primary` (with hover and active re-derived by the same formula) only when its role is `filled_primary`, and `--color-focus` only where it keeps 3:1. Ink on white stays the default. Per-product values go in one override block at the end of the product's `tokens.css`, only for the knob tokens listed in `directions.md` section 5.
 - Status colors are desaturated, always paired with an icon and a word, never used for decoration, never used as a card edge.
 - Status notices use `--color-<status>-surface` as the fill and `--color-<status>-border` on all four sides.
 
@@ -397,7 +430,7 @@ If any outside reference (a library example, a source design system, a designmd 
 
 JEV (TypeSafe) makes the soft calls so taste does not depend on the mood of one run. Call it through the `jev_decide` tool of the bundled `jal-design` MCP server (`{ state, questions }`; CLI fallback `bun mcp/jal-design/server.ts decide <file|->`). Question types: `choice` (a `criteria` map of options, answer `choice` plus `probabilities` plus `confidence`), `score` (an ordered `criteria` array of at least 2 levels, answer `score` plus `legend` plus `probabilities` plus `confidence`), `noul` (answer `noul`, the probability of yes). Always put the brief, the section concept lines, and the relevant criteria from this skill into `state`.
 
-Four decision points, called automatically in every `/jal-ui` run:
+Seven decision points. Points 1 to 4 run in every `/jal-ui` run; point 5 runs whenever a direction or structure is rolled (`directions.md`); points 6 and 7 run in every fresh-context finish review and every critique (`craft.md` sections 11 and 12):
 
 | # | Point | Questions | Rule |
 |---|---|---|---|
@@ -405,8 +438,11 @@ Four decision points, called automatically in every `/jal-ui` run:
 | 2 | Region and component gate | For every proposed section and major component: `noul` "implement?"; `score` relevance with levels 0 Irrelevant, 1 Marginal, 2 Useful, 3 Core; `choice` container over `rows`, `bento`, `divided-section`, `card`, `plain-spacing` with the Layout doctrine table as criteria | Drop when implement is under 0.5 or relevance is under 1.5 (use the probability-weighted mean when probabilities are returned). Build the kept ones in the chosen container |
 | 3 | designmd screen | Before any designmd kit is used as a reference: `noul` "is this slop?" with the Palette law and Hard law as the definition; `score` fit to the brief on the same 0 to 3 scale | Reject when slop is 0.5 or more. Treat fit under 1.5 as not useful. A kept kit is still law-filtered before it influences anything |
 | 4 | Final taste verdict | `score` on the built screen description plus the `ui_audit` result, levels 0 Reject, 1 Weak, 2 Ship-ready, 3 Excellent | Under 2: revise and ask again before returning |
+| 5 | Direction screen (`ui.direction_screen`) | Per candidate, batched with prefixed keys (`c1_slop`, `c1_fit`, ... `c7_fit`): `noul` slop (generic, the category rut, dependent on what the law strips, or needs invented claims or missing assets); `score` fit 0 Foreign or obscuring, 1 Skin over a stock layout, 2 Supports the task, 3 Native to the audience and explains the product | Drop when slop is 0.5 or more or fit is under 1.5. Survivors keep their original rank, never re-sorted by score. The seeded draw picks among survivors ranked 3 to 7; JEV never picks |
+| 6 | Heuristics (`ui.heuristics`) | Nielsen's 10 as `score` 0 to 4 (`h1_status` to `h10_help`) plus `noul` specific (could an unrelated product reuse this unchanged?), on the reviewer's structured screen description, the `ui_audit` summary, and the persona findings | Band on applicable max (h7 and h10 may be n/a on Persuade and Experience): 90% excellent, 70% good, 50% acceptable, 30% poor. Any heuristic under 2 is a priority issue; specific under 0.5 is P1. Feeds point 7 as evidence |
+| 7 | Finish disposition (`ui.finish_disposition`) | `choice` over `ship`, `fix`, `rebuild`, `recapture`, judged by a fresh-context reviewer against `docs/design/direction.md` and its fidelity matrix | `fix` applies up to 8 fixes in one batch and re-reviews with a resolved, partial, unresolved pass; `rebuild` re-derives the named regions; `recapture` redoes the evidence and does not count as a round. At most two fix rounds, then open items go to Brian. Low confidence: the stricter of primary and runner-up |
 
-- **JEV is final on soft calls**: density, relevance, implement-or-drop, container choice, fit, final taste. The agent does not override a JEV veto and does not re-ask the same question hoping for a different answer.
+- **JEV is final on soft calls**: density, relevance, implement-or-drop, container choice, fit, final taste, direction screening, heuristics, finish disposition. The one exception by design: JEV screens direction candidates but never chooses among them, because a ranked pick collapses to the top idea; the seeded draw chooses. The agent does not override a JEV veto and does not re-ask the same question hoping for a different answer.
 - **JEV has no authority over hard law.** If a JEV answer would require a gradient, a shadow, a side line, a dark default, purple, an emoji, or a broken grid, the law wins and the agent picks the next-best option that is lawful. JEV cannot grant an exception; only Brian can.
 - **designmd is supplementary only.** Read tools only, never upload or delete. A kit influences nothing until it passes point 3 and the law filter.
 - **Outage path.** 429 and 529 are retried with exponential backoff by the tool. If JEV is still unreachable (or returns 401 or 422 that cannot be fixed), the agent falls back to its own judgment using the same thresholds and criteria, and stamps the build report `UNVERIFIED BY JEV` for each affected decision. Never silently skip a decision point.
@@ -461,5 +497,7 @@ Run top to bottom on any existing screen or component before or during a redesig
 - [ ] Every touch target on mobile is 44x44px or larger with at least 8px between neighbors.
 - [ ] Empty, loading (skeleton, no layout shift), and error states exist and are deliberately designed for every view that can hit them.
 - [ ] Motion uses the duration and easing tokens, transform and opacity only, exits shorter than entrances, reduced motion honored.
-- [ ] JEV decisions for all four points are logged (or stamped `UNVERIFIED BY JEV`), and the final verdict is 2 or higher.
+- [ ] JEV decisions for every point that ran are logged (or stamped `UNVERIFIED BY JEV`), and the final verdict is 2 or higher.
+- [ ] `docs/design/direction.md` exists with its seed key, and the finish disposition is `ship` (or the open table went to Brian after round 2).
+- [ ] The craft floor holds (`craft.md` section 2): measure, tracking tokens, heading rhythm, browser surfaces, tabular numerals, and none of the section 3 bans.
 - [ ] `ui_audit` reports PASS at every width, and the 375 and 1280 screenshots have been looked at.

@@ -10,8 +10,8 @@ A showcase piece is one world the camera moves through, not a stack of sections 
 
 Entrances are slower and eased-out, exits are faster and eased-in, never symmetric. Use the showcase durations from `SKILL.md` section 2:
 
-- Standard beat: entrance `--duration-showcase-1` (400ms), exit `--duration-showcase-1-exit` (280ms).
-- Larger staged reveal: entrance `--duration-showcase-2` (600ms), exit `--duration-showcase-2-exit` (420ms).
+- Standard beat: entrance `--dur-400` (400ms), exit `--dur-400-exit` (280ms).
+- Larger staged reveal: entrance `--dur-600` (600ms), exit `--dur-600-exit` (420ms).
 - All on `--ease-standard`, the one curve, no exception for showcase.
 
 ## Stagger rhythm
@@ -60,4 +60,4 @@ A per-tween SVG `feGaussianBlur` aligned to the actual motion vector (not a blan
 
 ## What stays out of showcase too
 
-No word-highlight pill, marker, underline draw-on, or sparkle, even as a "one per project" signature, JAL bans the whole ornament category outright. No gradient light leak, no glow, no Three.js or WebGL background, no grain or paper/sticker collage skin, no dark-by-default opener. Any of these as a one-off exception needs Brian's explicit sign-off per technique, never assumed available by default.
+No word-highlight pill, marker, underline draw-on, or sparkle, even as a "one per project" signature, JAL bans the whole ornament category outright. No gradient light leak, no glow, no grain or paper/sticker collage skin, no dark-by-default opener. Any of these as a one-off exception needs Brian's explicit sign-off per technique, never assumed available by default. Three.js, WebGL, and WebGPU scenes are approved and live under `jal-immersive` (poster first, canvas lighting allowed, no bloom or neon); a WebGL background is only built when JEV `imm.gate` and `imm.recipe` choose it. noyzzi-derived sections follow their own exemption (`jal-immersive` `references/noyzzi.md`).

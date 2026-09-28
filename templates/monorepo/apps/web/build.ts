@@ -53,6 +53,10 @@ async function runBuild() {
     target: "browser",
     minify: true,
     sourcemap: "linked",
+    splitting: true,
+    publicPath: "/",
+    loader: { ".glb": "file", ".gltf": "file", ".ktx2": "file", ".hdr": "file", ".wasm": "file", ".bin": "file" },
+    plugins: await optionalPlugins(),
   });
 
   if (!res.success) {
@@ -63,4 +67,18 @@ async function runBuild() {
   await Bun.write(join(outdir, "index.html"), await Bun.file(join(here, "src/index.html")).text());
 
   console.log("web build ok");
+}
+
+// Tailwind is opt-in: when bun-plugin-tailwind is installed, CSS that
+// imports "tailwindcss" is compiled with the JAL @theme
+// (packages/ui/src/tailwind.css). Nothing changes for apps without it.
+async function optionalPlugins() {
+  try {
+    // A variable specifier keeps tsc from requiring the optional package.
+    const specifier = "bun-plugin-tailwind";
+    const mod = (await import(specifier)) as { default: import("bun").BunPlugin };
+    return [mod.default];
+  } catch {
+    return [];
+  }
 }

@@ -5,7 +5,7 @@ description: How every JAL agent asks JEV (TypeSafe AI System One) to judge a bo
 
 # JAL JEV: the judge
 
-JEV is the judge across all of JAL-AIDEV: orchestration, UI/UX, backend, security, QA, review, and memory. Agents reason and build. JEV decides bounded calls. The decision catalog with every question template, threshold, and action lives in `references/catalog.md`. Use the catalog first; design a new question only when no entry fits, and dispatch the `jal-jev` agent for that.
+JEV is the judge across all of JAL-AIDEV: orchestration, UI/UX, motion, immersive and 3D, backend, security, QA, review, and memory. Agents reason and build. JEV decides bounded calls. The decision catalog with every question template, threshold, and action lives in `references/catalog.md`. Use the catalog first; design a new question only when no entry fits, and dispatch the `jal-jev` agent for that.
 
 ## What JEV is
 
@@ -89,7 +89,7 @@ Never fabricate a JEV answer. Never report a decision as JEV-verified unless the
 
 ## Logging
 
-- Pass `decision_id` (the catalog ID, for example `ui.region_gate`) and `domain` (`orch`, `ui`, `be`, `sec`, `qa`, `rev`, `mem`) on every call.
+- Pass `decision_id` (the catalog ID, for example `ui.region_gate`) and `domain` (`orch`, `ui`, `motion`, `imm`, `be`, `sec`, `qa`, `rev`, `mem`) on every call.
 - The tool appends every call to `.jal/decisions/*.jsonl` with the redacted state, questions, answers, and verified flag. Do not write that log by hand.
 - In your report, list each decision: ID, the answer, confidence, and the action taken. Stamp unverified ones.
 
@@ -112,5 +112,5 @@ A call is about 400ms and costs fractions of a cent. Gate generously: any soft c
 
 ## References
 
-- `references/catalog.md`: the 24 catalog decisions with purpose, caller, precheck, state fields, question JSON, thresholds, and actions.
+- `references/catalog.md`: the 39 catalog decisions with purpose, caller, precheck, state fields, question JSON, thresholds, and actions.
 - Agent `jal-jev`: dispatch for a novel decision with no catalog entry, careful state framing, or an impartial verdict.

@@ -39,7 +39,7 @@ const TOOLS: ToolDef[] = [
         },
         domain: {
           type: "string",
-          description: "Owning domain for the decision log, e.g. \"ui\", \"be\", \"sec\", \"qa\", \"rev\", \"orch\", \"mem\".",
+          description: "Owning domain for the decision log, e.g. \"ui\", \"motion\", \"imm\", \"be\", \"sec\", \"qa\", \"rev\", \"orch\", \"mem\".",
         },
       },
       required: ["state", "questions"],

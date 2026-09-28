@@ -165,4 +165,15 @@ describe("runAudit", () => {
     },
     60000,
   );
+
+  test(
+    "an aria-hidden, pointer-events:none backdrop canvas is not an overlap; an interactive layer over content is",
+    async () => {
+      const report = await runAudit(`${baseUrl}/backdrop-canvas.html`, { widths: [1280] });
+      const overlaps = report.violations.filter((v) => v.rule === "overlap");
+      expect(overlaps.some((v) => v.selector.includes("ok-stage"))).toBe(false);
+      expect(overlaps.some((v) => v.selector.includes("bad-stage"))).toBe(true);
+    },
+    60000,
+  );
 });

@@ -4,3 +4,5 @@ export { Icon } from "./Icon";
 export type { IconProps } from "./Icon";
 export { AppShell } from "./AppShell";
 export type { AppShellProps, AppShellDestination } from "./AppShell";
+// JAL frame core (frame-driven compositions and the live Player).
+export * from "./frames";

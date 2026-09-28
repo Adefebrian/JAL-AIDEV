@@ -12,46 +12,54 @@ Before writing any animation: name what state it communicates in one sentence. I
 ## 1. Approved stack, nothing else
 
 - **Lenis** for smooth scroll.
-- **GSAP** (core plus its free plugin set, including ScrollTrigger, CustomEase) for orchestrated timelines and scroll-linked motion.
+- **GSAP** for orchestrated timelines and scroll-linked motion. Every GSAP plugin is free (since the 2024 Webflow licensing change) and allowed: ScrollTrigger, SplitText, Flip, MorphSVG, CustomEase, and the rest. JAL law still decides what each is used for (no DrawSVG ornaments, no ScrollSmoother next to Lenis, no bounce or elastic eases); the per-plugin filter is in `skills/jal-immersive/references/scroll-choreography.md`.
 - **Framer Motion** for React component, gesture, layout (FLIP), and exit animation (`AnimatePresence`).
 - **CSS transitions and WAAPI** (`element.animate()`) for simple, single-property, non-orchestrated motion. Prefer this over a library whenever a plain transition does the job, it costs nothing over the wire.
 
-Three.js, WebGL, Lottie, any ffmpeg/Node/Python export pipeline, and AE-bridge style tooling are **not approved**. Bang-motion's own workflow (fixed-stage HTML export, Puppeteer/ffmpeg frame dumps, Three.js nebula/bloom backgrounds) is explicitly not ported, per its source digest. Anything outside this list needs Brian's explicit yes before adoption, name what it replaces and why.
+- **Three.js** (WebGL and WebGPU), **React Three Fiber**, and **drei** for 3D and immersive sections, approved in v0.4.0 and governed by `skills/jal-immersive/SKILL.md` (lazy `import()`, poster first, DPR cap 2, disposal).
+- **Tailwind**, approved in v0.4.0, wired to JAL tokens through `bun-plugin-tailwind`. It styles; it never becomes a second token set.
+- **The JAL frame core** (`packages/ui/src/frames/`) for frame-driven compositions and product demo "videos" played live in the browser. See `skills/jal-immersive/references/frames.md`.
+
+Lottie, any ffmpeg/Node/Python export pipeline, and AE-bridge style tooling are **not approved**. Remotion and `@remotion/*` are banned (webpack, Node, Chromium, company license); the frame core replaces them. Bang-motion's own workflow (fixed-stage HTML export, Puppeteer/ffmpeg frame dumps, nebula/bloom backgrounds) is explicitly not ported, per its source digest. Anything outside this list needs Brian's explicit yes before adoption, name what it replaces and why.
 
 ## 2. Token scale (canonical, source of truth is `packages/ui/src/tokens.css`)
 
 Product UI durations, generated on the same discipline as the type and spacing scales, not hand-picked per component:
 
 ```css
---duration-micro:   100ms;  /* hover/press state layer, focus ring, toggle */
---duration-fast:    150ms;  /* small expansion, tooltip, menu item */
---duration-base:    200ms;  /* default entrance: card, panel, dropdown, toast */
---duration-slow:    300ms;  /* large expansion, route transition, dialog */
+--dur-100: 100ms;  /* micro: hover/press state layer, focus ring, toggle */
+--dur-150: 150ms;  /* fast: small expansion, tooltip, menu item */
+--dur-200: 200ms;  /* base: default entrance: card, panel, dropdown, toast */
+--dur-300: 300ms;  /* slow: large expansion, route transition, dialog */
 
---duration-showcase-1: 400ms; /* showcase only: hero element entrance */
---duration-showcase-2: 600ms; /* showcase only: large staged reveal */
+--dur-400: 400ms;  /* showcase only: hero element entrance */
+--dur-600: 600ms;  /* showcase only: large staged reveal */
 
 --ease-standard: cubic-bezier(0.24, 1, 0.4, 1); /* the one curve, everywhere */
 ```
 
-**Exit runs at about 70% of its matching entrance duration**, eased in rather than out (bang-motion's asymmetric-rhythm law, translated to UI scale: symmetric in/out reads as mechanical). Compute once, do not re-derive per component:
+**Exit runs at about 70% of its matching entrance duration** (`round(0.7 x enter / 10) x 10`), on the same curve (bang-motion's asymmetric-rhythm law, translated to UI scale: symmetric in/out reads as mechanical). Compute once, do not re-derive per component:
 
 ```css
---duration-micro-exit:   70ms;
---duration-fast-exit:   105ms;
---duration-base-exit:   140ms;
---duration-slow-exit:   210ms;
---duration-showcase-1-exit: 280ms;
---duration-showcase-2-exit: 420ms;
+--dur-100-exit:  70ms;
+--dur-150-exit: 110ms;
+--dur-200-exit: 140ms;
+--dur-300-exit: 210ms;
+--dur-400-exit: 280ms;
+--dur-600-exit: 420ms;
 ```
 
-Default pair when nothing more specific applies: entrance `--duration-base` / exit `--duration-base-exit`, both on `--ease-standard`. There is exactly one easing curve in the system. Do not introduce a second curve, a bounce, or an overshoot anywhere in product UI.
+Stagger, constant-speed loop, and hold tokens (`--stagger-*`, `--loop-*`, `--hold-*`) also live in `tokens.css`; see `references/components.md` section 2.1.
+
+Default pair when nothing more specific applies: entrance `--dur-200` / exit `--dur-200-exit`, both on `--ease-standard`. There is exactly one easing curve in the system. Do not introduce a second curve, a bounce, or an overshoot anywhere in product UI.
+
+**The linear exception.** Linear timing (`linear` in CSS, `ease: "none"` in GSAP, `Easing.linear` in the frame core) is allowed only where motion has no start or stop to shape: constant-speed loops such as a marquee, a spinner, or indeterminate progress, and scroll-mapped tracks where the scroll itself is the easing (a GSAP `containerAnimation` track must be linear). Anything that starts and stops uses `--ease-standard`. Linear is never a stylistic choice for an entrance or exit.
 
 ### Framer Motion mapping
 
 ```tsx
-const standard = { duration: 0.2, ease: [0.24, 1, 0.4, 1] }; // --duration-base
-const standardExit = { duration: 0.14, ease: [0.24, 1, 0.4, 1] }; // --duration-base-exit
+const standard = { duration: 0.2, ease: [0.24, 1, 0.4, 1] }; // --dur-200
+const standardExit = { duration: 0.14, ease: [0.24, 1, 0.4, 1] }; // --dur-200-exit
 
 <motion.div
   initial={{ opacity: 0, transform: "translateY(4px)" }}
@@ -81,11 +89,11 @@ If `CustomEase` is unavailable in a given build, the nearest core-only substitut
 
 **What may move**: opacity and `transform` (`translate`, `scale`) only. Every entry below is a state transition, nothing is ambient.
 
-- **State transitions**: hover, focus-visible, pressed, disabled use the state-layer opacities from `jal-ui-taste` (`color-mix` tints), transition `background-color`/`opacity` at `--duration-micro`. Focus rings appear instantly, never animate in.
-- **List add and remove**: enter with opacity + `translateY(4px to 0)` at `--duration-base`; remove with opacity + `translateY(0 to 4px)` at `--duration-base-exit`. Use Framer Motion `layout` + `AnimatePresence` so surrounding items reflow via FLIP (transform-driven), never an animated `height`/`margin` on siblings.
+- **State transitions**: hover, focus-visible, pressed, disabled use the state-layer opacities from `jal-ui-taste` (`color-mix` tints), transition `background-color`/`opacity` at `--dur-100`. Focus rings appear instantly, never animate in.
+- **List add and remove**: enter with opacity + `translateY(4px to 0)` at `--dur-200`; remove with opacity + `translateY(0 to 4px)` at `--dur-200-exit`. Use Framer Motion `layout` + `AnimatePresence` so surrounding items reflow via FLIP (transform-driven), never an animated `height`/`margin` on siblings.
 - **Disclosure** (accordion, dropdown panel): the one permitted exception to transform/opacity is animating a CSS grid track (`grid-template-rows: 0fr` to `1fr`) on the disclosure's own wrapper, since there is no way to animate to an intrinsic height otherwise. Scope it to that single element, never let it ripple a reflow through unrelated siblings, and collapse it to an instant show/hide under reduced motion.
 - **Route transitions**: crossfade (opacity only) by default. A directional slide (`translateX`) is allowed only when it communicates real navigation depth (drilling into a detail view versus going back), never as decoration on a flat navigation.
-- **Toast**: enter opacity + `translateY(8px to 0)` at `--duration-base`, exit at `--duration-base-exit`. Auto-dismissed toasts still need a manual dismiss control per section 5.
+- **Toast**: enter opacity + `translateY(8px to 0)` at `--dur-200`, exit at `--dur-200-exit`. Auto-dismissed toasts still need a manual dismiss control per section 5.
 - **Live status pulse or ambient product indicator**: must be a pure function of elapsed time (`sin(t * k)` style), never `setInterval` or accumulated velocity, so it is reproducible and trivially freezable under reduced motion.
 
 **What may never move in product UI**: `width`/`height`/`top`/`left`/`margin` (layout thrash, the one disclosure exception above aside), `box-shadow` (JAL has none to animate), any gradient sweep, any infinite ambient background motion, any bounce or overshoot easing, any 3D rotate, any blur filter, any decorative flourish (sparkle, marker, underline draw-on) per section 7.
@@ -95,6 +103,8 @@ If `CustomEase` is unavailable in a given build, the nearest core-only substitut
 ## 4. Showcase motion (landing heroes, product demo pieces)
 
 Richer choreography is allowed here: asymmetric in/out at the showcase durations, staged reveals, scroll-linked camera language, and the choreography bang-motion proved out (camera-follows-click, shot-size staging, deterministic timelines), rebuilt in Lenis/GSAP/Framer Motion/CSS/WAAPI only. Full recipe, stagger values, the shot-size vocabulary, the anti-slide mechanical checks, and worked GSAP timeline examples live in `references/showcase.md`, read it before building any hero or demo reel.
+
+For scroll and time choreography (ScrollTrigger pin, scrub, snap, batch, SplitText, Flip, Lenis synced with ScrollTrigger and the R3F frame loop, scroll camera paths, intensity tiers 0 to 3, and the JEV `motion.intensity`, `motion.choreography`, `motion.pin` calls) read `skills/jal-immersive/references/scroll-choreography.md`. For a frame-driven demo piece with play, pause, scrub, and a reduced-motion poster, read `skills/jal-immersive/references/frames.md`.
 
 The short version: one continuous world, never a slideshow of crossfading `<section>` blocks; the camera (a parent transform) does the moving, not every element animating itself independently; entrances slower and eased-out, exits faster and eased-in, at roughly the same 70% ratio as product UI; every showcase piece still opens on a white or off-white base and still obeys every rule in section 7.
 
@@ -124,7 +134,7 @@ No gradients of any kind, animated or static. No glow, no neon. No shadows (JAL 
 
 - Every animation states, in one sentence, what state change it communicates. None left that cannot answer this.
 - Only `transform` and `opacity` animate in product UI, with the one named disclosure exception in section 3.
-- Every duration and easing value traces to a named token in section 2, no inline magic numbers (`0.37s`, `ease-in-out`, a hand-typed cubic-bezier).
+- Every duration and easing value traces to a named token in section 2, no inline magic numbers (`0.37s`, `ease-in-out`, a hand-typed cubic-bezier). Linear appears only under the linear exception in section 2.
 - Every entrance/exit pair is asymmetric, exit at roughly 70% of entrance, exit eased in.
 - `prefers-reduced-motion` is implemented and actually tested (toggle it, confirm every motion collapses), not just referenced in a comment.
 - Nothing autoplays longer than 5s without a pause control; nothing flashes past the WCAG limit.

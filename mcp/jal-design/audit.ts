@@ -254,6 +254,13 @@ const AUDIT_SCRIPT = `
       var role = node.getAttribute ? node.getAttribute("role") : null;
       if (role === "dialog" || role === "alertdialog" || role === "menu" || role === "listbox" || role === "tooltip") return true;
       if (node.hasAttribute && (node.hasAttribute("popover") || node.hasAttribute("data-overlay"))) return true;
+      // A decorative backdrop layer (a fixed or absolute full-bleed canvas
+      // behind content) is not a sibling in the reading flow: it must be
+      // aria-hidden and pointer-events: none to count as one.
+      if (node.getAttribute && node.getAttribute("aria-hidden") === "true") {
+        var ncs = getComputedStyle(node);
+        if (ncs.pointerEvents === "none" && (ncs.position === "fixed" || ncs.position === "absolute")) return true;
+      }
       node = node.parentElement;
     }
     return false;

@@ -71,20 +71,22 @@ Use the full name `jal-aidev@jal-aidev-marketplace`; the short name `jal-aidev` 
 
 ## Skills
 
-18 skills back the agents and commands. The main ones:
+19 skills back the agents and commands. The main ones:
 
 - `jal-standards`: the JAL engineering constitution. Read before building or reviewing anything.
 - `jal-ui-taste`: the design core. Generated type, spacing, radius, and color scales, the no-overlap rule, section concept, and the JEV decision points for UI.
 - `jal-design-system`: JAL Core, the one JAL design system. Meta Astryx is the foundation, IBM Carbon supplies tables, forms, and notifications, and a few Google Material pieces cover mobile touch. One spec per component, so every product looks like the same team built it. JEV only sets how dense tables and lists are. Knowledge only, no extra packages.
-- `jal-motion`: restrained product motion plus richer showcase choreography, always with reduced-motion support.
-- `jal-jev`: the decision catalog, 24 standard decisions with their exact questions and thresholds.
+- `jal-design-system` also holds the craft floor (`references/craft.md`, from impeccable) and the visual directions with the seeded direction pick (`references/directions.md`, from impeccable and refero), so every product gets a fresh, deliberate look instead of the obvious first idea.
+- `jal-immersive`: the immersive and 3D core. Three.js (WebGL and WebGPU/TSL), React Three Fiber and drei, shaders, particles, clean-room effects (rain, puddles, sand, grass, ocean), performance tiers, poster-first loading, GSAP and Lenis scroll choreography, the JAL frame core for live product demos, and the noyzzi catalogue. JEV picks and combines recipes per section.
+- `jal-motion`: restrained product motion plus richer showcase choreography, and 167 component motion recipes from Magic UI and Animata (plain CSS and Tailwind), always with reduced-motion support.
+- `jal-jev`: the decision catalog, 39 standard decisions (orchestration, UI, motion, immersive, backend, security, QA, review, memory) with their exact questions and thresholds.
 - `jal-frontend-rules`: the CSS recipes that keep UI tidy.
 
 Also: `jal-scaffold`, `jal-architecture`, `jal-rpc`, `jal-polyglot`, `jal-security-hardening`, `jal-redteam-ops`, `jal-blueteam-ops`, `jal-qa-automation`, `jal-git-safety`, `jal-memory`, `jal-adr`, `jal-release`.
 
 ## Bundled tools (MCP)
 
-- **jal-design**: `jev_decide` (ask JEV) and `ui_audit` (the automatic UI check). Runs on Bun, no extra dependencies.
+- **jal-design**: `jev_decide` (ask JEV), `ui_audit` (the automatic UI check, 20 rules), and `noyzzi_list` / `noyzzi_get` (the noyzzi catalogue and live prompts or code). Runs on Bun, no extra dependencies.
 - **designmd**: design references from designmd.ai. Supplementary only, read-only, and every kit is screened by JEV before use.
 - **koboyo-icons**: the icon library. Fallback: https://reicon.dev.
 

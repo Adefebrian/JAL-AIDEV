@@ -9,6 +9,8 @@ There is one design system. Every JAL product, from an ops console to a phone-fi
 
 - `references/foundations.md`: layout doctrine, hierarchy, generated scales, contrast, depth, density, state model, motion principles, accessibility, agent mechanics.
 - `references/components.md`: one spec per component (anatomy, chrome, states, responsive contract).
+- `references/craft.md`: the craft floor (measure, tracking, heading rhythm, browser surfaces, with numbers), the anti-pattern ban list, type, color, layout, motion, state, and copy rules, the critique workflow (Nielsen's 10, personas, P0 to P3), the fresh-context finish reviewer, and the JAL conflicts with impeccable.
+- `references/directions.md`: the variety mechanism (5 to 7 candidates, JEV screen, seeded draw), the six variation axes, the `docs/design/direction.md` contract template, and the 13 visual directions as JAL Core knob sets.
 - `references/sources.md`: provenance. Source value to JAL Core translation tables for Astryx, Carbon, and Material, and every pattern each one had that JAL law removed.
 
 Read order for any UI task: `jal-standards` (law), `jal-ui-taste` (tokens, section concept law, audit), `jal-frontend-rules` (recipes), then this skill, `foundations.md`, and the component specs you need. `jal-motion` owns motion detail.
@@ -109,14 +111,15 @@ Motion: transform and opacity only, durations 100, 150, 200, 300, easing `cubic-
 
 ## Agent workflow (every screen, from zero or redesign)
 
-1. **Find the closest existing screen.** Search the target repo for the nearest screen with the same job (table, settings, dashboard, chat, form wizard, detail). If none exists, use the closest template family in `foundations.md` section 10 as a structural reference only. Discover, do not guess.
+1. **Find the closest existing screen.** Search the target repo for the nearest screen with the same job (table, settings, dashboard, chat, form wizard, detail). If none exists, use the closest template family in `foundations.md` section 10 as a structural reference only. Discover, do not guess. **Direction:** if the target repo has `docs/design/direction.md`, inherit it; for a new product, a new surface, or a redesign, run the candidate, `ui.direction_screen`, and seeded-draw steps in `directions.md` and write the contract before any code.
 2. **Study its skeleton, not its pixels.** Write the frame outside-in: shell (app-shell below 640, side nav allowed from 1024), region width budgets, fill versus capped (tables, charts, boards fill; prose, forms, lists cap), container policy per region. Then each section's concept: job, one message, primary action, container. A section with no job is deleted.
 3. **Gate every region with JEV** (`ui.region_gate`): implement, relevance, container. Drop when implement is under 0.5 or relevance is under 1.5.
 4. **Read the component spec** in `components.md` for every component you place. Build it from JAL tokens with all eight states.
 5. **Apply the rules.** Lightest container that still groups (spacing, then divider, then section, then card). Records render as rows at the product density. One content line per region. Grouping must survive with borders removed. Cards in a grid share one shape. No internal voids, no fake-fill. Adjacent sections vary in structure.
 6. **Mandatory self-check.** Re-read every file you wrote and fix before any tool run: raw hex or px outside the token tables, any `gradient`, any `box-shadow` with blur, any side or top or bottom accent border, marker dots, emoji, em-dash, eyebrow labels, purple family hues, control heights other than 44, missing states, `justify-content: space-between` or `flex-grow` on list rows, cards of mixed shape, a region without a job. This re-read pass cuts raw-CSS escapes about 4x.
 7. **Run `ui_audit`** at 320, 375, 414, 768, 1280. Fix every FAIL and rerun until PASS. `SKIPPED` is not a PASS.
-8. **Final taste verdict** (`ui.final_taste`); under 2 means revise. Screenshot 375 and 1280 and look at them.
+8. **Final taste verdict** (`ui.final_taste`); under 2 means revise. Screenshot 375 and 1280 and look at them. Check the render against the craft floor in `craft.md` section 2.
+9. **Fresh-context finish review** per `craft.md` section 12 (`ui.heuristics`, then `ui.finish_disposition`), at most two fix rounds.
 
 ## designmd policy (supplementary only)
 
