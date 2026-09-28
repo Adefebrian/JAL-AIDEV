@@ -25,7 +25,7 @@ Use the full name `jal-aidev@jal-aidev-marketplace`; the short name `jal-aidev` 
 - **The crew.** Any real task goes through the Pawang crew: jal-principal sets direction, jal-lead splits the work and runs independent pieces in parallel, specialists build, and the review gate decides when it is done.
 - **JEV is the judge.** JEV (TypeSafe's decision model) makes the small, bounded calls: which specialists a task needs, what can run in parallel, how dense tables and lists should be, whether a section is worth building, how severe a security finding is, whether a release is ready. Its verdict on those calls is final. Every decision is logged in `.jal/decisions/` so you can see why. Secrets are stripped before anything is sent.
 - **Hard law is mechanical.** The JAL rules (Bun only, no gradients, no shadows, no side lines on cards, no overlap, white-first, no emoji or em-dash, and the rest in `jal-standards`) are enforced by a write-time guard and by checks. JEV can never override them.
-- **UI is proven, not promised.** The automatic UI check opens the page in Chrome at 320, 375, 414, 768, and 1280 pixels wide and fails on overlap, anything sticking out of its container, clipped text, side stripes, shadows, gradients, dark backgrounds, mismatched field heights, form fields stretched wider than 640px, a phone layout without a pinned header and bottom tab bar, empty card space, and more. A screen is not done until it passes.
+- **UI is proven, not promised.** The automatic UI check opens the page in Chrome at 320, 375, 414, 768, and 1280 pixels wide and fails on overlap, anything sticking out of its container, clipped text, side stripes, shadows, gradients, dark backgrounds, mismatched field heights, form fields stretched wider than 640px, a phone layout without a pinned header and bottom tab bar, motion that keeps running when a visitor asks for reduced motion, empty card space, and more. A screen is not done until it passes.
 
 ## Agents
 
@@ -37,6 +37,7 @@ Use the full name `jal-aidev@jal-aidev-marketplace`; the short name `jal-aidev` 
 | jal-architect | System design and technical specifications |
 | jal-ux | Design system owner: builds or redesigns screens to the JAL standard |
 | jal-frontend | Frontend development to the jal-ux standard |
+| jal-immersive | Immersive, animated, and 3D websites: Three.js, shaders, scroll stories, noyzzi pieces |
 | jal-backend | Backend services on Bun and Hono |
 | jal-systems | Go or Rust sidecars for hot paths Bun cannot serve |
 | jal-security | Security baseline and vulnerability assessment |
@@ -52,6 +53,7 @@ Use the full name `jal-aidev@jal-aidev-marketplace`; the short name `jal-aidev` 
 | Command | What it is for |
 |---------|----------------|
 | `/jal-ui` | Build a new screen or redesign an existing one: tidy, modern, mobile-first, checked automatically |
+| `/jal-immersive` | Build or redesign an immersive, animated, or 3D website: beautiful, fast, mobile-friendly, checked automatically |
 | `/jal-ship` | Build a whole feature end to end with the full crew |
 | `/jal-orchestrate` | Run the crew on a task (plan, parallel build, review) |
 | `/jal-review` | Check the project against every JAL rule and give one PASS or FAIL |

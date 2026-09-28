@@ -127,7 +127,12 @@ function findSideStripeViolation(content) {
   return null;
 }
 
-const BANNED_DEPS = ["vite", "next", "@vitejs", "webpack", "create-react-app", "node", "deno", "ts-node", "tsx", "nodemon"];
+const BANNED_DEPS = ["vite", "next", "@vitejs", "webpack", "create-react-app", "node", "deno", "ts-node", "tsx", "nodemon", "remotion"];
+// Scoped packages banned as a whole family (Remotion needs webpack, Node, and Chromium; JAL ships its own frame core).
+const BANNED_SCOPES = ["@remotion/"];
+// noyzzi-derived files (Brian's ruling): exempt from the visual checks (gradient, shadow,
+// side stripe) because the piece is built as designed. Em-dash and emoji stay banned.
+const NOYZZI_PATH_RE = /(^|\/)noyzzi(\/|[-_.])/i;
 // Runtime commands banned from package.json scripts (Bun is the only JS/TS runtime).
 const BANNED_RUNTIME_CMDS = ["ts-node", "tsx", "nodemon", "deno"];
 // Deploy/coolify config files must only ever target the JAL deploy host.
@@ -148,6 +153,11 @@ export function evaluate({ file_path = "", content = "" }) {
         return { block: true, reason: `JAL constitution: "${dep}" is banned. Bun-only runtime, no Vite/Next/heavy bundlers. See jal-standards.` };
       }
     }
+    for (const scope of BANNED_SCOPES) {
+      if (content.includes(`"${scope}`)) {
+        return { block: true, reason: `JAL constitution: "${scope}*" packages are banned. Use the JAL frame core in packages/ui/src/frames (see jal-immersive references/frames.md).` };
+      }
+    }
     // Banned runtime commands anywhere in scripts (not just as a declared dependency).
     for (const cmd of BANNED_RUNTIME_CMDS) {
       if (new RegExp(`(["'\\s])${cmd}\\b`).test(content)) {
@@ -160,6 +170,13 @@ export function evaluate({ file_path = "", content = "" }) {
     return { block: true, reason: "JAL frontend law: no emdash in frontend content. Use a comma, colon, or rephrase. See jal-frontend-rules." };
   }
   if (FRONTEND_RE.test(file_path)) {
+    // noyzzi pieces keep their own look: skip gradient, shadow, and stripe checks.
+    if (NOYZZI_PATH_RE.test(file_path)) {
+      if (hasEmoji(content)) {
+        return { block: true, reason: "JAL frontend law: no emoji in frontend content. See jal-frontend-rules." };
+      }
+      return { block: false };
+    }
     // Gradients
     if (GRADIENT_RE.test(content)) {
       return { block: true, reason: "JAL frontend law: no gradients. Flat neutral surfaces only. See jal-frontend-rules." };

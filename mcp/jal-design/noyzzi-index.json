@@ -1,0 +1,608 @@
+{
+  "source": "https://noyzzi.com",
+  "note": "Index of noyzzi items. Fetch the live prompt or code with the noyzzi_get tool.",
+  "items": [
+    {
+      "kind": "effect",
+      "slug": "kaleido-mirror",
+      "name": "Kaleido Mirror",
+      "law": "none",
+      "url": "https://noyzzi.com/effects/kaleido-mirror/"
+    },
+    {
+      "kind": "effect",
+      "slug": "saturation-focus",
+      "name": "Saturation Focus",
+      "law": "none",
+      "url": "https://noyzzi.com/effects/saturation-focus/"
+    },
+    {
+      "kind": "effect",
+      "slug": "liquid-trail",
+      "name": "Liquid Trail",
+      "law": "none",
+      "url": "https://noyzzi.com/effects/liquid-trail/"
+    },
+    {
+      "kind": "effect",
+      "slug": "liquid-pool",
+      "name": "Liquid Pool",
+      "law": "none",
+      "url": "https://noyzzi.com/effects/liquid-pool/"
+    },
+    {
+      "kind": "effect",
+      "slug": "pixel-dissolve",
+      "name": "Pixel Dissolve",
+      "law": "none",
+      "url": "https://noyzzi.com/effects/pixel-dissolve/"
+    },
+    {
+      "kind": "effect",
+      "slug": "glitch-shift",
+      "name": "Glitch Shift",
+      "law": "neon (RGB fringe)",
+      "url": "https://noyzzi.com/effects/glitch-shift/"
+    },
+    {
+      "kind": "effect",
+      "slug": "ripple-bloom",
+      "name": "Ripple Bloom",
+      "law": "none",
+      "url": "https://noyzzi.com/effects/ripple-bloom/"
+    },
+    {
+      "kind": "effect",
+      "slug": "negative-reveal",
+      "name": "Negative Reveal",
+      "law": "none",
+      "url": "https://noyzzi.com/effects/negative-reveal/"
+    },
+    {
+      "kind": "effect",
+      "slug": "orbital-swirl",
+      "name": "Orbital Swirl",
+      "law": "none",
+      "url": "https://noyzzi.com/effects/orbital-swirl/"
+    },
+    {
+      "kind": "effect",
+      "slug": "thermal-scan",
+      "name": "Thermal Scan",
+      "law": "neon (false colour)",
+      "url": "https://noyzzi.com/effects/thermal-scan/"
+    },
+    {
+      "kind": "effect",
+      "slug": "duotone-wash",
+      "name": "Duotone Wash",
+      "law": "purple (indigo shadow)",
+      "url": "https://noyzzi.com/effects/duotone-wash/"
+    },
+    {
+      "kind": "effect",
+      "slug": "prism-hover",
+      "name": "Prism Hover",
+      "law": "purple (spectral fringe)",
+      "url": "https://noyzzi.com/effects/prism-hover/"
+    },
+    {
+      "kind": "effect",
+      "slug": "burn-focus",
+      "name": "Burn Focus",
+      "law": "glow",
+      "url": "https://noyzzi.com/effects/burn-focus/"
+    },
+    {
+      "kind": "effect",
+      "slug": "calm-distort",
+      "name": "Calm Distort",
+      "law": "none",
+      "url": "https://noyzzi.com/effects/calm-distort/"
+    },
+    {
+      "kind": "effect",
+      "slug": "flower-bloom",
+      "name": "Flower Bloom",
+      "law": "none",
+      "url": "https://noyzzi.com/effects/flower-bloom/"
+    },
+    {
+      "kind": "effect",
+      "slug": "heart-burst",
+      "name": "Heart Burst",
+      "law": "glow",
+      "url": "https://noyzzi.com/effects/heart-burst/"
+    },
+    {
+      "kind": "effect",
+      "slug": "sonar-pulse",
+      "name": "Sonar Pulse",
+      "law": "neon, glow",
+      "url": "https://noyzzi.com/effects/sonar-pulse/"
+    },
+    {
+      "kind": "effect",
+      "slug": "starburst",
+      "name": "Starburst",
+      "law": "glow",
+      "url": "https://noyzzi.com/effects/starburst/"
+    },
+    {
+      "kind": "effect",
+      "slug": "holo-shift",
+      "name": "Holo Shift",
+      "law": "purple (full spectrum)",
+      "url": "https://noyzzi.com/effects/holo-shift/"
+    },
+    {
+      "kind": "effect",
+      "slug": "crystal-shatter",
+      "name": "Crystal Shatter",
+      "law": "glow (edge light)",
+      "url": "https://noyzzi.com/effects/crystal-shatter/"
+    },
+    {
+      "kind": "effect",
+      "slug": "chrome-ripple",
+      "name": "Chrome Ripple",
+      "law": "none",
+      "url": "https://noyzzi.com/effects/chrome-ripple/"
+    },
+    {
+      "kind": "effect",
+      "slug": "halftone-print",
+      "name": "Halftone",
+      "law": "none",
+      "url": "https://noyzzi.com/effects/halftone-print/"
+    },
+    {
+      "kind": "section",
+      "slug": "gallery-carousel",
+      "name": "Gallery Carousel",
+      "surface": "light paper",
+      "law": "none (lightbox uses backdrop blur)",
+      "url": "https://noyzzi.com/sections/gallery-carousel/"
+    },
+    {
+      "kind": "section",
+      "slug": "perspective-cube",
+      "name": "Perspective Cube",
+      "surface": "dark",
+      "law": "dark, purple, glow",
+      "url": "https://noyzzi.com/sections/perspective-cube/"
+    },
+    {
+      "kind": "section",
+      "slug": "particle-field",
+      "name": "Particle Field",
+      "surface": "dark",
+      "law": "dark, eyebrow",
+      "url": "https://noyzzi.com/sections/particle-field/"
+    },
+    {
+      "kind": "section",
+      "slug": "kinetic-type",
+      "name": "Kinetic Type",
+      "surface": "dark",
+      "law": "dark, eyebrow, lines",
+      "url": "https://noyzzi.com/sections/kinetic-type/"
+    },
+    {
+      "kind": "section",
+      "slug": "parallax-layers",
+      "name": "Parallax Layers",
+      "surface": "dark",
+      "law": "dark, eyebrow, lines",
+      "url": "https://noyzzi.com/sections/parallax-layers/"
+    },
+    {
+      "kind": "section",
+      "slug": "sine-currents",
+      "name": "Sine Currents",
+      "surface": "dark",
+      "law": "dark",
+      "url": "https://noyzzi.com/sections/sine-currents/"
+    },
+    {
+      "kind": "section",
+      "slug": "geometric-order",
+      "name": "Geometric Order",
+      "surface": "dark",
+      "law": "dark, eyebrow",
+      "url": "https://noyzzi.com/sections/geometric-order/"
+    },
+    {
+      "kind": "section",
+      "slug": "magnetic-field",
+      "name": "Magnetic Field",
+      "surface": "dark",
+      "law": "dark, eyebrow",
+      "url": "https://noyzzi.com/sections/magnetic-field/"
+    },
+    {
+      "kind": "section",
+      "slug": "digital-decay",
+      "name": "Digital Decay",
+      "surface": "dark",
+      "law": "dark, neon, gradient",
+      "url": "https://noyzzi.com/sections/digital-decay/"
+    },
+    {
+      "kind": "section",
+      "slug": "spotlight",
+      "name": "Spotlight",
+      "surface": "dark",
+      "law": "dark, eyebrow, gradient",
+      "url": "https://noyzzi.com/sections/spotlight/"
+    },
+    {
+      "kind": "section",
+      "slug": "waveform",
+      "name": "Waveform",
+      "surface": "dark",
+      "law": "dark, neon",
+      "url": "https://noyzzi.com/sections/waveform/"
+    },
+    {
+      "kind": "section",
+      "slug": "ascii-art",
+      "name": "ASCII Art",
+      "surface": "dark",
+      "law": "dark, eyebrow, lines",
+      "url": "https://noyzzi.com/sections/ascii-art/"
+    },
+    {
+      "kind": "section",
+      "slug": "noise-terrain",
+      "name": "Noise Terrain",
+      "surface": "dark",
+      "law": "dark, eyebrow",
+      "url": "https://noyzzi.com/sections/noise-terrain/"
+    },
+    {
+      "kind": "section",
+      "slug": "cinematic-reel",
+      "name": "Cinematic Reel",
+      "surface": "dark",
+      "law": "dark, eyebrow",
+      "url": "https://noyzzi.com/sections/cinematic-reel/"
+    },
+    {
+      "kind": "section",
+      "slug": "type-mask",
+      "name": "Type Mask",
+      "surface": "dark",
+      "law": "dark, eyebrow",
+      "url": "https://noyzzi.com/sections/type-mask/"
+    },
+    {
+      "kind": "section",
+      "slug": "visual-board",
+      "name": "Visual Board",
+      "surface": "dark",
+      "law": "dark, eyebrow, shadow",
+      "url": "https://noyzzi.com/sections/visual-board/"
+    },
+    {
+      "kind": "section",
+      "slug": "starfield-warp",
+      "name": "Starfield Warp",
+      "surface": "dark",
+      "law": "dark, eyebrow",
+      "url": "https://noyzzi.com/sections/starfield-warp/"
+    },
+    {
+      "kind": "section",
+      "slug": "word-rotator",
+      "name": "Word Rotator",
+      "surface": "dark",
+      "law": "dark, eyebrow, lines, glow, gradient",
+      "url": "https://noyzzi.com/sections/word-rotator/"
+    },
+    {
+      "kind": "section",
+      "slug": "floating-playground",
+      "name": "Floating Playground",
+      "surface": "dark",
+      "law": "dark, eyebrow, shadow",
+      "url": "https://noyzzi.com/sections/floating-playground/"
+    },
+    {
+      "kind": "section",
+      "slug": "terminal",
+      "name": "Terminal",
+      "surface": "dark",
+      "law": "dark, neon, glow",
+      "url": "https://noyzzi.com/sections/terminal/"
+    },
+    {
+      "kind": "section",
+      "slug": "magnetic-scatter",
+      "name": "Magnetic Scatter",
+      "surface": "light (dusty pink)",
+      "law": "none",
+      "url": "https://noyzzi.com/sections/magnetic-scatter/"
+    },
+    {
+      "kind": "section",
+      "slug": "flaming-hot",
+      "name": "Flaming Hot",
+      "surface": "dark",
+      "law": "dark, neon, glow",
+      "url": "https://noyzzi.com/sections/flaming-hot/"
+    },
+    {
+      "kind": "section",
+      "slug": "cosmic-dust",
+      "name": "Cosmic Dust",
+      "surface": "dark",
+      "law": "dark, neon",
+      "url": "https://noyzzi.com/sections/cosmic-dust/"
+    },
+    {
+      "kind": "section",
+      "slug": "moodboard",
+      "name": "Moodboard",
+      "surface": "white",
+      "law": "shadow, gradient (hover sheen)",
+      "url": "https://noyzzi.com/sections/moodboard/"
+    },
+    {
+      "kind": "section",
+      "slug": "helix-portfolio",
+      "name": "Helix Portfolio",
+      "surface": "light paper",
+      "law": "none",
+      "url": "https://noyzzi.com/sections/helix-portfolio/"
+    },
+    {
+      "kind": "section",
+      "slug": "gaze",
+      "name": "Gaze",
+      "surface": "light paper",
+      "law": "none",
+      "url": "https://noyzzi.com/sections/gaze/"
+    },
+    {
+      "kind": "section",
+      "slug": "loom",
+      "name": "Loom",
+      "surface": "light paper",
+      "law": "none",
+      "url": "https://noyzzi.com/sections/loom/"
+    },
+    {
+      "kind": "section",
+      "slug": "ink-drift",
+      "name": "Ink Drift",
+      "surface": "light slate paper",
+      "law": "none",
+      "url": "https://noyzzi.com/sections/ink-drift/"
+    },
+    {
+      "kind": "section",
+      "slug": "veil",
+      "name": "Veil",
+      "surface": "light paper",
+      "law": "purple (periwinkle and lilac blobs)",
+      "url": "https://noyzzi.com/sections/veil/"
+    },
+    {
+      "kind": "section",
+      "slug": "draw",
+      "name": "Draw",
+      "surface": "light paper",
+      "law": "gradient (canvas vignette)",
+      "url": "https://noyzzi.com/sections/draw/"
+    },
+    {
+      "kind": "element",
+      "slug": "ring",
+      "name": "Ring",
+      "law": "purple (lavender wash)",
+      "interactive": false,
+      "url": "https://noyzzi.com/elements/ring/"
+    },
+    {
+      "kind": "element",
+      "slug": "knot",
+      "name": "Knot",
+      "law": "none",
+      "interactive": false,
+      "url": "https://noyzzi.com/elements/knot/"
+    },
+    {
+      "kind": "element",
+      "slug": "mochi",
+      "name": "Mochi",
+      "law": "purple (lilac zone)",
+      "interactive": false,
+      "url": "https://noyzzi.com/elements/mochi/"
+    },
+    {
+      "kind": "element",
+      "slug": "coral",
+      "name": "Coral",
+      "law": "none",
+      "interactive": false,
+      "url": "https://noyzzi.com/elements/coral/"
+    },
+    {
+      "kind": "element",
+      "slug": "orb",
+      "name": "Orb",
+      "law": "purple (violet core)",
+      "interactive": false,
+      "url": "https://noyzzi.com/elements/orb/"
+    },
+    {
+      "kind": "element",
+      "slug": "star",
+      "name": "Star",
+      "law": "purple (hue sweep)",
+      "interactive": false,
+      "url": "https://noyzzi.com/elements/star/"
+    },
+    {
+      "kind": "element",
+      "slug": "heart",
+      "name": "Heart",
+      "law": "purple (foil hues)",
+      "interactive": false,
+      "url": "https://noyzzi.com/elements/heart/"
+    },
+    {
+      "kind": "element",
+      "slug": "cube",
+      "name": "Cube",
+      "law": "dark studio",
+      "interactive": false,
+      "url": "https://noyzzi.com/elements/cube/"
+    },
+    {
+      "kind": "element",
+      "slug": "spark",
+      "name": "AI Spark",
+      "law": "glow (additive core)",
+      "interactive": false,
+      "url": "https://noyzzi.com/elements/spark/"
+    },
+    {
+      "kind": "element",
+      "slug": "flower",
+      "name": "Flower",
+      "law": "none",
+      "interactive": false,
+      "url": "https://noyzzi.com/elements/flower/"
+    },
+    {
+      "kind": "element",
+      "slug": "smiley",
+      "name": "Smiley",
+      "law": "purple studio",
+      "interactive": false,
+      "url": "https://noyzzi.com/elements/smiley/"
+    },
+    {
+      "kind": "element",
+      "slug": "terrace",
+      "name": "Terrace",
+      "law": "none",
+      "interactive": false,
+      "url": "https://noyzzi.com/elements/terrace/"
+    },
+    {
+      "kind": "element",
+      "slug": "squiggle",
+      "name": "Squiggle",
+      "law": "none",
+      "interactive": false,
+      "url": "https://noyzzi.com/elements/squiggle/"
+    },
+    {
+      "kind": "element",
+      "slug": "melt",
+      "name": "Melt",
+      "law": "purple (lavender)",
+      "interactive": false,
+      "url": "https://noyzzi.com/elements/melt/"
+    },
+    {
+      "kind": "element",
+      "slug": "prism",
+      "name": "Prism",
+      "law": "dark studio, glow",
+      "interactive": false,
+      "url": "https://noyzzi.com/elements/prism/"
+    },
+    {
+      "kind": "element",
+      "slug": "cloud",
+      "name": "Cloud",
+      "law": "dark studio",
+      "interactive": false,
+      "url": "https://noyzzi.com/elements/cloud/"
+    },
+    {
+      "kind": "element",
+      "slug": "cursor",
+      "name": "Cursor",
+      "law": "none",
+      "interactive": false,
+      "url": "https://noyzzi.com/elements/cursor/"
+    },
+    {
+      "kind": "element",
+      "slug": "fuzz",
+      "name": "Fuzz",
+      "law": "none",
+      "interactive": false,
+      "url": "https://noyzzi.com/elements/fuzz/"
+    },
+    {
+      "kind": "element",
+      "slug": "crystal",
+      "name": "Crystal",
+      "law": "dark studio",
+      "interactive": false,
+      "url": "https://noyzzi.com/elements/crystal/"
+    },
+    {
+      "kind": "element",
+      "slug": "bolt",
+      "name": "Bolt",
+      "law": "purple (violet kicks)",
+      "interactive": false,
+      "url": "https://noyzzi.com/elements/bolt/"
+    },
+    {
+      "kind": "element",
+      "slug": "blossom",
+      "name": "Blossom",
+      "law": "none",
+      "interactive": false,
+      "url": "https://noyzzi.com/elements/blossom/"
+    },
+    {
+      "kind": "element",
+      "slug": "wave",
+      "name": "Wave",
+      "law": "none",
+      "interactive": false,
+      "url": "https://noyzzi.com/elements/wave/"
+    },
+    {
+      "kind": "element",
+      "slug": "shards",
+      "name": "Shards",
+      "law": "purple (violet kicks)",
+      "interactive": true,
+      "url": "https://noyzzi.com/elements/shards/"
+    },
+    {
+      "kind": "element",
+      "slug": "voxel",
+      "name": "Voxel",
+      "law": "none",
+      "interactive": true,
+      "url": "https://noyzzi.com/elements/voxel/"
+    },
+    {
+      "kind": "element",
+      "slug": "book",
+      "name": "Grimoire",
+      "law": "purple studio",
+      "interactive": false,
+      "url": "https://noyzzi.com/elements/book/"
+    },
+    {
+      "kind": "element",
+      "slug": "shades",
+      "name": "Shades",
+      "law": "none",
+      "interactive": false,
+      "url": "https://noyzzi.com/elements/shades/"
+    }
+  ]
+}

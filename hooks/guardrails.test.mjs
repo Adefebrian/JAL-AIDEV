@@ -143,3 +143,25 @@ test("allows emoji in non-frontend content", () => {
   const r = evaluate({ file_path: "docs/notes.md", content: "Ship it \u{1F680}" });
   expect(r.block).toBe(false);
 });
+
+test("blocks remotion and @remotion/* dependencies", () => {
+  expect(evaluate({ file_path: "apps/web/package.json", content: '{"dependencies":{"remotion":"4.0.0"}}' }).block).toBe(true);
+  expect(evaluate({ file_path: "apps/web/package.json", content: '{"dependencies":{"@remotion/player":"4.0.0"}}' }).block).toBe(true);
+});
+
+test("allows three, R3F, drei, gsap, lenis, tailwind dependencies", () => {
+  const pkg = '{"dependencies":{"three":"0.180.0","@react-three/fiber":"9.1.0","@react-three/drei":"10.0.0","gsap":"3.13.0","lenis":"1.3.0","tailwindcss":"4.1.0","bun-plugin-tailwind":"0.1.0"}}';
+  expect(evaluate({ file_path: "apps/web/package.json", content: pkg }).block).toBe(false);
+});
+
+test("noyzzi-derived files may use gradients, glow shadows, and stripes as designed", () => {
+  const css = ".hero { background: linear-gradient(90deg, #7c3aed, #22d3ee); box-shadow: 0 0 24px #7c3aed; border-left: 4px solid #22d3ee; }";
+  expect(evaluate({ file_path: "apps/web/src/sections/noyzzi/Moodboard.css", content: css }).block).toBe(false);
+  expect(evaluate({ file_path: "apps/web/src/sections/noyzzi-moodboard.tsx", content: css }).block).toBe(false);
+  expect(evaluate({ file_path: "apps/web/src/sections/Hero.css", content: css }).block).toBe(true);
+});
+
+test("noyzzi-derived files still ban emoji and em-dash", () => {
+  expect(evaluate({ file_path: "apps/web/src/noyzzi/Hero.tsx", content: "<p>Launch \u{1F680}</p>" }).block).toBe(true);
+  expect(evaluate({ file_path: "apps/web/src/noyzzi/Hero.tsx", content: "<p>Fast — and calm</p>" }).block).toBe(true);
+});

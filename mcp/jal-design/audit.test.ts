@@ -45,6 +45,7 @@ const ALL_RULES = [
   "icon-text-collision",
   "form-width-cap",
   "mobile-app-shell",
+  "reduced-motion",
 ];
 
 describe("runAudit", () => {
@@ -128,5 +129,40 @@ describe("runAudit", () => {
       expect(wide.violations.map((v) => v.rule)).not.toContain("mobile-app-shell");
     },
     30000,
+  );
+
+  test(
+    "a data-jal-exempt=noyzzi section skips visual rules but keeps mechanical ones",
+    async () => {
+      const report = await runAudit(`${baseUrl}/noyzzi-exempt.html`, { widths: [1280] });
+      const inExempt = report.violations.filter((v) => v.selector.includes("exempt") || v.detail.includes("#exempt"));
+      const visual = ["gradient-background", "blurred-shadow", "purple-color"];
+      for (const rule of visual) {
+        expect(report.violations.some((v) => v.rule === rule)).toBe(true); // the lawful twin still fails
+        expect(inExempt.some((v) => v.rule === rule)).toBe(false);
+      }
+      expect(report.violations.some((v) => v.rule === "form-control-min-height" && v.selector === "#tiny-exempt")).toBe(true);
+    },
+    60000,
+  );
+
+  test(
+    "reduced-motion fails a page that keeps animating under prefers-reduced-motion",
+    async () => {
+      const report = await runAudit(`${baseUrl}/motion-loop.html`, { widths: [1280] });
+      const rm = report.violations.filter((v) => v.rule === "reduced-motion");
+      expect(rm.some((v) => v.detail.includes("requestAnimationFrame"))).toBe(true);
+      expect(rm.some((v) => v.detail.includes("infinite animation"))).toBe(true);
+    },
+    60000,
+  );
+
+  test(
+    "reduced-motion passes a page that stops its loops under prefers-reduced-motion",
+    async () => {
+      const report = await runAudit(`${baseUrl}/motion-calm.html`, { widths: [1280] });
+      expect(report.violations.filter((v) => v.rule === "reduced-motion")).toEqual([]);
+    },
+    60000,
   );
 });

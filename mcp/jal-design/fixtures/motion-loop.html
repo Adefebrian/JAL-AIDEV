@@ -1,0 +1,22 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>motion loop fixture</title>
+<style>
+  body { margin: 0; background: #ffffff; font-family: sans-serif; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .spinner { width: 44px; height: 44px; border: 1px solid #1b1b1b; animation: spin 1s linear infinite; }
+</style>
+</head>
+<body>
+<main>
+  <div class="spinner"></div>
+  <canvas id="c" width="10" height="10"></canvas>
+  <script>
+    (function loop() { requestAnimationFrame(loop); })();
+  </script>
+</main>
+</body>
+</html>

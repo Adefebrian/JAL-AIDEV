@@ -55,6 +55,8 @@
     border: 1px solid #d1d5db;
   }
   .wide-field { display: block; width: 100%; min-width: 900px; height: 88px; margin-bottom: 16px; }
+  @keyframes jal-bad-spin { to { transform: rotate(360deg); } }
+  .spin-forever { width: 44px; height: 44px; animation: jal-bad-spin 1s linear infinite; }
   .tiny-btn {
     height: 30px;
     padding: 0 10px;
@@ -160,6 +162,7 @@
     <select><option>Choose</option></select>
   </div>
   <textarea class="wide-field" aria-label="Notes"></textarea>
+  <div class="spin-forever" aria-hidden="true"></div>
   <button class="tiny-btn">Go</button>
   <div class="card-row">
     <div class="card-a"><p>Short card content that fills most of the box.</p></div>

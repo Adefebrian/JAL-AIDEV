@@ -1,7 +1,7 @@
 {
   "name": "jal-aidev",
-  "version": "0.3.0",
-  "description": "JAL engineering constitution, the Pawang agent crew judged by JEV, a mechanical UI audit, and a no-Vite Bun monorepo scaffolder.",
+  "version": "0.4.0",
+  "description": "JAL engineering constitution, the Pawang agent crew judged by JEV, one design system (JAL Core), an immersive and 3D layer, a mechanical UI audit, and a no-Vite Bun monorepo scaffolder.",
   "author": {
     "name": "Brian",
     "email": "brian@jalgroup.id"

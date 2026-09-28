@@ -8,11 +8,12 @@ What to work on: $ARGUMENTS
 ## What happens
 
 1. It works out whether this is a new screen or a redesign of one that already exists. For a redesign it checks the current screen first and lists what is wrong before changing anything.
-2. It plans every section before drawing it: what the section is for, the one message it carries, and the one action it offers. Sections with no clear purpose are left out.
-3. It builds on one JAL design system every time, sets how dense tables and lists should be for this product, and decides for each section whether it belongs and how it should be laid out. These calls are made by the JEV judge, not by guesswork.
-4. It builds phone first, then tablet, then desktop, on the shared JAL design tokens: white background, one quiet accent at most, nothing overlapping, nothing sticking out of its box, no shadows, no gradients, no side lines on cards.
-5. It proves the result with the automatic UI check at phone, tablet, and desktop widths, fixes anything the check finds, and repeats until it passes.
-6. It reports back what it built, each decision it made and how confident it was, and the result of the UI check.
+2. It explores several creative directions for your audience, has the JEV judge screen them, and commits to one fresh direction instead of the obvious first idea.
+3. It plans every section before drawing it: what the section is for, the one message it carries, and the one action it offers. Sections with no clear purpose are left out.
+4. It builds on one JAL design system every time, sets how dense tables and lists should be for this product, and decides for each section whether it belongs and how it should be laid out. These calls are made by the JEV judge, not by guesswork.
+5. It builds phone first, then tablet, then desktop, on the shared JAL design tokens: white background, one quiet accent at most, nothing overlapping, nothing sticking out of its box, no shadows, no gradients, no side lines on cards.
+6. It proves the result with the automatic UI check at phone, tablet, and desktop widths, fixes anything the check finds, and repeats until it passes.
+7. It reports back what it built, each decision it made and how confident it was, and the result of the UI check.
 
 ## Run it
 

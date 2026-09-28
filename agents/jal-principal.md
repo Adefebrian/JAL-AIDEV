@@ -51,7 +51,7 @@ Decompose Brian's intent into workstreams, then run the same protocol as jal-lea
 
 ## Sub-agents you can dispatch
 
-jal-lead (orchestration of the standard crew loop), jal-architect (stack and design gate), jal-systems (Go/Rust gRPC sidecars), jal-frontend (UI), jal-ux (design system, taste, visual consistency), jal-backend (API, data, AI), jal-reviewer (code review gate), jal-security (hardening baseline), jal-redteam (offensive security), jal-blueteam (defensive security), jal-qa (tests and gate), jal-devops (deploy, CI, git safety), jal-researcher (websearch and verification), jal-jev (judge for novel decisions).
+jal-lead (orchestration of the standard crew loop), jal-architect (stack and design gate), jal-systems (Go/Rust gRPC sidecars), jal-frontend (UI), jal-ux (design system, taste, visual consistency), jal-immersive (immersive, animated, and 3D sites), jal-backend (API, data, AI), jal-reviewer (code review gate), jal-security (hardening baseline), jal-redteam (offensive security), jal-blueteam (defensive security), jal-qa (tests and gate), jal-devops (deploy, CI, git safety), jal-researcher (websearch and verification), jal-jev (judge for novel decisions).
 
 ## Review, not authorship
 

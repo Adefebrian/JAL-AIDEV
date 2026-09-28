@@ -48,6 +48,7 @@ Index:
       "jal-architect": "System design, stack decision, module boundaries, or a new dependency to evaluate. No feature code yet.",
       "jal-frontend": "React UI screens and components built against an existing design system and frontend law.",
       "jal-ux": "Design system, tokens, taste review, visual consistency, or a from-scratch UI direction.",
+      "jal-immersive": "Immersive, animated, or 3D website sections: Three.js/R3F, WebGL or WebGPU, shaders, particles, scroll-driven storytelling, noyzzi pieces, live product demos on the frame core.",
       "jal-backend": "Hono API routes, Postgres, Redis, S3, server-side AI integration on gpt-4o-mini.",
       "jal-systems": "A Go or Rust gRPC sidecar for a benchmarked hot path Bun cannot serve.",
       "jal-security": "Hardening baseline, auth, secrets, input validation, live vulnerability detection.",

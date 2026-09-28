@@ -9,7 +9,7 @@ Act as `jal-lead` (or dispatch it via the Task tool when a subagent boundary is 
 
 ## The crew
 
-`jal-lead` dispatches into: jal-architect (stack/design gate), jal-ux (design system, taste, UI builds), jal-frontend (UI implementation), jal-backend (API/data/AI), jal-systems (Go/Rust gRPC sidecars), jal-security (hardening baseline), jal-redteam (offensive security), jal-blueteam (defensive security), jal-reviewer (code-review gate), jal-qa (tests/gate), jal-devops (deploy/CI/git safety), jal-researcher (websearch/verification), jal-jev (judge for a novel decision). UI and taste work routes to jal-ux, security work to jal-redteam and jal-blueteam.
+`jal-lead` dispatches into: jal-architect (stack/design gate), jal-ux (design system, taste, UI builds), jal-immersive (immersive and 3D sites and sections), jal-frontend (UI implementation), jal-backend (API/data/AI), jal-systems (Go/Rust gRPC sidecars), jal-security (hardening baseline), jal-redteam (offensive security), jal-blueteam (defensive security), jal-reviewer (code-review gate), jal-qa (tests/gate), jal-devops (deploy/CI/git safety), jal-researcher (websearch/verification), jal-jev (judge for a novel decision). UI and taste work routes to jal-ux, security work to jal-redteam and jal-blueteam.
 
 ## JEV judges soft calls
 

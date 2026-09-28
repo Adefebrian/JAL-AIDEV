@@ -27,7 +27,7 @@ const STANDARD_CHROME_PATHS = [
   "/usr/bin/chromium-browser",
 ];
 
-function resolveChromePath(explicit?: string): string | null {
+export function resolveChromePath(explicit?: string): string | null {
   const configured = explicit ?? process.env.CHROME_PATH;
   if (configured) return configured;
   for (const candidate of STANDARD_CHROME_PATHS) {
@@ -36,7 +36,7 @@ function resolveChromePath(explicit?: string): string | null {
   return null;
 }
 
-function withTimeout<T>(ms: number, run: () => Promise<T>): Promise<T> {
+export function withTimeout<T>(ms: number, run: () => Promise<T>): Promise<T> {
   return new Promise<T>((resolve, reject) => {
     const timer = setTimeout(() => reject(new Error(`audit timed out after ${ms}ms`)), ms);
     run().then(
@@ -70,14 +70,20 @@ async function readDevtoolsPort(stream: ReadableStream<Uint8Array>): Promise<num
   throw new Error("could not read chrome devtools port from stderr");
 }
 
-type ChromeHandle = { proc: ReturnType<typeof Bun.spawn>; port: number };
+export type ChromeHandle = { proc: ReturnType<typeof Bun.spawn>; port: number };
 
-async function launchChrome(chromePath: string, userDataDir: string): Promise<ChromeHandle> {
+export async function launchChrome(
+  chromePath: string,
+  userDataDir: string,
+  opts: { webgl?: boolean } = {},
+): Promise<ChromeHandle> {
+  // webgl: software WebGL via SwiftShader for pages that need a GL context.
+  const gpuArgs = opts.webgl ? ["--use-angle=swiftshader", "--enable-unsafe-swiftshader", "--ignore-gpu-blocklist"] : ["--disable-gpu"];
   const proc = Bun.spawn({
     cmd: [
       chromePath,
       "--headless=new",
-      "--disable-gpu",
+      ...gpuArgs,
       "--no-sandbox",
       "--hide-scrollbars",
       "--mute-audio",
@@ -93,13 +99,13 @@ async function launchChrome(chromePath: string, userDataDir: string): Promise<Ch
   return { proc, port };
 }
 
-async function createPageTarget(port: number): Promise<{ id: string; webSocketDebuggerUrl: string }> {
+export async function createPageTarget(port: number): Promise<{ id: string; webSocketDebuggerUrl: string }> {
   const res = await fetch(`http://127.0.0.1:${port}/json/new?about:blank`, { method: "PUT" });
   if (!res.ok) throw new Error(`failed to create page target: ${res.status}`);
   return (await res.json()) as { id: string; webSocketDebuggerUrl: string };
 }
 
-async function closePageTarget(port: number, id: string): Promise<void> {
+export async function closePageTarget(port: number, id: string): Promise<void> {
   try {
     await fetch(`http://127.0.0.1:${port}/json/close/${id}`);
   } catch {
@@ -110,7 +116,7 @@ async function closePageTarget(port: number, id: string): Promise<void> {
 type PendingEntry = { resolve: (v: unknown) => void; reject: (e: unknown) => void };
 type EventWaiter = { method: string; resolve: (v: unknown) => void };
 
-class CdpClient {
+export class CdpClient {
   private ws: WebSocket;
   private nextId = 1;
   private pending = new Map<number, PendingEntry>();
@@ -188,12 +194,33 @@ class CdpClient {
 const AUDIT_SCRIPT = `
 (function () {
   var violations = [];
+  var pathEls = {};
+
+  // Visual-law rules that do not apply inside a noyzzi-derived section
+  // (data-jal-exempt="noyzzi", Brian's ruling). Mechanical rules (control
+  // height, overflow, clipped text, emoji, em-dash, form cap, app-shell,
+  // reduced motion) still apply there.
+  var NOYZZI_EXEMPT = {
+    "light-background": 1, "gradient-background": 1, "blurred-shadow": 1, "side-stripe": 1,
+    "purple-color": 1, "eyebrow-label": 1, "overlap": 1, "overflow-parent": 1,
+    "card-row-mismatch": 1, "card-empty-band": 1
+  };
+  function isExempt(el) {
+    return !!(el && el.closest && el.closest("[data-jal-exempt~=noyzzi]"));
+  }
 
   function pushV(rule, selector, detail) {
+    if (NOYZZI_EXEMPT[rule] && isExempt(pathEls[selector])) return;
     violations.push({ rule: rule, selector: selector, detail: detail });
   }
 
   function cssPath(el) {
+    var p = cssPathRaw(el);
+    if (p) pathEls[p] = el;
+    return p;
+  }
+
+  function cssPathRaw(el) {
     if (!el || el.nodeType !== 1) return "";
     if (el.id) return "#" + el.id;
     var parts = [];
@@ -772,6 +799,75 @@ async function auditAtWidth(client: CdpClient, url: string, width: number): Prom
   return result.result.value ?? [];
 }
 
+// reduced-motion: with prefers-reduced-motion: reduce emulated, nothing may
+// keep moving on its own. Counts requestAnimationFrame calls per second after
+// the page settles and lists infinite CSS/WAAPI animations still running.
+// Applies everywhere, noyzzi sections included (mechanical rule).
+const RAF_COUNTER = `
+(function () {
+  window.__jalRaf = 0;
+  var raf = window.requestAnimationFrame.bind(window);
+  window.requestAnimationFrame = function (cb) { window.__jalRaf++; return raf(cb); };
+})();
+`;
+
+const REDUCED_MOTION_PROBE = `
+(async function () {
+  var sleep = function (ms) { return new Promise(function (r) { setTimeout(r, ms); }); };
+  await sleep(1500);
+  var start = window.__jalRaf || 0;
+  await sleep(1000);
+  var perSecond = (window.__jalRaf || 0) - start;
+  var infinite = [];
+  if (document.getAnimations) {
+    document.getAnimations().forEach(function (a) {
+      try {
+        var timing = a.effect && a.effect.getComputedTiming ? a.effect.getComputedTiming() : null;
+        if (a.playState === "running" && timing && timing.iterations === Infinity) {
+          var t = a.effect.target;
+          infinite.push((t && t.tagName ? t.tagName.toLowerCase() + (t.id ? "#" + t.id : t.classList && t.classList[0] ? "." + t.classList[0] : "") : "?") + " " + (a.animationName || a.id || "animation"));
+        }
+      } catch (e) {}
+    });
+  }
+  return { perSecond: perSecond, infinite: infinite.slice(0, 5) };
+})()
+`;
+
+export const RAF_LIMIT_PER_SECOND = 10;
+
+async function auditReducedMotion(client: CdpClient, url: string, width: number): Promise<RawViolation[]> {
+  await client.send("Emulation.setDeviceMetricsOverride", { width, height: 1024, deviceScaleFactor: 1, mobile: width < 768 });
+  await client.send("Emulation.setEmulatedMedia", { features: [{ name: "prefers-reduced-motion", value: "reduce" }] });
+  const { identifier } = await client.send<{ identifier: string }>("Page.addScriptToEvaluateOnNewDocument", { source: RAF_COUNTER });
+  try {
+    const loaded = client.waitForEvent("Page.loadEventFired", 25000);
+    await client.send("Page.navigate", { url });
+    await loaded;
+    const res = await client.send<{ result: { value?: { perSecond: number; infinite: string[] } } }>("Runtime.evaluate", {
+      expression: REDUCED_MOTION_PROBE,
+      awaitPromise: true,
+      returnByValue: true,
+    });
+    const v = res.result.value;
+    const out: RawViolation[] = [];
+    if (v && v.perSecond > RAF_LIMIT_PER_SECOND) {
+      out.push({
+        rule: "reduced-motion",
+        selector: "window",
+        detail: `requestAnimationFrame loop still runs ${v.perSecond}/s under prefers-reduced-motion: reduce (limit ${RAF_LIMIT_PER_SECOND}); stop render and smooth-scroll loops, render a poster or on-demand frames`,
+      });
+    }
+    for (const a of v?.infinite ?? []) {
+      out.push({ rule: "reduced-motion", selector: a.split(" ")[0], detail: `infinite animation still running under prefers-reduced-motion: ${a}` });
+    }
+    return out;
+  } finally {
+    await client.send("Page.removeScriptToEvaluateOnNewDocument", { identifier }).catch(() => {});
+    await client.send("Emulation.setEmulatedMedia", { features: [] }).catch(() => {});
+  }
+}
+
 function dedupe(violations: Violation[]): Violation[] {
   const seen = new Set<string>();
   const out: Violation[] = [];
@@ -817,6 +913,9 @@ export async function runAudit(
         const raw = await auditAtWidth(client, url, width);
         for (const v of raw) violations.push({ ...v, width });
       }
+      // One reduced-motion pass at the widest requested width.
+      const rmWidth = Math.max(...widths);
+      for (const v of await auditReducedMotion(client, url, rmWidth)) violations.push({ ...v, width: rmWidth });
 
       const deduped = dedupe(violations);
       return {

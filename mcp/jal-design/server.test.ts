@@ -113,11 +113,11 @@ describe("jal-design MCP server (stdio)", () => {
     client.send({ jsonrpc: "2.0", method: "notifications/initialized" });
   });
 
-  test("tools/list returns exactly jev_decide and ui_audit with schemas", async () => {
+  test("tools/list returns exactly jev_decide, noyzzi_get, noyzzi_list, and ui_audit with schemas", async () => {
     const res = await client.request("tools/list", {});
     expect(res.error).toBeUndefined();
     const names = res.result.tools.map((t: any) => t.name).sort();
-    expect(names).toEqual(["jev_decide", "ui_audit"]);
+    expect(names).toEqual(["jev_decide", "noyzzi_get", "noyzzi_list", "ui_audit"]);
     for (const tool of res.result.tools) {
       expect(tool.inputSchema).toBeDefined();
       expect(tool.inputSchema.type).toBe("object");
@@ -142,6 +142,27 @@ describe("jal-design MCP server (stdio)", () => {
     const res = await client.request("ping", {});
     expect(res.error).toBeUndefined();
     expect(res.result).toEqual({});
+  });
+
+  test("tools/call noyzzi_list filters by kind", async () => {
+    const res = await client.request("tools/call", { name: "noyzzi_list", arguments: { kind: "element" } });
+    const body = JSON.parse(res.result.content[0].text);
+    expect(body.count).toBe(26);
+  });
+
+  test("tools/call noyzzi_get on an effect returns MANUAL with its URL, no browser", async () => {
+    const res = await client.request("tools/call", { name: "noyzzi_get", arguments: { kind: "effect", slug: "liquid-pool" } });
+    const body = JSON.parse(res.result.content[0].text);
+    expect(body.status).toBe("MANUAL");
+    expect(body.url).toBe("https://noyzzi.com/effects/liquid-pool/");
+    expect(body.text).toContain("UNTRUSTED");
+  });
+
+  test("tools/call noyzzi_get rejects unknown or malformed slugs", async () => {
+    const bad = await client.request("tools/call", { name: "noyzzi_get", arguments: { kind: "section", slug: "../etc" } });
+    expect(bad.result.isError).toBe(true);
+    const unknown = await client.request("tools/call", { name: "noyzzi_get", arguments: { kind: "section", slug: "no-such-hero" } });
+    expect(unknown.result.isError).toBe(true);
   });
 
   test("tools/call jev_decide with JEV_API_KEY unset returns UNVERIFIED (no network)", async () => {
