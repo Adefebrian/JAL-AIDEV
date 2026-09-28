@@ -25,12 +25,25 @@ export function App() {
     }
   }
 
+  // Section: hero. Job: say what this is. Message: one sentence. Action:
+  // none. Container: plain-spacing.
+  //
+  // Section: stack. Job: explain what the template gives you. Message:
+  // three balanced facts about the stack. Action: none. Container: bento
+  // (mixed summary content, all three tiles equal shape and length).
+  //
+  // Section: demo. Job: prove the typed Hono client actually works. Message:
+  // one action, one result. Action: run the demo call. Container: card (one
+  // self-contained widget), kept out of the bento above so its button and
+  // result never distort the sibling tiles' shape.
+  const resultText = itemCount !== null ? `Example items: ${itemCount}` : loadFailed ? "Could not reach the API." : "";
+
   return (
     <main className="app">
       <h1>Welcome to __APP_NAME__</h1>
       <p>A Bun only monorepo: Hono API, React SPA bundled with Bun.build, no Vite, no Next.js.</p>
       <Bento className="app-bento">
-        <BentoItem span="wide">
+        <BentoItem span="sm">
           <h2>Fast by default</h2>
           <p>Bun runs the app, builds the app, and tests the app, one runtime end to end.</p>
         </BentoItem>
@@ -41,13 +54,16 @@ export function App() {
         <BentoItem span="sm">
           <h2>Typed everywhere</h2>
           <p>TypeScript across apps and packages, validated env, zero plain JavaScript.</p>
-          <button type="button" onClick={loadItemCount}>
-            Load example items via RPC
-          </button>
-          {itemCount !== null && <p>Example items: {itemCount}</p>}
-          {loadFailed && <p>Could not reach the API.</p>}
         </BentoItem>
       </Bento>
+      <section className="app-demo">
+        <h2>Typed RPC, proven live</h2>
+        <p>Call the API through the typed Hono client and print what comes back.</p>
+        <button type="button" className="btn btn-primary" onClick={loadItemCount}>
+          Load example items
+        </button>
+        <p className="app-demo-result">{resultText}</p>
+      </section>
     </main>
   );
 }

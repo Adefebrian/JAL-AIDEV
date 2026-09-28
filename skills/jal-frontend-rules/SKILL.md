@@ -162,7 +162,7 @@ Base recipe (mobile-first):
 .bento {
   display: grid;
   grid-template-columns: minmax(0, 1fr);            /* phone: one column */
-  grid-auto-rows: minmax(160px, auto);
+  grid-auto-rows: auto;                             /* rows follow content: a fixed floor opens a void in a short tile */
   gap: var(--space-16px);
 }
 @media (min-width: 640px) {
