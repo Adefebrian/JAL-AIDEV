@@ -439,6 +439,11 @@ const AUDIT_SCRIPT = `
   })();
 
   // cards: row height + empty band
+  // Cards are grouped into visual rows by top-edge proximity (<=2px) before
+  // comparing heights or empty-band, because a wrapping/stacking grid (e.g.
+  // a single-column layout at narrow widths) puts each card in its own row,
+  // where differing heights are legitimate. Only cards that actually share a
+  // visual row are compared against each other.
   (function checkCards() {
     function isCardLike(el) {
       var cs = getComputedStyle(el);
@@ -448,6 +453,23 @@ const AUDIT_SCRIPT = `
       var hasBg = bg && bg.a > 0.05;
       var hasPadding = (parseFloat(cs.paddingTop) || 0) > 0;
       return (hasBorder || hasShadow || hasBg) && hasPadding;
+    }
+    function groupIntoVisualRows(cards) {
+      var rows = [];
+      for (var i = 0; i < cards.length; i++) {
+        var card = cards[i];
+        var rect = card.getBoundingClientRect();
+        var placed = false;
+        for (var j = 0; j < rows.length; j++) {
+          if (Math.abs(rows[j].top - rect.top) <= 2) {
+            rows[j].items.push({ el: card, rect: rect });
+            placed = true;
+            break;
+          }
+        }
+        if (!placed) rows.push({ top: rect.top, items: [{ el: card, rect: rect }] });
+      }
+      return rows;
     }
     var seen = {};
     Array.prototype.forEach.call(document.querySelectorAll("*"), function (el) {
@@ -461,26 +483,37 @@ const AUDIT_SCRIPT = `
       var key = cssPath(el);
       if (seen[key]) return;
       seen[key] = true;
-      var rects = cards.map(function (c) { return c.getBoundingClientRect(); });
-      var heights = rects.map(function (r) { return r.height; });
-      var maxH = Math.max.apply(null, heights), minH = Math.min.apply(null, heights);
-      if (maxH - minH > 1) {
-        pushV("card-row-mismatch", key, "heights=[" + heights.map(function (h) { return h.toFixed(1); }).join(",") + "]");
-      }
-      cards.forEach(function (card) {
-        var cardRect = card.getBoundingClientRect();
-        var cardCs = getComputedStyle(card);
-        var padBottom = parseFloat(cardCs.paddingBottom) || 0;
-        var contentBottom = cardRect.top;
-        Array.prototype.forEach.call(card.querySelectorAll("*"), function (desc) {
-          if (!isVisible(desc)) return;
-          var r = desc.getBoundingClientRect();
-          if (r.bottom > contentBottom) contentBottom = r.bottom;
-        });
-        var gap = (cardRect.bottom - padBottom) - contentBottom;
-        if (gap > 40) {
-          pushV("card-empty-band", cssPath(card), "emptyBand=" + gap.toFixed(1) + "px cardHeight=" + cardRect.height.toFixed(1) + "px");
+      var visualRows = groupIntoVisualRows(cards);
+      visualRows.forEach(function (row) {
+        if (row.items.length < 2) return;
+        var heights = row.items.map(function (item) { return item.rect.height; });
+        var maxH = Math.max.apply(null, heights), minH = Math.min.apply(null, heights);
+        if (maxH - minH > 1) {
+          pushV("card-row-mismatch", key, "heights=[" + heights.map(function (h) { return h.toFixed(1); }).join(",") + "]");
         }
+      });
+      visualRows.forEach(function (row) {
+        // Measure each card's empty band against its own rendered box, which
+        // is scoped to this visual row (a card alone in its row is measured
+        // against itself; a card stretched by its row siblings already has
+        // that stretched height reflected in its own rect). This never pulls
+        // in height from a card in a different visual row.
+        row.items.forEach(function (item) {
+          var card = item.el;
+          var cardRect = item.rect;
+          var cardCs = getComputedStyle(card);
+          var padBottom = parseFloat(cardCs.paddingBottom) || 0;
+          var contentBottom = cardRect.top;
+          Array.prototype.forEach.call(card.querySelectorAll("*"), function (desc) {
+            if (!isVisible(desc)) return;
+            var r = desc.getBoundingClientRect();
+            if (r.bottom > contentBottom) contentBottom = r.bottom;
+          });
+          var gap = (cardRect.bottom - padBottom) - contentBottom;
+          if (gap > 40) {
+            pushV("card-empty-band", cssPath(card), "emptyBand=" + gap.toFixed(1) + "px cardHeight=" + cardRect.height.toFixed(1) + "px");
+          }
+        });
       });
     });
   })();

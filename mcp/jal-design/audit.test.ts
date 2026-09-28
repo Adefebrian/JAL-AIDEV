@@ -84,4 +84,36 @@ describe("runAudit", () => {
     },
     60000,
   );
+
+  test(
+    "single-column stacked cards at 320px do not emit card-row-mismatch or card-empty-band",
+    async () => {
+      const report = await runAudit(`${baseUrl}/cards-stacked.html`, { widths: [320] });
+      const rulesFound = new Set(report.violations.map((v) => v.rule));
+      expect(rulesFound.has("card-row-mismatch")).toBe(false);
+      expect(rulesFound.has("card-empty-band")).toBe(false);
+    },
+    30000,
+  );
+
+  test(
+    "same cards side by side at 1280px with unequal, unstretched heights emit card-row-mismatch",
+    async () => {
+      const report = await runAudit(`${baseUrl}/cards-stacked.html`, { widths: [1280] });
+      const rulesFound = new Set(report.violations.map((v) => v.rule));
+      expect(rulesFound.has("card-row-mismatch")).toBe(true);
+    },
+    30000,
+  );
+
+  test(
+    "a row stretched to match a taller card with an empty band emits card-empty-band, not card-row-mismatch",
+    async () => {
+      const report = await runAudit(`${baseUrl}/cards-empty-band.html`, { widths: [1280] });
+      const rulesFound = new Set(report.violations.map((v) => v.rule));
+      expect(rulesFound.has("card-empty-band")).toBe(true);
+      expect(rulesFound.has("card-row-mismatch")).toBe(false);
+    },
+    30000,
+  );
 });
