@@ -1,2 +1,2 @@
 #!/usr/bin/env bash
-echo "[JAL] Obey jal-standards: Bun only (no Vite/Next), no emdash in frontend, bento + minimalist + mobile app-like, auto hardening, gpt-4o-mini default, white-first bg, no gradients, no emoji, no decorative lines, JEV judges soft calls."
+echo "[JAL] Obey jal-standards: Bun only (no Vite/Next), no overlap ever, no side lines on cards, no shadows, no gradients, no emoji, no em-dash, white-first bg, mobile-first, auto hardening, gpt-4o-mini default, JEV judges soft calls, ui_audit must PASS."

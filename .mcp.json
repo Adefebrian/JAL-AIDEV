@@ -3,7 +3,27 @@
     "koboyo-icons": {
       "type": "http",
       "url": "https://api.koboyo.com/v1-mcp",
-      "headers": { "Authorization": "Bearer ${KOBOYO_API_KEY}" }
+      "headers": {
+        "Authorization": "Bearer ${KOBOYO_API_KEY}"
+      }
+    },
+    "jal-design": {
+      "command": "bun",
+      "args": [
+        "${CLAUDE_PLUGIN_ROOT}/mcp/jal-design/server.ts"
+      ],
+      "env": {
+        "JEV_API_KEY": "${JEV_API_KEY}"
+      }
+    },
+    "designmd": {
+      "command": "bunx",
+      "args": [
+        "designmd-mcp"
+      ],
+      "env": {
+        "DESIGNMD_API_KEY": "${DESIGNMD_API_KEY}"
+      }
     }
   }
 }
