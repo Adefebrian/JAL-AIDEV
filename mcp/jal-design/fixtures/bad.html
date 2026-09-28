@@ -1,0 +1,185 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>bad fixture</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: #111111;
+    color: #222222;
+    font-family: sans-serif;
+  }
+  .wrap { max-width: 600px; margin: 0 auto; padding: 24px; }
+  .gradient-box {
+    height: 80px;
+    background-image: linear-gradient(90deg, #ff8a00, #e52e71);
+    margin-bottom: 16px;
+  }
+  .shadow-box {
+    height: 60px;
+    background: #ffffff;
+    box-shadow: 0 4px 6px 0 rgba(0, 0, 0, 0.25);
+    margin-bottom: 16px;
+  }
+  .stripe-card {
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-left: 4px solid #f97316;
+    padding: 16px;
+    margin-bottom: 16px;
+  }
+  .purple-btn {
+    background: #8b5cf6;
+    color: #ffffff;
+    border: none;
+    padding: 12px 20px;
+    margin-bottom: 16px;
+    display: inline-block;
+  }
+  .form-row {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+  .form-row input {
+    height: 44px;
+    padding: 0 12px;
+    border: 1px solid #d1d5db;
+  }
+  .form-row select {
+    height: 57px;
+    padding: 0 12px;
+    border: 1px solid #d1d5db;
+  }
+  .tiny-btn {
+    height: 30px;
+    padding: 0 10px;
+    margin-bottom: 16px;
+    border: 1px solid #d1d5db;
+    background: #ffffff;
+    display: inline-block;
+  }
+  .card-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    margin-bottom: 16px;
+  }
+  .card-a {
+    flex: 1;
+    border: 1px solid #e5e7eb;
+    background: #ffffff;
+    padding: 16px;
+  }
+  .card-b {
+    flex: 1;
+    border: 1px solid #e5e7eb;
+    background: #ffffff;
+    padding: 16px;
+    height: 320px;
+  }
+  .overflow-box {
+    width: 900px;
+    white-space: nowrap;
+    background: #ffffff;
+    padding: 8px;
+    margin-bottom: 16px;
+  }
+  .eyebrow {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: #6b7280;
+    margin: 0 0 4px 0;
+  }
+  h2 { margin: 0 0 16px 0; }
+  .badge-stack {
+    position: relative;
+    height: 40px;
+    margin-bottom: 16px;
+  }
+  .badge {
+    position: absolute;
+    top: 0;
+    left: 0;
+    padding: 6px 10px;
+    background: #e5e7eb;
+    border: 1px solid #d1d5db;
+  }
+  .badge-2 { left: 10px; }
+  .narrow-box {
+    width: 200px;
+    border: 1px solid #e5e7eb;
+    padding: 8px;
+    margin-bottom: 16px;
+  }
+  .wide-child {
+    width: 260px;
+    background: #fca5a5;
+    padding: 4px;
+  }
+  .clipped-label {
+    width: 150px;
+    overflow: hidden;
+    white-space: nowrap;
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    padding: 4px;
+    margin-bottom: 16px;
+  }
+  .icon-label {
+    position: relative;
+    height: 24px;
+    margin-bottom: 16px;
+  }
+  .icon-overlap {
+    position: absolute;
+    top: 4px;
+    left: 10px;
+  }
+  .icon-label-text {
+    position: absolute;
+    top: 0;
+    left: 0;
+    line-height: 24px;
+  }
+</style>
+</head>
+<body>
+<main class="wrap">
+  <div class="gradient-box"></div>
+  <div class="shadow-box"></div>
+  <div class="stripe-card">Side stripe card</div>
+  <div class="purple-btn">Purple accent button</div>
+  <div class="form-row">
+    <input type="text" placeholder="Name" />
+    <select><option>Choose</option></select>
+  </div>
+  <button class="tiny-btn">Go</button>
+  <div class="card-row">
+    <div class="card-a"><p>Short card content that fills most of the box.</p></div>
+    <div class="card-b"><p>Mostly empty card.</p></div>
+  </div>
+  <div class="overflow-box">This row is intentionally much wider than the smallest supported viewport and will not wrap.</div>
+  <p class="eyebrow">FEATURED</p>
+  <h2>Section title</h2>
+  <p>Great things happen when teams move fast &mdash; and stay aligned.</p>
+  <p>Launch party emoji test 🎉 celebration</p>
+  <div class="badge-stack">
+    <span class="badge badge-1">New</span>
+    <span class="badge badge-2">Hot</span>
+  </div>
+  <div class="narrow-box">
+    <div class="wide-child">I am wider than my container</div>
+  </div>
+  <div class="clipped-label">This label text is intentionally much longer than the fixed width box that contains it</div>
+  <div class="icon-label">
+    <svg class="icon-overlap" width="16" height="16" viewBox="0 0 16 16"><circle cx="8" cy="8" r="6"></circle></svg>
+    <span class="icon-label-text">Notifications</span>
+  </div>
+</main>
+</body>
+</html>

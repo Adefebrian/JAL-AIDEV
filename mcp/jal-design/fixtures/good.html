@@ -1,0 +1,70 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>good fixture</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: #ffffff;
+    color: #1f2933;
+    font-family: sans-serif;
+  }
+  .wrap { max-width: 960px; margin: 0 auto; padding: 24px; }
+  .panel {
+    background: #f9fafb;
+    border: 1px solid #e5e7eb;
+    padding: 16px;
+    margin-bottom: 16px;
+  }
+  .form-row {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+  .form-row input,
+  .form-row select {
+    height: 44px;
+    width: 100%;
+    min-width: 0;
+    padding: 0 28px 0 12px;
+    border: 1px solid #d1d5db;
+    background: #ffffff;
+  }
+  .card-row {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+    margin-bottom: 16px;
+  }
+  .card {
+    min-width: 0;
+    border: 1px solid #e5e7eb;
+    background: #ffffff;
+    padding: 16px;
+  }
+  .card p { margin: 0; }
+  h2 { margin: 0 0 16px 0; }
+</style>
+</head>
+<body>
+<main class="wrap">
+  <h2>Account details</h2>
+  <div class="panel">
+    <p>All fields below are normalized to a consistent forty four pixel control height.</p>
+  </div>
+  <div class="form-row">
+    <input type="text" placeholder="First name" />
+    <input type="text" placeholder="Last name" />
+    <select><option>Country</option></select>
+  </div>
+  <div class="card-row">
+    <div class="card"><p>Card one holds a short summary line of similar length to its neighbor.</p></div>
+    <div class="card"><p>Card two holds a short summary line of similar length to its neighbor.</p></div>
+  </div>
+</main>
+</body>
+</html>
