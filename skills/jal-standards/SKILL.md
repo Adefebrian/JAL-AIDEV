@@ -54,7 +54,7 @@ This is the single source of truth for how JAL projects are built. Every other s
 - Use Lenis for smooth scrolling.
 - Use GSAP for complex timeline and scroll-triggered animation.
 - Use Framer Motion for React-native component and gesture animation.
-- Check originkit.dev (https://www.originkit.dev/) for pre-built motion patterns before hand-rolling one.
+- OriginKit (https://www.originkit.dev/) is approved. Agents may use real OriginKit components in client projects whenever JEV (`ui.component_recipe`) picks one and JAL law holds. Its license forbids vendoring components into starter kits or templates, so the JAL-AIDEV template ships only the clean-room `ok.*` recipes (`skills/jal-motion/references/components.md`, indexed in `skills/jal-design-system/references/recipe-index.md`). OriginKit needs a signed-in account and agents never sign in, so the source comes from Brian's account: pasted by him, or through OriginKit's MCP connected with his key. Its CLI (`npx originkit add`) is not used: copy the source and adapt it to Bun.build and the JAL tokens (Tailwind through the JAL `@theme`).
 - Animate transform and opacity only, on the motion tokens in jal-ui-taste, and honor `prefers-reduced-motion` on every animation. See skill jal-motion for product and showcase motion.
 
 ## Frontend Law

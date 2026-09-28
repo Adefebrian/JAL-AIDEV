@@ -2,7 +2,7 @@
 
 How a JAL surface gets a distinct, committed look without leaving JAL Core. A **direction** is a set of JAL Core knob values (accent hue and role, canvas temperature, tracking, display ceiling, radius tier, hairline weight, type personality, density, motion intensity, media role). It never selects a design system, a component set, or a token table, and it never loosens law. Tokens, components, and law stay JAL Core.
 
-**Provenance.** The candidate, screen, and seeded-draw mechanism and the six variation axes are derived from pbakaus/impeccable (Apache-2.0), restated in JAL's own words. The 13 visual directions are JAL's own distillation of a small, hand-scale browse of Refero style pages (n = 29, 2026-09-29), written fresh; no Refero style document, token table, or URL index is reproduced, and Refero is never fetched by JAL agents (its robots.txt blocks Claude agents and its Terms forbid systematic extraction). Method notes also draw on referodesign/refero_skill (MIT).
+**Provenance.** The candidate, screen, and seeded-draw mechanism and the six variation axes are derived from pbakaus/impeccable (Apache-2.0), restated in JAL's own words. The page-shape vocabulary, the domain trios, the chrome verdicts, and the context ask are principles from the local hallmark skill (no license file), tagged `From: hallmark`, restated with no text copied; they feed the impeccable mechanism and never replace it (`craft.md` header). The 13 visual directions are JAL's own distillation of a small, hand-scale browse of Refero style pages (n = 29, 2026-09-29), written fresh; no Refero style document, token table, or URL index is reproduced, and Refero is never fetched by JAL agents (its robots.txt blocks Claude agents and its Terms forbid systematic extraction). Method notes also draw on referodesign/refero_skill (MIT).
 
 ## 1. When to roll
 
@@ -13,11 +13,14 @@ How a JAL surface gets a distinct, committed look without leaving JAL Core. A **
 | A whole new surface inside an established direction | Keep the direction fixed; roll **structures** only (section 3, `kind = structure`). Composition changes, identity does not. |
 | A new product, a replacement look, or a redesign | Full roll: candidates, JEV screen, seeded draw, contract (sections 2 to 6). |
 
+From: hallmark. The pre-flight scan (`hm.preflight_scan`, `craft.md` section 11 step 1) runs before this table is read, so "inherit" or "roll" is decided on cited evidence. Whether a request is "one component" is decided by the scope signals in `hm.scope_first` (`craft.md` section 9): two signals mean component and no roll; unclear and unanswered defaults to component.
+
 ## 2. The variety mechanism
 
 Why a mechanism: when any chooser picks from a ranked shortlist (the model, a simulated user, a judge model), the first option wins about 9 times in 10. Variety dies at selection, not at ideation. So the agent proposes, JEV screens, a hash assigns, and the agent builds. **JEV screens; it never rank-picks.**
 
 1. **Ground it.** Write one sentence each: the product's unique mechanism, the audience's real scene (who, where, what light), their cultural home, and what the first surface must prove. Pick the visitor mode (`craft.md` section 1).
+   - **Context ask** (From: hallmark, H>I, `hm.context_gate`): on attended runs, when the brief does not already say them, ask for the audience, the one action the surface exists for, and the tone as an extreme ("clean and modern" is not a tone), once, in one message, with an explicit "or say go ahead and I will infer". Never ladder follow-up questions. If the user opts out or does not answer, infer all three and state the inference in one line at the top of the next message so it can be redirected. Unattended runs infer and log the line. Why hallmark wins: impeccable grounds the brief but does not say what to do when an attended user will not answer. If the domain splits on intent (docs or marketing), that is the one question.
 2. **Name the rut and keep it off the list**: the page this category always ships, and its predictable opposite. If the brief paints its own picture (a product name, a governing metaphor), its literal reading joins the rut; spend at most one candidate on it.
 3. **Write 5 to 7 candidates** (default 7), ordered by resonance, rank 1 first. Each candidate is:
    - a **form**: a concrete visual system, artifact, place, or ritual the audience knows by heart (their notation, publications, instruments, identity programs, data graphics, screen traditions; what the thing would be as a physical object; what their world looked like before the web), with a one-line reason;
@@ -38,6 +41,84 @@ Rules around the draw:
 - **Refill**: if fewer than 4 candidates survive, or none survives at rank 3 or below, write replacements for the dropped slots at the same ranks and screen them once. If the rank 3 to 7 pool is still empty, build the best-ranked survivor and log `fallback: empty pool`.
 - A **structure roll** (new surface in an established direction) uses the same steps with 5 to 7 **structures** derived from content, task, and behavior, the preset fixed, and `kind = structure`.
 
+### Page shapes (From: hallmark, `hm.structure_vocab`)
+
+Named whole-page shapes, used as inputs when writing structure candidates (and the layout-topology half of a direction candidate). A shape is a vocabulary word, never a pick: the candidates still pass the law precheck, the JEV screen, and the seeded draw. Name each candidate's shape out loud in its first-viewport line. When the brief is vague, never default to the first familiar shape; spread the candidates across categorically different shapes. hallmark's rotation log (avoid the last three shapes) is not adopted: the seeded draw and one direction per product do that job.
+
+| Shape | What it is | JAL verdict |
+|---|---|---|
+| Bento Grid | a fully occupied grid of unequal tiles, each tile one real claim or view | lawful (Bento recipes in `jal-frontend-rules`; no void tiles) |
+| Long Document | one reading column that argues from top to bottom | lawful |
+| Conversational FAQ | the page is a sequence of real questions answered plainly | lawful |
+| Photographic | real photography leads every region | lawful with real media only; captions below, never over |
+| Quote-Led | one real, attributed quote opens and frames the page | lawful with a real testimonial only |
+| Catalogue | the offer is a list of items with counts, dates, and prices | lawful |
+| Letter | the page reads as a signed note from a person | lawful |
+| Index-First | the page opens on its own index of work or entries | lawful |
+| Split Studio | a statement column beside a work or proof column | lawful; replaces Stat-Led in the B2B trio |
+| Feature Stack | one feature per pinned pane, walked through in order | lawful; sticky panes on desktop only, stacked below 960px |
+| Portfolio Grid | a grid of projects, indexed by year or client | lawful |
+| Ecosystem Index | several discovery surfaces (featured, latest, by category) on one page | lawful |
+| Component Playground | live, editable examples are the page | lawful |
+| Marquee Hero | one oversized display line owns the first viewport | ADAPT: fixed display steps (57, 69, 83) replace viewport-width type; the hero footprint rule applies |
+| Workbench | the page opens on a real command, input, or tool in use | ADAPT: a numbered legend below replaces annotation arrows; no re-drawn window frames |
+| Narrative Workflow | the page walks a real process stage by stage | ADAPT: a real process only, numbers inline, no thick numbered rules or connectors |
+| Manifesto | a sequence of short declarations | ADAPT: sentence case, no tilt, tonal bands instead of bleed-color blocks, accent at 3% or less |
+| Map / Diagram | a structural diagram of the system is the page's spine | ADAPT: the diagram is structural content with static edges, never decoration |
+| Type Specimen | the page shows a typeface as the product | ADAPT: needs a display face, and Brian approves the dependency |
+| Stat-Led | giant numbers carry the page | DROP (big-number hero, `craft.md` section 3) |
+| Specimen | numbered specimen plates with margin labels | DROP (numbered section labels) |
+
+Every shape states what it becomes below 960px and below 640px (`hm.mobile_collapse`); below 640px the app-shell always ships.
+
+### Three shapes per domain (From: hallmark, `hm.domain_trio`)
+
+Seeds for the 5 to 7 structure candidates. The trio for the brief's domain enters the candidate list (ranked by resonance like any candidate); the rest of the list comes from content, task, and behavior. The seeded draw still picks.
+
+| Domain | Three shapes to seed |
+|---|---|
+| Audio and podcasts | Photographic, Quote-Led, Letter |
+| Commerce | Catalogue, Photographic, Bento Grid |
+| Docs and CLI | Workbench, Long Document, Component Playground |
+| B2B platform | Bento Grid, Workbench, Split Studio (in place of Stat-Led) |
+| Agency and studio | Portfolio Grid, Split Studio, Index-First |
+| Personal site | Long Document, Letter, Index-First |
+| Food | Photographic, Long Document, Catalogue |
+| Fashion | Photographic, Catalogue, Marquee Hero |
+| Fintech | Workbench, Long Document, Split Studio |
+| Cause and nonprofit | Manifesto, Quote-Led, Long Document |
+| Event | Marquee Hero, Manifesto, Photographic |
+
+A domain that splits on intent (docs or marketing) gets the one `hm.context_gate` question before its trio is chosen.
+
+### Chrome archetypes (From: hallmark, `hm.nav_fingerprint`, `hm.footer_fingerprint`)
+
+Nav and footer are part of a Persuade or Experience page's fingerprint. The contract names one of each; defaulting to the AI nav or AI footer (`craft.md` section 3) is a finding. Operate and Read surfaces use the JAL app-shell and need no pick.
+
+| Nav | Verdict |
+|---|---|
+| Wordmark plus two links | keep when there are only two destinations |
+| Floating chip | keep, opaque |
+| Side rail | adapt: no dot indicators, no rotated tracked caps |
+| Command-K only | adapt: an accelerator; the app-shell still ships |
+| Floating pill | adapt: opaque `surface` plus a full hairline, no blur, no shadow |
+| Masthead | adapt: one hairline, not a double rule |
+| Slab | adapt: a 1px `border-strong`, not 2px |
+| Terminal | keep for devtool brands; the caret only inside a typed command |
+| Edge-aligned minimal | keep |
+| Scroll morph | adapt: the `jal-motion` floating-nav recipe, 640px and up only |
+
+| Footer | Verdict |
+|---|---|
+| Mast-headed | keep |
+| Inline line | keep, no dash separators |
+| Index columns | keep for hubs and docs only |
+| Dense colophon | adapt: sans, not mono as costume |
+| Statement | keep at a heading step |
+| Letter close | keep |
+| Newsletter-first | keep only if the page asked for the subscription earlier |
+| Marquee | adapt: the pausable marquee recipe, sentence case |
+
 ## 3. The seed (deterministic, stable on rerun)
 
 - `key` = the first 8 hex characters of `SHA-256(lower(trim(product)) + "|" + lower(trim(screen)))`. `product` is the product name as written in the brief; `screen` is the surface name or route (`landing`, `/pricing`, `dashboard home`). Record both strings verbatim in the contract, so any rerun of the same product and screen reproduces the same draw.
@@ -51,7 +132,7 @@ Bun one-liner (prints the key and the 0-based index into the pool):
 bun -e 'const [p,s,n,r="0",k="direction"]=process.argv.slice(1);const h=x=>new Bun.CryptoHasher("sha256").update(x).digest();const key=h(p.trim().toLowerCase()+"|"+s.trim().toLowerCase()).toString("hex").slice(0,8);const u=h(k+":index:"+key+(r==="0"?"":":reroll-"+r)).readUInt32BE(0)/2**32;console.log(JSON.stringify({key,kind:k,pool:+n,reroll:+r,pick:Math.floor(u*+n)}))' "<product>" "<screen>" <pool size> [reroll] [kind]
 ```
 
-Example: `"Acme Ledger" "landing" 4` gives key `31f431f3`, pick 3 (the fourth pool entry). Log the command line and its output in the build report.
+Example: `"Warung Kas" "landing" 4` gives key `7d4b6a5e`, pick 3 (the fourth pool entry). Log the command line and its output in the build report.
 
 ## 4. The six variation axes
 
@@ -67,6 +148,7 @@ Candidates, structures, and any "give me options" variants each commit to a diff
 - **Identity lock first** for variants inside an existing direction: one factual sentence of what is on screen (canvas and accent values, loaded faces, layout topology, voice). Every variant reads as the same product side by side.
 - **Family pass**: label each option with its family; two options sharing a label means rework. **Sentence pass**: two one-line descriptions that rhyme means rework. Three variants that differ only in density is a failure.
 - When unsure whether a request wants variants inside the identity or a departure from it, stay inside: three similar on-brand options are recoverable, three off-brand ones are not.
+- **Knob delta** (From: hallmark, optional): when two surfaces of one product use the same page shape, the second changes at least one knob inside that shape (tile count, spans, border mode, media side) and the build report states the knob values of both, as one line.
 
 ## 5. The direction contract (`docs/design/direction.md` in the target repo)
 
@@ -92,6 +174,10 @@ Own world: <what stays recognizable with all content removed: accent role, type 
 Story: <what the visitor understands, then believes, then does>
 First viewport: <exact composition at 375 and at 1280; where the primary action sits>
 Signature moment: <the one authored motion or interaction moment, or none>
+Page shape: <shape from the section 2 table, and what it becomes below 960 and 640> (optional, From: hallmark)
+Nav / Footer archetype: <from the chrome tables> (optional, From: hallmark)
+Headline chars: <rendered count and its hm.headline_buckets bucket> (optional, From: hallmark)
+Media role evidence: <hm.image_need result; does the hero pass hm.survives_deletion> (optional, From: hallmark)
 
 ## Knobs (the only values this file may set)
 | Knob | Value | Token or mechanism | Reason |
@@ -212,6 +298,7 @@ A literary, warm-neutral reading page with an optional serif display. The newest
 - Knobs: canvas warm (inside the canvas floor); serif display only with a written reason and Brian's yes on the font; display `--text-display-1` to `-2`, tracking -0.01 to -0.02; body sans; accent none or one muted warm hue as `signal_only`; radius cards 16, controls pill.
 - Law filter: cream grounds below the canvas floor; a one-word italic or serif swap inside a sans headline; the beige plus italic serif plus terracotta trio (`craft.md` section 14); multi-color illustration palettes.
 - Gate: the product publishes content (journal, research, culture) and the brief says so. Never picked for a bookish mood alone.
+- Note (From: hallmark): hallmark's editorial genre default (warm paper, italic serif display, hairlines, mono labels) is exactly the reflex look in `craft.md` section 14, so it never lowers this gate.
 
 ### D8 `quiet_care` (health, wellness, nonprofit)
 Soft and humane, generous air, one gentle color, calm without the editorial-serif autopilot.
@@ -248,6 +335,7 @@ A near-black instrument panel with stepped surfaces, thin light hairlines, weigh
 - Knobs: page the JAL warm near-black (about `#171412`, never `#000`, never cold blue-black); surfaces step lighter by about 3 to 6% each; hairlines as solid colors equal to white at 10 to 12%; text near-white, never `#fff`; primary a light neutral fill; accent one hue used flat (chartreuse or green) as `signal_only`; elevation by surface step only; density compact.
 - Law filter: every shadow stack, glow, neon edges, violet and indigo tag fills, cobalt brand fills.
 - Gate: the brief explicitly asks for dark or the product ships a dark theme. Never OS-triggered, never the light default.
+- Note (From: hallmark): hallmark's atmospheric genre (dark canvas, warm blooms, glow) is a rejected direction, not a form of D13. The accent follows `hm.dark_hue_lock` (`craft.md` section 6).
 
 ### Rejected directions (never candidates)
 The law filter would strip their carrier:
@@ -272,6 +360,8 @@ A noyzzi piece may carry dark, neon, or glow inside its own exempt section; that
 - **A token's role is part of the token.** A CTA-only color stays CTA-only; syntax colors stay in code; decorative color never becomes UI surface.
 - **Keep the media role.** If a reference is carried by photography, keep real media or an honest fixed-ratio placeholder; never fake imagery with CSS shapes or collapse to text only.
 - Record the result in the contract's reference lock and decision ledger.
+- **How to study one** (From: hallmark): diagnose a supplied reference with the ordered protocol in `craft.md` section 11 (`hm.reference_study`: surface, type roles, structure, motion, rhythm; roles only from a screenshot; rhythm cannot be read from markup; one source per diagnosis; no code in the diagnosis turn), and check any URL against `hm.reference_url_safety` before fetching it.
+- **OriginKit** is an approved, paid, closed component library, not a reference to study. Its components enter a client build only when JEV `ui.component_recipe` picks one and JAL law holds; the source comes from Brian's account (pasted by him, or through OriginKit's MCP connected with his key), since agents never sign in. Never crawl its catalog. The JAL template holds only the clean-room `ok.*` recipes (`jal-motion` `references/components.md`).
 
 ## 9. Calibration statistics (hand-scale sample, n = 29)
 
