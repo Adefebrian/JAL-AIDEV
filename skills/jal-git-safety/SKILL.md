@@ -10,7 +10,7 @@ Operational detail behind the git safety summary in `jal-standards`. Applies to 
 ## Feature-branch flow
 
 - Never commit directly to `main`. Every change starts on a branch cut from `main`: `git checkout -b feat/<slug>` (or `fix/`, `chore/`, matching the conventional-commit type).
-- Keep branches short-lived and scoped to one task. Merge or open a PR as soon as the task's gate (`/jal-review`) passes, do not let branches accumulate unmerged for days.
+- Keep branches short-lived and scoped to one task. Merge or open a PR as soon as the task's gate (the review gate (`/jal-check`)) passes, do not let branches accumulate unmerged for days.
 - Rebase onto latest `main` before opening a PR (`git fetch origin && git rebase origin/main`) to keep history linear; resolve conflicts locally, never in the PR UI.
 
 ## Git worktrees for parallel agents

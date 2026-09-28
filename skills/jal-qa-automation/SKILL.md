@@ -132,7 +132,7 @@ describe("smoke: home page", () => {
 
 ## JUnit/TAP reporting and pass/fail summary
 
-CI and `/jal-review` both need a single machine-parseable result and a single human-readable line.
+CI and the review gate (`/jal-check`) both need a single machine-parseable result and a single human-readable line.
 
 Generate JUnit XML from `bun test`:
 
@@ -146,7 +146,7 @@ Generate TAP for tools that expect it:
 bun test --reporter=tap
 ```
 
-Concrete pass/fail summary format (what `/jal-review` and CI print at the end, one line, always this shape):
+Concrete pass/fail summary format (what the review gate (`/jal-check`) and CI print at the end, one line, always this shape):
 
 ```
 QA GATE: PASS  |  42 passed, 0 failed, 0 skipped  |  unit+api+smoke  |  1.8s

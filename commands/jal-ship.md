@@ -1,26 +1,26 @@
 ---
-description: Invoke jal-principal to run the full senior loop on a feature, brainstorm, spec, owned-workstream plan, JEV-judged parallel build, review gate, ship call, memory.
-argument-hint: <feature description>
+description: Get the work out, open a pull request, cut a release, or deploy to deploy.jalgroup.id with a health check and one-step rollback.
+argument-hint: <pr | release | deploy | rollback> [tag or note]
 ---
 
-Feature to ship: $ARGUMENTS
+What to ship: $ARGUMENTS
 
-Dispatch agent `jal-principal` (via the Task tool) to own this feature end to end, per `agents/jal-principal.md` and skill `jal-standards`. `jal-principal` sets direction and the quality gate but delegates execution, it does not write bulk code itself. Do not shortcut any stage below.
+## What this does
 
-JEV judges soft calls through `mcp__plugin_jal-aidev_jal-design__jev_decide` {state, questions, decision_id, domain}, question templates and thresholds per skill `jal-jev`. A JEV veto is final. Hard law is mechanical and never sent to JEV. On `UNVERIFIED BY JEV`, fall back to own judgment and stamp the report line. Every call is logged to `.jal/decisions/`.
+Runs the full check first, and only moves on if it passes. Then it does what you asked:
+- **pr**: opens a pull request with a clear title and a test checklist.
+- **release**: bumps the version, writes the changelog, and tags it.
+- **deploy**: builds a tagged image, deploys it to deploy.jalgroup.id, and checks it is healthy.
+- **rollback**: returns to the last healthy version in one step.
 
-## The senior loop
+With no word it opens a pull request. It never deploys unless your message says deploy or rollback, and never anywhere except deploy.jalgroup.id.
 
-1. **Brainstorm.** Explore intent, constraints, and open questions on `$ARGUMENTS` before any spec exists. Surface ambiguity to Brian rather than guessing, `orch.escalate` decides when a gap is worth the ask.
-2. **Spec.** Turn the brainstorm into a concrete spec: scope, interfaces, acceptance criteria.
-3. **Plan.** Break the spec into workstreams with a FILE OWNERSHIP table (ID, owner, model, exclusive paths, depends on, acceptance, verify command), one owner per file per wave. `orch.route` fills owners, `orch.model` fills model tiers.
-4. **Parallel subagent build.** Overlap or dependency means sequential, every other same-wave pair gets `orch.parallel`. Dispatch to `jal-lead`, which runs the `/jal-orchestrate` loop across the crew; every independent piece goes out in one message. Workers touch only their owned paths and never run git commit, checkout, reset, stash, restore, or clean. The lead re-runs each worker's verify command, checks ownership with `git status --porcelain`, and commits only that worker's paths.
-5. **Review gate.** Run `/jal-review` against the resulting repo state. Route every failing finding to its owning specialist, rebuild, and re-run until `JAL REVIEW: PASS` and `orch.loop_exit` agree the loop may stop. Cap 3 fix rounds per finding, escalate any survivor to Brian.
-6. **Ship call.** `jal-principal` does its own review pass, then runs `rev.ship` as the final go/no-go. A no-go goes back to step 5.
-7. **Memory.** `mem.promote` on each new learning: project gotchas to `.jal/memory/` per skill `jal-memory` (one file plus an `INDEX.md` line), universal learnings into the owning skill.
+Examples:
+- `/jal-ship pr`
+- `/jal-ship release`
+- `/jal-ship deploy`
+- `/jal-ship rollback v1.4.2`
 
-## Escalation
+## Run it
 
-Any proposal to use tech outside the approved stack, or any default-LLM change away from gpt-4o-mini, routes to Brian for confirmation before it ships. `jal-principal` does not approve deviations unilaterally, neither does this command, and neither does JEV.
-
-Report the final gate result, the `rev.ship` verdict (or `UNVERIFIED BY JEV`), and the memory entries written. Stay terse.
+Run the `jal-orchestration` engine: playbook `review-gate` first (it must PASS), then `pr`, `release`, or `deploy` (`references/pr.md`, `release.md`, `deploy.md`) per the user's word, with jal-devops executing. `qa.release_go` and `rev.ship` judge readiness. Deploy and rollback run only on the user's explicit word in this message and only to deploy.jalgroup.id; JEV never authorizes them. Report: the gate result, then the PR URL, the version and tag, or the deployed tag and health check.

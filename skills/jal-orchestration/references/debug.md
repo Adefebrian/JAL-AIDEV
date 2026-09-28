@@ -1,9 +1,8 @@
----
-description: Systematic debugging of a symptom, reproduce, isolate, root-cause, failing test, fix, verify. No guess-patching.
-argument-hint: <symptom>
----
+# Playbook: Systematic debugging
 
-Debug this symptom: $ARGUMENTS
+Internal playbook, run through the `jal-orchestration` engine by a JAL command (see `../SKILL.md` for which command runs it). Systematic debugging of a symptom, reproduce, isolate, root-cause, failing test, fix, verify. No guess-patching.
+
+Debug this symptom: <request>
 
 Follow the `superpowers:systematic-debugging` approach for the full method behind this loop, do not re-derive it here. Do not skip a phase, and never propose a fix before root cause is established.
 

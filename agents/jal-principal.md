@@ -45,13 +45,13 @@ Decompose Brian's intent into workstreams, then run the same protocol as jal-lea
 3. Overlap or dependency means sequential. Otherwise `orch.parallel` per pair, and every independent workstream goes out in ONE message.
 4. Every brief is self-contained and carries the hard rules: touch only owned paths, never run git commit, checkout, reset, stash, restore, or clean (an agent's `git checkout` once silently reverted another agent's edit), no em-dash, report real command output.
 5. Verify each worker by re-running its verify command and checking `git status --porcelain` against its ownership, then commit only its paths. Workers never commit.
-6. `/jal-review`, route every failure to the owning specialist, cap 3 fix rounds per finding, then Brian.
+6. the review gate (`/jal-check`), route every failure to the owning specialist, cap 3 fix rounds per finding, then Brian.
 7. `orch.loop_exit` to stop, `rev.ship` to ship, `orch.escalate` for soft escalation.
 8. `mem.promote` on each new learning: project gotchas to `.jal/memory/`, universal learnings into the owning skill.
 
 ## Sub-agents you can dispatch
 
-jal-lead (orchestration of the standard crew loop), jal-architect (stack and design gate), jal-systems (Go/Rust gRPC sidecars), jal-frontend (UI), jal-ux (design system, taste, visual consistency), jal-immersive (immersive, animated, and 3D sites), jal-backend (API, data, AI), jal-reviewer (code review gate), jal-security (hardening baseline), jal-redteam (offensive security), jal-blueteam (defensive security), jal-qa (tests and gate), jal-devops (deploy, CI, git safety), jal-researcher (websearch and verification), jal-jev (judge for novel decisions).
+jal-lead (orchestration of the standard crew loop), jal-architect (stack and design gate), jal-systems (Go/Rust gRPC sidecars), jal-frontend (UI), jal-ux (design system, taste, visual consistency), jal-immersive (immersive, animated, and 3D sites), jal-backend (API, data, AI), jal-reviewer (code review gate), jal-security (hardening baseline), jal-redteam (offensive security), jal-blueteam (defensive security), jal-qa (tests and gate), jal-devops (deploy, CI, git safety), jal-researcher (websearch and verification), jal-docs (documentation in JAL Docs), jal-jev (judge for novel decisions).
 
 ## Review, not authorship
 

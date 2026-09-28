@@ -47,31 +47,36 @@ Use the full name `jal-aidev@jal-aidev-marketplace`; the short name `jal-aidev` 
 | jal-qa | Tests, coverage, and the UI check |
 | jal-devops | Deploys and infrastructure |
 | jal-researcher | Research, with every fetched page screened before use |
+| jal-docs | Technical and non-technical docs in JAL Docs, every claim checked against the code |
 
 ## Commands
 
-| Command | What it is for |
-|---------|----------------|
-| `/jal-ui` | Build a new screen or redesign an existing one: tidy, modern, mobile-first, checked automatically |
-| `/jal-immersive` | Build or redesign an immersive, animated, or 3D website: beautiful, fast, mobile-friendly, checked automatically |
-| `/jal-ship` | Build a whole feature end to end with the full crew |
-| `/jal-orchestrate` | Run the crew on a task (plan, parallel build, review) |
-| `/jal-review` | Check the project against every JAL rule and give one PASS or FAIL |
-| `/jal-scaffold` | Start a new JAL project from the template |
-| `/jal-module` | Add a new backend module |
-| `/jal-service` | Add a Go or Rust sidecar for a hot path |
-| `/jal-migrate` | Run database migrations |
-| `/jal-audit` | Deep scan: security, architecture drift, dependencies, dead code, bundle size |
-| `/jal-pentest` | Red team attacks, blue team fixes, one report |
-| `/jal-debug` | Find and fix a bug properly: reproduce, root cause, test, fix |
-| `/jal-pr` | Review and open a pull request |
-| `/jal-deploy` | Deploy to deploy.jalgroup.id with health check and rollback |
-| `/jal-release` | Version, changelog, and tag a release |
-| `/jal-adr` | Record an architecture decision |
+Seven commands. Each one runs the whole crew on the JAL orchestration engine: it plans, splits the work across specialists that run in parallel, lets JEV make the judgment calls, checks everything, and fixes what fails before calling it done.
+
+| Command | What it is for | What it covers |
+|---------|----------------|----------------|
+| `/jal-new` | Start a new project | Scaffold from the JAL template, install, first commit, a build and test proof. Optionally builds the first version right away |
+| `/jal-build` | Build or change anything | Features end to end, backend modules and API routes, database migrations, Go or Rust sidecars (asks Brian first), architecture decision records, and any screens the change needs |
+| `/jal-ui` | Anything visual | New screens, redesigns, landing pages, and immersive or 3D websites. JEV picks product UI, marketing, or immersive mode. Built phone first and proven with the 20-rule UI check |
+| `/jal-fix` | Fix a bug properly | Reproduce, root cause, a failing test, the fix, and proof. Several suspects are checked in parallel |
+| `/jal-check` | One PASS or FAIL | `quick` (rules, tests, UI check), `full` (plus security hardening, boot test, ship call), and `deep` (plus a deep audit and a red team versus blue team pentest). JEV picks the depth if you do not |
+| `/jal-ship` | Get it out | `pr` (pull request), `release` (version, changelog, tag), `deploy` (deploy.jalgroup.id with a health check), and `rollback`. The full check runs first; it never deploys unless you say so |
+| `/jal-docs` | Documentation | Technical and non-technical docs written from the code and published to JAL-Group/malasbaca, with every claim checked |
+
+The old commands still exist as internal playbooks inside `skills/jal-orchestration/references/`, so nothing they did is lost.
+
+| Old command | Now |
+|---|---|
+| `/jal-scaffold` | `/jal-new` |
+| `/jal-ship` (feature), `/jal-orchestrate`, `/jal-module`, `/jal-service`, `/jal-migrate`, `/jal-adr` | `/jal-build` |
+| `/jal-ui`, `/jal-immersive` | `/jal-ui` |
+| `/jal-debug` | `/jal-fix` |
+| `/jal-review`, `/jal-audit`, `/jal-pentest` | `/jal-check` |
+| `/jal-pr`, `/jal-release`, `/jal-deploy` | `/jal-ship` |
 
 ## Skills
 
-19 skills back the agents and commands. The main ones:
+21 skills back the agents and commands. The main ones:
 
 - `jal-standards`: the JAL engineering constitution. Read before building or reviewing anything.
 - `jal-ui-taste`: the design core. Generated type, spacing, radius, and color scales, the no-overlap rule, section concept, and the JEV decision points for UI.
@@ -79,14 +84,17 @@ Use the full name `jal-aidev@jal-aidev-marketplace`; the short name `jal-aidev` 
 - `jal-design-system` also holds the craft floor (`references/craft.md`, from impeccable) and the visual directions with the seeded direction pick (`references/directions.md`, from impeccable and refero), so every product gets a fresh, deliberate look instead of the obvious first idea.
 - `jal-immersive`: the immersive and 3D core. Three.js (WebGL and WebGPU/TSL), React Three Fiber and drei, shaders, particles, clean-room effects (rain, puddles, sand, grass, ocean), performance tiers, poster-first loading, GSAP and Lenis scroll choreography, the JAL frame core for live product demos, and the noyzzi catalogue. JEV picks and combines recipes per section.
 - `jal-motion`: restrained product motion plus richer showcase choreography, and 167 component motion recipes from Magic UI and Animata (plain CSS and Tailwind), always with reduced-motion support.
-- `jal-jev`: the decision catalog, 39 standard decisions (orchestration, UI, motion, immersive, backend, security, QA, review, memory) with their exact questions and thresholds.
+- `jal-jev`: the decision catalog, 45 standard decisions (orchestration, UI, motion, immersive, backend, security, QA, review, memory, docs) with their exact questions and thresholds.
 - `jal-frontend-rules`: the CSS recipes that keep UI tidy.
+
+- `jal-orchestration`: the one engine behind every command: waves of truly parallel agents, JEV as every agent's decision helper, verification and commits by the lead, and the playbooks the old commands became.
+- `jal-docs`: how documentation is written for JAL Docs from evidence only.
 
 Also: `jal-scaffold`, `jal-architecture`, `jal-rpc`, `jal-polyglot`, `jal-security-hardening`, `jal-redteam-ops`, `jal-blueteam-ops`, `jal-qa-automation`, `jal-git-safety`, `jal-memory`, `jal-adr`, `jal-release`.
 
 ## Bundled tools (MCP)
 
-- **jal-design**: `jev_decide` (ask JEV), `ui_audit` (the automatic UI check, 20 rules), and `noyzzi_list` / `noyzzi_get` (the noyzzi catalogue and live prompts or code). Runs on Bun, no extra dependencies.
+- **jal-design**: `jev_decide` (ask JEV), `ui_audit` (the automatic UI check, 20 rules), `noyzzi_list` / `noyzzi_get` (the noyzzi catalogue and live prompts or code), and `docs_verify` (checks every documentation claim against the source and scans for secrets). Runs on Bun, no extra dependencies.
 - **designmd**: design references from designmd.ai. Supplementary only, read-only, and every kit is screened by JEV before use.
 - **koboyo-icons**: the icon library. Fallback: https://reicon.dev.
 

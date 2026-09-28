@@ -1,6 +1,6 @@
----
-description: Deep scan of the repo, security, architecture drift, dependency audit, dead code, bundle size, in one consolidated report.
----
+# Playbook: Deep audit
+
+Internal playbook, run through the `jal-orchestration` engine by a JAL command (see `../SKILL.md` for which command runs it). Deep scan of the repo, security, architecture drift, dependency audit, dead code, bundle size, in one consolidated report.
 
 Run a full audit of the current repo state. Do every check below, then emit exactly one consolidated report. Never stop early because one check already failed, collect every finding first, then report once.
 

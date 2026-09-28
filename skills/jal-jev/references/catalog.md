@@ -13,15 +13,16 @@ Index:
 
 | Domain | IDs |
 |--------|-----|
-| Orchestration | `orch.route`, `orch.parallel`, `orch.model`, `orch.escalate`, `orch.loop_exit` |
-| UI/UX | `ui.direction_screen`, `ui.density`, `ui.region_gate`, `ui.designmd_screen`, `ui.final_taste`, `ui.heuristics`, `ui.finish_disposition`, `ui.text_reveal_granularity`, `ui.number_motion`, `ui.geo_visual` |
+| Orchestration | `orch.route`, `orch.playbooks`, `orch.parallel`, `orch.model`, `orch.escalate`, `orch.loop_exit` |
+| UI/UX | `ui.experience`, `ui.direction_screen`, `ui.density`, `ui.region_gate`, `ui.designmd_screen`, `ui.final_taste`, `ui.heuristics`, `ui.finish_disposition`, `ui.text_reveal_granularity`, `ui.number_motion`, `ui.geo_visual` |
 | Motion | `motion.intensity`, `motion.choreography`, `motion.pin`, `motion.demo_medium` |
 | Immersive | `imm.gate`, `imm.recipe`, `imm.tech`, `imm.tier`, `imm.taste` |
 | Backend | `be.placement`, `be.api_quality`, `be.migration_risk`, `be.new_tech` |
 | Security | `sec.severity`, `sec.false_positive`, `sec.ship_block`, `sec.input_screen` |
-| QA | `qa.failure_class`, `qa.test_selection`, `qa.coverage`, `qa.release_go` |
+| QA | `qa.check_depth`, `qa.failure_class`, `qa.test_selection`, `qa.coverage`, `qa.release_go` |
 | Review | `rev.risk`, `rev.ship` |
 | Memory | `mem.promote` |
+| Docs | `docs.plan`, `docs.claim`, `docs.publish` |
 
 ---
 
@@ -59,7 +60,8 @@ Index:
       "jal-qa": "Tests: unit, happy-dom component, puppeteer-core E2E, or a QA gate.",
       "jal-devops": "Docker, Coolify deploy, CI, git branch or worktree safety, rollback.",
       "jal-researcher": "Current external information, library or API lookup, fact verification.",
-      "jal-reviewer": "Code review of an existing diff for correctness, boundaries, simplification."
+      "jal-reviewer": "Code review of an existing diff for correctness, boundaries, simplification.",
+      "jal-docs": "Technical or non-technical documentation of a project in the JAL Docs portal (JAL-Group/malasbaca), written only from evidence in the source."
     }
   },
   "split": {
@@ -73,6 +75,37 @@ Index:
 - `split` under 0.5: split the unit along surfaces, then run `orch.route` per piece.
 - `split` 0.5 or above: dispatch to `owner`.
 - Low confidence on `owner`: primary owns, runner-up is added as consultant or reviewer on that unit.
+
+### `orch.playbooks`
+
+**Purpose:** pick which internal playbooks a command run needs.
+
+**Caller:** jal-lead at engine step 1, once per run of `/jal-new`, `/jal-build`, `/jal-check`, or `/jal-ship`.
+
+**Precheck (decides without JEV):**
+- Playbooks the user named in the request are on and are not asked, for example "deploy" or "with a migration".
+- `review-gate` is always on for `/jal-build`, `/jal-check`, and `/jal-ship`. Not asked.
+- `deploy` is on only when the user's own message says deploy or rollback; it is never offered to JEV.
+- `service` (Go or Rust sidecar) always also triggers an escalation to Brian.
+
+**State fields:** `task` (the request), `evidence.repo` (what exists: modules, migrations, UI, services), `evidence.allowed` (the playbooks this command allows).
+
+**Questions** (one `noul` per allowed playbook, batched in one call; examples):
+```json
+{
+  "feature": { "type": "noul", "instructions": "Yes means the request in state.task is a user-facing capability that needs the full feature playbook (spec, owned plan, parallel build, review). No means it is a narrower change." },
+  "module": { "type": "noul", "instructions": "Yes means state.task needs a new backend domain module under apps/api/src/modules, because no existing module in state.evidence.repo owns this domain." },
+  "migrate": { "type": "noul", "instructions": "Yes means state.task changes the database schema (new table, column, index, or constraint) and so needs a migration file." },
+  "ui": { "type": "noul", "instructions": "Yes means state.task adds or changes a screen, page, or visible section, so the /jal-ui pipeline runs for that part." },
+  "adr": { "type": "noul", "instructions": "Yes means state.task makes a lasting architecture decision (new dependency, new data store, new boundary, a pattern other modules will copy) that should be recorded." },
+  "service": { "type": "noul", "instructions": "Yes means state.task names a CPU-bound or latency-critical hot path that Bun cannot serve and that needs a compiled Go or Rust sidecar. Default no." }
+}
+```
+
+**Thresholds and actions:**
+- 0.5 or above: the playbook is on for this run.
+- `service` needs 0.7 or above, and then goes to Brian before any build.
+- Low confidence on `ui` or `migrate`: turn it on (building it costs less than missing it).
 
 ### `orch.parallel`
 
@@ -187,7 +220,7 @@ Index:
 
 **Purpose:** decide what happens after each build-review round: exit, another round, change approach, or escalate.
 
-**Caller:** jal-lead after every `/jal-review` round in the build-review-fix loop.
+**Caller:** jal-lead after every the review gate (`/jal-check`) round in the build-review-fix loop.
 
 **Precheck (decides without JEV):**
 - Any open Critical or Important finding from jal-reviewer, a failing `bun test`, a failing `bun run check:boundaries`, a law violation from `ui_audit`, or an open confirmed security finding at medium or above: the loop cannot exit. Not asked.
@@ -225,6 +258,38 @@ Index:
 ---
 
 ## UI/UX
+
+### `ui.experience`
+
+**Purpose:** classify a `/jal-ui` brief so the right lead agent and pipeline run.
+
+**Caller:** the `/jal-ui` command, before dispatch.
+
+**Precheck (decides without JEV):**
+- A brief that names 3D, WebGL, WebGPU, shaders, particles, noyzzi, or "immersive" is `immersive`. Not asked.
+- A brief for an app screen with forms, tables, or settings inside an existing product is `product_ui`. Not asked.
+
+**State fields:** `task` (the brief), `evidence.surface` (what exists at the target), `evidence.audience` (first-time visitor or daily user).
+
+**Questions:**
+```json
+{
+  "experience": {
+    "type": "choice",
+    "instructions": "Classify the brief in state.task by what the visitor must do and feel on this surface.",
+    "criteria": {
+      "product_ui": "A daily-use tool surface: dashboards, lists, forms, settings, detail pages. Clarity and speed win; motion stays at state feedback.",
+      "marketing": "A page that explains and persuades: landing, pricing, product, about. Expressive type and restrained scroll motion, no 3D required.",
+      "immersive": "A page whose story is carried by an experience: 3D objects, WebGL or shader effects, pinned scroll stories, interactive demos."
+    }
+  }
+}
+```
+
+**Thresholds and actions:**
+- `product_ui` and `marketing` dispatch jal-ux.
+- `immersive` dispatches jal-immersive.
+- Low confidence between `marketing` and `immersive`: dispatch jal-ux, which hands single sections to jal-immersive through `imm.gate`.
 
 ### `ui.density`
 
@@ -382,7 +447,7 @@ Index:
 
 **Purpose:** screen direction candidates before the seeded draw. JEV screens; it never picks.
 
-**Caller:** jal-ux at the `/jal-ui` direction step, and jal-immersive at `/jal-immersive` step 2, for a new product, a new surface, or a redesign without a direction contract.
+**Caller:** jal-ux at the `/jal-ui` direction step, and jal-immersive at `/jal-ui` immersive mode (jal-immersive step 2), for a new product, a new surface, or a redesign without a direction contract.
 
 **Precheck (decides without JEV):**
 - The agent has 5 to 7 ranked candidates spanning 3 or more material families. Each is expressed as a form, a preset, a first viewport, and a lawful expression.
@@ -1261,6 +1326,37 @@ Index:
 
 ## QA
 
+### `qa.check_depth`
+
+**Purpose:** choose how deep `/jal-check` goes when the user did not say.
+
+**Caller:** jal-lead at the start of `/jal-check`.
+
+**Precheck (decides without JEV):**
+- The user said `quick`, `full`, or `deep`: use it. Not asked.
+- A first release, a launch, a new auth or payment flow, or a new public endpoint since the last deep check is `deep`. Not asked.
+
+**State fields:** `task`, `evidence.diff` (size and areas since the last check), `evidence.last_deep` (date and result of the last deep check), `evidence.stage` (dev, pre-release, release).
+
+**Questions:**
+```json
+{
+  "depth": {
+    "type": "choice",
+    "instructions": "Pick how deep this check should go, given the change and stage in state.",
+    "criteria": {
+      "quick": "Small, low-risk change during development: rules scan, tests, and UI check are enough.",
+      "full": "A normal change heading to review or merge: add hardening, runtime smoke, the security ship block, and the ship call.",
+      "deep": "A risky or release-bound change, or a long time since the last deep check: add the deep audit and the red and blue team pentest."
+    }
+  }
+}
+```
+
+**Thresholds and actions:**
+- Build the chosen depth.
+- Low confidence: take the deeper of the top two.
+
 ### `qa.failure_class`
 
 **Purpose:** classify a failing test so the right owner fixes the right thing.
@@ -1369,7 +1465,7 @@ Index:
 
 **Purpose:** final QA go/no-go for a release.
 
-**Caller:** jal-qa at `/jal-ship`; jal-principal reads it at the final gate.
+**Caller:** jal-qa at the end of `/jal-build` and before `/jal-ship`; jal-principal reads it at the final gate.
 
 **Precheck (decides without JEV, no-go):**
 - Any failing test in the full suite.
@@ -1434,7 +1530,7 @@ Index:
 
 **Purpose:** the review gate verdict on the residual set after mechanical checks.
 
-**Caller:** jal-reviewer at the end of `/jal-review`.
+**Caller:** jal-reviewer at the end of the review gate (`/jal-check`).
 
 **Precheck (decides without JEV, block):**
 - Any Critical or Important finding open.
@@ -1456,6 +1552,100 @@ Index:
 **Thresholds and actions:**
 - `approve` 0.7 or above: pass to jal-qa.
 - Under 0.7: send back with the findings driving the verdict.
+
+---
+
+## Docs
+
+### `docs.plan`
+
+**Purpose:** decide which documentation sections a `/jal-docs` run writes or updates, and how much non-technical material it adds.
+
+**Caller:** jal-docs at pipeline step 3, after create-or-update detection.
+
+**Precheck (decides without JEV):**
+- In update mode, a section none of whose source files changed since the last analysed commit is not a candidate, unless it is flagged stale. Not asked.
+- A create always writes Ringkasan, Arsitektur, Cara menjalankan, and Referensi. Not asked.
+- Sections that would need secrets are never planned. Env sections are names only.
+
+**State fields:** `task`, `evidence.mode` (create or update), `evidence.changed` (changed source files mapped to sections), `evidence.repo` (entrypoints, modules, routes, migrations present), `evidence.audience` (developers only, or also business readers).
+
+**Questions** (one `noul` per candidate section, batched; plus `nontech`):
+```json
+{
+  "s_frontend_menu": { "type": "noul", "instructions": "Yes means the section Frontend and menu should be written or updated in this run because state.evidence shows screens or menus that exist in the source and are missing from or changed since the current docs." },
+  "s_backend_endpoints": { "type": "noul", "instructions": "Yes means the section Backend endpoints should be written or updated because state.evidence shows routes that exist in the source and are missing from or changed since the current docs." },
+  "nontech": {
+    "type": "choice",
+    "instructions": "Pick how much non-technical material the docs for this project need, given the audience and the kind of product in state.",
+    "criteria": {
+      "none": "An internal developer tool or library nobody outside engineering uses.",
+      "summary_only": "A product whose business readers need only what it is, its status, and who to contact.",
+      "full": "A product with business owners or operators who need what it does, who uses it, its status, how to access it, and who to contact."
+    }
+  }
+}
+```
+
+**Thresholds and actions:**
+- Write a section when its `noul` is 0.5 or above.
+- `nontech` sets the `Untuk Non-Teknis` group. Low confidence takes the richer of the top two.
+
+### `docs.claim`
+
+**Purpose:** judge whether each documentation claim is supported by its cited evidence, after `docs_verify` has confirmed the citations exist.
+
+**Caller:** jal-docs at pipeline step 6, batched per section group.
+
+**Precheck (decides without JEV):**
+- `docs_verify` must return VERIFIED for the claim. `NO_EVIDENCE` or `MISSING_EVIDENCE` means fix it or drop it, not ask.
+- A claim with a secret-shaped value is removed. Not asked.
+
+**State fields:** `proposal.claims` (each with `id`, `text`, and the evidence snippets inline), `evidence.repo` (repo and commit).
+
+**Questions** (one `noul` per claim, batched):
+```json
+{
+  "c1": { "type": "noul", "instructions": "Yes means claim c1 in state.proposal.claims is fully supported by its own cited evidence snippets as worded: every fact in the sentence appears in or follows directly from the evidence. No means it overstates, generalizes, adds a number, name, or behavior the evidence does not show, or describes intent rather than code." }
+}
+```
+
+**Thresholds and actions:**
+- 0.6 or above: keep the claim.
+- Under 0.6: rewrite it to exactly what the evidence shows and re-ask once, or drop it.
+- Never keep a dropped claim as a fact. It becomes an open question for Brian in the PR body.
+
+### `docs.publish`
+
+**Purpose:** the readiness call before the docs branch is pushed and the pull request opened.
+
+**Caller:** jal-docs at pipeline step 9, after the mechanical gate passes.
+
+**Precheck (decides without JEV):**
+- `bunx tsc --noEmit` and `bun run build` pass in malasbaca, `docs_verify` is PASS, and the diff touches only this slug's files and its `src/docs.ts` registration. Otherwise, fix first. Not asked.
+- Pushing to `main` and deploying are never offered.
+
+**State fields:** `proposal` (the sections written with their claim counts, removed claims, and open questions), `evidence` (build output, `docs_verify` summary, diff stat).
+
+**Questions:**
+```json
+{
+  "ready": {
+    "type": "score",
+    "instructions": "Score how ready these docs are for Brian to review, given state.proposal and state.evidence: coverage of what the source actually contains, clarity for both audiences, and no unverified statement.",
+    "criteria": [
+      "0 Not ready: major parts of the system are undocumented or the text is unclear.",
+      "1 Thin: correct but missing sections a new developer needs to run or deploy it.",
+      "2 Ready: a new developer can run, change, and deploy from these docs; business readers know what it is and its status.",
+      "3 Excellent: complete, precise, and easy to navigate for both audiences."
+    ]
+  }
+}
+```
+
+**Thresholds and actions:**
+- 2 or above: push `docs/<slug>-<yyyymmdd>` and open the PR.
+- Under 2: fill the named gaps and ask again once. If it is still under 2, open the PR as a draft with the gaps listed.
 
 ---
 

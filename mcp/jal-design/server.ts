@@ -62,6 +62,24 @@ const TOOLS: ToolDef[] = [
     },
   },
   {
+    name: "docs_verify",
+    description:
+      "Mechanically check documentation claims before they are published: every claim must cite evidence in the source repo (a path, optionally a snippet that must appear there), no path may escape the repo, and no claim or draft may contain a secret-shaped value. Returns PASS or FAIL per claim. Run it before JEV docs.claim.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        repo_path: { type: "string", description: "Absolute path of the source repo the docs describe." },
+        claims: {
+          type: "array",
+          description: "Claims as { id, text, evidence: [{ path, contains? }] }.",
+          items: { type: "object" },
+        },
+        drafts: { type: "object", description: "Optional map of draft file name to full text, scanned for secrets." },
+      },
+      required: ["repo_path", "claims"],
+    },
+  },
+  {
     name: "noyzzi_list",
     description:
       "List the noyzzi.com catalogue (30 hero sections, 22 image hover effects, 26 3D elements) with slug, name, source URL, surface, and JAL law note. Use it to assemble imm.recipe candidates.",
@@ -185,6 +203,15 @@ async function handleNoyzziGet(args: any) {
   return { content: [{ type: "text", text: JSON.stringify(body, null, 2) }], isError: result.status !== "OK" };
 }
 
+async function handleDocsVerify(args: any) {
+  if (!args || typeof args.repo_path !== "string" || !Array.isArray(args.claims)) {
+    throw new Error("docs_verify requires { repo_path, claims }");
+  }
+  const { verifyClaims } = await import("./docs-verify.ts");
+  const report = verifyClaims(args.repo_path, args.claims, args.drafts && typeof args.drafts === "object" ? args.drafts : {});
+  return { content: [{ type: "text", text: JSON.stringify(report, null, 2) }], isError: report.status === "FAIL" };
+}
+
 async function handleToolsCall(id: JsonRpcId, params: any): Promise<void> {
   const name = params?.name;
   const args = params?.arguments ?? {};
@@ -195,6 +222,10 @@ async function handleToolsCall(id: JsonRpcId, params: any): Promise<void> {
     }
     if (name === "ui_audit") {
       respond(id, await handleUiAudit(args));
+      return;
+    }
+    if (name === "docs_verify") {
+      respond(id, await handleDocsVerify(args));
       return;
     }
     if (name === "noyzzi_list") {

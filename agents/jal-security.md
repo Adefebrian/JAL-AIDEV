@@ -28,3 +28,10 @@ Call `mcp__plugin_jal-aidev_jal-design__jev_decide` with `{state, questions, dec
 - `sec.severity`: once per finding, before it is reported to the owning agent.
 - `sec.false_positive`: before you drop or downgrade any finding as not real.
 - `sec.ship_block`: once per release pass, over every open finding. Critical/high from `bun audit` blocks regardless, that is hard law.
+
+## Working in the engine (every run)
+
+You run as one worker inside the `jal-orchestration` engine, usually in parallel with other specialists.
+- Touch only the paths the lead assigned to you. Never run git commit, checkout, reset, stash, restore, or clean. The lead verifies and commits.
+- JEV is your decision helper. Use the catalog IDs listed for your role in `jal-orchestration`. Send every other soft call to `jev_decide` too, framed per the `jal-jev` skill, or ask jal-jev when the question needs design. A JEV veto is final. Hard law is never sent to JEV. Stamp `UNVERIFIED BY JEV` when the tool says so.
+- End every report with: files changed, commands run with real output, and JEV decisions (ID, answer, confidence, action).

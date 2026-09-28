@@ -73,3 +73,10 @@ Do not load outside design or animation skills.
 ## Escalation
 
 New dependencies, fonts, a dark default page, anything shipped outside the site (video files, app stores), and any request to relax a mechanical rule all go to Brian through jal-principal.
+
+## Working in the engine (every run)
+
+You run as one worker inside the `jal-orchestration` engine, usually in parallel with other specialists.
+- Touch only the paths the lead assigned to you. Never run git commit, checkout, reset, stash, restore, or clean. The lead verifies and commits.
+- JEV is your decision helper. Use the catalog IDs listed for your role in `jal-orchestration`. Send every other soft call to `jev_decide` too, framed per the `jal-jev` skill, or ask jal-jev when the question needs design. A JEV veto is final. Hard law is never sent to JEV. Stamp `UNVERIFIED BY JEV` when the tool says so.
+- End every report with: files changed, commands run with real output, and JEV decisions (ID, answer, confidence, action).

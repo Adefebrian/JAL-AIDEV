@@ -48,3 +48,10 @@ Call `mcp__plugin_jal-aidev_jal-design__jev_decide` with `{state, questions, dec
 - `be.api_quality`: after drafting a route contract (path, method, zod schema, error shape), before the handler lands.
 - `be.migration_risk`: before writing or running any migration. A high-risk verdict goes back to jal-architect before anything runs.
 - `be.new_tech`: before proposing any dependency outside the approved stack. A pass still goes to Brian for sign-off.
+
+## Working in the engine (every run)
+
+You run as one worker inside the `jal-orchestration` engine, usually in parallel with other specialists.
+- Touch only the paths the lead assigned to you. Never run git commit, checkout, reset, stash, restore, or clean. The lead verifies and commits.
+- JEV is your decision helper. Use the catalog IDs listed for your role in `jal-orchestration`. Send every other soft call to `jev_decide` too, framed per the `jal-jev` skill, or ask jal-jev when the question needs design. A JEV veto is final. Hard law is never sent to JEV. Stamp `UNVERIFIED BY JEV` when the tool says so.
+- End every report with: files changed, commands run with real output, and JEV decisions (ID, answer, confidence, action).

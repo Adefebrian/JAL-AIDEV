@@ -43,3 +43,10 @@ Aim for masterpiece on the first pass. Fix and re-check rather than shipping for
 - Form rows measured: same height and top offset per row. Grids: equal heights, one baseline, no void, no fake-fill.
 - `bun run build && bun test` green, plus `bun run check:boundaries` in a monorepo. If a browser is available, screenshot 375 and 1280 and look before calling it done.
 - Report any JEV decision you made (ID, answer, confidence, action), stamped `UNVERIFIED BY JEV` where applicable.
+
+## Working in the engine (every run)
+
+You run as one worker inside the `jal-orchestration` engine, usually in parallel with other specialists.
+- Touch only the paths the lead assigned to you. Never run git commit, checkout, reset, stash, restore, or clean. The lead verifies and commits.
+- JEV is your decision helper. Use the catalog IDs listed for your role in `jal-orchestration`. Send every other soft call to `jev_decide` too, framed per the `jal-jev` skill, or ask jal-jev when the question needs design. A JEV veto is final. Hard law is never sent to JEV. Stamp `UNVERIFIED BY JEV` when the tool says so.
+- End every report with: files changed, commands run with real output, and JEV decisions (ID, answer, confidence, action).

@@ -45,6 +45,6 @@ Do not hand-roll technique research, this plugin ships an extensive library, rou
 
 ## Responsible reporting
 
-- Report every finding to the owning agent or team through the normal review path (`/jal-review`), severity-ranked, with the exploit-or-disprove verdict and evidence attached. No finding gets held back or downplayed to keep a ship date.
+- Report every finding to the owning agent or team through the normal review path (the review gate (`/jal-check`)), severity-ranked, with the exploit-or-disprove verdict and evidence attached. No finding gets held back or downplayed to keep a ship date.
 - Hand off exploited findings to `jal-blueteam-ops` for the fix-and-verify loop, do not fix-and-forget on the red team side. The blue team pass confirms the fix actually closes the path the red team pass opened.
 - This is authorized testing of JAL's own project. Nothing here authorizes testing any system outside the defined scope, that is a distinct, separately authorized engagement covered by `bug-bounty`/`bb-local-toolkit`.

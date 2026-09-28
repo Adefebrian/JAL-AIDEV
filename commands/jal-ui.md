@@ -1,24 +1,47 @@
 ---
-description: Build a new screen or redesign an existing one to the JAL standard, tidy, modern, mobile-first, and checked automatically.
-argument-hint: <what to build, or which screen to redesign>
+description: Design and build any screen or website, a new screen, a redesign, or an immersive 3D site, beautiful, tidy, mobile-first, and checked automatically.
+argument-hint: <what to build, or which screen or site to redesign>
 ---
 
 What to work on: $ARGUMENTS
 
-## What happens
+## What this does
 
-1. It works out whether this is a new screen or a redesign of one that already exists. For a redesign it checks the current screen first and lists what is wrong before changing anything.
-2. It explores several creative directions for your audience, has the JEV judge screen them, and commits to one fresh direction instead of the obvious first idea.
-3. It plans every section before drawing it: what the section is for, the one message it carries, and the one action it offers. Sections with no clear purpose are left out.
-4. It builds on one JAL design system every time, sets how dense tables and lists should be for this product, and decides for each section whether it belongs and how it should be laid out. These calls are made by the JEV judge, not by guesswork.
-5. It builds phone first, then tablet, then desktop, on the shared JAL design tokens: white background, one quiet accent at most, nothing overlapping, nothing sticking out of its box, no shadows, no gradients, no side lines on cards.
-6. It proves the result with the automatic UI check at phone, tablet, and desktop widths, fixes anything the check finds, and repeats until it passes.
-7. It reports back what it built, each decision it made and how confident it was, and the result of the UI check.
+One command for everything visual. The JEV judge first decides what kind of work it is:
+- **product UI**: app screens, dashboards, forms, and tables. Calm, tidy, and fast.
+- **marketing page**: landing pages and product pages. More expressive, with restrained motion.
+- **immersive**: 3D heroes, WebGL and shader effects, scroll stories, and noyzzi pieces. Rich, but still fast on phones.
+
+Then it:
+1. On a redesign, it checks the current screen first and lists what is wrong before changing anything.
+2. It explores several creative directions for your audience, lets JEV screen them, and commits to one fresh direction instead of the obvious first idea.
+3. It plans every section: its purpose, one message, and one action. Sections without a purpose are left out. For each section JEV decides whether it belongs, how to lay it out, and how much motion it gets. For immersive sections JEV also picks which recipe to use from the whole library, or a combination:
+   - noyzzi heroes, effects, and 3D objects
+   - WebGL and shader effects, and particles
+   - Magic UI and Animata motion
+   - GSAP scroll stories
+   - live product demos
+4. It builds phone first with a real app-shell, then tablet, then desktop, on the one JAL design system: white background, nothing overlapping, and 44px controls. Outside noyzzi sections there are no shadows, gradients, or side lines. For 3D, a still poster shows first, motion calms down for people who ask for reduced motion, and heavy effects scale down on slower phones. Independent sections are built at the same time.
+5. It proves the result with the automatic UI check at phone, tablet, and desktop widths (20 rules) and screenshots. For 3D it also runs a frame-speed check. A fresh reviewer then judges it. It fixes and repeats until everything passes.
+6. It reports what it built, each decision with its confidence, where each effect came from, and the check results.
+
+Examples:
+- `/jal-ui a settings screen for team members and roles`
+- `/jal-ui redesign the pricing page`
+- `/jal-ui an immersive landing page for Halo, a smart desk lamp, with a 3D lamp hero`
 
 ## Run it
 
-Dispatch agent `jal-ux` with the full request: $ARGUMENTS
+1. JEV `ui.experience` classifies the brief as `product_ui`, `marketing`, or `immersive`. A brief that names 3D, WebGL, shaders, noyzzi, or immersive is `immersive` without asking.
+2. Dispatch `jal-ux` for `product_ui` and `marketing`, or `jal-immersive` for `immersive`. Each runs its pipeline from `agents/jal-ux.md` or `agents/jal-immersive.md` with no step skipped. jal-ux hands any single section that earns immersion (`imm.gate`) to jal-immersive.
+3. For a multi-section page, once the section concepts are written, the lead agent splits the sections into owned files and builds them in parallel per the `jal-orchestration` engine.
+4. It then integrates the sections and runs `ui_audit` at 320, 375, 414, 768, and 1280 until PASS (`SKIPPED` is never a pass).
 
-`jal-ux` runs its pipeline from `agents/jal-ux.md` in order, with no step skipped: read the brief or audit the existing UI, write a concept for every section, JEV `ui.density`, the JAL Core frame and region workflow, JEV `ui.region_gate` per section and major component, an optional designmd reference only after JEV `ui.designmd_screen` passes, build on JAL Core tokens mobile-first, motion per `jal-motion`, the hard-law self-check, `ui_audit` at 320, 375, 414, 768, and 1280 until PASS (`SKIPPED` is never a pass), JEV `ui.final_taste`, screenshots at 375 and 1280, then the decision log.
-
-Report back, terse: mode (new or redesign), the section concepts, each JEV decision with confidence and the action taken (stamp `UNVERIFIED BY JEV` where it applies), what was built or changed by file, the final `ui_audit` result per width, and build and test status.
+Report back, tersely:
+- the mode and lead agent
+- the direction and the section concepts
+- each JEV decision with its confidence and the action taken (stamp `UNVERIFIED BY JEV` where it applies)
+- the recipe and source for each immersive section
+- the files changed
+- the `ui_audit` result per width, and the frame-time sample for 3D
+- build and test status

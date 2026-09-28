@@ -53,7 +53,7 @@ This checklist is the baseline, not the ceiling. Before shipping anything handli
 - Infra/config: `hunt-cloud-misconfig`, `hunt-cicd`, `hunt-tls-network`, `hunt-source-leak`, `hunt-open-redirect`.
 - LLM integration (relevant given the gpt-4o-mini default): `hunt-llm-ai` for prompt injection and data exfiltration paths through the AI feature.
 
-`jal-security` (the agent) owns running these continuously and reporting fast-fix findings back through `/jal-review`. Any finding severe enough to block ship gets logged to `.jal/memory/` so the same class of gap does not recur in the next project.
+`jal-security` (the agent) owns running these continuously and reporting fast-fix findings back through the review gate (`/jal-check`). Any finding severe enough to block ship gets logged to `.jal/memory/` so the same class of gap does not recur in the next project.
 
 ## Red team / blue team ops
 

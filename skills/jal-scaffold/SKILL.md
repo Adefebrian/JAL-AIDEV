@@ -1,13 +1,13 @@
 ---
 name: jal-scaffold
-description: How /jal-scaffold builds a JAL monorepo, the no-Vite Bun.build() React recipe, Hono static serving, bun --watch dev loop, and the post-scaffold checklist. Use when scaffolding a new JAL project, setting up Bun.build() for React, or wiring a Hono static server.
+description: How /jal-new builds a JAL monorepo, the no-Vite Bun.build() React recipe, Hono static serving, bun --watch dev loop, and the post-scaffold checklist. Use when scaffolding a new JAL project, setting up Bun.build() for React, or wiring a Hono static server.
 ---
 
 # JAL Scaffold
 
-Detail layer behind `/jal-scaffold <name>`. Defers to `jal-standards` for the approved stack (Bun, Hono, React, TypeScript, Docker, Redis; no Vite, no Next.js).
+Detail layer behind `/jal-new <name>`. Defers to `jal-standards` for the approved stack (Bun, Hono, React, TypeScript, Docker, Redis; no Vite, no Next.js).
 
-## What /jal-scaffold does
+## What /jal-new does
 
 1. Copies `templates/monorepo` into a new directory named `<name>`.
 2. Renames the root `package.json` name field and any placeholder tokens to `<name>`.
@@ -108,7 +108,7 @@ No Vite dev server, no HMR framework. The dev loop is a watch-and-rebuild-and-se
 
 ## Post-scaffold checklist
 
-Run in order immediately after `/jal-scaffold <name>` finishes:
+Run in order immediately after `/jal-new <name>` finishes:
 
 1. `cd <name> && bun install` (idempotent if scaffold already ran it, safe to rerun after any manual `package.json` edit).
 2. `bun run build` across all workspaces (`turbo run build`), confirm `apps/web/dist` and any `apps/api` build output are produced with no errors.

@@ -1,6 +1,6 @@
 # JAL Core craft floor and critique
 
-The quality floor every JAL surface clears, the anti-pattern ban list, the per-discipline craft rules (type, color, layout, motion, states, copy), and the critique and finish-review system. Applies to `/jal-ui` and `/jal-immersive`.
+The quality floor every JAL surface clears, the anti-pattern ban list, the per-discipline craft rules (type, color, layout, motion, states, copy), and the critique and finish-review system. Applies to `/jal-ui` and `/jal-ui (immersive mode)`.
 
 **Provenance.** The doctrine, thresholds, and workflows here are derived from pbakaus/impeccable (Apache-2.0, commit `114ea1d`), restated in JAL's own words and filtered through JAL law. No impeccable file, code, or tooling is copied, installed, or run. The tracking curve and a few statistics also draw on referodesign/refero_skill (MIT). Both are recorded in `THIRD_PARTY_NOTICES.md` and `sources.md`.
 

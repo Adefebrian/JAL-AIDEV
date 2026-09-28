@@ -1,6 +1,6 @@
----
-description: Run the consolidated guideline, security, QA, UI audit, runtime smoke, and JEV ship gate on the repo and emit one PASS/FAIL report.
----
+# Playbook: Review gate (one PASS/FAIL)
+
+Internal playbook, run through the `jal-orchestration` engine by a JAL command (see `../SKILL.md` for which command runs it). Run the consolidated guideline, security, QA, UI audit, runtime smoke, and JEV ship gate on the repo and emit one PASS/FAIL report.
 
 Run the full JAL review gate against the current repo state. Do every check below, then emit exactly one consolidated report ending in `JAL REVIEW: PASS` or `JAL REVIEW: FAIL`. Never stop early because one check already failed, collect every failure first, then report once.
 

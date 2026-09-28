@@ -25,7 +25,7 @@ Project-level, team-shared memory. Distinct from Claude's personal `~/.claude` m
 # Redis rate-limit key collision across routes
 
 Date: 2026-08-10
-Discovered by: jal-security (during /jal-review on apps/api)
+Discovered by: jal-security (during the review gate (/jal-check) on apps/api)
 
 ## What happened
 Rate limit keys were built as `ratelimit:${ip}` with no route segment, so
@@ -38,7 +38,7 @@ apps/api/src/middleware/rateLimit.ts.
 
 ## Rule going forward
 Every new rate-limited route must include the route path in its Redis key.
-Check this in /jal-review whenever a new rate-limited route is added.
+Check this in the review gate (/jal-check) whenever a new rate-limited route is added.
 ```
 
 - `INDEX.md` is a flat, newest-first list, one line per file, enough to scan without opening every file:
@@ -55,7 +55,7 @@ Check this in /jal-review whenever a new rate-limited route is added.
 
 Write a memory file when:
 - An agent hits a real gotcha (a library quirk, a platform behavior, a config trap) that cost real debugging time and would cost it again for the next agent or teammate.
-- A `/jal-review` gate failure traces back to a root cause that is not obvious from the code alone, capture the cause, not just the fix.
+- A the review gate (`/jal-check`) gate failure traces back to a root cause that is not obvious from the code alone, capture the cause, not just the fix.
 - A deviation from `jal-standards` gets approved by Brian, record what was approved and why, so it is not silently re-litigated or silently violated by someone who never saw the approval.
 - A scaffold or deploy step needed a workaround not covered in `jal-scaffold` or `jal-git-safety`.
 
