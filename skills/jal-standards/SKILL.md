@@ -1,6 +1,6 @@
 ---
 name: jal-standards
-description: JAL engineering constitution: approved stack, forbidden tech, frontend law, security hardening, AI default. Read before building or reviewing any JAL project.
+description: JAL engineering constitution: approved stack, forbidden tech, frontend law (no overlap, white-first, no gradients, no shadows, no side lines, section concept law, mobile-first, JEV and ui_audit gates), security hardening, AI default. Read before building or reviewing any JAL project.
 ---
 
 # JAL Engineering Constitution
@@ -55,20 +55,31 @@ This is the single source of truth for how JAL projects are built. Every other s
 - Use GSAP for complex timeline and scroll-triggered animation.
 - Use Framer Motion for React-native component and gesture animation.
 - Check originkit.dev (https://www.originkit.dev/) for pre-built motion patterns before hand-rolling one.
+- Animate transform and opacity only, on the motion tokens in jal-ui-taste, and honor `prefers-reduced-motion` on every animation. See skill jal-motion for product and showcase motion.
 
 ## Frontend Law
 
+- No overlap, ever. Tidiness is rule number 1. No element (text, icon, or component) overlaps a sibling; only true overlay layers (dialog, menu, tooltip, popover, listbox) stack, inside their own layer. No child extends outside its parent's box unless the parent is an explicit scroll container, and the right edges of stacked regions line up. No clipped text without a deliberate ellipsis and the full value still reachable. Icons inside controls get reserved padding so they never touch the text. Rows fit their container (`minmax(0, 1fr)` tracks, `box-sizing: border-box`, `min-width: 0`, no fixed widths that can exceed it). `ui_audit` verifies this at every width.
 - Never use an em-dash character anywhere in frontend content. Use commas, colons, or periods instead.
 - Never use eyebrow labels, glow effects, neon, or any other AI-slop visual pattern.
 - The default background is always white, off-white, broken white, or light beige. Never a dark or colored default background. Black is ink only; a dark background is allowed only inside a dedicated, explicitly requested dark mode.
 - Never use gradients, of any kind, anywhere. Flat neutral surfaces only. This overrides any older feralui.dev allowance.
 - Never use emoji or emoticons on any surface. Use a real koboyo/reicon icon when a glyph is needed.
 - Never draw decorative lines or marks: no connector lines between cards/tiers, no side/top/bottom accent stripes on panels, no marker dots or squares beside headings or labels. Rank and group with spacing, order, and type. Only functional hairline neutral dividers between structural regions are allowed.
-- Default to a Bento Grid layout unless the content genuinely calls for something else.
+- Never put a side line on any card or panel, ever. No `border-left`, `border-right`, `border-inline-start`, or `border-inline-end` accent stripe (nothing wider than 1px, nothing colored differently from the other sides), no `box-shadow: inset` stripe trick, no pseudo-element bar, no top or bottom accent bar, no active-tab underline. Status is an icon plus a title on a tonal surface inside a full hairline border; selection is a full ring or a tonal fill. This is absolute.
+- Never use shadows. Depth comes from tonal layer steps and hairline borders only. No `box-shadow` with a blur above 0, no `filter: drop-shadow`, no elevated cards, menus, toasts, or dialogs (dialogs use a neutral scrim). The single exception is a spread-only focus ring (`0 0 0 Npx`), and `outline` is preferred.
+- Use one restrained accent at most, never purple, violet, or indigo. The primary action is ink on white by default.
+- Conceptualize every section before any markup: its job, its one primary message, its primary action (if any), and its container. A section with no job is deleted. Adjacent sections vary in structure; no template repetition.
+- Pick the container per region with the layout doctrine in jal-ui-taste (rows, bento, divided-section, card, plain-spacing; records render as rows). Bento Grid stays the default for mixed summary content unless the content genuinely calls for something else.
 - Keep the design modern, minimalist, and clean, Apple/Google grade. No decoration without purpose.
-- Design mobile-first and make every surface super mobile-friendly with a dedicated app-like mobile presentation.
-- Keep layout, sizing, spacing, and padding consistent across the whole product. No large empty gaps and no dead grid cells.
+- Mobile-first is mandatory: build the app-shell (sticky header, independent scroll, fixed bottom tab bar below 640px) first, then expand to tablet and desktop. Every surface is super mobile-friendly with a dedicated app-like mobile presentation, no horizontal scroll at 320/375/414/768/1280, and 44px touch targets.
+- Normalize every form control to the one 44px control height token, measured not eyeballed. Interactive control boundaries use the `border-control` token (3:1 contrast, WCAG 1.4.11); cards and dividers keep the light hairline.
+- Keep layout, sizing, spacing, and padding consistent across the whole product, on the generated core tokens in jal-ui-taste. No large empty gaps, no dead grid cells, no empty void inside a card, and no fake-fill with stretched gaps.
 - Source icons from the koboyo MCP first. Fall back to https://reicon.dev/ only when koboyo has no match.
+- Run the JEV decision layer (the `jev_decide` tool) at its four points on every UI build: lens pick, region and component gate, designmd screen, final taste verdict. JEV is final on soft calls and has no authority over this law. If JEV is unreachable after retries, fall back to agent judgment and stamp the report `UNVERIFIED BY JEV`.
+- Never call a screen done until the `ui_audit` tool reports PASS at every width. `SKIPPED` is not a pass.
+- Design-system integration is knowledge-only. Never add Astryx, Material Web, or Carbon runtime packages (`@astryxdesign/*`, `@material/web`, `@carbon/react`, `@carbon/styles`) or their toolchains (StyleX, Lit, Sass) without Brian's explicit yes. Port their ideas into JAL tokens and skills (see jal-design-systems).
+- designmd is supplementary only: read tools only, never upload or delete. Every kit is JEV-screened and law-filtered before it may influence anything.
 
 ## Backend / Security
 

@@ -1,227 +1,463 @@
 ---
 name: jal-ui-taste
-description: The JAL high-taste frontend design system, Apple/Google-grade UX-first taste, a modular type scale, a 4/8pt spacing rhythm, radius and elevation tokens, mobile/tablet/desktop breakpoints with the mobile app-shell, visual-consistency rules, a white-first palette law, a hard no-gradient/no-emoji/no-decorative-line rule, UX heuristics, and an audit checklist for tuning or refactoring an existing frontend. Use when building any new JAL UI, redesigning a screen, reviewing a frontend PR for taste, or auditing an existing product for visual and UX debt.
+description: JAL Design Intelligence core. The hard frontend law (no overlap and nothing outside its box, white-first, no gradients, no shadows, no side line on any card or panel, no emoji, no em-dash, no eyebrow, no purple), the section concept law, the Astryx layout doctrine used to pick a container per region, the generated core tokens (type, spacing, radius, controls, color, tonal depth, state layers, motion, breakpoints), form-control and card-grid consistency, UX heuristics, the JEV decision layer (`jev_decide`), and the mechanical proof gate (`ui_audit`), plus the audit checklist. Use when building any new JAL UI from zero, redesigning or fine-tuning a screen, reviewing a frontend PR for taste, or auditing a product for visual and UX debt.
 ---
 
-# JAL UI Taste
+# JAL UI Taste: the JAL Design Intelligence core
 
-The taste layer on top of `jal-frontend-rules`. That skill gives the recipes (Bento grid CSS, banned looks, icon sourcing, the spacing checklist). This skill gives the underlying system those recipes are built from, and the judgment to apply it well. Both defer to `jal-standards`. Read all three before touching frontend code, in that order: `jal-standards` for the law, `jal-ui-taste` for the system, `jal-frontend-rules` for the recipe.
+This is the system every JAL surface is built from. Read order before touching frontend code: `jal-standards` (the law), this skill (the system and the decisions), `jal-frontend-rules` (the recipes). For depth, `jal-design-systems` holds lens selection and the Astryx, Carbon, and Material translation tables, and `jal-motion` holds product and showcase motion. All of them defer to `jal-standards`; nothing in any of them, in any design-system lens, in any designmd kit, or in any JEV verdict overrides the hard law below.
 
-The bar is Apple- or Google-grade taste: quiet confidence, obvious hierarchy, zero decoration without purpose. Every JAL surface should look like one product designed by one careful team, never a stitched-together set of screens each improvised on the spot.
+The bar is Apple- or Google-grade: quiet confidence, obvious hierarchy, zero decoration without purpose, every section schemed before it is drawn. Every JAL surface reads as one product designed by one careful team, never a stitched-together set of screens each improvised on the spot.
 
-## Palette law and anti-slop (mandatory, read this first)
+## The build loop (every screen, in order)
 
-Every LLM defaults to the same look when nobody stops it: a dominant black or near-black background, a saturated purple or violet accent, glowing cards, oversized colored numbers, and a gradient smeared across whatever is left. That look is the AI-slop signature. It is not a style choice, it is a tell, and it is forbidden on every JAL surface, no exception without Brian's sign-off.
+1. Read the brief. Call `jev_decide` for the lens pick (Decision layer, point 1). Open `jal-design-systems` for the chosen lens.
+2. Set the frame: shell, region list, and each region's width budget (Layout doctrine, step 1).
+3. Write the section concept for every section (Section concept law). Call `jev_decide` for the region and component gate (point 2). Delete what JEV drops.
+4. Lock tokens from the Core tokens section. No value outside those tables.
+5. Build mobile-first: the app-shell below 640px first, then tablet, then desktop. Same tokens at every width, only layout changes.
+6. Give every interactive element all eight states. Motion from `jal-motion`, restrained.
+7. Self-critique (six axes, 1 to 5), then run `ui_audit` until it reports PASS (Mechanical proof).
+8. Call `jev_decide` for the final taste verdict (point 4). Revise if it scores under 2.
+9. Screenshot 375 and 1280 and look at them. Log every JEV decision and the audit result in the build report.
 
-**Reference bar.** The output should feel like it belongs next to Apple, Linear, Stripe, or Vercel documentation: quiet, confident, mostly neutral, one considered accent. If a screen looks like a generic dark AI-tool landing page, it is wrong, full stop, rebuild it.
+## Hard law (absolute, Brian, non-negotiable)
+
+These override every other guideline, every older doc, every lens, and every JEV answer. A screen that violates any of them is rebuilt, not patched over. No exception without Brian's explicit sign-off.
+
+0. **No overlap, nothing outside its box. Tidiness is rule number 1.** No element overlaps a sibling, and no child extends past its parent's box. See the dedicated rule below.
+1. **White-first background.** The default background of any screen is white, off-white, broken white, or a light beige, one of the whites, always. Never a dark or a colored default background. Black is used for ink (text) only. A black or near-black background is allowed only inside a dedicated dark mode that the user explicitly asked for, never as the light default and never auto-triggered from the OS `prefers-color-scheme` unless the product explicitly ships a dark theme. If in doubt, the background is white.
+2. **No gradients at all.** No gradient background, fill, text, border, mask, or overlay, static or animated, anywhere. There is no feralui exception anymore. See Gradients: banned.
+3. **No shadows.** Depth comes from tonal layer steps and hairline borders only (see Depth). No `box-shadow` with a blur radius above 0, no `filter: drop-shadow`, no elevated cards, no shadow on hover, no shadow on menus, popovers, toasts, or dialogs. The single exception is a spread-only focus ring (`box-shadow: 0 0 0 Npx`), and `outline` is preferred over it.
+4. **No side line on any card or panel, ever.** See the dedicated rule below. This is the ban Brian hates seeing broken most.
+5. **No decorative lines or marks.** No vertical or horizontal connector line drawn between cards, tiers, steps, or sections. No marker dot, square, or bullet glyph placed beside a heading, label, or tier name as decoration. Hierarchy and grouping come from spacing, order, and typography. The only lines allowed are functional full hairlines (1px, low-contrast neutral): a complete border around a container, or a neutral divider that genuinely separates structural regions (a header underline, a footer top border, a divider between table rows).
+6. **No emoji or emoticons.** Never in UI copy, headings, labels, buttons, empty states, or anywhere on any JAL surface. Use a real icon from koboyo (first) or reicon.dev (fallback).
+7. **No em-dash.** Not in copy, not in code comments, not in generated text. Use a comma, colon, or period.
+8. **No eyebrow labels, no glow, no neon, no AI-slop signature.** Small uppercase letter-spaced kicker text above a heading is deleted; the heading stands alone.
+9. **One restrained accent, never purple, violet, or indigo.** Primary action is ink on white by default.
+10. **No big empty gaps, no empty void inside a card, no fake-fill.** Never `justify-content: space-between` or `flex-grow` on list rows to fill height. See Card and grid consistency.
+11. **Cards in a grid share one shape. Form controls share one 44px height token**, measured, not eyeballed.
+12. **Every section is conceptualized before markup.** See Section concept law.
+13. **Mobile-first always.** App-shell with a fixed bottom tab bar below 640px, no horizontal scroll at 320, 375, 414, 768, and 1280, 44px touch targets.
+
+### No overlap, nothing outside its box (tidiness rule number 1)
+
+- **No element overlaps a sibling**: not text, not an icon, not a component, at any width. Only true overlay layers (dialog, menu, tooltip, popover, listbox, bottom sheet) may stack, and only inside their own layer above the page.
+- **No child extends outside its parent's box**, unless the parent is an explicit scroll container (`overflow-x: auto` on a code line, a table scroller). The failure Brian caught: a three-field row wider than its container, so the Country select stuck out past the right edge of the info box and past the cards above and below it. That is a rebuild.
+- **Right edges of stacked regions line up.** Regions stacked in one column share one left content line and one right edge. A region that pokes out on either side is a bug.
+- **No clipped text** without a deliberate `text-overflow: ellipsis` (with `overflow: hidden` and `white-space: nowrap`, or a line clamp) and the full value still reachable (`title`, `aria-label`, or a detail view). Text that is silently cut off by a box is a bug.
+- **Icons inside controls get reserved padding.** A select chevron, a leading search icon, a trailing clear or reveal button: the control reserves `padding-inline-start` or `padding-inline-end` for the icon plus a gap, so the icon never touches or overlaps the text, even with the longest value.
+- **Rows must fit their container.** Grid tracks are `minmax(0, 1fr)`, never bare `1fr` or fixed widths; every control is `box-sizing: border-box` and `width: 100%` of its track; every grid and flex child that holds text or a control gets `min-width: 0`; no fixed `width` or `min-width` that can exceed the container at 320px. A row with more fields than the width allows wraps to fewer columns (1 on phone, 2 on tablet), it never overflows.
+- **Mechanically verified.** `ui_audit` checks this at 320, 375, 414, 768, and 1280 and reports `overlap`, `overflow-parent`, `clipped-text`, and `icon-text-collision`. The prevention recipe is in `jal-frontend-rules` (No overlap recipe).
+
+### No side line on any card or panel, ever
+
+Forbidden on every card, tile, panel, notice, list item, table row, quote, callout, nav item, and section, in every state (resting, hover, selected, active, error):
+
+- A `border-left`, `border-right`, `border-inline-start`, or `border-inline-end` that is wider than 1px, or whose color differs from the element's other sides, or that exists without the other three sides.
+- A top or bottom accent bar (`border-top` or `border-bottom` in an accent or status color, or thicker than the other sides).
+- The `box-shadow: inset Npx 0 0` stripe trick, a `::before` or `::after` pseudo-element drawn as a vertical or horizontal bar, or a background-image stripe.
+- An underline bar under the active tab or active nav item.
+
+What to do instead:
+
+- **Status and notification**: status icon plus a title that names the state, on a tonal surface (status color mixed at 8% into surface), inside one full 1px hairline border of the same color on all four sides. Recipe in `jal-frontend-rules`. Carbon's notifications, tabs, and tiles do ship side stripes (a 6px or 3px `border-inline-start`, tab stripes, inset tile shadows); when the Carbon lens is active, those are shed, never ported.
+- **Selection** (selected card, row, option): a full ring on all four sides (`outline: 2px solid` in ink or accent, following the corner radius) or a tonal fill change (`layer-1` or `layer-2`). Never a stripe on one edge.
+- **Active nav item and active tab**: tonal fill (`layer-2`), ink color, and weight 600. Never an underline or side bar.
+- **Quote or callout**: a tonal surface with a full hairline border, or type alone (size step and ink-muted). Never a left rule.
+- **Emphasis on one card in a grid**: position, span, and content, never a colored edge.
+
+### No shadows: how depth is made
+
+- Nested surfaces step page, surface, layer-1, layer-2 (tokens below). A card is `surface` with a 1px `border` hairline on the `page` background.
+- Overlays (menu, popover, select list, dialog, toast, bottom sheet) sit on `surface` with a 1px `border-strong` hairline. A dialog adds a neutral scrim behind it. Never a shadow.
+- Hover and pressed feedback is a state layer (color-mix), never a lift.
+- Focus is `outline: 2px solid var(--color-focus); outline-offset: 2px`. If `outline` cannot be used, a spread-only ring `box-shadow: 0 0 0 2px var(--color-focus)` is the only permitted box-shadow.
+- Sticky headers and sticky table columns get a 1px `border` edge when content scrolls under them, never a shadow or a fade.
+
+## Palette law and anti-slop (read this before any color decision)
+
+Every LLM defaults to the same look when nobody stops it: a dominant black or near-black background, a saturated purple or violet accent, glowing cards, oversized colored numbers, a gradient smeared across whatever is left, and a colored stripe down the side of every card. That look is the AI-slop signature. It is not a style choice, it is a tell, and it is forbidden on every JAL surface.
+
+**Reference bar.** The output should feel like it belongs next to Apple, Linear, Stripe, or Vercel documentation: quiet, confident, mostly neutral, one considered accent at most. If a screen looks like a generic dark AI-tool landing page, it is wrong, full stop, rebuild it.
 
 **Neutral-first.** The dominant surface of every screen is neutral, not colored.
 
-- Light mode (default posture unless the product is explicitly dark-only): the base surface is a near-white *warm* neutral, never a flat `#ffffff`. Tint it toward whatever hue anchors the palette, e.g. `oklch(97% 0.006 60)` (roughly `#f7f5f1`), not pure white.
-- Dark mode, if the surface ships one: a sophisticated warm near-black, e.g. `oklch(16% 0.006 60)` (roughly `#171412`), never `#000000` and never a cold blue-black.
-- Body text is ink, near-black on light surfaces (`oklch(18–22% 0.01 <hue>)`), near-white on dark surfaces (`oklch(92–96% 0.006 <hue>)`). Never pure `#000` or pure `#fff` for either surface or ink.
+- The page base is a near-white neutral (`--color-page`, `#fafaf9`), never a flat `#ffffff` page. White (`--color-surface`) is for cards and overlays sitting on that page, which is what makes the layer step readable without a shadow.
+- Dark mode, only when explicitly requested and shipped as a dedicated theme: a warm near-black, e.g. `oklch(16% 0.006 60)` (roughly `#171412`), never `#000000`, never a cold blue-black, never auto-selected from the OS.
+- Body text is ink (`--color-ink`, `#1b1b1b`), never pure `#000`. On a dark theme, ink is a near-white, never pure `#fff`.
 - Most of any given view is neutral. Color is rare, deliberate, and small in area.
 
-**Exactly one accent hue.** Pick one. A second, desaturated semantic color (a success green, a danger red) is permitted only for real state, never for decoration. The accent is used on at most a handful of elements per screen: a primary CTA, links, an active nav indicator, a focus ring. It is a highlighter, not a fill. It is never a marker square, dot, or hairline placed beside a heading or label (see the decorative-line ban below).
+**At most one accent hue.** The primary action is ink on white by default, and that is the preferred posture. A project may add exactly one brand accent. A desaturated status color (success, warning, danger, info) is permitted only for real state, never for decoration. The accent is used on at most a handful of elements per screen: a primary CTA, links, an active nav indicator (tonal, never a bar), a focus ring. It is a highlighter, not a fill. It is never a marker square, dot, stripe, or hairline placed beside a heading or label.
 
-- **The accent is never purple, violet, or indigo.** That hue family is the single most recognizable AI-slop tell (it is the default nearly every model reaches for). Pick something else: a warm terracotta or signal orange, a considered blue that is clearly blue and not violet, a forest green, an ochre. Anything except the purple/violet/indigo family as the *default* choice.
+- **The accent is never purple, violet, or indigo** (roughly OKLCH hue 250 to 320 with meaningful chroma). That family is the single most recognizable AI-slop tell. Pick something else: a warm terracotta or signal orange, a blue that is clearly blue and not violet, a forest green, an ochre.
 - The accent never fills a large area. Cap it at roughly 3% of any viewport's pixels. A giant accent-filled hero band, an accent-filled card grid, or an accent-colored stat number is the fill violation, not the highlight use.
-- Giant colored stat numbers are banned outright. A metric on screen is ink-colored at a normal-to-large size with a small muted label underneath, never a huge saturated-color numeral competing with the page's one accent for attention.
+- Giant colored stat numbers are banned outright. A metric is ink at a normal-to-large type step with a small ink-muted label underneath, never a huge saturated numeral competing for attention.
 - No gradient text fill on headings or body copy, ever. That is decoration standing in for a design decision.
 
 **Banned outright, no exceptions:**
 
 - Glow effects of any kind: radial glow blobs behind text or cards, neon edge lighting, blurred colored drop-shadows standing in for elevation.
-- Purple-on-black as a page's dominant identity, in any variation (violet-on-near-black, indigo-on-charcoal, etc.).
-- Gradients of any kind, anywhere: no gradient background, no gradient fill, no gradient text, no gradient border, on any surface. A flat neutral is always the answer. This is absolute and overrides any earlier feralui.dev allowance in older docs.
-- Saturated accent fill covering a large surface area: full-bleed accent-colored hero sections, accent-filled card backgrounds used as the default card treatment, accent-colored borders around every card on a grid.
-- Any shadow that is not neutral. If a shadow exists at all, it uses the elevation tokens below (neutral, low-opacity black or ink), reserved for genuine stacking (a menu over content, a modal over a scrim), never as ambient decoration or a stand-in for a glow.
+- Purple-on-black as a page's dominant identity, in any variation (violet-on-near-black, indigo-on-charcoal).
+- Gradients of any kind, anywhere, on any surface. A flat neutral is always the answer.
+- Saturated accent fill covering a large surface area: full-bleed accent heroes, accent-filled card backgrounds as the default card treatment, accent-colored borders around every card in a grid.
+- Shadows of any kind (the hard law above), including the "subtle neutral elevation" that older JAL docs allowed. That allowance is gone.
+- Gratuitous blur blobs, fake grain overlays, decorative squiggles, re-drawn fake chrome.
 
 **Type: editorial, not decorative.**
 
-- A real modular type scale (the table below), a confident, restrained set of large headings, and generous line-height on body copy. Headings tighten as they grow; body stays loose and readable.
-- A clean interface font stack: system-ui/-apple-system/Segoe UI/Roboto or an Inter-like sans by default. A tasteful display or serif face is allowed only when it earns its place (an editorial or manifesto-toned product), never added reflexively "to look designed."
-- Two weights per screen, three as a hard ceiling. Hierarchy comes from size, weight, and position, not from color.
+- One generated scale (below), a restrained set of large headings, generous line-height on body copy. Headings tighten as they grow; body stays loose and readable.
+- A clean interface font stack: `system-ui, -apple-system, "Segoe UI", Roboto, sans-serif` or an Inter-like sans by default. A tasteful display or serif face only when it earns its place (an editorial or manifesto-toned product), never added reflexively "to look designed." A new webfont is a dependency decision per `jal-standards`.
+- Weights 400, 500, and 600 only. Two weights per screen, three as a hard ceiling.
+- Hierarchy comes from weight, ink step (ink versus ink-muted), and position before size, and never from the accent color. Exactly two text colors carry content (ink and ink-muted); ink-subtle is for large text and non-essential meta only; the disabled color is never used for content.
 
 **Space and layout: generous, gridded, no dead air.**
 
-- Whitespace is generous and rhythmic: the same spacing scale repeated consistently down a page, not hand-tuned per section.
-- Dividers and borders are hairline: 1px, low-contrast against the surface (a neutral a few steps off the background, never full-contrast black or the accent color).
-- Everything aligns to the grid, no element sits off the nearest spacing line.
-- A Bento layout fills completely at every breakpoint: no oversized empty bands, no dead gaps patched with a stray margin. If content does not tile cleanly, resize the spans, do not leave a hole.
+- Whitespace is generous and rhythmic: the same spacing tokens repeated down a page, not hand-tuned per section. Grouping comes from contrast between tight gaps inside a group and generous gaps between groups.
+- Borders and dividers are hairline: 1px, low-contrast neutral, never full-contrast black, never the accent, never on one side only.
+- Everything aligns to the 4px grid and to one left content line per region.
+- A Bento region fills completely at every breakpoint: no oversized empty bands, no dead gaps patched with a stray margin. If content does not tile cleanly, resize the spans or change the container, do not leave a hole.
 
-This section is strict on purpose: it exists because a prior JAL surface shipped the exact forbidden look (black background, saturated purple accent, glowing cards, oversized colored stat numbers, weak layout) and it read as AI-slop, not as a JAL product. Every subsequent build and every audit checks against this section first.
+This section is strict on purpose: a prior JAL surface shipped the exact forbidden look (black background, saturated purple accent, glowing cards, oversized colored stat numbers, weak layout) and it read as AI-slop, not as a JAL product. Every build and every audit checks against the Hard law and this section first.
 
-### Absolute bans (Brian, non-negotiable)
+## Section concept law
 
-These override every other guideline and every older doc. No exceptions without Brian's explicit sign-off.
+No section is drawn until it is schemed. Before any markup, write a concept line for every section of the screen:
 
-- **White-first background.** The default background of any screen is white, off-white, broken white, or a light beige, one of the whites, always. Never a dark or a colored default background. Black is used for ink (text) only. A black or near-black background is allowed only inside a dedicated dark mode that the user explicitly asked for, never as the light default and never auto-triggered from the OS `prefers-color-scheme` unless the product explicitly ships a dark theme. If in doubt, the background is white.
-- **No gradients at all.** Anywhere. See the banned list above. There is no feralui exception anymore.
-- **No emoji or emoticons.** Never in UI copy, headings, labels, buttons, empty states, or anywhere on any JAL surface. Use a real icon from koboyo or reicon.dev when a glyph is needed.
-- **No decorative lines or marks.** Forbidden: a vertical or horizontal connector line drawn between cards, tiers, or sections; a colored accent stripe on the side, top, or bottom of a panel or card (border-left/right/top accent bars); a marker dot, square, or bullet-glyph placed beside a heading, label, or tier name as decoration. Hierarchy and grouping are communicated by spacing, order, and typography, not by drawn lines or marks. The only lines allowed are functional hairline (1px, low-contrast neutral) dividers that genuinely separate structural regions (for example a header underline or a footer top border), never an accent-colored or decorative one.
+```
+Section: <name>
+Job: what the user must understand or do after this section
+Message: the one primary message, one sentence
+Action: the one primary action, or "none"
+Container: rows | bento | divided-section | card | plain-spacing (JEV decides, see Layout doctrine)
+```
 
-A screen that violates any of these four is rebuilt, not patched over.
+- **A section with no job is deleted.** "It looks empty without it" is not a job. Filler features, filler stats, and filler testimonials are deleted, not written.
+- **One primary message and at most one primary action per section.** Secondary actions are visibly secondary.
+- **At most two text tiers inside a block**: a lead line and one supporting line or body. A kicker plus title plus subtitle plus body plus badges stack is a failure.
+- **Adjacent sections vary in structure.** Two neighbors never share the same container and the same shape (not three cards then three cards, not hero then three cards then CTA band then footer on every page). Vary container, column count, alignment, or density between neighbors.
+- **Section order follows the user's question order**, not a template's order: what is this, why should I care, how does it work, what does it cost, what do I do now (landing); status, exceptions, records, actions (product).
+- The concept lines go into the build report and into the `state` sent to `jev_decide`.
 
-## Type scale
+## Layout doctrine: the criteria JEV uses to pick a container
 
-One modular scale for the whole product, base 16px, ratio 1.25 (major third), rounded to clean pixel values:
+Outside-in, adapted from Astryx. Structure is decided before content and before styling.
 
-| Token | Size | Line-height | Typical use |
-|---|---|---|---|
-| `text-caption` | 13px | 1.4 | metadata, timestamps, helper text |
-| `text-body` | 16px | 1.6 | default body copy, base of the scale |
-| `text-subhead` | 20px | 1.5 | card titles, section labels |
-| `text-h4` | 25px | 1.3 | minor headings |
-| `text-h3` | 31px | 1.25 | section headings |
-| `text-h2` | 39px | 1.2 | page-level headings |
-| `text-h1` | 49px | 1.15 | hero headline, major page title |
-| `text-display` | 61px | 1.1 | landing hero, rare, one per page at most |
+1. **Frame and region widths first.** Pick the shell (mobile app-shell; top nav or side nav at tablet and desktop; multi-pane for tools; plain column for docs and forms). Give every fixed region a width budget. Decide fill versus capped per region: tables, charts, boards, and maps fill; prose caps near 68ch (about 720px), forms near 640px; page content caps at 1280px and centers above that.
+2. **Lightest container that still groups.** Try in this order and stop at the first that reads as a group: spacing, then a divider, then a section (no border), then a card. A card is for a self-contained widget or a hard boundary, not for page structure. No cards inside cards. No full-width cards stacked as page structure.
+3. **Records render as rows, not cards.** Many items of the same shape that the user scans or compares (orders, users, logs, invoices, files, messages) are rows in a list or table, edge-to-edge inside one container, separated by neutral dividers. Card soup is a failure.
+4. **One left content line per region.** Every label, heading, and control in a region starts on the same vertical line. Only hover and selected backgrounds may cross it. Verify by drawing a vertical line down the region.
+5. **Grouping must survive with borders removed.** Mentally delete every border: if the groups can still be named from spacing alone, the spacing is right. If everything uses the same gap, proximity is doing no work, fix it.
+6. **Per-region breakpoint contract.** For each region, state what happens as width shrinks: divide (columns become rows), reveal (hidden detail appears at a width), resize (fill width changes), or swap (side panel becomes a bottom sheet, side nav becomes the bottom tab bar). Drop a non-essential region rather than shrink everything uniformly.
 
-- Every size a component uses comes from this table. No inline `font-size: 22px` because it "looked right," pick the nearest scale step and adjust weight or line-height instead.
-- Headings tighten line-height as they grow (display and h1 near 1.1, body stays loose at 1.6 for readability). Never apply body line-height to a display headline, it reads as loose and unstructured.
-- Two weights maximum per screen: one for headings, one for body. A third weight (usually medium, for emphasis inside body copy) is the ceiling, never four or five weights fighting for attention.
+**The container options JEV chooses from, and when each is right:**
 
-## Spacing scale: 4/8pt rhythm
+| Container | Choose when | Never when |
+|---|---|---|
+| `rows` | Many records of one shape, scanned, sorted, compared, or acted on one at a time | The items are different kinds of content |
+| `bento` | Mixed summary content of different kinds side by side: KPIs, a chart, a short list, a status, a primary action (overview, dashboard home, landing feature summary) | The content is a list of records, or one tile would be a text card forced into a span it cannot fill |
+| `divided-section` | A long sequence of related groups read top to bottom (settings, profile, docs, a form with parts) | The groups need to be compared side by side |
+| `card` | One self-contained widget or a hard boundary (a sign-in panel, a checkout summary, a single chart with its own controls) | It would wrap page structure or hold other cards |
+| `plain-spacing` | A few tightly related items, or a hero, headline, or prose block | The items need a visible boundary to be understood |
 
-One spacing scale, everything a multiple of 4, most things a multiple of 8:
+Bento is the default for mixed summary content, not for everything. Records inside a Bento tile still render as rows. JEV makes the call per region; the doctrine above is its criteria and the agent sends those criteria in the question.
 
-| Token | Value |
-|---|---|
-| `space-1` | 4px |
-| `space-2` | 8px |
-| `space-3` | 12px |
-| `space-4` | 16px |
-| `space-6` | 24px |
-| `space-8` | 32px |
-| `space-12` | 48px |
-| `space-16` | 64px |
-| `space-24` | 96px |
+## Core tokens (generated, JAL-tuned)
+
+Generated with formulas, not hand lists. A project changes a generator input only with a written reason, never an individual resolved token. Every token is a CSS custom property declared once in `packages/ui/src/tokens.css`; components reference tokens by name only, no inline hex, no inline `rgb()` or `oklch()`, no one-off `font-family`, no px value outside these tables (structural region widths are the only raw px allowed). The names below are the template's names. Pre-v0.3.0 aliases (`--font-size-*`, `--space-1` to `--space-8`, `--color-bg`, `--color-text`, `--color-text-muted`, `--dur-fast`, `--dur-med`, `--ease-out`) still resolve for old consumers; new code uses the primary names.
+
+### Type
+
+Formula: `size(step) = round(16 x 1.2^step)`, steps -2 to 6. Line height: `lh(size) = 4 x round(min(1.5 x size, size + 8) / 4)`, which keeps body at 1.5 and tightens headings toward 1.17, all on the 4px grid.
+
+| Size token | Line token | Step | Size | Line height | Weight | Role and typical use |
+|---|---|---|---|---|---|---|
+| `--text-n2` | `--line-n2` | -2 | 11px | 16px | 500 | micro: dense desktop meta, table column headers; never body, never a tap label |
+| `--text-n1` | `--line-n1` | -1 | 13px | 20px | 400 | caption: metadata, timestamps, helper and error text |
+| `--text-0` | `--line-0` | 0 | 16px | 24px | 400 | body: body copy, controls, base of the scale |
+| `--text-1` | `--line-1` | 1 | 19px | 28px | 600 | subhead: card titles, row titles, lead lines |
+| `--text-2` | `--line-2` | 2 | 23px | 32px | 600 | h4: minor headings |
+| `--text-3` | `--line-3` | 3 | 28px | 36px | 600 | h3: section headings |
+| `--text-4` | `--line-4` | 4 | 33px | 40px | 600 | h2: page-level headings |
+| `--text-5` | `--line-5` | 5 | 40px | 48px | 600 | h1: major page title, hero headline |
+| `--text-6` | `--line-6` | 6 | 48px | 56px | 500 | display: landing hero only, one per page at most |
+
+- Weights are `--weight-regular` 400, `--weight-medium` 500, `--weight-semibold` 600, and nothing else.
+- Every size a component uses comes from this table, always paired with its matching line token. No inline `font-size: 22px` because it "looked right": pick the nearest step and adjust weight or ink instead.
+- Base 16 keeps mobile legibility and prevents iOS focus zoom: every input, select, and textarea is `--text-0` (16px) or larger.
+- Never apply body line-height to a display headline; never apply heading line-height to body copy.
+- Numbers that update live use `font-variant-numeric: tabular-nums` so the box does not jitter.
+
+### Spacing
+
+Formula: a 4px base, `step(n) = 4px x n` for n in 0, 1, 2, 3, 4, 5, 6, 8, 10, 12, 16, 20, 24, plus the half-steps 2px and 6px. Token names are the literal pixel value, so a token is self-documenting.
+
+| Token | `--space-0` | `--space-2px` | `--space-4px` | `--space-6px` | `--space-8px` | `--space-12px` | `--space-16px` | `--space-20px` | `--space-24px` | `--space-32px` | `--space-40px` | `--space-48px` | `--space-64px` | `--space-80px` | `--space-96px` |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| Value | 0 | 2px | 4px | 6px | 8px | 12px | 16px | 20px | 24px | 32px | 40px | 48px | 64px | 80px | 96px |
 
 - No arbitrary value like `13px` or `22px` anywhere, ever. If nothing on the scale looks right, the layout is wrong, not the scale.
-- Micro-spacing (icon-to-label gap, inline chip padding) uses `space-1` to `space-3`. Component padding uses `space-4` to `space-8`. Section rhythm (space between major page blocks) uses `space-12` to `space-24`, one value repeated consistently down the page, not hand-tuned per section.
-- This is the same scale `jal-frontend-rules` assumes in its spacing checklist, do not introduce a second scale for a new surface.
+- Micro-spacing (icon-to-label gap, chip padding) uses 2px to 12px. Component padding uses 16px to 32px. Section rhythm uses 48px to 96px, one value repeated consistently down the page.
+- The legacy index names `--space-1` to `--space-8` keep their old values (4, 8, 12, 16, 24, 32, 48, 64) for existing consumers only. Never mix index names and pixel names in one component.
+- The container owns padding; children carry zero outer margin. Gaps between siblings come from the parent's `gap`.
 
-## Radius and elevation tokens
+### Radius
 
-Radius:
+Formula: `--radius = 4px x step`, steps 1, 2, 3, 4, 7, plus pill.
+
+| Token | Tier alias | Value | Use |
+|---|---|---|---|
+| `--radius-4` | | 4px | badges, tags, inner elements, code chips |
+| `--radius-8` | `--radius-sm` | 8px | inputs, selects, buttons, menu items |
+| `--radius-12` | `--radius-md` | 12px | cards, Bento tiles, row containers, notices |
+| `--radius-16` | `--radius-lg` | 16px | large cards, dialogs, popovers |
+| `--radius-28` | `--radius-xl` | 28px | bottom sheets, page-level hero panels |
+| `--radius-pill` | | 9999px | avatars, pills, icon buttons, toggles |
+
+- Pick radius by component tier, not by feel. Every instance of a tier shares one radius across the product.
+- Concentric rule: an element nested inside a padded container uses `max(0, outer radius - padding)` so the corners stay parallel.
+- Selection rings and focus outlines follow the element's radius.
+
+### Controls and row density
 
 | Token | Value | Use |
 |---|---|---|
-| `radius-sm` | 8px | chips, small buttons, inputs |
-| `radius-md` | 12px | cards, standard buttons |
-| `radius-lg` | 16px | large cards, modals |
-| `radius-xl` | 24px | hero panels, bottom sheets |
-| `radius-full` | 9999px | avatars, pills, icon buttons |
+| `--control-h` | 44px | every input, select, date and time input, and button, at every width |
+| `--control-row-h-compact` | 40px | table rows, desktop only (1024px and up), logs and monitors |
+| `--control-row-h-default` | 48px | table rows, desktop default |
+| `--control-row-h-comfortable` | 56px | table rows, desktop, short selection lists and settings |
 
-Elevation (shadow depth communicates stacking order, nothing else):
+- Below 1024px, density tokens do not apply: every tappable row is at least `--control-h` and wide tables reflow to stacked rows.
+- One control size per row and one density per table. Density changes row height and cell padding together, never one without the other.
 
-| Token | Shadow | Use |
+### Color (neutral base, white-first)
+
+| Token | Value | Role | Contrast note |
+|---|---|---|---|
+| `--color-page` | `#fafaf9` | page background (luminance 0.955) | |
+| `--color-surface` | `#ffffff` | cards, overlays, controls | |
+| `--color-layer-1` | `#f5f5f4` | first nested step, hover rows, sidebars | |
+| `--color-layer-2` | `#efefed` | second nested step, active nav, selected | |
+| `--color-border` | `#e5e5e3` | hairline borders and dividers | decorative, exempt |
+| `--color-border-strong` | `#d4d4d1` | overlay edges, emphasized hairlines | decorative, exempt |
+| `--color-border-control` | `#8f8e89` | interactive control boundaries ONLY: input, select, date and time input, textarea, checkbox, radio, switch track | 3.28:1 on surface, 3.14:1 on page, 3.01:1 on layer-1 (WCAG 1.4.11) |
+| `--color-ink` | `#1b1b1b` | primary text, primary action fill | 17.2:1 on surface, 15.0:1 on layer-2 |
+| `--color-ink-muted` | `#474747` | secondary text | 9.3:1 on surface, 8.1:1 on layer-2 |
+| `--color-ink-subtle` | `#6b6b6b` | large text and non-essential meta only | 5.3:1 on surface, 4.6:1 on layer-2 |
+| `--color-primary` | `var(--color-ink)` | primary action fill (ink on white by default) | |
+| `--color-primary-contrast` | `var(--color-surface)` | text and icon on the primary fill | 17.2:1 |
+| `--color-primary-hover` | `color-mix(in oklab, white 8%, var(--color-ink) 92%)` | primary hover state layer | |
+| `--color-primary-active` | `color-mix(in oklab, white 12%, var(--color-ink) 88%)` | primary pressed state layer | |
+| `--color-focus` | `var(--color-ink)` (or the one accent) | focus outline | at least 3:1 |
+| `--color-success` / `--color-success-surface` | `#1f7a45` / `#ebf4ee` | real success state only | 5.4:1 on surface, 4.8:1 on its surface |
+| `--color-warning` / `--color-warning-surface` | `#8a5a1f` / `#f6efe4` | real warning state only | 5.9:1 on surface, 5.2:1 on its surface |
+| `--color-danger` / `--color-danger-surface` | `#b3261e` / `#f7ebea` | real error and destructive state only | 6.5:1 on surface, 5.6:1 on its surface |
+| `--color-info` / `--color-info-surface` | `#3d5a73` / `#ecf1f4` | real informational state only (slate blue, OKLCH hue 245, low chroma) | 7.2:1 on surface, 6.4:1 on its surface |
+
+Derived tokens (declare them in `tokens.css` before first use if the project does not have them yet):
+
+| Token | Value | Role | Contrast note |
+|---|---|---|---|
+| `--color-<status>-border` | `color-mix(in oklab, var(--color-<status>) 24%, var(--color-border))` | the full four-side hairline of a status notice | decorative, the icon and title carry meaning |
+| `--color-scrim` | `color-mix(in oklab, var(--color-ink) 40%, transparent)` | dialog backdrop only | |
+| `--color-accent` / `--color-accent-contrast` | one brand hue, never purple-family | only when the brand requires an accent | at least 4.5:1 for text use |
+
+- `--color-border-control` is for interactive control boundaries only. Cards, tiles, row containers, and dividers keep the light `--color-border` hairline (`#e5e5e3`); overlays keep `--color-border-strong`. On focus, a control's border turns to `--color-ink` and the focus outline is added.
+- The accent, when added, replaces `--color-primary` and `--color-focus` only where the brand requires it. Ink on white stays the default.
+- Status colors are desaturated, always paired with an icon and a word, never used for decoration, never used as a card edge.
+- Status notices use `--color-<status>-surface` as the fill and `--color-<status>-border` on all four sides.
+
+### Depth (tonal layers, no shadow)
+
+Carbon's layer model plus Material's tonal ladder, rendered flat. Nested surfaces step `page` -> `surface` -> `layer-1` -> `layer-2`, each step a small luminance change plus, where the boundary matters, a 1px `border` hairline. A surface never skips more than one step from its parent. Overlays sit on `surface` with a 1px `border-strong` hairline; a dialog adds `--color-scrim`. Elevation never changes on hover; state layers do.
+
+### State layers (Material table, no gradients)
+
+Formula: `state(fill, on, N) = color-mix(in oklab, var(on) N%, var(fill))`, where `on` is the content color that sits on that fill (ink on surface, white on the ink primary).
+
+| State | N | Token on surface | Resolved (ink over `#ffffff`) | Token on primary | Resolved (white over `#1b1b1b`) |
+|---|---|---|---|---|---|
+| hover | 8% | `--state-hover` | `#eaeaea` | `--color-primary-hover` | `#2a2a2a` |
+| focus (layer, with the outline) | 12% | `--state-focus` | `#e0e0e0` | | |
+| pressed | 12% | `--state-pressed` | `#e0e0e0` | `--color-primary-active` | `#323232` |
+| disabled content | 38% | `--state-disabled-content` | `#a0a0a0` (exempt from contrast) | | |
+| disabled container | 12% | `--state-disabled-container` | `#e0e0e0` | | |
+
+- On a fill other than surface (layer-1, a status surface), compute the state with the same formula against that fill; do not reuse the surface token on a different fill.
+
+- Hover applies only under `@media (hover: hover)` and only when enabled. Disabled never paints hover or pressed, and uses the default cursor.
+- Astryx's `linear-gradient(c, c)` hover overlays are replaced by this formula. No `background-image` state trick of any kind.
+
+### Motion
+
+| Token | Value | Use |
 |---|---|---|
-| `elevation-0` | none | flat surface, default card on a plain background |
-| `elevation-1` | `0 1px 2px rgba(0,0,0,0.06), 0 1px 1px rgba(0,0,0,0.04)` | resting card that needs slight lift |
-| `elevation-2` | `0 4px 12px rgba(0,0,0,0.08)` | dropdown, popover, raised nav |
-| `elevation-3` | `0 12px 32px rgba(0,0,0,0.14)` | modal, dialog, anything above a scrim |
+| `--dur-100` | 100ms | micro: press, toggle, checkbox, color change |
+| `--dur-150` | 150ms | fast: hover and state-layer transitions, small fades |
+| `--dur-200` | 200ms | base: menus, popovers, list add and remove |
+| `--dur-300` | 300ms | slow: dialogs, sheets, route transitions |
+| `--dur-400` | 400ms | showcase only (landing hero, demo pieces) |
+| `--dur-600` | 600ms | showcase only |
+| `--ease-standard` | `cubic-bezier(0.24, 1, 0.4, 1)` | the one product easing |
 
-- Pick radius by component tier, not by feel. Every card of the same tier across the product shares the same radius token, exactly as `jal-frontend-rules` requires for Bento card chrome.
-- Elevation only increases with actual stacking (something is literally above something else, a menu over content, a modal over a scrim). Never add elevation as decoration on a flat resting element, that is a glow effect wearing a shadow costume, and it is banned by `jal-frontend-rules`.
+- Exit asymmetry: an exit runs at about 70% of its entrance, `exit = round(0.7 x enter / 10) x 10`: 100 -> 70, 150 -> 110, 200 -> 140, 300 -> 210, 400 -> 280, 600 -> 420 (ms).
+- Transform and opacity only. Never `transition: all`. Never animate layout properties, color of large areas, or shadows (there are none).
+- `prefers-reduced-motion: reduce` collapses every animation to an opacity crossfade of 150ms or less with no travel and no scale. Meaning is preserved without motion.
+- Focus rings show instantly and never animate. High-frequency hovers (rows, list items) feel instant.
+- Showcase choreography, exit curves beyond the default, and library choice (Lenis, GSAP, Framer Motion, CSS or WAAPI) live in `jal-motion`.
 
-## Responsive breakpoints and the mobile app-shell
+### Breakpoints
 
-| Breakpoint | Range | Layout behavior |
+| Token | Min width | Layout |
 |---|---|---|
-| Mobile | `< 640px` | single column, app-shell pattern (below), bottom tab bar |
-| Tablet | `640px - 1024px` | 2-column Bento, top nav returns, bottom tab bar drops |
-| Desktop | `> 1024px` | full 4-column Bento per `jal-frontend-rules` |
+| (base) | 0 | app-shell, single column, bottom tab bar |
+| `--bp-sm` | 640px | tablet: 2-column Bento, top nav returns, bottom tab bar drops |
+| `--bp-md` | 768px | tablet wide: regions may divide, forms may go 2 across |
+| `--bp-lg` | 1024px | desktop: 4-column Bento, side nav allowed, table density tokens apply |
+| `--bp-xl` | 1280px | content cap reached, page centers |
+| `--bp-2xl` | 1536px | wide: extra room goes to fill regions (tables, charts), never to wider prose |
 
-- Mobile is not "the desktop site, but narrower." Ship the dedicated app-shell defined in `jal-frontend-rules`: sticky header with safe-area-inset-top, independently scrolling content, fixed bottom tab bar (3 to 5 items) with safe-area-inset-bottom.
-- Design mobile-first: build the single-column, app-shell version first, then expand the same components into the tablet and desktop grids. Never design desktop first and squeeze it down, that produces the cramped, proportionally-shrunk mobile screens `jal-frontend-rules` explicitly forbids.
-- Breakpoint values, spacing tokens, and type scale steps do not change across breakpoints, only layout (columns, nav pattern) does. A `text-h2` is 39px on mobile and 39px on desktop; what changes is how much horizontal room it has, not its identity in the scale.
+CSS custom properties cannot be read inside `@media`, so media queries use these literal values (`min-width: 640px` and so on), mobile-first, `min-width` only. Container queries are preferred inside components.
+
+## Responsive and the mobile app-shell
+
+- Mobile is not "the desktop site, but narrower." Below 640px ship the dedicated app-shell from `jal-frontend-rules`: sticky header with `safe-area-inset-top`, independently scrolling content, fixed bottom tab bar (3 to 5 items) with `safe-area-inset-bottom`.
+- Design mobile-first: build the single-column app-shell version first, then expand the same components into the tablet and desktop layouts. Never design desktop first and squeeze it down; that produces the cramped, proportionally-shrunk mobile screens `jal-frontend-rules` forbids.
+- Type steps, spacing tokens, radius, and control height do not change across breakpoints, only layout (columns, nav pattern, region visibility) does. `--text-4` (h2) is 33px on mobile and 33px on desktop; what changes is how much horizontal room it has.
+- Side panels swap to a bottom sheet, side nav swaps to the bottom tab bar, tables swap to stacked rows.
 
 ## Visual-consistency rules
 
 - One type scale, the table above, used everywhere. No screen introduces its own heading size.
 - One spacing rhythm, the table above, used everywhere. No screen introduces its own gap value.
-- No ad-hoc px values in any dimension, font-size, margin, padding, gap, border-radius. If it is not on a token table in this skill, it does not go in the codebase.
-- Align every element to the grid. A component that is 2px off the nearest 4pt line is a bug, not a rounding error to shrug off.
-- Component chrome (padding, radius, border weight) is identical across every instance of the same component tier. Visual weight varies only by size and content, exactly as `jal-frontend-rules` requires for Bento cards, and the same principle applies to buttons, inputs, and list rows.
+- No ad-hoc px values in any dimension, font-size, margin, padding, gap, or border-radius. If it is not on a token table in this skill, it does not go in the codebase.
+- Align every element to the 4px grid. A component 2px off the nearest line is a bug, not a rounding error.
+- Component chrome (padding, radius, border weight) is identical across every instance of the same component tier. Visual weight varies only by size and content, and the same principle applies to buttons, inputs, list rows, and cards.
 
 ### Form control consistency (fatal to get wrong, and the most commonly botched)
 
 A native `input`, `select`, `textarea`, and `input type="date"` all size themselves differently. Left unnormalized they render at different heights in the same row, which reads as amateur work. Normalize every control explicitly.
 
-- **One control height token.** Define `--control-h` (44px, which also satisfies the touch target) and apply it to every `input`, `select`, and date/time input as `height` (use `min-height` for `textarea`). Set `box-sizing: border-box` so padding cannot change it.
-- **Kill platform chrome sizing.** Every `select` and date/time input gets `appearance: none` (plus `-webkit-appearance: none`), because platform styling silently adds height and padding that a text input does not have. Supply your own chevron for a select (an inline SVG or background image, never a decorative bar).
-- **Identical chrome across control types.** Same padding token, same `border-radius` token, same 1px hairline border, same `font-size` (16px minimum, smaller triggers zoom on iOS), same `font-family` (`inherit`, never the platform default), same focus-visible ring. A select must be visually indistinguishable from a text input except for its chevron.
-- **A row of fields uses equal grid tracks, top-aligned.** `grid-template-columns: repeat(N, minmax(0, 1fr))` with `align-items: start` (and `align-content: start` inside each field wrapper), and every field wrapper has the same internal structure: label, control, helper slot. Use `start`, never `end`: bottom-anchoring a cell means a taller helper or a two-line error in one field pushes that field's control up relative to its neighbors, which recreates the exact misalignment this rule exists to prevent. Top-anchoring keeps every label and control on one line no matter how the helper text below them differs. Never let one field be a different width or sit at a different vertical offset than its neighbors.
-- **Reserve space for helper and error text.** Give the helper/error slot a fixed `min-height` so showing a validation error does not shift the row, resize the card, or push neighboring fields out of alignment. Validation state changes color and text, never layout.
-- **Verify by measurement, not by eye.** Every control in the same row must report the SAME computed height and the SAME top offset. Measure them (`getBoundingClientRect`) before shipping. A 1px difference is a bug; 13px is what a botched form looks like.
+- **One control height token.** `--control-h` (44px, which also satisfies the touch target) applies to every `input`, `select`, button, and date or time input as `height` (`min-height` for `textarea`). `box-sizing: border-box` so padding cannot change it.
+- **Kill platform chrome sizing.** Every `select` and date or time input gets `appearance: none` (plus `-webkit-appearance: none`), because platform styling silently adds height and padding that a text input does not have. Supply your own chevron as an `Icon` positioned inside the field, never a decorative bar.
+- **Identical chrome across control types.** Same padding token, same `--radius-sm`, same 1px `--color-border-control` border on all four sides, same `font-size` (16px minimum, smaller triggers zoom on iOS), same `font-family` (`inherit`, never the platform default), same focus-visible treatment (border to `--color-ink` plus the focus outline). A select is visually indistinguishable from a text input except for its chevron.
+- **Icons inside a control reserve their lane.** A chevron, leading icon, or trailing button gets reserved inline padding (icon size plus a 12px gap) so it never touches or overlaps the value, and the value ellipsizes before it reaches the icon.
+- **The row fits its container.** Field rows use `minmax(0, 1fr)` tracks, every field wrapper has `min-width: 0`, every control is `width: 100%` with `box-sizing: border-box`. Three fields that do not fit wrap to fewer columns; they never push past the right edge of the container.
+- **A row of fields uses equal grid tracks, top-aligned.** `grid-template-columns: repeat(N, minmax(0, 1fr))` with `align-items: start` (and `align-content: start` inside each field wrapper), and every field wrapper has the same internal structure: label, control, helper slot. Use `start`, never `end`: bottom-anchoring lets a taller helper or a two-line error in one field push that control up relative to its neighbors, recreating the exact misalignment this rule exists to prevent. Never let one field be a different width or sit at a different vertical offset than its neighbors.
+- **Reserve space for helper and error text.** The helper and error slot has a fixed `min-height` so a validation error does not shift the row, resize the card, or push neighbors out of alignment. Validation changes color and text, never layout.
+- **Verify by measurement, not by eye.** Every control in the same row reports the SAME computed height and the SAME top offset. Measure with `getBoundingClientRect` before shipping; `ui_audit` checks it. A 1px difference is a bug; 13px is what a botched form looks like.
 
 ### Card and grid consistency (this is fatal to get wrong)
 
 Repeated cards or items in a grid MUST share one consistent shape. Uneven card shapes in a grid are the single most damaging tidiness failure and are forbidden.
 
 - **Equal card heights per row.** Cards in the same row are the same height (CSS grid stretch, or `grid-auto-rows: 1fr`). Never let one card in a row be taller than its neighbors.
-- **Align repeated internal elements to the same baseline.** When every card in a grid contains the same kind of element (a code block, a primary CTA, a price, a meta row, a thumbnail), that element sits at the SAME position in every card. Pin it: make the card a flex column and give the shared bottom element `margin-top: auto` so it rests on one baseline across the whole row, no matter how long the text above it runs. A CTA or code block that floats at a different height in each card is the classic ragged-grid tell.
-- **Constrain variable-length content so it does not reshape the card.** A one-line command or code snippet is `white-space: nowrap` with its own `overflow-x: auto`, so a long value scrolls inside a fixed-height block instead of wrapping to three lines and making that one card taller. Long descriptions are either clamped to a fixed line count or absorbed by a bottom-pinned action row. Content length must never change a card's shape.
-- **No empty void inside a card, and never fake-fill with stretched gaps (both are fatal).** A card must never be taller than its content fills. But the fix is NOT to spread the content out: `justify-content: space-between`, `flex-grow` on list rows, or any trick that distributes items to fill vertical space produces huge uneven gaps between rows, which is chaotic spacing and is just as forbidden as an empty void. The real rule:
-  - **Rows and list items use exactly one fixed gap token** (the spacing scale), always the same gap, top-aligned. Never stretch, never space-between to fill height. A list of 4 items looks the same whether its card is short or tall.
-  - **Only a genuinely stretchable visual may flex to fill height** (a bar/line chart body, a map, an image, a canvas): `flex: 1` on that visual is correct because it scales. A list, a stat, or a text block never flex-fills.
+- **Align repeated internal elements to the same baseline.** When every card contains the same kind of element (a code block, a primary CTA, a price, a meta row, a thumbnail), it sits at the SAME position in every card. Make the card a flex column and give the shared bottom element `margin-top: auto` so it rests on one baseline across the row, no matter how long the text above it runs. A CTA or code block floating at a different height in each card is the classic ragged-grid tell.
+- **Constrain variable-length content so it does not reshape the card.** A one-line command or code snippet is `white-space: nowrap` with its own `overflow-x: auto`, so a long value scrolls inside a fixed-height block instead of wrapping and making that card taller. Long descriptions are clamped to a fixed line count or absorbed by a bottom-pinned action row. Content length never changes a card's shape.
+- **No empty void inside a card, and never fake-fill with stretched gaps (both are fatal).** A card must never be taller than its content fills. But the fix is NOT to spread the content out: `justify-content: space-between`, `flex-grow` on list rows, or any trick that distributes items to fill vertical space produces huge uneven gaps, which is chaotic spacing and just as forbidden as an empty void. The real rule:
+  - **Rows and list items use exactly one fixed gap token**, always the same gap, top-aligned. Never stretch, never space-between to fill height. A list of 4 items looks the same whether its card is short or tall.
+  - **Only a genuinely stretchable visual may flex to fill height** (a bar or line chart body, a map, an image, a canvas): `flex: 1` on that visual is correct because it scales. A list, a stat, or a text block never flex-fills.
   - **Therefore a card's height follows its content.** Do NOT give a text or list card a big row span it cannot naturally fill. Match spans to content.
-  - **When a layout mixes a tall visual with short lists, do not force the lists into the visual's height.** Put the tall visual in its own full-width band (or its own column), and lay the short cards in an even row where they share a similar natural height. That is how you get no void and no stretched gaps at the same time.
+  - **When a layout mixes a tall visual with short lists, do not force the lists into the visual's height.** Put the tall visual in its own full-width band (or its own column), and lay the short cards in an even row where they share a similar natural height.
   - Before shipping, look at every card: any visible empty band (void) OR any oversized gap between rows (fake-fill) is a bug. Fix the layout, do not paper over it by stretching.
-- **A grid reads as one system, not a pile of different cards.** Before shipping any card grid, scan across a row: do the borders, heights, internal element positions, and code-block sizes line up, and does every card's content fill its box with no empty band? If any card is a different shape or has a dead region, it is a bug, fix it before shipping.
+- **A grid reads as one system, not a pile of different cards.** Scan across each row: do the borders, heights, internal element positions, and code-block sizes line up, does every card's content fill its box with no empty band, and does no card carry a side line or a different edge? If any card is a different shape or has a dead region, it is a bug.
 
 ## Gradients: banned
 
-- No gradients, of any kind, anywhere: no gradient background, fill, text, or border, static or animated. Not from feralui.dev, not hand-rolled, not anywhere. This is absolute.
-- The answer to "this surface feels flat" is better spacing, hierarchy, and one considered accent, never a gradient.
-- Depth, when a surface genuinely needs it, comes from a hairline neutral border or a single subtle neutral elevation token reserved for real stacking, never from a gradient or a glow.
+- No gradients of any kind, anywhere: no gradient background, fill, text, border, mask, scroll fade, or state overlay, static or animated. Not from feralui.dev, not from a design-system lens, not hand-rolled. This is absolute.
+- The answer to "this surface feels flat" is better spacing, hierarchy, a tonal layer step, and one considered accent at most, never a gradient.
+- Scroll edges get a hard edge plus a 1px hairline when content scrolls under them, never a fade.
 
 ## UX heuristics
 
-- **Clear hierarchy**: one primary action per screen, obvious at a glance. Size, weight, and position communicate importance before color does. If a user has to read copy to find the primary action, the hierarchy failed.
-- **Affordance**: every interactive element looks interactive, buttons look pressable, links are visually distinct from static text, disabled states are visibly disabled (reduced opacity or muted tone), not just inert.
-- **Immediate feedback**: every action gets a visible response within roughly 100ms, a pressed state, a spinner past 300 to 400ms, a toast or inline confirmation on completion. Silence after a tap reads as broken, even when the request is still in flight.
-- **Restrained motion**: animate only to clarify a state change (an item entering, a panel expanding, a page transitioning), never as ambient decoration. Per `jal-standards`, reach for Lenis, GSAP, or Framer Motion only when the interaction genuinely needs it, and honor `prefers-reduced-motion` on every animation added.
-- **Accessibility and contrast AA+**: text and meaningful icons meet WCAG AA contrast at minimum (4.5:1 for normal text, 3:1 for large text) against their background. Never rely on color alone to convey state, pair it with an icon, label, or shape change.
-- **Touch targets 44px+**: every tappable element on mobile is at least 44x44px including padding, not just the visible glyph. Two targets never sit closer than 8px apart, per the `space-2` token, to avoid mis-taps.
-- **Empty, loading, and error states**: every view that can be empty, loading, or errored ships a deliberate design for all three, never a blank screen, a bare spinner with no context, or a raw error string. Empty states explain what belongs there and how to fill it; error states explain what happened and offer a next action, not just "something went wrong."
+- **Clear hierarchy**: one primary action per screen and per section, obvious at a glance. Weight, ink, position, and size communicate importance before color does. If a user has to read copy to find the primary action, the hierarchy failed.
+- **Affordance**: every interactive element looks interactive. Buttons look pressable, links are visually distinct from static text, disabled states are visibly disabled (state-layer disabled tokens), not just inert. A disabled control that needs to explain why stays focusable (`aria-disabled`) with the reason reachable.
+- **Immediate feedback**: every action gets a visible response within roughly 100ms: a pressed state, a spinner past 300 to 400ms, a toast or inline confirmation on completion. Silence after a tap reads as broken.
+- **Restrained motion**: animate only to clarify a state change (an item entering, a panel expanding, a page transitioning), never as ambient decoration. Per `jal-standards`, reach for Lenis, GSAP, or Framer Motion only when the interaction genuinely needs it, and honor `prefers-reduced-motion` on every animation. Detail in `jal-motion`.
+- **Accessibility and contrast AA+**: text and meaningful icons meet WCAG AA (4.5:1 for normal text, 3:1 for large text and for control boundaries and focus indicators) against their background. Never rely on color alone to convey state; pair it with an icon, a word, or a shape change. No skipped heading levels.
+- **Touch targets 44px+**: every tappable element on mobile is at least 44x44px including padding, not just the visible glyph. Two targets never sit closer than 8px (`--space-8px`) apart.
+- **Empty, loading, and error states**: every view that can be empty, loading, or errored ships a deliberate design for all three, never a blank screen, a bare spinner with no context, or a raw error string. Loading is a skeleton matching the expected shape (no layout shift). Empty states explain what belongs there and how to fill it; error states explain what happened and offer a next action.
 
 ## Design principles (JAL-native, self-contained)
 
-JAL-AIDEV does not depend on any external design skill. Do NOT load `hallmark`, `design-taste-frontend`, `ui-ux-pro-max`, `high-end-visual-design`, or any other outside skill to build a JAL frontend. The anti-slop principles below are copied into this skill so the plugin is self-contained and every teammate gets the same bar with nothing extra installed. These principles sit alongside the Palette law and the Absolute bans above; all of it is JAL law.
+JAL-AIDEV does not depend on any external design skill. Do NOT load `hallmark`, `design-taste-frontend`, `ui-ux-pro-max`, `high-end-visual-design`, or any other outside skill to build a JAL frontend. The design-system knowledge JAL uses (Astryx, Carbon, Material, bang-motion) is already translated into this skill, `jal-design-systems`, and `jal-motion`, so the plugin is self-contained and every teammate gets the same bar with nothing extra installed. All of it is JAL law alongside the Hard law and the Palette law.
 
-- **Structural variety.** Two different JAL screens must not share the same shape. Do not fall back to the same hero, then three feature cards, then a CTA band, then a footer on every page. Vary the macrostructure so each surface reads as its own product, not a color-swap of one template.
-- **Pre-emit self-critique.** Before you show any screen, score it 1 to 5 on six axes: hierarchy (is the most important thing obviously first), restraint (could anything be removed), consistency (one type scale, one spacing rhythm, one accent), specificity (does it fit this product or any product), execution (spacing, alignment, states), and taste (does it clear the Apple/Vercel bar). Anything under 3 gets a revision pass before it ships. Never hand over a screen you have not scored.
-- **Honest copy.** Never fabricate a metric, testimonial, logo, user count, or review. Use a real number, or a clearly labeled placeholder, or a layout that does not need the number. Invented proof is slop the moment it is written.
-- **Locked tokens.** Every color and every font-family references a named token (`var(--color-...)`, `var(--font-...)`). No inline hex, no inline `rgb()`/`oklch()`, no one-off `font-family` mid-file. If a value is missing, add it to the token block first, then reference it.
+- **Structural variety.** Two different JAL screens must not share the same shape, and two adjacent sections must not share the same structure. Do not fall back to hero, then three feature cards, then a CTA band, then a footer on every page. Vary the macrostructure so each surface reads as its own product, not a color-swap of one template.
+- **Pre-emit self-critique.** Before you show any screen, score it 1 to 5 on six axes: hierarchy (is the most important thing obviously first), restraint (could anything be removed), consistency (one type scale, one spacing rhythm, one accent at most), specificity (does it fit this product or any product), execution (spacing, alignment, states), and taste (does it clear the Apple/Vercel bar). Anything under 3 gets a revision pass before it ships. Never hand over a screen you have not scored. The JEV final verdict comes after this, not instead of it.
+- **Honest copy.** Never fabricate a metric, testimonial, logo, user count, or review. Use a real number, a clearly labeled placeholder, or a layout that does not need the number. Invented proof is slop the moment it is written.
+- **Locked tokens.** Every color and every font-family references a named token (`var(--color-...)`, `var(--font-...)`). No inline hex, no inline `rgb()` or `oklch()`, no one-off `font-family` mid-file. If a value is missing, add it to the token block first (with a reason), then reference it.
 - **No re-drawn chrome.** Never hand-build a fake browser bar (URL pill plus traffic-light dots), a fake phone frame, a fake code-window title bar, or fake IDE chrome. Use a real screenshot in a bordered figure, or let the content stand alone.
-- **Mobile verified at 320, 375, 414, and 768px.** No horizontal scroll at any width. No clickable target that wraps to two lines. Image-bearing grid tracks use `minmax(0, 1fr)`, never bare `1fr`. Headings wrap inside long words. Every layout collapses cleanly to one column on the smallest width. This is a floor, not a wish.
+- **Mobile verified at 320, 375, 414, and 768px** (and 1280 on desktop). No horizontal scroll at any width. No clickable target that wraps to two lines. Image-bearing grid tracks use `minmax(0, 1fr)`, never bare `1fr`. Headings wrap inside long words. Every layout collapses cleanly to one column on the smallest width. This is a floor, not a wish.
 - **Eight states on every interactive element.** default, hover, focus-visible, active, disabled, loading, error, success. A button or input that ships fewer than eight states is unfinished. Focus rings show instantly and never animate.
-- **Cut motion before adding it.** Most screens have too much. Motion earns its place only when it carries information (a state change, a spatial relationship). Animate transform and opacity only, with the named easings, and collapse to a short opacity crossfade under `prefers-reduced-motion`. Restraint reads as expensive; decoration reads as slop.
+- **Cut motion before adding it.** Motion earns its place only when it carries information (a state change, a spatial relationship). Transform and opacity only, the named easing, a reduced-motion crossfade. Restraint reads as expensive; decoration reads as slop.
 
-If any outside reference (a library example, a generated mock, a teammate's snippet) disagrees with this file or `jal-frontend-rules`, this file wins, no exception without Brian's sign-off per `jal-standards`.
+If any outside reference (a library example, a design-system lens, a designmd kit, a generated mock, a teammate's snippet) disagrees with this file or `jal-frontend-rules`, this file wins, no exception without Brian's sign-off per `jal-standards`.
+
+## Decision layer (JEV)
+
+JEV (TypeSafe) makes the soft calls so taste does not depend on the mood of one run. Call it through the `jev_decide` tool of the bundled `jal-design` MCP server (`{ state, questions }`; CLI fallback `bun mcp/jal-design/server.ts decide <file|->`). Question types: `choice` (a `criteria` map of options, answer `choice` plus `probabilities` plus `confidence`), `score` (an ordered `criteria` array of at least 2 levels, answer `score` plus `legend` plus `probabilities` plus `confidence`), `noul` (answer `noul`, the probability of yes). Always put the brief, the section concept lines, and the relevant criteria from this skill into `state`.
+
+Four decision points, called automatically in every `/jal-ui` run:
+
+| # | Point | Questions | Rule |
+|---|---|---|---|
+| 1 | Lens pick | `choice` over `astryx`, `carbon`, `material`, each option described by its fit signals from `jal-design-systems` | Confidence under 0.5: use the top pick as primary and the runner-up as secondary |
+| 2 | Region and component gate | For every proposed section and major component: `noul` "implement?"; `score` relevance with levels 0 Irrelevant, 1 Marginal, 2 Useful, 3 Core; `choice` container over `rows`, `bento`, `divided-section`, `card`, `plain-spacing` with the Layout doctrine table as criteria | Drop when implement is under 0.5 or relevance is under 1.5 (use the probability-weighted mean when probabilities are returned). Build the kept ones in the chosen container |
+| 3 | designmd screen | Before any designmd kit is used as a reference: `noul` "is this slop?" with the Palette law and Hard law as the definition; `score` fit to the brief on the same 0 to 3 scale | Reject when slop is 0.5 or more. Treat fit under 1.5 as not useful. A kept kit is still law-filtered before it influences anything |
+| 4 | Final taste verdict | `score` on the built screen description plus the `ui_audit` result, levels 0 Reject, 1 Weak, 2 Ship-ready, 3 Excellent | Under 2: revise and ask again before returning |
+
+- **JEV is final on soft calls**: lens, relevance, implement-or-drop, container choice, fit, final taste. The agent does not override a JEV veto and does not re-ask the same question hoping for a different answer.
+- **JEV has no authority over hard law.** If a JEV answer would require a gradient, a shadow, a side line, a dark default, purple, an emoji, or a broken grid, the law wins and the agent picks the next-best option that is lawful. JEV cannot grant an exception; only Brian can.
+- **designmd is supplementary only.** Read tools only, never upload or delete. A kit influences nothing until it passes point 3 and the law filter.
+- **Outage path.** 429 and 529 are retried with exponential backoff by the tool. If JEV is still unreachable (or returns 401 or 422 that cannot be fixed), the agent falls back to its own judgment using the same thresholds and criteria, and stamps the build report `UNVERIFIED BY JEV` for each affected decision. Never silently skip a decision point.
+- **Log every decision** in the build report: point, question, answer, confidence, and what was built or dropped because of it.
+
+## Mechanical proof (`ui_audit`)
+
+No screen is called done until `ui_audit` reports **PASS**. Call the `ui_audit` tool of the `jal-design` MCP server with the running page URL (`{ url, widths? }`, default widths 320, 375, 414, 768, 1280; CLI fallback `bun mcp/jal-design/server.ts audit <url>`). It drives system Chrome over the DevTools Protocol and asserts on computed styles and the live DOM at every width:
+
+- Page background is light: relative luminance of `body` and the main container background is at least 0.85.
+- No gradient in any computed `background-image`.
+- No `box-shadow` with a blur radius above 0 (spread-only focus rings allowed).
+- No side stripe: no element with a left or right (or inline start or end) border wider than 1px, or a side border whose color differs from its other sides, or an inset horizontal box-shadow stripe.
+- No emoji and no em-dash in visible text.
+- No purple-family color (hue 250 to 320 with meaningful chroma) in any computed color or background.
+- Form rows: every control in the same row has identical height and top offset, and every control is at least 44px tall.
+- Cards in a row share height, and no card has a blank band taller than its content by more than the threshold.
+- No horizontal overflow (`scrollWidth <= innerWidth`) at every width.
+- Eyebrow heuristic: small uppercase letter-spaced text directly above a heading is flagged.
+- `overlap`: no text, icon, or component box intersects a sibling's box (overlay layers excluded).
+- `overflow-parent`: no child extends past its parent's box unless the parent is a scroll container.
+- `clipped-text`: no text is cut off by its box without an ellipsis and a reachable full value.
+- `icon-text-collision`: no icon inside a control touches or overlaps the control's text.
+
+`FAIL` lists each violation with selector, width, and measured values: fix every one and re-run. `SKIPPED` (Chrome not found) is never a PASS: set `CHROME_PATH` or install Chrome and re-run; if that is impossible, report the screen as not verified. The audit proves the mechanical floor; the self-critique, the JEV verdict, and your own eyes on the 375 and 1280 screenshots prove the taste.
 
 ## Audit checklist: fine-tuning or refactoring an existing frontend
 
-Run this top to bottom on any existing screen or component before or during a redesign pass:
+Run top to bottom on any existing screen or component before or during a redesign pass. Fix drift from the token tables first, then layout and UX gaps; never rewrite when a tune closes the gap.
 
-- [ ] The dominant surface is a neutral (warm near-white in light mode, or a warm near-black like `#171412`, never pure `#000`/`#fff`), not a colored or purple/violet/indigo-on-black identity. Fails the Palette law above are the first thing to fix, before any other item on this list.
-- [ ] Exactly one accent hue is in use, occupying roughly 3% or less of any viewport, never purple/violet/indigo, never filling a large surface, never a giant colored stat number.
-- [ ] Every font size on screen maps to a token in the type scale table above. Flag and fix any inline one-off size.
-- [ ] Every spacing value (margin, padding, gap) maps to the 4/8pt scale. Flag and fix any arbitrary value.
-- [ ] Every radius maps to the radius token table, matched to the correct component tier.
-- [ ] Shadows only appear where real stacking exists, and match an elevation token, none used as ambient decoration.
-- [ ] The screen has a working mobile app-shell (sticky header, independent scroll region, bottom tab bar), not a shrunk desktop layout.
-- [ ] Bento grid rows are fully occupied at every breakpoint per `jal-frontend-rules`, no dead space patched with a gap.
-- [ ] No gradients anywhere (no gradient background, fill, text, or border). No emoji. No decorative lines, connectors, side accent stripes, or marker dots.
-- [ ] Default background is white, off-white, broken white, or light beige, never dark or colored (dark only inside an explicitly requested dark mode).
-- [ ] No eyebrow labels, no neon accents, no fake grain or blur-blob decoration anywhere on the screen.
-- [ ] Icons are sourced from koboyo first, reicon only as fallback, all wrapped in the shared `Icon` component.
-- [ ] One primary action is visually obvious on the screen, everything else is clearly secondary or tertiary.
-- [ ] Every interactive element has a visible affordance and a feedback state (hover where applicable, pressed, disabled, loading).
-- [ ] Contrast passes AA at minimum for every text and icon element against its background.
-- [ ] Every touch target on mobile is 44x44px or larger with adequate spacing from its neighbors.
-- [ ] Empty, loading, and error states exist and are deliberately designed for every view that can hit them, not left as defaults.
-- [ ] No em-dash anywhere in the copy or code comments on the screen.
+- [ ] Tidiness first: nothing overlaps a sibling, nothing sticks out of its parent, right edges of stacked regions line up, no silently clipped text, no icon touching control text, every row fits its container at 320px (`ui_audit`: `overlap`, `overflow-parent`, `clipped-text`, `icon-text-collision` all clean).
+- [ ] Hard law first. The default background is white, off-white, broken white, or light beige (page `#fafaf9`, cards white), never dark or colored; a dark theme exists only when explicitly requested (warm near-black like `#171412`, never pure `#000`, never OS-triggered).
+- [ ] No gradients anywhere (background, fill, text, border, mask, scroll fade, state overlay).
+- [ ] No shadows anywhere. Depth is tonal layers plus hairlines; focus is an outline or a spread-only ring.
+- [ ] No side line on any card, panel, notice, row, nav item, or tab: no thick or colored side border, no top or bottom accent bar, no inset stripe, no pseudo-element bar, no active underline.
+- [ ] No decorative lines, connectors, or marker dots. No emoji. No em-dash in copy or code comments. No eyebrow labels, no neon, no glow, no fake grain or blur-blob decoration.
+- [ ] At most one accent hue, roughly 3% or less of any viewport, never purple, violet, or indigo, never filling a large surface, never a giant colored stat number.
+- [ ] Every section has a written concept (job, message, action, container). Sections with no job are gone. Adjacent sections differ in structure.
+- [ ] Each region uses the lightest container that groups; records are rows, not card soup; no cards in cards; one left content line per region; grouping survives with borders removed.
+- [ ] Every font size maps to a type token; weights are 400, 500, 600 only, two per screen, three at most.
+- [ ] Every spacing value maps to the 4px scale. Every radius maps to the radius table by component tier.
+- [ ] Every control is `--control-h` (44px); every control in a row has the same measured height and top offset; helper slots reserve space; control boundaries use `--color-border-control` (3:1), cards and dividers keep the light hairline.
+- [ ] Every color references a token; status colors appear only for real state, with an icon and a word.
+- [ ] Grid rows are fully occupied at every breakpoint; cards in a row share one shape; repeated elements sit on one baseline; no internal void and no fake-fill.
+- [ ] The screen has a working mobile app-shell below 640px (sticky header, independent scroll region, bottom tab bar), not a shrunk desktop layout; no horizontal scroll at 320, 375, 414, 768, 1280.
+- [ ] Icons come from koboyo first, reicon.dev only as fallback, all through the shared `Icon` component.
+- [ ] One primary action is visually obvious per screen and per section; everything else is clearly secondary or tertiary.
+- [ ] Every interactive element has all eight states, hover gated by `@media (hover: hover)`, disabled without hover or pressed.
+- [ ] Contrast passes AA for every text and icon element; control boundaries and focus indicators reach 3:1.
+- [ ] Every touch target on mobile is 44x44px or larger with at least 8px between neighbors.
+- [ ] Empty, loading (skeleton, no layout shift), and error states exist and are deliberately designed for every view that can hit them.
+- [ ] Motion uses the duration and easing tokens, transform and opacity only, exits shorter than entrances, reduced motion honored.
+- [ ] JEV decisions for all four points are logged (or stamped `UNVERIFIED BY JEV`), and the final verdict is 2 or higher.
+- [ ] `ui_audit` reports PASS at every width, and the 375 and 1280 screenshots have been looked at.
