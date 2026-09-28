@@ -593,9 +593,9 @@ Index:
       "<candidate_id_3>": "<one line>"
     }
   },
-  "combine": {
+"layer_1": {
     "type": "noul",
-    "instructions": "Yes means the runner-up recipe adds a different, non-competing layer to the top pick in this section (for example a text reveal on a section whose layout recipe is a FLIP list), with one visual owner per viewport. No means use the top pick alone."
+    "instructions": "Yes means the proposed layer in state.proposal.layers[0] (its recipe ID and role: layout, text, motion, hover, background, 3D, or demo) aligns with the stack already chosen for this section (state.proposal.stack) and makes the section carry its message better, with no competing focal point and no role already filled. No means stop adding layers. Example: a text reveal (text role) on a section whose layout recipe is a FLIP list."
   }
 }
 ```
@@ -605,7 +605,10 @@ The agent fills `criteria` with the real candidate IDs and lines. Keys must matc
 **Thresholds and actions:**
 - Confidence 0.5 or above: build the chosen recipe.
 - Low confidence: take the top pick unless the runner-up is the JAL Core spec, in which case take the spec (calmer is the safe default).
-- `combine` 0.6 or above: add the runner-up as a second layer, if it stays within the motion tier.
+- **Layering has no fixed limit** (Brian's ruling): mix as many recipes as align and fit. Run the layering protocol in `jal-design-system` `references/recipe-index.md`:
+  - Propose one further layer at a time (`layer_1`, then `layer_2` with the updated stack, and so on), each filling a role the stack does not have yet.
+  - Keep a layer at 0.6 or above. Stop at the first no, or when the section's motion tier, the performance budget, or a mechanical rule (no overlap, 44px, reduced motion) would be broken.
+- Adjacent sections may reuse a recipe only when JEV judges the repetition serves the story. Variety is the default.
 
 ### `ui.text_reveal_granularity`
 
@@ -878,14 +881,14 @@ The agent fills `criteria` with the real candidate IDs and lines. Keys must matc
 
 ### `imm.recipe`
 
-**Purpose:** pick the recipe, or recipes, for one gated section from its assembled candidates (SKILL.md section 5), and whether to combine the top two.
+**Purpose:** pick the recipe for one gated section from its assembled candidates (SKILL.md section 5), then grow it layer by layer with every further recipe that aligns and fits (no fixed limit).
 
 **Caller:** jal-immersive at workflow step 3, after `imm.gate` passes for the section. One call per section.
 
 **Precheck (decides without JEV):**
-- Candidates come only from the pool and pass the hard filter: approved tech only, within the cost ceiling, a mobile fallback when mobile is a target, not the adjacent section's recipe, mechanically feasible.
+- Candidates come only from the pool and pass the hard filter: approved tech only, within the cost ceiling, a mobile fallback when mobile is a target, mechanically feasible. Reusing an adjacent section's recipe is allowed only when JEV judges it serves the story.
 - The shortlist has 2 to 6 candidates, including at least one JAL-native and one C0 or C1 control, and at most three noyzzi pieces.
-- `combine` is only acted on if the combination rules hold (one canvas, shared surface or noyzzi boundary, summed cost in tier, one scroll owner, one pointer effect per element). Not asked when only one candidate exists.
+- Each proposed layer must pass the mechanical combination rules before it is asked about: summed cost within the tier budget, one scroll owner, one pointer effect per element, a shared surface or the noyzzi boundary, and canvases within the tier's canvas count (usually one per viewport, for GPU cost). Not asked when only one candidate exists.
 
 **State fields:** `product`, `proposal.section` (kind, job, message, beats, surface of neighbouring sections), `proposal.candidates` (for each: pool ID, source, surface, cost tier, mobile fallback, law note, what it shows), `evidence.direction` (the direction contract), `evidence.page_recipes` (recipes already chosen for other sections), `constraints.cost_ceiling`.
 
@@ -901,9 +904,9 @@ The agent fills `criteria` with the real candidate IDs and lines. Keys must matc
       "mu.R02": "The headline itself is the message; a line or word reveal carries it without any canvas."
     }
   },
-  "combine": {
+"layer_1": {
     "type": "noul",
-    "instructions": "Yes means build the primary recipe with the runner-up layered in the same section (for example kinetic type over a paper field), because together they carry the message better than either alone and neither competes for attention. No means build the primary alone."
+    "instructions": "Yes means the proposed layer in state.proposal.layers[0] (its recipe ID and role: layout, text, motion, hover, background, 3D, or demo) aligns with the stack already chosen for this section (state.proposal.stack) and makes the section carry its message better, with no competing focal point and no role already filled. No means stop adding layers. Example: kinetic type (text role) over a paper field (background role)."
   },
   "surface": {
     "type": "choice",
@@ -938,7 +941,9 @@ The agent fills `criteria` with the real candidate IDs and lines. Keys must matc
 
 **Thresholds and actions:**
 - Confidence 0.5 or above: build `recipe`.
-- `combine` 0.6 or above and the combination rules hold: layer the runner-up. Otherwise the primary alone.
+- **Layering has no fixed limit** (Brian's ruling): after `recipe`, propose further layers one at a time (`layer_1`, `layer_2`, and so on, each with the updated stack and a new role).
+  - Keep each layer at 0.6 or above when the mechanical combination rules hold.
+  - Stop at the first no, or when the tier budget would be exceeded.
 - `surface` `dark`: the section is wrapped `data-jal-exempt="noyzzi"` and must hold a noyzzi piece; a JAL-native recipe never goes dark.
 - Gallery: `motion_budget` under 1 means no hover effect (static images); `loud` with `motion_budget` under 2 downgrades to `expressive`; the chosen recipe must match the family.
 - Low confidence on `recipe`: take the lighter-cost of primary and runner-up; if equal, the JAL-native one.
@@ -1663,7 +1668,7 @@ The agent fills `criteria` with the real candidate IDs and lines. Keys must matc
 
 **Precheck (decides without JEV):**
 - `bunx tsc --noEmit` and `bun run build` pass in malasbaca, `docs_verify` is PASS, and the diff touches only this slug's files and its `src/docs.ts` registration. Otherwise, fix first. Not asked.
-- Pushing to `main` and deploying are never offered.
+- A direct push to `main` is never offered. Merge and deploy follow only from this decision plus the mechanical gate, under Brian's standing authorization for jal-docs.
 
 **State fields:** `proposal` (the sections written with their claim counts, removed claims, and open questions), `evidence` (build output, `docs_verify` summary, diff stat).
 
@@ -1684,8 +1689,8 @@ The agent fills `criteria` with the real candidate IDs and lines. Keys must matc
 ```
 
 **Thresholds and actions:**
-- 2 or above: push `docs/<slug>-<yyyymmdd>` and open the PR.
-- Under 2: fill the named gaps and ask again once. If it is still under 2, open the PR as a draft with the gaps listed.
+- 2 or above with the mechanical gate green: push `docs/<slug>-<yyyymmdd>`, open the PR, squash-merge it, and deploy malasbaca (skill `jal-docs` step 9).
+- Under 2: fill the named gaps and ask again once. If it is still under 2, open the PR as a draft with the gaps listed, and do not merge or deploy.
 
 ---
 

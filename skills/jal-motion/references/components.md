@@ -1465,7 +1465,7 @@ The candidate set for each section kind, filtered by the region's `motion.intens
 | navigation | R06, R30, R29, R42 |
 | gallery | R43, R27, R28, R32 |
 
-Combine rule for the noul: combining the top two is allowed only across classes (a G with an E or an S, or a Q that hosts a G, such as R23 panes whose headings use R03). Never two G in one section, never two Q on one scroll range, never two pinned stages overlapping in scroll distance. When JEV says combine and the pair breaks this rule, ship the primary alone.
+Layering rule (no fixed limit on layers, per Brian; JEV judges each added layer with the protocol in `jal-design-system` `references/recipe-index.md`). The mechanical constraints on any stack: each layer fills a different role; never two scroll owners (two Q) on one scroll range; never two pinned stages overlapping in scroll distance; one pointer effect per element; the summed cost stays within the section's tier. Any number of G, E, and S recipes may stack when they take different roles and JEV judges them aligned.
 
 ## 8. Component-specific JEV decisions
 

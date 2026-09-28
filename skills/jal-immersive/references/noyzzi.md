@@ -147,7 +147,7 @@ Note: Grimoire's URL uses the id `book`, not its display name.
 2. The candidate list for `imm.recipe` includes the matching noyzzi items from the taxonomy above, next to candidates from the other pools.
 3. The noyzzi-specific questions below may be batched into the same `jev_decide` call when a noyzzi candidate is in the running.
 4. If JEV picks a noyzzi item, fetch it with `noyzzi_get` and adapt it under the law profile above.
-5. If JEV asks to combine (the `imm.recipe` combine question), keep one visual owner per section: for example, a noyzzi paper hero plus a magicui text reveal is fine, but two WebGL canvases in one viewport are not.
+5. Layer freely with the `imm.recipe` layering protocol: any number of recipes from any source, as long as JEV judges each one aligned and fitting. For example, a noyzzi paper hero plus a Magic UI text reveal plus a GSAP scroll exit. The mechanical limits still hold: the tier's GPU budget (usually one WebGL canvas per viewport), one scroll owner, and one pointer effect per element.
 
 ## JEV questions for noyzzi candidates (batched into `imm.recipe`)
 

@@ -154,6 +154,6 @@ Workers never touch git state because an agent's `git checkout` once silently re
 
 ## Hard lines no playbook or JEV call can cross
 
-- Deploys go only to deploy.jalgroup.id, and only when the user's own message asks to deploy or roll back. JEV never authorizes a deploy, a push, a merge, or a publish.
+- Deploys go only to deploy.jalgroup.id, and only when the user's own message asks to deploy or roll back. JEV never authorizes a deploy, a push, a merge, or a publish. One standing exception, authorized by Brian: `/jal-docs` squash-merges and deploys its own malasbaca docs PR when every check passes (skill `jal-docs` step 9).
 - Tech outside the approved stack and any default-LLM change go to Brian. JEV never approves them.
 - No PR is opened against a failing gate, no force-push, and no force-merge.

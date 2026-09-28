@@ -23,7 +23,7 @@ Read before touching a file:
 6. JEV `docs.claim`: rewrite or drop anything under 0.6.
 7. Write in the house style: Bahasa Indonesia, the `src/ui.tsx` primitives, no em-dash, no emoji. The memory header records the source commit.
 8. Build: `bunx tsc --noEmit`, then `bun run build`, then a local render of `#/<slug>`.
-9. JEV `docs.publish`, then push `docs/<slug>-<yyyymmdd>` and open the PR with `gh pr create`. Never push to `main`, never deploy.
+9. JEV `docs.publish`, then push `docs/<slug>-<yyyymmdd>` and open the PR. When every check passes, squash-merge that PR and deploy malasbaca through Coolify with `COOLIFY_API_TOKEN` from the environment only (skill `jal-docs` step 9). Never push directly to `main`.
 10. Report: mode, sections, claims verified and removed, JEV decisions, build result, and the PR URL.
 
 ## Hard lines
@@ -31,7 +31,7 @@ Read before touching a file:
 - Never write, echo, or commit a secret value. Env files are names only.
 - Never state what the source does not prove. Unknowns become questions for Brian in the PR body.
 - Touch only this slug's files and its `src/docs.ts` registration.
-- Merging, pushing to `main`, and deploying happen only on Brian's explicit word in his own message.
+- Brian's standing authorization: a docs PR from this run that passes every check is squash-merged and deployed. Anything else in malasbaca (other PRs, portal code, a direct push to `main`) needs his explicit word.
 
 ## Working in the engine (every run)
 

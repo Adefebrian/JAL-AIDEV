@@ -61,7 +61,7 @@ Seven commands. Each one runs the whole crew on the JAL orchestration engine: it
 | `/jal-fix` | Fix a bug properly | Reproduce, root cause, a failing test, the fix, and proof. Several suspects are checked in parallel |
 | `/jal-check` | One PASS or FAIL | `quick` (rules, tests, UI check), `full` (plus security hardening, boot test, ship call), and `deep` (plus a deep audit and a red team versus blue team pentest). JEV picks the depth if you do not |
 | `/jal-ship` | Get it out | `pr` (pull request), `release` (version, changelog, tag), `deploy` (deploy.jalgroup.id with a health check), and `rollback`. The full check runs first; it never deploys unless you say so |
-| `/jal-docs` | Documentation | Technical and non-technical docs written from the code and published to JAL-Group/malasbaca, with every claim checked |
+| `/jal-docs` | Documentation | Technical and non-technical docs written from the code, with every claim checked. It opens a PR on JAL-Group/malasbaca, then merges and deploys JAL Docs automatically when every check passes (needs `COOLIFY_API_TOKEN` in your environment for the deploy) |
 
 The old commands still exist as internal playbooks inside `skills/jal-orchestration/references/`, so nothing they did is lost.
 

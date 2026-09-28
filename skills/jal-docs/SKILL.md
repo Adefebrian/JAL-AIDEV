@@ -74,12 +74,25 @@ Non-technical sections use plain words, no jargon, and short paragraphs: what it
    - No em-dash in new text. Use commas, colons, or a new sentence.
    - No emoji.
 8. **Build.** In the malasbaca working copy, run `bunx tsc --noEmit` and `bun run build`. Both must pass. Render the new route locally (`bun run dev`, open `#/<slug>`) and confirm it renders with no console errors.
-9. **Publish (JEV `docs.publish`).**
-   - The mechanical gate first: the build passes, `docs_verify` passes, and the diff touches only this slug's files plus the `src/docs.ts` registration.
-   - Then JEV `docs.publish` scores readiness.
-   - On go, push branch `docs/<slug>-<yyyymmdd>` and open a pull request against `main` with `gh pr create`. The PR body lists: what changed, the source commit, the verified claim count, the removed claims, and the open questions for Brian.
-   - Never push to `main`.
-   - Never trigger the Coolify deploy. Merging and deploying are Brian's call. If he asks for a deploy in his own message, follow malasbaca's `HANDOVER.md` deploy steps.
+9. **Publish, merge, deploy (JEV `docs.publish`).** Brian authorized this flow on 2026-09-29: `/jal-docs` runs only when someone asks, and a docs PR that passes every check merges and deploys itself.
+   1. The mechanical gate: the build passes, `docs_verify` passes, and the diff touches only this slug's files plus the `src/docs.ts` registration.
+   2. JEV `docs.publish` scores readiness.
+   3. Push branch `docs/<slug>-<yyyymmdd>` and open a pull request against `main` with `gh pr create`. The PR body lists what changed, the source commit, the verified claim count, the removed claims, and the open questions for Brian.
+   4. **Auto-merge** only when all of these hold:
+      - the mechanical gate is green
+      - `docs.publish` is 2 or above
+      - no claim was dropped for lack of evidence in a section Brian marked as required
+      - the PR is the one this run created
+      - its diff is still only the slug files and the registration
+
+      Merge with `gh pr merge <number> --squash --delete-branch`. Otherwise leave the PR open, stating exactly why.
+   5. **Auto-deploy** after a merge, following malasbaca's `HANDOVER.md`:
+      - Trigger the Coolify deploy for application `r3pyjc6qczm9y7ouithk3b0m` on `https://deploy.jalgroup.id/api/v1/deploy?uuid=r3pyjc6qczm9y7ouithk3b0m&force=false`, with `Authorization: Bearer $COOLIFY_API_TOKEN` taken only from the environment variable.
+      - Never read the token from any file. Never print it or log it.
+      - Poll `/api/v1/deployments/<deployment_uuid>` until it is `finished` or `failed`, then fetch `https://malasbaca.jalgroup.id/` and expect a response (a login page is fine).
+      - If `COOLIFY_API_TOKEN` is not set, stop after the merge and report "deploy skipped: set COOLIFY_API_TOKEN".
+      - A failed deploy is reported with its status. It is not retried blindly.
+   6. Never push directly to `main`. The only path into `main` is this run's own squash-merged PR.
 10. **Report.** Mode (create or update), sections written or updated, claims verified or removed, every JEV decision, the build result, and the PR URL.
 
 ## Hard lines
@@ -91,4 +104,4 @@ Non-technical sections use plain words, no jargon, and short paragraphs: what it
   - `docs_verify` scans every draft.
 - **Evidence only:** every factual sentence traces to cited source. Marketing claims, performance numbers, user counts, and dates not in the source are not written.
 - **Minimal footprint in malasbaca:** touch only the slug's files and its registration. Never restyle the portal, add dependencies, or change auth or serve code. A needed portal change is a separate finding for Brian.
-- **Outward actions:** pushing the docs branch and opening the PR is the default output of `/jal-docs`. Merging, pushing to `main`, and deploying happen only on Brian's explicit word.
+- **Outward actions:** `/jal-docs` runs only when a person invokes it (no CI trigger). Within that run, Brian's standing authorization covers exactly this: pushing the docs branch, opening the PR, squash-merging that same PR when every check passes, and deploying malasbaca through Coolify at deploy.jalgroup.id. Nothing else in malasbaca is merged or deployed, and a direct push to `main` is never allowed.

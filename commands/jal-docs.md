@@ -13,7 +13,7 @@ Reads the project's code and writes its page in JAL Docs (malasbaca.jalgroup.id)
 
 If the project already has docs, it only updates the parts the code changed since the last time. Every sentence must point to real code. A mechanical check and the JEV judge throw out anything that cannot be proven, so nothing is made up. Secrets are never written; env files list names only.
 
-It finishes by opening a pull request on JAL-Group/malasbaca for you to review. It never merges or deploys by itself.
+It runs only when you ask. It opens a pull request on JAL-Group/malasbaca, and when every check passes it merges that PR and deploys JAL Docs, then confirms the site is up. If anything fails, the PR stays open and it tells you why. For the deploy step it needs the Coolify token in the `COOLIFY_API_TOKEN` environment variable; without it, the docs are merged and the deploy is skipped.
 
 Examples:
 - `/jal-docs JAL-Group/Sentimen_DPP`
@@ -30,6 +30,6 @@ Dispatch agent `jal-docs`, which runs the skill `jal-docs` pipeline in order on 
 6. writing in the malasbaca house style
 7. `tsc`, build, and a local render
 8. `docs.publish`
-9. branch plus PR
+9. branch plus PR, then squash-merge and a Coolify deploy when every check passes
 
-Report: mode, sections written or updated, claims verified and removed, each JEV decision with confidence, the build result, and the PR URL.
+Report: mode, sections written or updated, claims verified and removed, each JEV decision with confidence, the build result, the PR URL, and the merge and deploy result.
