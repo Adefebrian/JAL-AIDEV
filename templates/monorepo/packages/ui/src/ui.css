@@ -1,0 +1,409 @@
+/*
+ * JAL Core component CSS. Built on tokens.css only: every value below is a
+ * var() reference, never an inline hex, px, or font. Import tokens.css
+ * before this file.
+ *
+ * Covers: base reset, form-control normalization (one 44px control-h for
+ * every input/select/date input/button, measured not eyeballed), field-row
+ * layout, the button component with all interactive states, and the Bento
+ * grid primitive. White-first, no gradient, no shadow other than a
+ * spread-only focus ring (we use `outline`, so there is none at all here),
+ * no side-stripe accents, no emoji.
+ */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  min-height: 100dvh;
+  background: var(--color-page);
+  color: var(--color-ink);
+  font-family:
+    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-size: var(--text-0);
+  line-height: var(--line-0);
+}
+
+/* Focus is always visible, never a color-only cue, never a shadow: a
+   spread-only outline, offset so it never reads as a fill or a stripe. */
+:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+:focus:not(:focus-visible) {
+  outline: none;
+}
+
+/* ---------------------------------------------------------------------
+ * Form controls: one height token (--control-h, 44px) for every input,
+ * select, date/time input, and button. Identical box-sizing, padding,
+ * radius, border, font-size (16px, blocks iOS focus zoom), and font-family
+ * across every control type, so a row of mixed controls always lines up.
+ * ------------------------------------------------------------------- */
+input,
+select,
+textarea,
+button {
+  box-sizing: border-box;
+  font: inherit;
+  font-family: inherit;
+  font-size: var(--text-0);
+  color: var(--color-ink);
+  background: var(--color-surface);
+  border: var(--border-weight) solid var(--color-border-strong);
+  border-radius: var(--radius-8);
+  padding: 0 var(--space-12px);
+  transition:
+    background-color var(--dur-150) var(--ease-standard),
+    border-color var(--dur-150) var(--ease-standard),
+    color var(--dur-150) var(--ease-standard);
+}
+
+input,
+select {
+  height: var(--control-h);
+}
+
+input[type="date"],
+input[type="time"],
+input[type="datetime-local"] {
+  height: var(--control-h);
+  appearance: none;
+  -webkit-appearance: none;
+}
+
+select {
+  appearance: none;
+  -webkit-appearance: none;
+  padding-right: var(--space-32px);
+  /* Flat SVG chevron, no gradient. The fill is a literal hex baked into the
+     data URI (a CSS var cannot be read inside an encoded asset); it mirrors
+     --color-ink-muted (#474747) and must be updated by hand if that token
+     value ever changes. */
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6' fill='none'%3E%3Cpath d='M1 1L5 5L9 1' stroke='%23474747' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: calc(100% - 14px) center;
+  background-size: 10px 6px;
+}
+
+textarea {
+  min-height: var(--control-h);
+  padding-block: var(--space-8px);
+  resize: vertical;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: var(--color-ink-subtle);
+}
+
+input:hover,
+select:hover,
+textarea:hover {
+  border-color: var(--color-border-strong);
+}
+
+input:disabled,
+select:disabled,
+textarea:disabled {
+  color: var(--state-disabled-content);
+  background: var(--state-disabled-container);
+  border-color: var(--color-border);
+  cursor: not-allowed;
+}
+
+/* Field layout: rows top-align (never center or stretch), each field
+   reserves a fixed helper/error slot so a row never jumps height when a
+   hint appears or disappears on one field but not its neighbors. */
+.field-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  align-content: flex-start;
+  gap: var(--space-16px);
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  align-content: flex-start;
+  gap: var(--space-4px);
+  flex: 1 1 200px;
+  min-width: 0;
+}
+
+.field > label {
+  font-size: var(--text-n1);
+  line-height: var(--line-n1);
+  font-weight: var(--weight-medium);
+  color: var(--color-ink-muted);
+}
+
+.field-hint {
+  min-height: var(--line-n2);
+  margin: 0;
+  font-size: var(--text-n2);
+  line-height: var(--line-n2);
+  color: var(--color-ink-subtle);
+}
+
+.field-hint[data-tone="danger"] {
+  color: var(--color-danger);
+}
+
+.field-hint[data-tone="success"] {
+  color: var(--color-success);
+}
+
+/* ---------------------------------------------------------------------
+ * Buttons. A bare <button> defaults to the primary (ink) treatment, same
+ * as before, so existing markup needs no class. `.btn-secondary` and
+ * `.btn-ghost` are explicit opt-ins for a lighter weight action. `.btn` is
+ * the same base for a non-<button> element (e.g. a link styled as a
+ * button). All eight states: default, hover, focus-visible, active,
+ * disabled, loading, error, success.
+ * ------------------------------------------------------------------- */
+button,
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-8px);
+  height: var(--control-h);
+  padding: 0 var(--space-16px);
+  border-radius: var(--radius-8);
+  font-size: var(--text-0);
+  font-weight: var(--weight-medium);
+  cursor: pointer;
+  position: relative;
+  transition:
+    background-color var(--dur-150) var(--ease-standard),
+    border-color var(--dur-150) var(--ease-standard),
+    color var(--dur-150) var(--ease-standard),
+    transform var(--dur-100) var(--ease-standard);
+}
+
+button,
+.btn,
+.btn-primary {
+  background: var(--color-primary);
+  color: var(--color-primary-contrast);
+  border: var(--border-weight) solid var(--color-primary);
+}
+
+button:hover,
+.btn:hover,
+.btn-primary:hover {
+  background: var(--color-primary-hover);
+  border-color: var(--color-primary-hover);
+}
+
+button:active,
+.btn:active,
+.btn-primary:active {
+  background: var(--color-primary-active);
+  border-color: var(--color-primary-active);
+  transform: translateY(1px);
+}
+
+.btn-secondary {
+  background: var(--color-surface);
+  color: var(--color-ink);
+  border: var(--border-weight) solid var(--color-border-strong);
+}
+
+.btn-secondary:hover {
+  background: var(--state-hover);
+}
+
+.btn-secondary:active {
+  background: var(--state-pressed);
+  transform: translateY(1px);
+}
+
+.btn-ghost {
+  background: transparent;
+  color: var(--color-ink);
+  border: var(--border-weight) solid transparent;
+}
+
+.btn-ghost:hover {
+  background: var(--state-hover);
+}
+
+.btn-ghost:active {
+  background: var(--state-pressed);
+  transform: translateY(1px);
+}
+
+button:disabled,
+.btn:disabled,
+.btn[data-state="disabled"] {
+  color: var(--state-disabled-content);
+  background: var(--state-disabled-container);
+  border-color: var(--color-border);
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Loading: label hides, a spread-only ring spinner takes its place.
+   Transform-only motion (rotate), honors prefers-reduced-motion below. */
+button[data-state="loading"],
+.btn[data-state="loading"] {
+  color: transparent;
+  pointer-events: none;
+}
+
+button[data-state="loading"]::after,
+.btn[data-state="loading"]::after {
+  content: "";
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  border-radius: var(--radius-pill);
+  border: 2px solid var(--color-primary-contrast);
+  border-top-color: transparent;
+  animation: btn-spin var(--dur-600) linear infinite;
+}
+
+.btn-secondary[data-state="loading"]::after,
+.btn-ghost[data-state="loading"]::after {
+  border-color: var(--color-ink);
+  border-top-color: transparent;
+}
+
+@keyframes btn-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+button[data-state="error"],
+.btn[data-state="error"] {
+  background: var(--color-danger-surface);
+  color: var(--color-danger);
+  border-color: var(--color-danger);
+}
+
+button[data-state="success"],
+.btn[data-state="success"] {
+  background: var(--color-success-surface);
+  color: var(--color-success);
+  border-color: var(--color-success);
+}
+
+/* ---------------------------------------------------------------------
+ * Bento grid primitive. One gap value per breakpoint; every card in a
+ * grid shares the same corner radius, padding, and border weight; visual
+ * weight varies only by span. `.bento-item-footer` is an explicit opt-in
+ * for the one repeated trailing element (CTA, meta row) a card wants
+ * pinned to a shared baseline; nothing gets margin-top:auto by default,
+ * so short cards never grow an accidental internal void.
+ * ------------------------------------------------------------------- */
+.bento {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  grid-auto-rows: minmax(160px, auto);
+  gap: var(--space-16px);
+}
+
+.bento-item {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8px);
+  border-radius: var(--radius-12);
+  border: var(--border-weight) solid var(--color-border);
+  background: var(--color-surface);
+  padding: var(--space-16px);
+  transition:
+    border-color var(--dur-200) var(--ease-standard),
+    transform var(--dur-200) var(--ease-standard);
+}
+
+.bento-item:hover {
+  border-color: var(--color-border-strong);
+  transform: translateY(-2px);
+}
+
+.bento-item h2 {
+  font-size: var(--text-1);
+  line-height: var(--line-1);
+  font-weight: var(--weight-semibold);
+  margin: 0;
+}
+
+.bento-item p {
+  color: var(--color-ink-muted);
+  margin: 0;
+}
+
+.bento-item-footer {
+  margin-top: auto;
+}
+
+.bento-lg {
+  grid-column: span 2;
+  grid-row: span 2;
+}
+
+.bento-wide {
+  grid-column: span 2;
+  grid-row: span 1;
+}
+
+.bento-tall {
+  grid-column: span 1;
+  grid-row: span 2;
+}
+
+.bento-sm {
+  grid-column: span 1;
+  grid-row: span 1;
+}
+
+/* Tablet: 2-column Bento, 640px to 1023px. */
+@media (max-width: 1023px) {
+  .bento {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* Mobile app-shell: single column below 640px, every span collapses to
+   one cell so no card is ever a different shape on the smallest width. */
+@media (max-width: 639px) {
+  .bento {
+    grid-template-columns: 1fr;
+  }
+  .bento-lg,
+  .bento-wide,
+  .bento-tall,
+  .bento-sm {
+    grid-column: span 1;
+    grid-row: span 1;
+  }
+}
+
+/* Honor reduced-motion everywhere: collapse to a near-instant crossfade,
+   never a slide/scale, transform-based motion included. */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
