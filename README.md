@@ -83,6 +83,7 @@ The old commands still exist as internal playbooks inside `skills/jal-orchestrat
 - `jal-design-system`: JAL Core, the one JAL design system. Meta Astryx is the foundation, IBM Carbon supplies tables, forms, and notifications, and a few Google Material pieces cover mobile touch. One spec per component, so every product looks like the same team built it. JEV only sets how dense tables and lists are. Knowledge only, no extra packages.
 - `jal-design-system` also holds the craft floor (`references/craft.md`, from impeccable) and the visual directions with the seeded direction pick (`references/directions.md`, from impeccable and refero), so every product gets a fresh, deliberate look instead of the obvious first idea.
 - `jal-immersive`: the immersive and 3D core. Three.js (WebGL and WebGPU/TSL), React Three Fiber and drei, shaders, particles, clean-room effects (rain, puddles, sand, grass, ocean), performance tiers, poster-first loading, GSAP and Lenis scroll choreography, the JAL frame core for live product demos, and the noyzzi catalogue. JEV picks and combines recipes per section.
+- `jal-gsap`: GreenSock's eight official GSAP skills (MIT) plus the JAL layer for Bun, React 19, Lenis, and JAL law.
 - `jal-motion`: restrained product motion plus richer showcase choreography, and 167 component motion recipes from Magic UI and Animata (plain CSS and Tailwind), always with reduced-motion support.
 - `jal-jev`: the decision catalog, 47 standard decisions (orchestration, UI, motion, immersive, backend, security, QA, review, memory, docs) with their exact questions and thresholds.
 - `jal-frontend-rules`: the CSS recipes that keep UI tidy.
@@ -113,8 +114,9 @@ Every reference is integrated as knowledge (no extra packages) and is used by a 
 - **jal-design**: `jev_decide` (ask JEV), `ui_audit` (the automatic UI check, 20 rules), `noyzzi_list` / `noyzzi_get` (the noyzzi catalogue and live prompts or code), `docs_verify` (checks every documentation claim against the source and scans for secrets), and `design_history` (what past builds stacked and how it scored). Runs on Bun, no extra dependencies.
 - **designmd**: design references from designmd.ai. Supplementary only, read-only, and every kit is screened by JEV before use.
 - **koboyo-icons**: the icon library. Fallback: https://reicon.dev.
+- **originkit**: OriginKit components on demand (search, list, get, fetch). JEV picks them; they are fetched into client projects only, never into this plugin.
 
-The JEV and designmd keys ship inside the plugin so the whole team gets them with no setup. That means anyone with access to this repo holds them. Keep the repo private and inside JAL.
+The JEV, designmd, and OriginKit keys ship inside the plugin so the whole team gets them with no setup. That means anyone with access to this repo holds them. Keep the repo private and inside JAL.
 
 ## Requirements
 
