@@ -1,5 +1,9 @@
 import { describe, test, expect, afterAll, beforeAll } from "bun:test";
 import { join } from "node:path";
+import { tmpdir } from "node:os";
+
+// Keep test decisions out of the working tree (inherited by the spawned server).
+process.env.JAL_DECISION_LOG ??= join(tmpdir(), `jal-test-decisions-${process.pid}.jsonl`);
 
 const SERVER_PATH = join(import.meta.dir, "server.ts");
 

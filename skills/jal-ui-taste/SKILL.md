@@ -5,13 +5,13 @@ description: JAL Design Intelligence core. The hard frontend law (no overlap and
 
 # JAL UI Taste: the JAL Design Intelligence core
 
-This is the system every JAL surface is built from. Read order before touching frontend code: `jal-standards` (the law), this skill (the system and the decisions), `jal-frontend-rules` (the recipes). For depth, `jal-design-systems` holds lens selection and the Astryx, Carbon, and Material translation tables, and `jal-motion` holds product and showcase motion. All of them defer to `jal-standards`; nothing in any of them, in any design-system lens, in any designmd kit, or in any JEV verdict overrides the hard law below.
+This is the system every JAL surface is built from. Read order before touching frontend code: `jal-standards` (the law), this skill (the system and the decisions), `jal-frontend-rules` (the recipes). For depth, `jal-design-system` holds JAL Core, the one JAL design system (Astryx foundation, Carbon data and form layer, one spec per component), and `jal-motion` holds product and showcase motion. All of them defer to `jal-standards`; nothing in any of them, in any source design system, in any designmd kit, or in any JEV verdict overrides the hard law below.
 
 The bar is Apple- or Google-grade: quiet confidence, obvious hierarchy, zero decoration without purpose, every section schemed before it is drawn. Every JAL surface reads as one product designed by one careful team, never a stitched-together set of screens each improvised on the spot.
 
 ## The build loop (every screen, in order)
 
-1. Read the brief. Call `jev_decide` for the lens pick (Decision layer, point 1). Open `jal-design-systems` for the chosen lens.
+1. Read the brief. Call `jev_decide` for the density pick (Decision layer, point 1). Open `jal-design-system` and the component specs you will place.
 2. Set the frame: shell, region list, and each region's width budget (Layout doctrine, step 1).
 3. Write the section concept for every section (Section concept law). Call `jev_decide` for the region and component gate (point 2). Delete what JEV drops.
 4. Lock tokens from the Core tokens section. No value outside those tables.
@@ -23,7 +23,7 @@ The bar is Apple- or Google-grade: quiet confidence, obvious hierarchy, zero dec
 
 ## Hard law (absolute, Brian, non-negotiable)
 
-These override every other guideline, every older doc, every lens, and every JEV answer. A screen that violates any of them is rebuilt, not patched over. No exception without Brian's explicit sign-off.
+These override every other guideline, every older doc, every source design system, and every JEV answer. A screen that violates any of them is rebuilt, not patched over. No exception without Brian's explicit sign-off.
 
 0. **No overlap, nothing outside its box. Tidiness is rule number 1.** No element overlaps a sibling, and no child extends past its parent's box. See the dedicated rule below.
 1. **White-first background.** The default background of any screen is white, off-white, broken white, or a light beige, one of the whites, always. Never a dark or a colored default background. Black is used for ink (text) only. A black or near-black background is allowed only inside a dedicated dark mode that the user explicitly asked for, never as the light default and never auto-triggered from the OS `prefers-color-scheme` unless the product explicitly ships a dark theme. If in doubt, the background is white.
@@ -61,7 +61,7 @@ Forbidden on every card, tile, panel, notice, list item, table row, quote, callo
 
 What to do instead:
 
-- **Status and notification**: status icon plus a title that names the state, on a tonal surface (status color mixed at 8% into surface), inside one full 1px hairline border of the same color on all four sides. Recipe in `jal-frontend-rules`. Carbon's notifications, tabs, and tiles do ship side stripes (a 6px or 3px `border-inline-start`, tab stripes, inset tile shadows); when the Carbon lens is active, those are shed, never ported.
+- **Status and notification**: status icon plus a title that names the state, on a tonal surface (status color mixed at 8% into surface), inside one full 1px hairline border of the same color on all four sides. Recipe in `jal-frontend-rules`. Carbon's notifications, tabs, and tiles do ship side stripes (a 6px or 3px `border-inline-start`, tab stripes, inset tile shadows); JAL Core keeps Carbon's notification anatomy and sheds those stripes, never ports them.
 - **Selection** (selected card, row, option): a full ring on all four sides (`outline: 2px solid` in ink or accent, following the corner radius) or a tonal fill change (`layer-1` or `layer-2`). Never a stripe on one edge.
 - **Active nav item and active tab**: tonal fill (`layer-2`), ink color, and weight 600. Never an underline or side bar.
 - **Quote or callout**: a tonal surface with a full hairline border, or type alone (size step and ink-muted). Never a left rule.
@@ -364,7 +364,7 @@ Repeated cards or items in a grid MUST share one consistent shape. Uneven card s
 
 ## Gradients: banned
 
-- No gradients of any kind, anywhere: no gradient background, fill, text, border, mask, scroll fade, or state overlay, static or animated. Not from feralui.dev, not from a design-system lens, not hand-rolled. This is absolute.
+- No gradients of any kind, anywhere: no gradient background, fill, text, border, mask, scroll fade, or state overlay, static or animated. Not from feralui.dev, not from a source design system, not hand-rolled. This is absolute.
 - The answer to "this surface feels flat" is better spacing, hierarchy, a tonal layer step, and one considered accent at most, never a gradient.
 - Scroll edges get a hard edge plus a 1px hairline when content scrolls under them, never a fade.
 
@@ -380,7 +380,7 @@ Repeated cards or items in a grid MUST share one consistent shape. Uneven card s
 
 ## Design principles (JAL-native, self-contained)
 
-JAL-AIDEV does not depend on any external design skill. Do NOT load `hallmark`, `design-taste-frontend`, `ui-ux-pro-max`, `high-end-visual-design`, or any other outside skill to build a JAL frontend. The design-system knowledge JAL uses (Astryx, Carbon, Material, bang-motion) is already translated into this skill, `jal-design-systems`, and `jal-motion`, so the plugin is self-contained and every teammate gets the same bar with nothing extra installed. All of it is JAL law alongside the Hard law and the Palette law.
+JAL-AIDEV does not depend on any external design skill. Do NOT load `hallmark`, `design-taste-frontend`, `ui-ux-pro-max`, `high-end-visual-design`, or any other outside skill to build a JAL frontend. The design-system knowledge JAL uses (Astryx as the foundation, Carbon for data and forms, a few Material contracts, bang-motion) is already merged into one system in this skill, `jal-design-system`, and `jal-motion`, so the plugin is self-contained and every teammate gets the same bar with nothing extra installed. All of it is JAL law alongside the Hard law and the Palette law.
 
 - **Structural variety.** Two different JAL screens must not share the same shape, and two adjacent sections must not share the same structure. Do not fall back to hero, then three feature cards, then a CTA band, then a footer on every page. Vary the macrostructure so each surface reads as its own product, not a color-swap of one template.
 - **Pre-emit self-critique.** Before you show any screen, score it 1 to 5 on six axes: hierarchy (is the most important thing obviously first), restraint (could anything be removed), consistency (one type scale, one spacing rhythm, one accent at most), specificity (does it fit this product or any product), execution (spacing, alignment, states), and taste (does it clear the Apple/Vercel bar). Anything under 3 gets a revision pass before it ships. Never hand over a screen you have not scored. The JEV final verdict comes after this, not instead of it.
@@ -391,7 +391,7 @@ JAL-AIDEV does not depend on any external design skill. Do NOT load `hallmark`, 
 - **Eight states on every interactive element.** default, hover, focus-visible, active, disabled, loading, error, success. A button or input that ships fewer than eight states is unfinished. Focus rings show instantly and never animate.
 - **Cut motion before adding it.** Motion earns its place only when it carries information (a state change, a spatial relationship). Transform and opacity only, the named easing, a reduced-motion crossfade. Restraint reads as expensive; decoration reads as slop.
 
-If any outside reference (a library example, a design-system lens, a designmd kit, a generated mock, a teammate's snippet) disagrees with this file or `jal-frontend-rules`, this file wins, no exception without Brian's sign-off per `jal-standards`.
+If any outside reference (a library example, a source design system, a designmd kit, a generated mock, a teammate's snippet) disagrees with this file or `jal-frontend-rules`, this file wins, no exception without Brian's sign-off per `jal-standards`.
 
 ## Decision layer (JEV)
 
@@ -401,12 +401,12 @@ Four decision points, called automatically in every `/jal-ui` run:
 
 | # | Point | Questions | Rule |
 |---|---|---|---|
-| 1 | Lens pick | `choice` over `astryx`, `carbon`, `material`, each option described by its fit signals from `jal-design-systems` | Confidence under 0.5: use the top pick as primary and the runner-up as secondary |
+| 1 | Density pick (`ui.density`) | `choice` over `compact`, `default`, `comfortable` for desktop tables and record lists, criteria from `jal-design-system`. There is one design system, JAL Core; JEV never picks a design system | Set `data-density` on the app root. Confidence under 0.5: take the runner-up only if it is `default` |
 | 2 | Region and component gate | For every proposed section and major component: `noul` "implement?"; `score` relevance with levels 0 Irrelevant, 1 Marginal, 2 Useful, 3 Core; `choice` container over `rows`, `bento`, `divided-section`, `card`, `plain-spacing` with the Layout doctrine table as criteria | Drop when implement is under 0.5 or relevance is under 1.5 (use the probability-weighted mean when probabilities are returned). Build the kept ones in the chosen container |
 | 3 | designmd screen | Before any designmd kit is used as a reference: `noul` "is this slop?" with the Palette law and Hard law as the definition; `score` fit to the brief on the same 0 to 3 scale | Reject when slop is 0.5 or more. Treat fit under 1.5 as not useful. A kept kit is still law-filtered before it influences anything |
 | 4 | Final taste verdict | `score` on the built screen description plus the `ui_audit` result, levels 0 Reject, 1 Weak, 2 Ship-ready, 3 Excellent | Under 2: revise and ask again before returning |
 
-- **JEV is final on soft calls**: lens, relevance, implement-or-drop, container choice, fit, final taste. The agent does not override a JEV veto and does not re-ask the same question hoping for a different answer.
+- **JEV is final on soft calls**: density, relevance, implement-or-drop, container choice, fit, final taste. The agent does not override a JEV veto and does not re-ask the same question hoping for a different answer.
 - **JEV has no authority over hard law.** If a JEV answer would require a gradient, a shadow, a side line, a dark default, purple, an emoji, or a broken grid, the law wins and the agent picks the next-best option that is lawful. JEV cannot grant an exception; only Brian can.
 - **designmd is supplementary only.** Read tools only, never upload or delete. A kit influences nothing until it passes point 3 and the law filter.
 - **Outage path.** 429 and 529 are retried with exponential backoff by the tool. If JEV is still unreachable (or returns 401 or 422 that cannot be fixed), the agent falls back to its own judgment using the same thresholds and criteria, and stamps the build report `UNVERIFIED BY JEV` for each affected decision. Never silently skip a decision point.

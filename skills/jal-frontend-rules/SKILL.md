@@ -140,11 +140,13 @@ Records inside a Bento tile still render as rows. Never cards inside cards, neve
 @media (hover: hover) { a.row:hover, button.row:hover { background: var(--state-hover); } }
 .row[aria-selected="true"] { background: var(--color-layer-2); }   /* tonal fill, never a side stripe */
 
-/* Desktop density, 1024px and up only. One density per table. */
+/* Desktop density, 1024px and up only. The product density is set once on
+   <html data-density="..."> (JEV ui.density); tokens.css resolves the
+   --density-* properties from the nearest ancestor, so a table may step one
+   level with its own data-density when its region concept says why. */
 @media (min-width: 1024px) {
-  .rows[data-density="compact"] .row     { min-height: var(--control-row-h-compact);     padding-block: var(--space-6px); }
-  .rows[data-density="default"] .row     { min-height: var(--control-row-h-default);     padding-block: var(--space-12px); }
-  .rows[data-density="comfortable"] .row { min-height: var(--control-row-h-comfortable); padding-block: var(--space-16px); }
+  .row { min-height: var(--density-row-h); padding-block: var(--density-row-pad-block); }
+  .table td, .table th { padding-inline: var(--density-cell-pad-inline); }
 }
 ```
 
@@ -336,7 +338,7 @@ The Carbon-style left-border notice is banned. A status notice is an icon, a tit
 ```
 
 - `--color-<status>-border` is the derived token from `jal-ui-taste` (`color-mix(in oklab, var(--color-<status>) 24%, var(--color-border))`); declare it in `tokens.css` if it is missing.
-- Carbon's own notifications, tabs, and tiles use side stripes (`border-inline-start` 6px and 3px, tab stripes, inset tile shadows). When the Carbon lens is active, port its anatomy and severity model only; the stripe is always shed.
+- Carbon's own notifications, tabs, and tiles use side stripes (`border-inline-start` 6px and 3px, tab stripes, inset tile shadows). JAL Core keeps the Carbon notification anatomy and severity model; the stripe is always shed.
 - Never: `border-left: 4px solid var(--color-warning)`, `border-inline-start` in a status color, `box-shadow: inset 4px 0 0 ...`, a `::before` bar, a colored top strip, or a status dot beside the title.
 - Toasts use the same anatomy on `--color-surface` with a `--color-border-strong` hairline, no shadow, entering with opacity and a short transform per `jal-motion`, and `role="status"` (or `role="alert"` for errors).
 - Inline field errors are not notices: they live in the field's reserved hint slot.

@@ -18,7 +18,7 @@ Research digests (inputs): `<scratchpad>/ds-research/{astryx,carbon,material,ban
 | W1b | jal-qa | `mcp/jal-design/audit.ts`, `mcp/jal-design/audit.test.ts`, `mcp/jal-design/fixtures/*` | CDP UI audit + bad/good fixtures |
 | W2 | jal-frontend | `hooks/guardrails.mjs`, `hooks/guardrails.test.mjs` | write-time blocks: gradient, blurred shadow, side stripe, emoji |
 | W3 | jal-ux | `skills/jal-ui-taste/SKILL.md`, `skills/jal-standards/SKILL.md`, `skills/jal-frontend-rules/SKILL.md` | core token + law rewrite |
-| W4 | jal-ux | `skills/jal-design-systems/**` | lens skill + astryx/carbon/material references |
+| W4 | jal-ux | `skills/jal-design-system/**` | JAL Core, one design system (Astryx foundation + Carbon data and form layer), revised from three lenses on Brian's call |
 | W5 | jal-ux | `skills/jal-motion/**` | motion skill |
 | W6 | jal-ux | `templates/monorepo/packages/ui/src/tokens.css`, `templates/monorepo/packages/ui/src/ui.css` (and template web CSS only if a token rename forces it) | template adopts new core tokens, stays green |
 
@@ -64,7 +64,7 @@ JEV judges bounded decisions in every domain; agents still create. Hard law stay
 | W9 | jal-principal | `skills/jal-jev/**`, `agents/jal-jev.md` | decision catalog (IDs, questions, thresholds, state guidance) + the judge agent |
 | W10 | jal-lead | the 12 non-UI agents, `commands/jal-orchestrate.md`, `commands/jal-ship.md`, `commands/jal-review.md`, `hooks/session-context.sh`, `hooks/prompt-reminder.sh` | JEV decision points wired into every agent, advanced parallel orchestration protocol, auto-routing on every run |
 
-Decision catalog IDs (shared contract for W9 and W10): `orch.route`, `orch.parallel`, `orch.model`, `orch.escalate`, `orch.loop_exit`, `ui.lens`, `ui.region_gate`, `ui.designmd_screen`, `ui.final_taste`, `be.placement`, `be.api_quality`, `be.migration_risk`, `be.new_tech`, `sec.severity`, `sec.false_positive`, `sec.ship_block`, `sec.input_screen`, `qa.failure_class`, `qa.test_selection`, `qa.coverage`, `qa.release_go`, `rev.risk`, `rev.ship`, `mem.promote`.
+Decision catalog IDs (shared contract for W9 and W10): `orch.route`, `orch.parallel`, `orch.model`, `orch.escalate`, `orch.loop_exit`, `ui.density`, `ui.region_gate`, `ui.designmd_screen`, `ui.final_taste`, `be.placement`, `be.api_quality`, `be.migration_risk`, `be.new_tech`, `sec.severity`, `sec.false_positive`, `sec.ship_block`, `sec.input_screen`, `qa.failure_class`, `qa.test_selection`, `qa.coverage`, `qa.release_go`, `rev.risk`, `rev.ship`, `mem.promote`.
 
 MCP tool names (verify after install): `mcp__plugin_jal-aidev_jal-design__jev_decide`, `mcp__plugin_jal-aidev_jal-design__ui_audit`, `mcp__plugin_jal-aidev_designmd__*`.
 

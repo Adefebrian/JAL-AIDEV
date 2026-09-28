@@ -4,6 +4,9 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { decide, redact } from "./jev.ts";
 
+// Keep test decisions out of the working tree.
+process.env.JAL_DECISION_LOG ??= join(tmpdir(), `jal-test-decisions-${process.pid}.jsonl`);
+
 const SECRET = "topsecretkey123";
 
 function jsonResponse(status: number, body: unknown): Response {

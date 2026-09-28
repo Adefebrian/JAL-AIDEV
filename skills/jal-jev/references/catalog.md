@@ -14,7 +14,7 @@ Index:
 | Domain | IDs |
 |--------|-----|
 | Orchestration | `orch.route`, `orch.parallel`, `orch.model`, `orch.escalate`, `orch.loop_exit` |
-| UI/UX | `ui.lens`, `ui.region_gate`, `ui.designmd_screen`, `ui.final_taste` |
+| UI/UX | `ui.density`, `ui.region_gate`, `ui.designmd_screen`, `ui.final_taste` |
 | Backend | `be.placement`, `be.api_quality`, `be.migration_risk`, `be.new_tech` |
 | Security | `sec.severity`, `sec.false_positive`, `sec.ship_block`, `sec.input_screen` |
 | QA | `qa.failure_class`, `qa.test_selection`, `qa.coverage`, `qa.release_go` |
@@ -223,35 +223,38 @@ Index:
 
 ## UI/UX
 
-### `ui.lens`
+### `ui.density`
 
-**Purpose:** pick the design-system lens for a product from the brief.
+**Purpose:** set the one density for the product's desktop tables and record lists. There is one JAL design system (JAL Core, skill `jal-design-system`); JEV never picks a design system, only the density inside it.
 
-**Caller:** jal-ux (or jal-frontend when jal-ux is not on the task) at `/jal-ui` step 1, before any tokens or layout.
+**Caller:** jal-ux (or jal-frontend when jal-ux is not on the task) at `/jal-ui` step 3, before the frame and before any component is placed.
 
 **Precheck (decides without JEV):**
-- JAL Law applies to every lens unchanged. Each lens sheds its banned patterns per skill `jal-design-systems`; the lens choice never reintroduces shadows, gradients, purple, dark-by-default, or small controls.
+- Controls are 44px at every density and every width. Not asked.
+- Below 1024px density does not apply: rows are at least 44 tall and wide tables become stacked records. Not asked.
+- A product that already ships a density (`data-density` on its app root) keeps it on a redesign unless the brief asks to change it. Not asked.
 
-**State fields:** `product`, `evidence.users` (who, on what device), `evidence.density` (records per screen, data tables, forms), `evidence.primary_platform` (mobile or desktop share), `evidence.brand` (any existing brand constraints).
+**State fields:** `product`, `evidence.users` (who, how often, how long per session), `evidence.devices` (primary device and input), `evidence.records` (the heaviest data surface: rows per screen, columns, how often scanned).
 
 **Questions:**
 ```json
 {
-  "lens": {
+  "density": {
     "type": "choice",
-    "instructions": "Pick the design-system lens that best fits this product from the brief in state. All lenses are rendered under JAL Law.",
+    "instructions": "Pick the density for this product's desktop tables and record lists. Controls stay 44px at every density and every surface is still built from one JAL Core design system; density only sets desktop row height, cell padding, and list row padding.",
     "criteria": {
-      "astryx": "Default. General product UI: clear layout doctrine, lightest container that still groups, records as rows, strong hierarchy by weight and ink. Fits most apps, dashboards, and marketing sites.",
-      "carbon": "Data-dense, enterprise, or productivity tools: many records, tables, forms, filters, dense rows, layered surfaces for depth, productive motion.",
-      "material": "Touch-first consumer product with a mobile-app feel: large touch targets, state-layer feedback, tonal surfaces, gesture-friendly patterns."
+      "compact": "Scan-heavy data: logs, monitors, audit trails, long tables read many rows at a time by expert users in long daily sessions.",
+      "default": "Most product UI: admin lists, trackers, dashboards, inboxes, and mixed tables where users both scan and act on rows.",
+      "comfortable": "Few records per screen: settings, short selection lists, consumer or occasional-use tools where each row is read and acted on alone."
     }
   }
 }
 ```
 
 **Thresholds and actions:**
-- Confidence 0.5 or above: use the chosen lens alone.
-- Low confidence: use the primary lens plus the runner-up as secondary (the secondary contributes only where the primary is silent). No follow-up call.
+- Confidence 0.5 or above: set `data-density` to `choice` on the app root.
+- Low confidence: take the runner-up only if it is `default`, otherwise keep the top pick. No follow-up call.
+- Row heights and paddings per density are in `jal-design-system` `SKILL.md`.
 
 ### `ui.region_gate`
 
@@ -312,7 +315,7 @@ Index:
 - designmd is read-only: never upload or delete.
 - Law-filter the kit: strip gradients, shadows, glow, neon, purple family, dark default, emoji, em-dash, eyebrow labels, side lines, and controls under 44px. What remains is what JEV judges.
 
-**State fields:** `product`, `task`, `evidence.kit` (name, the law-filtered summary of its layout, type, color, components), `evidence.stripped` (what the law filter removed and how much), `evidence.lens` (the lens picked by `ui.lens`).
+**State fields:** `product`, `task`, `evidence.kit` (name, the law-filtered summary of its layout, type, color, components), `evidence.stripped` (what the law filter removed and how much), `evidence.density` (the density picked by `ui.density`).
 
 **Questions:**
 ```json
@@ -323,12 +326,12 @@ Index:
   },
   "fit": {
     "type": "score",
-    "instructions": "Score how well the law-filtered kit fits this product and the chosen lens.",
+    "instructions": "Score how well the law-filtered kit fits this product under the JAL Core design system.",
     "criteria": [
       "0 No fit: wrong product type or audience, nothing worth taking.",
       "1 Weak: one or two isolated ideas worth taking, the rest does not fit.",
       "2 Good: layout or component ideas that fit this product with translation into JAL tokens.",
-      "3 Strong: closely matches the product's needs and the lens, a primary reference."
+      "3 Strong: closely matches the product's needs and JAL Core, a strong reference."
     ]
   }
 }
@@ -337,7 +340,7 @@ Index:
 **Thresholds and actions:**
 - `slop` 0.5 or above: reject the kit. Veto.
 - `slop` under 0.5 and `fit` under 1.5: do not use the kit.
-- `slop` under 0.5 and `fit` 1.5 or above: use it as a supplementary reference, translated into JAL tokens. It never outranks the lens or the law.
+- `slop` under 0.5 and `fit` 1.5 or above: use it as a supplementary reference, translated into JAL tokens. It never outranks a JAL Core component spec, the tokens, or the law.
 
 ### `ui.final_taste`
 
@@ -348,7 +351,7 @@ Index:
 **Precheck (decides without JEV):**
 - `ui_audit` must report zero law violations at 320, 375, 414, 768, and 1280. Any violation means fix and re-audit. Not asked.
 
-**State fields:** `product`, `task`, `evidence.screen` (a structured description of the built screen: regions in order with container, primary message, primary action), `evidence.audit` (audit summary with counts), `evidence.lens`, `evidence.decisions` (the `ui.region_gate` results).
+**State fields:** `product`, `task`, `evidence.screen` (a structured description of the built screen: regions in order with container, primary message, primary action), `evidence.audit` (audit summary with counts), `evidence.density`, `evidence.decisions` (the `ui.region_gate` results).
 
 **Questions:**
 ```json

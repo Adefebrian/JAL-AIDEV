@@ -110,6 +110,13 @@
   --control-row-h-default: 48px;
   --control-row-h-comfortable: 56px;
 
+  /* Density (JAL Core, set once by JEV ui.density as data-density on
+   * <html>). These resolve per nearest ancestor, so one table may step a
+   * level by setting its own data-density. Applied to rows at >=1024px. */
+  --density-row-h: var(--control-row-h-default);
+  --density-row-pad-block: var(--space-12px);
+  --density-cell-pad-inline: var(--space-12px);
+
   /* ---------------------------------------------------------------------
    * Color: neutral base, white-first. Page sits one tonal step below pure
    * white; surface (cards, controls) is pure white; layer-1/2 nest deeper
@@ -217,6 +224,22 @@
   --bp-lg: 1024px;
   --bp-xl: 1280px;
   --bp-2xl: 1536px;
+}
+
+[data-density="compact"] {
+  --density-row-h: var(--control-row-h-compact);
+  --density-row-pad-block: var(--space-6px);
+  --density-cell-pad-inline: var(--space-8px);
+}
+[data-density="default"] {
+  --density-row-h: var(--control-row-h-default);
+  --density-row-pad-block: var(--space-12px);
+  --density-cell-pad-inline: var(--space-12px);
+}
+[data-density="comfortable"] {
+  --density-row-h: var(--control-row-h-comfortable);
+  --density-row-pad-block: var(--space-16px);
+  --density-cell-pad-inline: var(--space-16px);
 }
 
 /* The global prefers-reduced-motion collapse (transitions/animations capped

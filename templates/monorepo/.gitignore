@@ -8,4 +8,4 @@ dist/
 .DS_Store
 
 # JEV decision logs: per-run, local audit trail. .jal/memory/ stays committed.
-.jal/decisions/
+**/.jal/decisions/

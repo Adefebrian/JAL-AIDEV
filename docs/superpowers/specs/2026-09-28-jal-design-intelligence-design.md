@@ -10,7 +10,7 @@ Turn the JAL frontend layer into one intelligent design system that builds or re
 
 1. **Knowledge-only integration.** None of the four systems ship as runtime packages. Research proved each one fights Bun.build (StyleX, Lit, Sass) and ships banned patterns (gradients, shadows, purple, dark-by-default, 28 to 36px controls). We port ideas, generators, and doctrine into JAL-native tokens and skills.
 2. **JAL Law is absolute and mechanical where possible.** Nothing in any system, designmd kit, or JEV verdict can override it.
-3. **JEV is the decision layer.** Its verdict is final on soft calls (lens, relevance, implement-or-drop, container choice). The agent may not override a JEV veto. Hard law is outside JEV's authority. On outage: exponential-backoff retry; if still unreachable, fall back to agent judgment and stamp the report `UNVERIFIED BY JEV`.
+3. **JEV is the decision layer.** Its verdict is final on soft calls (density, relevance, implement-or-drop, container choice). The agent may not override a JEV veto. Hard law is outside JEV's authority. On outage: exponential-backoff retry; if still unreachable, fall back to agent judgment and stamp the report `UNVERIFIED BY JEV`.
 4. **Container choice is combined and decided per region by JEV**: rows, bento tiles, divided section, single card, or plain spacing, using the Astryx layout doctrine as the criteria.
 5. **designmd is supplementary only.** Read tools only (never upload/delete). Every kit is JEV-screened and law-filtered before it may influence anything.
 6. **One command.** `/jal-ui` builds from zero or redesigns. Mobile-first is mandatory. No new commands.
@@ -43,13 +43,14 @@ Generated with the Astryx method (formulas, not hand lists), tuned for JAL.
 - **Motion:** product UI durations 100 (micro), 150 (fast), 200 (base), 300 (slow); showcase only 400, 600. Standard easing `cubic-bezier(0.24, 1, 0.4, 1)` (Astryx). Exits run at about 70% of the entrance duration (bang-motion asymmetry). Transform and opacity only. `prefers-reduced-motion` collapses to an opacity crossfade of 150ms or less.
 - **Breakpoints:** 640, 768, 1024, 1280, 1536. App-shell below 640, tablet 640 to 1023, desktop 1024 and up.
 
-## 5. Lenses (skill `jal-design-systems`)
+## 5. One design system: JAL Core (skill `jal-design-system`)
 
-One skill with three reference files. Each lens has: what to take, a translation table into JAL tokens, the conflicts it must shed, and product-fit signals. JEV picks the lens (or a primary + secondary mix) from the brief.
+Revised 2026-09-28 on Brian's call: no per-product lens pick. Astryx and Carbon are merged into one system so every JAL product looks like one team built it.
 
-- **Astryx (default).** Agent workflow (find closest template, study skeleton, read component doc, rules, self-check), layout doctrine (frame and region widths first; lightest container that still groups: spacing, then divider, then section, then card; records as rows; one left content line per region; grouping must survive with borders removed), component doc anatomy with per-part contrast tables, state taxonomy. Sheds: OS-following dark mode, gradient overlays and fades, shadow elevation, StatusDot, purple palette, 28 to 36px controls, lucide default.
-- **Carbon (data-dense, enterprise, productivity).** Layer tokens for depth, field and row density, DataTable anatomy, productive motion, notification and form patterns. Sheds: dark themes as default, left-border accent on notifications and tiles (replace with an icon plus title plus tonal surface), square radius, purple support color, all box-shadow.
-- **Material (touch-first consumer, mobile-app feel).** State-layer model, tonal surface ladder, component token contracts, touch target and interaction semantics. Sheds: purple seed `#6750A4`, ripple, shadow elevation, per-component radius scale, Material Symbols default, dark-by-default.
+- **Astryx is the foundation.** Method (generated scales, contrast by contract), layout doctrine (frame and region widths first; lightest container that still groups: spacing, then divider, then section, then card; records as rows; one content line per region; grouping survives with borders removed), hierarchy, state taxonomy (user, system, agentic), elevation order, accessibility rules, motion principles, the agent workflow with a mandatory self-check, and the Button, Card, List, Dialog, Tabs, Badge, EmptyState, AppShell, and chat specs.
+- **Carbon is the data and form layer.** Contextual layer tokens, the density mechanism, DataTable, TextInput, Select, DatePicker, the notification model, modal states and sizing, three-tier accessibility verification.
+- **Material contributes four contracts only:** state-layer percentages, the mobile navigation bar, chips, the one floating create action (no shadow), plus soft-disabled.
+- One owner per concern and one spec per component (`references/components.md`); if Astryx and Carbon disagree and the owner table does not decide, Astryx wins. Provenance and every shed pattern are kept in `references/sources.md`. Sheds: OS-following dark mode, gradient overlays and fades, shadow elevation, StatusDot, notification and tab stripes, square radius, purple palettes, ripple, 28 to 40px controls, third-party icon fonts.
 
 ## 6. Motion (skill `jal-motion`)
 
@@ -61,7 +62,7 @@ Official endpoint only: `POST https://api.typesafe.ai/v1/systemone`, `Authorizat
 
 Called automatically at four points in `/jal-ui`:
 
-1. **Lens pick:** choice over astryx, carbon, material, given the brief. Low confidence (under 0.5) takes a primary plus the runner-up as secondary.
+1. **Density pick (`ui.density`):** choice over compact, default, comfortable for desktop tables and record lists, given the brief. Controls stay 44px. JEV never picks a design system.
 2. **Region and component gate:** for every proposed section and major component, `noul` "implement?" plus `score` relevance (0 Irrelevant, 1 Marginal, 2 Useful, 3 Core) plus `choice` container (rows, bento, divided-section, card, plain-spacing). Drop when implement is under 0.5 or relevance is under 1.5.
 3. **designmd screen:** before any kit is used as reference, `noul` "is this slop?" and `score` fit; reject when slop is 0.5 or more.
 4. **Final taste verdict:** `score` on the built screen description and audit results; under 2 means revise before returning.
@@ -97,7 +98,7 @@ One zero-dependency Bun MCP server inside the plugin, `mcp/jal-design/server.ts`
 
 - Rewrite: `skills/jal-ui-taste/SKILL.md`, `agents/jal-ux.md`, `commands/jal-ui.md`.
 - Update: `skills/jal-standards/SKILL.md`, `skills/jal-frontend-rules/SKILL.md`, `agents/jal-frontend.md`, `hooks/guardrails.mjs` (+ tests), `.mcp.json`, `README.md`, `.claude-plugin/plugin.json`, template `packages/ui/src/tokens.css` and `packages/ui/src/ui.css`.
-- New: `skills/jal-design-systems/SKILL.md` + `references/astryx.md`, `references/carbon.md`, `references/material.md`; `skills/jal-motion/SKILL.md`; `mcp/jal-design/server.ts` + tests.
+- New: `skills/jal-design-system/SKILL.md` + `references/foundations.md`, `references/components.md`, `references/sources.md`; `skills/jal-motion/SKILL.md`; `mcp/jal-design/server.ts` + tests.
 
 ## 12. Acceptance
 

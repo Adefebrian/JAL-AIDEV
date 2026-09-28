@@ -22,7 +22,7 @@ JEV is the judge across all of JAL-AIDEV: orchestration, UI/UX, backend, securit
 ## Authority model
 
 1. **Hard law first, mechanically.** Every catalog entry lists a precheck. Run it before calling JEV. If the precheck decides the outcome (a forbidden stack item, a failing test, an open Critical finding, a law violation from `ui_audit`), act on the precheck and do not ask JEV.
-2. **JEV is final on soft calls.** Lens pick, relevance, implement-or-drop, container, routing, parallel-or-sequential, severity grading, go/no-go on the residual set, and the rest of the catalog. When JEV vetoes, the proposal is dropped or revised. An agent may not override a JEV veto, argue it away in its report, or re-ask with reframed state to fish for a different answer.
+2. **JEV is final on soft calls.** Density, relevance, implement-or-drop, container, routing, parallel-or-sequential, severity grading, go/no-go on the residual set, and the rest of the catalog. When JEV vetoes, the proposal is dropped or revised. An agent may not override a JEV veto, argue it away in its report, or re-ask with reframed state to fish for a different answer.
 3. **JEV can never override hard law.** If a JEV answer would require breaking law (for example it picks a container that would need a shadow, or approves shipping with a failing gate), law wins, the conflict is logged, and the agent reports it.
 4. **Escalations stay escalations.** Tech outside the approved stack, any default-LLM change away from gpt-4o-mini, scope changes that move a deadline, and any new agent or skill go to Brian through jal-principal. JEV may help frame the tradeoff; it never approves these.
 5. **Legitimate re-ask.** Re-asking is allowed only when the state was materially wrong or incomplete (new evidence, a corrected fact). Log both calls with the same `decision_id` and say in the report what changed.
@@ -73,7 +73,7 @@ Every answer has a `confidence`.
 - **0.5 or above:** act on the answer per the catalog threshold.
 - **Under 0.5:** do one of two things, whichever the decision allows:
   - Ask one sharper follow-up: add the missing evidence to state or narrow the options, same `decision_id`, one retry only.
-  - Take primary plus runner-up where the catalog allows it (lens pick takes primary plus secondary lens; model pick takes the higher tier; severity takes the higher grade; routing takes primary owner plus runner-up as consultant).
+  - Take primary plus runner-up where the catalog allows it (density keeps the top pick unless the runner-up is `default`; model pick takes the higher tier; severity takes the higher grade; routing takes primary owner plus runner-up as consultant).
 - Still under 0.5 after one follow-up: act on the primary answer, and flag it in the report as low confidence with the probabilities.
 
 ## Outage fallback and stamping
@@ -101,11 +101,11 @@ A call is about 400ms and costs fractions of a cent. Gate generously: any soft c
 
 ```json
 {
-  "decision_id": "ui.lens",
+  "decision_id": "ui.density",
   "domain": "ui",
   "state": { "product": "...", "task": "...", "proposal": "...", "law": ["..."], "evidence": ["..."] },
   "questions": {
-    "lens": { "type": "choice", "instructions": "...", "criteria": { "astryx": "...", "carbon": "...", "material": "..." } }
+    "density": { "type": "choice", "instructions": "...", "criteria": { "compact": "...", "default": "...", "comfortable": "..." } }
   }
 }
 ```

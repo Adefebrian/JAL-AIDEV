@@ -23,7 +23,7 @@ Use the full name `jal-aidev@jal-aidev-marketplace`; the short name `jal-aidev` 
 ## How it works
 
 - **The crew.** Any real task goes through the Pawang crew: jal-principal sets direction, jal-lead splits the work and runs independent pieces in parallel, specialists build, and the review gate decides when it is done.
-- **JEV is the judge.** JEV (TypeSafe's decision model) makes the small, bounded calls: which specialists a task needs, what can run in parallel, which design system fits, whether a section is worth building, how severe a security finding is, whether a release is ready. Its verdict on those calls is final. Every decision is logged in `.jal/decisions/` so you can see why. Secrets are stripped before anything is sent.
+- **JEV is the judge.** JEV (TypeSafe's decision model) makes the small, bounded calls: which specialists a task needs, what can run in parallel, how dense tables and lists should be, whether a section is worth building, how severe a security finding is, whether a release is ready. Its verdict on those calls is final. Every decision is logged in `.jal/decisions/` so you can see why. Secrets are stripped before anything is sent.
 - **Hard law is mechanical.** The JAL rules (Bun only, no gradients, no shadows, no side lines on cards, no overlap, white-first, no emoji or em-dash, and the rest in `jal-standards`) are enforced by a write-time guard and by checks. JEV can never override them.
 - **UI is proven, not promised.** The automatic UI check opens the page in Chrome at 320, 375, 414, 768, and 1280 pixels wide and fails on overlap, anything sticking out of its container, clipped text, side stripes, shadows, gradients, dark backgrounds, mismatched field heights, empty card space, and more. A screen is not done until it passes.
 
@@ -73,7 +73,7 @@ Use the full name `jal-aidev@jal-aidev-marketplace`; the short name `jal-aidev` 
 
 - `jal-standards`: the JAL engineering constitution. Read before building or reviewing anything.
 - `jal-ui-taste`: the design core. Generated type, spacing, radius, and color scales, the no-overlap rule, section concept, and the JEV decision points for UI.
-- `jal-design-systems`: knowledge from Meta Astryx, IBM Carbon, and Google Material, translated into JAL tokens. JEV picks the right one per product. Knowledge only, no extra packages.
+- `jal-design-system`: JAL Core, the one JAL design system. Meta Astryx is the foundation, IBM Carbon supplies tables, forms, and notifications, and a few Google Material pieces cover mobile touch. One spec per component, so every product looks like the same team built it. JEV only sets how dense tables and lists are. Knowledge only, no extra packages.
 - `jal-motion`: restrained product motion plus richer showcase choreography, always with reduced-motion support.
 - `jal-jev`: the decision catalog, 24 standard decisions with their exact questions and thresholds.
 - `jal-frontend-rules`: the CSS recipes that keep UI tidy.
