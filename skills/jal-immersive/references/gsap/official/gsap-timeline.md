@@ -4,6 +4,8 @@ description: Official GSAP skill for timelines — gsap.timeline(), position par
 license: MIT
 ---
 
+> JAL NOTE: Official GreenSock skill, shipped verbatim under MIT (see LICENSE). In JAL-AIDEV, Bun is the only runtime and bundler: install with `bun add`, build with Bun.build. Any Vite, Next.js, Nuxt, npm, or Node example below is an API reference only. The JAL layer in `../gsap.md` wins wherever it differs (Lenis instead of ScrollSmoother, the JAL easing, transform and opacity only, reduced motion).
+
 # GSAP Timeline
 
 ## When to Use This Skill

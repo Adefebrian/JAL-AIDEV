@@ -20,7 +20,7 @@ JAL-AIDEV's skills distill knowledge from the projects below. Unless noted, the 
 |---|---|---|
 | [Magic UI](https://github.com/magicuidesign/magicui), Copyright (c) Magic UI | MIT | Component motion recipes (`skills/jal-motion/references/components.md`) |
 | [Animata](https://github.com/codse/animata), Copyright (c) Animata | MIT | Component and text motion recipes |
-| [gsap-skills](https://github.com/greensock/gsap-skills), Copyright (c) 2026 GreenSock | MIT | The eight official skills ship verbatim in `skills/jal-gsap/references/official/` with their LICENSE; the JAL layer is `skills/jal-gsap/SKILL.md`. GSAP itself is used under GreenSock's standard no-charge license; JAL never builds a visual animation editor on it |
+| [gsap-skills](https://github.com/greensock/gsap-skills), Copyright (c) 2026 GreenSock | MIT | The eight official skills ship verbatim in `skills/jal-immersive/references/gsap/official/` with their LICENSE; the JAL layer is `skills/jal-immersive/references/gsap/gsap.md`. GSAP itself is used under GreenSock's standard no-charge license; JAL never builds a visual animation editor on it |
 | [Lenis](https://github.com/darkroomengineering/lenis) | MIT | Smooth scroll integration |
 | [Remotion](https://github.com/remotion-dev/remotion) | Remotion License | Concept only (frame-driven compositions). No Remotion code is used, and the package is banned. The JAL frame core is an independent implementation |
 | [ai-dev-kit](https://github.com/AftabIbrahimKazi/ai-dev-kit) | MIT | Scroll-camera principles and the performance audit method |

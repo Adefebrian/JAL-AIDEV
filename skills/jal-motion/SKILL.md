@@ -12,7 +12,7 @@ Before writing any animation: name what state it communicates in one sentence. I
 ## 1. Approved stack, nothing else
 
 - **Lenis** for smooth scroll.
-- **GSAP** for orchestrated timelines and scroll-linked motion. Every GSAP plugin is free (since the 2024 Webflow licensing change) and allowed: ScrollTrigger, SplitText, Flip, MorphSVG, CustomEase, and the rest. JAL law still decides what each is used for (no DrawSVG ornaments, no ScrollSmoother next to Lenis, no bounce or elastic eases); the per-plugin filter is in `skills/jal-immersive/references/scroll-choreography.md`.
+- **GSAP** for orchestrated timelines and scroll-linked motion (official skills plus the JAL layer: `skills/jal-immersive/references/gsap/gsap.md`). Every GSAP plugin is free (since the 2024 Webflow licensing change) and allowed: ScrollTrigger, SplitText, Flip, MorphSVG, CustomEase, and the rest. JAL law still decides what each is used for (no DrawSVG ornaments, no ScrollSmoother next to Lenis, no bounce or elastic eases); the per-plugin filter is in `skills/jal-immersive/references/scroll-choreography.md`.
 - **Framer Motion** for React component, gesture, layout (FLIP), and exit animation (`AnimatePresence`).
 - **CSS transitions and WAAPI** (`element.animate()`) for simple, single-property, non-orchestrated motion. Prefer this over a library whenever a plain transition does the job, it costs nothing over the wire.
 

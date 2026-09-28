@@ -1,24 +1,19 @@
----
-name: jal-gsap
-description: GreenSock's official GSAP agent skills (MIT, github.com/greensock/gsap-skills), shipped whole inside JAL-AIDEV, plus the JAL layer that adapts them to Bun, React 19, Lenis, and JAL law. Covers gsap.to, from, fromTo, easing, stagger, matchMedia, timelines and the position parameter, ScrollTrigger (pin, scrub, snap, batch, refresh), every plugin (SplitText, Flip, MorphSVG, DrawSVG, ScrollTo, Observer, Draggable, Inertia, MotionPath), gsap.utils, the React useGSAP hook and cleanup, other frameworks, and performance. GSAP and all its plugins, plus @gsap/react, are approved. Use whenever an agent writes or reviews GSAP code, scroll choreography, timelines, text splitting, or Flip transitions on any JAL surface.
----
+# GSAP in JAL: the official GSAP skills plus the JAL layer
 
-# JAL GSAP: the official GSAP skills, adapted to JAL
-
-GSAP is fully approved in JAL-AIDEV, with every plugin (all free since 2024) and `@gsap/react`. GreenSock's official agent skills ship verbatim under `references/official/` with their MIT license, so every agent has the complete official knowledge.
+GSAP is fully approved in JAL-AIDEV, with every plugin (all free since 2024) and `@gsap/react`. GreenSock's official agent skills (github.com/greensock/gsap-skills, MIT) ship verbatim under `official/` next to this file, so every agent has the complete official knowledge. GSAP serves every surface: calm modern sites use it for small accents, marketing pages for reveals and scroll stories, and immersive sites for full choreography. JEV (`motion.intensity`) sets how much motion each section gets.
 
 | Official skill | File | Read it when |
 |---|---|---|
-| Core API | `references/official/gsap-core.md` | Any tween: to, from, fromTo, easing, stagger, defaults, matchMedia |
-| Timelines | `references/official/gsap-timeline.md` | Sequencing, the position parameter, nesting, playback control |
-| ScrollTrigger | `references/official/gsap-scrolltrigger.md` | Scroll-linked motion, pin, scrub, snap, batch, refresh order |
-| Plugins | `references/official/gsap-plugins.md` | SplitText, Flip, MorphSVG, DrawSVG, ScrollTo, Observer, Draggable, Inertia, MotionPath |
-| Utils | `references/official/gsap-utils.md` | clamp, mapRange, normalize, interpolate, snap, toArray, wrap, pipe |
-| React | `references/official/gsap-react.md` | useGSAP, refs, contextSafe, cleanup |
-| Other frameworks | `references/official/gsap-frameworks.md` | Vue, Svelte, and vanilla lifecycles |
-| Performance | `references/official/gsap-performance.md` | Transforms, avoiding layout thrash, will-change, batching |
+| Core API | `official/gsap-core.md` | Any tween: to, from, fromTo, easing, stagger, defaults, matchMedia |
+| Timelines | `official/gsap-timeline.md` | Sequencing, the position parameter, nesting, playback control |
+| ScrollTrigger | `official/gsap-scrolltrigger.md` | Scroll-linked motion, pin, scrub, snap, batch, refresh order |
+| Plugins | `official/gsap-plugins.md` | SplitText, Flip, MorphSVG, DrawSVG, ScrollTo, Observer, Draggable, Inertia, MotionPath |
+| Utils | `official/gsap-utils.md` | clamp, mapRange, normalize, interpolate, snap, toArray, wrap, pipe |
+| React | `official/gsap-react.md` | useGSAP, refs, contextSafe, cleanup |
+| Other frameworks | `official/gsap-frameworks.md` | Vue, Svelte, and vanilla lifecycles |
+| Performance | `official/gsap-performance.md` | Transforms, avoiding layout thrash, will-change, batching |
 
-JAL's own choreography layer (tiers, patterns, the Lenis, ScrollTrigger, and R3F single clock, and camera paths) is `skills/jal-immersive/references/scroll-choreography.md`. Read both.
+JAL's own choreography layer (tiers, patterns, the single clock for Lenis, ScrollTrigger, and R3F, and camera paths) is `../scroll-choreography.md`. Read both.
 
 ## The JAL layer (wins where the official skills differ)
 

@@ -1,5 +1,12 @@
 # Combined recipe index: every source, one lookup
 
+**Experience levels and surfaces.** `ui.experience` places a page on the spectrum `modern`, `modern_motion`, `modern_immersive`, or `immersive`. The "surfaces" column in this index is per section:
+- `product_ui`: a daily-use app screen, allowed on any page level
+- `marketing`: a persuasive page section, on `modern` and above
+- `immersive`: a section that passed `imm.gate`, on `modern_immersive` and `immersive` pages
+
+One page can mix all three.
+
 One row per recipe from every source Brian supplied, so any recipe can be mixed with any other on any surface where it is allowed. Agents assemble `ui.component_recipe` (product and marketing) and `imm.recipe` (immersive) candidates from this file in one lookup, then grow each section with the layering protocol (section 4). The full recipe always lives in the file named in the last column; this index never replaces it.
 
 ## 0. How to read the tables

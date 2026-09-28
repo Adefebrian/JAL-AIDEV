@@ -261,35 +261,37 @@ Index:
 
 ### `ui.experience`
 
-**Purpose:** classify a `/jal-ui` brief so the right lead agent and pipeline run.
+**Purpose:** place a `/jal-ui` brief on the experience spectrum, so the right lead agent, motion budget, and recipe pool apply. Brian's use cases run the whole range: a calm modern site, a modern site with motion accents (Lenis, GSAP, Framer Motion), a modern site with a few immersive sections, or a fully immersive site. Sections may then sit at different levels through `motion.intensity` and `imm.gate`.
 
 **Caller:** the `/jal-ui` command, before dispatch.
 
 **Precheck (decides without JEV):**
-- A brief that names 3D, WebGL, WebGPU, shaders, particles, noyzzi, or "immersive" is `immersive`. Not asked.
-- A brief for an app screen with forms, tables, or settings inside an existing product is `product_ui`. Not asked.
+- A brief that asks for a fully immersive, 3D, WebGL, or shader-driven site is `immersive`. Not asked.
+- A daily-use app screen (forms, tables, settings inside a product) is `modern`. Not asked.
 
-**State fields:** `task` (the brief), `evidence.surface` (what exists at the target), `evidence.audience` (first-time visitor or daily user).
+**State fields:** `task` (the brief), `evidence.surface` (what exists at the target), `evidence.audience` (first-time visitor or daily user), `evidence.history` (the `design_history` summary).
 
 **Questions:**
 ```json
 {
   "experience": {
     "type": "choice",
-    "instructions": "Classify the brief in state.task by what the visitor must do and feel on this surface.",
+    "instructions": "Place the brief in state.task on the experience spectrum by what the visitor must do and feel. Pick the least experience that fully serves the brief; more is not better unless the story needs it.",
     "criteria": {
-      "product_ui": "A daily-use tool surface: dashboards, lists, forms, settings, detail pages. Clarity and speed win; motion stays at state feedback.",
-      "marketing": "A page that explains and persuades: landing, pricing, product, about. Expressive type and restrained scroll motion, no 3D required.",
-      "immersive": "A page whose story is carried by an experience: 3D objects, WebGL or shader effects, pinned scroll stories, interactive demos."
+      "modern": "A clean, calm modern site or app screen: clarity and speed win; motion stays at state feedback and simple reveals.",
+      "modern_motion": "A modern site whose sections gain motion accents: Lenis smooth scroll, GSAP or Framer Motion reveals, text motion, scroll-linked details; no 3D.",
+      "modern_immersive": "A modern site where one to three sections carry an immersive moment (a 3D hero, a pinned scroll story, a WebGL image effect, a noyzzi piece) and the rest stays calm.",
+      "immersive": "A site whose whole story is carried by an experience: 3D, WebGL or shader scenes, pinned scroll storytelling, interactive demos throughout."
     }
   }
 }
 ```
 
 **Thresholds and actions:**
-- `product_ui` and `marketing` dispatch jal-ux.
-- `immersive` dispatches jal-immersive.
-- Low confidence between `marketing` and `immersive`: dispatch jal-ux, which hands single sections to jal-immersive through `imm.gate`.
+- `modern` and `modern_motion`: jal-ux leads; motion recipes come from the whole pool (GSAP, Lenis, Framer Motion, Magic UI, Animata) through `motion.intensity` and `ui.component_recipe`.
+- `modern_immersive`: jal-ux leads and hands each section that passes `imm.gate` to jal-immersive.
+- `immersive`: jal-immersive leads the whole page.
+- Low confidence: take the lighter of the top two, since sections can still rise through `imm.gate`.
 
 ### `ui.density`
 
@@ -576,10 +578,10 @@ Index:
 **Precheck (decides without JEV):**
 - The JAL Core component spec (`jal-design-system` `references/components.md`) is always a candidate. It is the default for product UI controls, tables, forms, and navigation, and is not asked for those.
 - Recipes above the section's `motion.intensity` tier are removed from the candidates (the tier table in `jal-motion` `references/components.md` section 7).
-- noyzzi hover effects and sections are candidates only on marketing surfaces, and only with the noyzzi exemption applied to that section.
+- noyzzi hover effects and sections are candidates on `modern_motion`, `modern_immersive`, and `immersive` pages (never inside a daily-use app screen), with the noyzzi exemption applied to that section. 3D and WebGL recipes are candidates only where the section passed `imm.gate`.
 - Recipes on the DROP list are never candidates.
 
-**State fields:** `evidence.section` (job, message, action, container), `evidence.mode` (`product_ui` or `marketing`), `evidence.tier` (from `motion.intensity`), `evidence.direction` (the direction contract), `proposal.candidates` (3 to 6 recipe IDs, each with source and one line: for example `core.table`, `mu.R02` text motion, `mu.R13` sliding indicator, `an.R21` FLIP list, `nz.fx.halftone-print`, `bang.staged_reveal`, `md.nav_bar`). Also `evidence.history`: the `design_history` summary for this section kind (top stacks by mean taste, stacks to avoid), which JEV weighs but which never overrides the current brief.
+**State fields:** `evidence.section` (job, message, action, container), `evidence.experience` (the page's `ui.experience` level) and `evidence.surface` (`product_ui` for app screens, `marketing` for persuasive pages, `immersive` for sections that passed `imm.gate`), `evidence.tier` (from `motion.intensity`), `evidence.direction` (the direction contract), `proposal.candidates` (3 to 6 recipe IDs, each with source and one line: for example `core.table`, `mu.R02` text motion, `mu.R13` sliding indicator, `an.R21` FLIP list, `nz.fx.halftone-print`, `bang.staged_reveal`, `md.nav_bar`). Also `evidence.history`: the `design_history` summary for this section kind (top stacks by mean taste, stacks to avoid), which JEV weighs but which never overrides the current brief.
 
 **Questions:**
 ```json

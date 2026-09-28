@@ -7,10 +7,13 @@ What to work on: $ARGUMENTS
 
 ## What this does
 
-One command for everything visual. The JEV judge first decides what kind of work it is:
-- **product UI**: app screens, dashboards, forms, and tables. Calm, tidy, and fast.
-- **marketing page**: landing pages and product pages. More expressive, with restrained motion.
-- **immersive**: 3D heroes, WebGL and shader effects, scroll stories, and noyzzi pieces. Rich, but still fast on phones.
+One command for everything visual, across the whole range. The JEV judge places your brief on the spectrum:
+- **modern**: a clean, calm site or app screen.
+- **modern with motion**: the same, plus accents such as Lenis smooth scroll, GSAP or Framer Motion reveals, and text motion.
+- **modern with immersive moments**: a mostly calm site with one to three immersive sections, such as a 3D hero, a pinned scroll story, or a noyzzi piece.
+- **fully immersive**: the whole story told through 3D, WebGL, shaders, and scroll storytelling.
+
+Then JEV decides section by section how much motion each part gets, so one page can mix levels.
 
 Then it:
 1. On a redesign, it checks the current screen first and lists what is wrong before changing anything.
@@ -32,8 +35,8 @@ Examples:
 
 ## Run it
 
-1. JEV `ui.experience` classifies the brief as `product_ui`, `marketing`, or `immersive`. A brief that names 3D, WebGL, shaders, noyzzi, or immersive is `immersive` without asking.
-2. Dispatch `jal-ux` for `product_ui` and `marketing`, or `jal-immersive` for `immersive`. Each runs its pipeline from `agents/jal-ux.md` or `agents/jal-immersive.md` with no step skipped. jal-ux hands any single section that earns immersion (`imm.gate`) to jal-immersive.
+1. JEV `ui.experience` places the brief on the spectrum: `modern`, `modern_motion`, `modern_immersive`, or `immersive`.
+2. Dispatch `jal-ux` for `modern`, `modern_motion`, and `modern_immersive`, or `jal-immersive` for `immersive`. Each runs its pipeline from `agents/jal-ux.md` or `agents/jal-immersive.md` with no step skipped. jal-ux hands any single section that earns immersion (`imm.gate`) to jal-immersive.
 3. For a multi-section page, once the section concepts are written, the lead agent splits the sections into owned files and builds them in parallel per the `jal-orchestration` engine.
 4. It then integrates the sections and runs `ui_audit` at 320, 375, 414, 768, and 1280 until PASS (`SKIPPED` is never a pass).
 
