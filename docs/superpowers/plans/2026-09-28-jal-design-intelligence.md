@@ -67,3 +67,12 @@ JEV judges bounded decisions in every domain; agents still create. Hard law stay
 Decision catalog IDs (shared contract for W9 and W10): `orch.route`, `orch.parallel`, `orch.model`, `orch.escalate`, `orch.loop_exit`, `ui.lens`, `ui.region_gate`, `ui.designmd_screen`, `ui.final_taste`, `be.placement`, `be.api_quality`, `be.migration_risk`, `be.new_tech`, `sec.severity`, `sec.false_positive`, `sec.ship_block`, `sec.input_screen`, `qa.failure_class`, `qa.test_selection`, `qa.coverage`, `qa.release_go`, `rev.risk`, `rev.ship`, `mem.promote`.
 
 MCP tool names (verify after install): `mcp__plugin_jal-aidev_jal-design__jev_decide`, `mcp__plugin_jal-aidev_jal-design__ui_audit`, `mcp__plugin_jal-aidev_designmd__*`.
+
+## Queue after v0.3.0 (Brian, 2026-09-28), in order
+
+3. **Docs agent + command -> JAL-Group/malasbaca.** Auto-generate comprehensive technical AND non-technical documentation of what a project builds, detect existing docs and update them instead of duplicating, and never hallucinate. Seeds:
+   - malasbaca is a Bun APP (auth.ts, login.html, build.ts, serve.ts, src/, Dockerfile, HANDOVER.md), not a plain docs folder. Study its content model first and write in that model.
+   - Evidence-only: every doc claim must trace to evidence (file tree, code, tests, git log and diffs, ADRs, .jal/decisions). JEV gates each claim with a noul "supported by this evidence?" and drops unsupported claims; JEV also picks update-existing vs new-page vs no-change per section.
+   - Publishing to malasbaca is an outward write to another repo: default to a branch plus PR, not a direct push to main, unless Brian says otherwise.
+4. **Command compaction.** Fold the command set into as few entry points as possible (ideally one) that route by intent, JEV-routed. The docs command from item 3 folds in too.
+5. **SEO / GEO agent.** Integration and optimization for search and generative-engine visibility.
