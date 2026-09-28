@@ -75,4 +75,10 @@ MCP tool names (verify after install): `mcp__plugin_jal-aidev_jal-design__jev_de
    - Evidence-only: every doc claim must trace to evidence (file tree, code, tests, git log and diffs, ADRs, .jal/decisions). JEV gates each claim with a noul "supported by this evidence?" and drops unsupported claims; JEV also picks update-existing vs new-page vs no-change per section.
    - Publishing to malasbaca is an outward write to another repo: default to a branch plus PR, not a direct push to main, unless Brian says otherwise.
 4. **Command compaction.** Fold the command set into as few entry points as possible (ideally one) that route by intent, JEV-routed. The docs command from item 3 folds in too.
+   Brian's requirements (2026-09-28):
+   - Plain language, not technical. A teammate must know what a command is FOR from its name and one-line description alone, without knowing which agents, skills, or sub-commands it runs.
+   - Easy to use: describe the goal in normal words; the command figures out the rest.
+   - One command bundles several commands, agents, and skills and runs them automatically (JEV routes); internals stay hidden unless the user asks.
+   - Output tells the user in plain words what was done and what to do next.
+   - Open design question to settle with Brian at the start of this phase: one master command (for example `/jal <goal>`) versus a very small set of plain-verb commands (build, fix, check, ship, docs). The trade-off is simplicity versus discoverability.
 5. **SEO / GEO agent. BLOCKED: do not start.** Brian will supply the instructions first. Do not design, scaffold, or execute anything for it until those arrive.
