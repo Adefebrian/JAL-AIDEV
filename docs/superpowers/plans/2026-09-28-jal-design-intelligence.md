@@ -1,0 +1,55 @@
+# JAL Design Intelligence (v0.3.0): build plan
+
+Spec: `docs/superpowers/specs/2026-09-28-jal-design-intelligence-design.md`. Branch: `feat/design-intelligence-v0.3.0`.
+Research digests (inputs): `<scratchpad>/ds-research/{astryx,carbon,material,bang-motion,designmd}.md`.
+
+## Rules for every parallel worker
+
+- Touch ONLY the files you own. Other workers are editing other files at the same time.
+- Never run `git commit`, `git checkout`, `git reset`, `git stash`, `git restore`, or `git clean`. The controller commits.
+- No em-dash anywhere in any file you write.
+- Report: files written, commands run with real output, open concerns.
+
+## Wave 1 (parallel, disjoint files)
+
+| ID | Owner agent | Owns | Deliverable |
+|----|-------------|------|-------------|
+| W1a | jal-backend | `mcp/jal-design/jev.ts`, `mcp/jal-design/server.ts`, `mcp/jal-design/*.test.ts` for those | JEV client + zero-dep stdio MCP server + CLI |
+| W1b | jal-qa | `mcp/jal-design/audit.ts`, `mcp/jal-design/audit.test.ts`, `mcp/jal-design/fixtures/*` | CDP UI audit + bad/good fixtures |
+| W2 | jal-frontend | `hooks/guardrails.mjs`, `hooks/guardrails.test.mjs` | write-time blocks: gradient, blurred shadow, side stripe, emoji |
+| W3 | jal-ux | `skills/jal-ui-taste/SKILL.md`, `skills/jal-standards/SKILL.md`, `skills/jal-frontend-rules/SKILL.md` | core token + law rewrite |
+| W4 | jal-ux | `skills/jal-design-systems/**` | lens skill + astryx/carbon/material references |
+| W5 | jal-ux | `skills/jal-motion/**` | motion skill |
+| W6 | jal-ux | `templates/monorepo/packages/ui/src/tokens.css`, `templates/monorepo/packages/ui/src/ui.css` (and template web CSS only if a token rename forces it) | template adopts new core tokens, stays green |
+
+### Shared interfaces (W1a and W1b must match exactly)
+
+```ts
+// audit.ts (W1b)
+export type Violation = { rule: string; width: number; selector: string; detail: string };
+export type AuditReport = { status: "PASS" | "FAIL" | "SKIPPED"; reason?: string; widths: number[]; violations: Violation[] };
+export async function runAudit(url: string, opts?: { widths?: number[]; chromePath?: string; timeoutMs?: number }): Promise<AuditReport>;
+
+// jev.ts (W1a)
+export type JevQuestion =
+  | { type: "choice"; instructions: unknown; criteria: Record<string, unknown> }
+  | { type: "score"; instructions: unknown; criteria: unknown[] }
+  | { type: "noul"; instructions: unknown };
+export type JevResult =
+  | { verified: true; model: string; answers: Record<string, unknown> }
+  | { verified: false; stamp: "UNVERIFIED BY JEV"; error: string };
+export async function decide(
+  req: { state: unknown; questions: Record<string, JevQuestion> },
+  opts?: { apiKey?: string; fetchImpl?: typeof fetch; retries?: number; baseDelayMs?: number; timeoutMs?: number },
+): Promise<JevResult>;
+```
+
+Server (W1a): newline-delimited JSON-RPC 2.0 over stdio. Methods `initialize` (echo client protocolVersion, serverInfo `jal-design`), `notifications/initialized`, `tools/list`, `tools/call`. Tools: `jev_decide` {state, questions} and `ui_audit` {url, widths?}. CLI: `bun server.ts decide <file|->` and `bun server.ts audit <url>`. Key from env `JEV_API_KEY`. Endpoint `https://api.typesafe.ai/v1/systemone`, model `jev-latest`.
+
+## Wave 2 (after W1a..W5)
+
+- **W7 integration** (controller or jal-ux): rewrite `agents/jal-ux.md`, update `agents/jal-frontend.md`, rewrite `commands/jal-ui.md`, wire `.mcp.json` (jal-design + designmd), update `README.md`, bump `plugin.json` to 0.3.0.
+
+## Wave 3
+
+- **W8 verification**: hook tests, MCP stdio round trip, live JEV call, audit FAILs bad fixture and PASSes good fixture, template green and starter passes audit, then a real `/jal-ui` build from zero with JEV log + audit PASS + screenshots at 375 and 1280.
