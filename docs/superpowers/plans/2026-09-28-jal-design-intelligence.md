@@ -53,3 +53,17 @@ Server (W1a): newline-delimited JSON-RPC 2.0 over stdio. Methods `initialize` (e
 ## Wave 3
 
 - **W8 verification**: hook tests, MCP stdio round trip, live JEV call, audit FAILs bad fixture and PASSes good fixture, template green and starter passes audit, then a real `/jal-ui` build from zero with JEV log + audit PASS + screenshots at 375 and 1280.
+
+## Wave 2b: JEV as judge across all of JAL-AIDEV (added by Brian, 2026-09-28)
+
+JEV judges bounded decisions in every domain; agents still create. Hard law stays mechanical and outside JEV.
+
+| ID | Owner agent | Owns | Deliverable |
+|----|-------------|------|-------------|
+| W1c | jal-backend | `mcp/jal-design/jev.ts`, `mcp/jal-design/server.ts`, their tests | secret redaction before send, decision log to `.jal/decisions/*.jsonl`, `decision_id` param |
+| W9 | jal-principal | `skills/jal-jev/**`, `agents/jal-jev.md` | decision catalog (IDs, questions, thresholds, state guidance) + the judge agent |
+| W10 | jal-lead | the 12 non-UI agents, `commands/jal-orchestrate.md`, `commands/jal-ship.md`, `commands/jal-review.md`, `hooks/session-context.sh`, `hooks/prompt-reminder.sh` | JEV decision points wired into every agent, advanced parallel orchestration protocol, auto-routing on every run |
+
+Decision catalog IDs (shared contract for W9 and W10): `orch.route`, `orch.parallel`, `orch.model`, `orch.escalate`, `orch.loop_exit`, `ui.lens`, `ui.region_gate`, `ui.designmd_screen`, `ui.final_taste`, `be.placement`, `be.api_quality`, `be.migration_risk`, `be.new_tech`, `sec.severity`, `sec.false_positive`, `sec.ship_block`, `sec.input_screen`, `qa.failure_class`, `qa.test_selection`, `qa.coverage`, `qa.release_go`, `rev.risk`, `rev.ship`, `mem.promote`.
+
+MCP tool names (verify after install): `mcp__plugin_jal-aidev_jal-design__jev_decide`, `mcp__plugin_jal-aidev_jal-design__ui_audit`, `mcp__plugin_jal-aidev_designmd__*`.
