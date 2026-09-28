@@ -82,3 +82,17 @@ MCP tool names (verify after install): `mcp__plugin_jal-aidev_jal-design__jev_de
    - Output tells the user in plain words what was done and what to do next.
    - Open design question to settle with Brian at the start of this phase: one master command (for example `/jal <goal>`) versus a very small set of plain-verb commands (build, fix, check, ship, docs). The trade-off is simplicity versus discoverability.
 5. **SEO / GEO agent. BLOCKED: do not start.** Brian will supply the instructions first. Do not design, scaffold, or execute anything for it until those arrive.
+
+## PAUSED 2026-09-28 (Brian stepped away). Resume here.
+
+Branch `feat/design-intelligence-v0.3.0`, all local, nothing pushed yet.
+
+Done and committed: W1a jev+server, W1b audit (17 rules incl. overlap, overflow-parent, clipped-text, icon-text-collision), W1c redaction+decision log, W2 hook blocks (gradient, shadow, side stripe, emoji), W3 core taste and law (rule 0 no overlap, border-control #8f8e89), W4 design-system lenses, W5 motion, W6 template tokens + ui.css, W9 JEV catalog + jal-jev agent, W10 JEV in all 12 non-UI agents + orchestration + /jal-review gates, plus .mcp.json wiring (jal-design, designmd) and session hooks.
+
+Not done:
+1. W7a was STOPPED mid-work. Only `templates/monorepo/packages/ui/src/tokens.css` has an uncommitted partial edit; review it or discard and redo. Still to do: rewrite agents/jal-ux.md (pipeline + exact tool list, omitting designmd upload/delete), update agents/jal-frontend.md, rewrite commands/jal-ui.md in plain language, tokens (border-control, per-status borders, scrim, 640px Bento comment), ui.css (control border, 640px Bento, no-overflow rows, chevron padding). Audit rule names to reference are the 17 above.
+2. README + plugin.json to 0.3.0.
+3. W8 verification: fresh plugin update, confirm agents see the MCP tools (headless `claude -p` tool listing), audit bad/good fixtures, audit the template starter, real /jal-ui build from zero with JEV log + ui_audit PASS + screenshots at 375 and 1280.
+4. Merge to main, tag v0.3.0, push, give team update commands.
+
+Open decision for Brian: /jal-review treats a SKIPPED ui_audit (no Chrome) as FAIL for frontend projects. Kept strict pending his call.
