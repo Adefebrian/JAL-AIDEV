@@ -111,3 +111,36 @@ The agent never picks from the pool by taste alone.
 - Hook, MCP, and audit tests are green, including new fixtures for the noyzzi exemption and the reduced-motion rule.
 - The template frame core has passing tests, and the template builds with three, R3F, and Tailwind through Bun.build in a proof project.
 - A real headless `/jal-immersive` build of a one-page immersive site finishes with `ui_audit` PASS at every width, a JEV decision log, and screenshots.
+
+## PAUSED checkpoint (2026-09-29, Brian asked to pause)
+
+Branch `feat/immersive-v0.4.0` (built on the unmerged v0.3.0 branch). Last lead commit `7e5d1fe`. Nothing pushed, nothing merged.
+
+Background jobs that were still running at pause (their edits are uncommitted until reviewed):
+- W-material: full Material Web into JAL Core. It edits `jal-design-system` `components.md`, `foundations.md`, `sources.md`, `SKILL.md`, and the template `ui.css`.
+- W-coverage: the 8 immersive repos audited file by file, with gap fills. It edits `jal-immersive` `SKILL.md` and its references, plus the new `coverage.md` and `procedural-geometry.md`, and adds Animata gaps to `jal-motion` `components.md`.
+- The Halo `/jal-ui` immersive E2E in the scratch folder `e2e-imm`.
+
+Resume, in order:
+1. Review and commit W-material, then W-coverage (check the diffs and run the tests).
+2. Add the OriginKit clean-room recipes R45 to R52 and the `md.*` rows to `jal-motion` `components.md` and `recipe-index.md`. Add a hallmark line to `sources.md`.
+3. Fill the recipe-index spec gaps:
+   - side nav
+   - KPI tiles and charts
+   - pricing, testimonial, hero, and footer blocks
+   - the `live_dom` and `poster_steps` demo builds
+   - the ocean mobile fallback
+   - the law note for 2D canvas
+4. Halo proof: check its result, run `ui_audit` at all widths, take screenshots at 375 and 1280, serve it locally for Brian, and read the JEV log.
+5. Full verification:
+   - hooks, MCP, template, and docs-site tests
+   - the em-dash and frontmatter sweep
+   - a headless plugin load that shows exactly 7 commands
+6. Update the docs-site for the spectrum, the learning loop, GSAP in jal-immersive, and OriginKit.
+7. With Brian's OK: merge to main, tag v0.3.0 and v0.4.0, push, and send the team update commands.
+
+Waiting on Brian:
+- a new koboyo key (koboyo.com/mcp)
+- `COOLIFY_API_TOKEN` in his environment, for the jal-docs deploy step
+
+SEO/GEO stays on hold.
