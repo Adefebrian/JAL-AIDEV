@@ -120,6 +120,10 @@ describe("jal-design MCP server (stdio)", () => {
     }
     const jevTool = res.result.tools.find((t: any) => t.name === "jev_decide");
     expect(jevTool.inputSchema.required).toEqual(["state", "questions"]);
+    expect(jevTool.inputSchema.properties.decision_id).toBeDefined();
+    expect(jevTool.inputSchema.properties.decision_id.type).toBe("string");
+    expect(jevTool.inputSchema.properties.domain).toBeDefined();
+    expect(jevTool.inputSchema.properties.domain.type).toBe("string");
     const auditTool = res.result.tools.find((t: any) => t.name === "ui_audit");
     expect(auditTool.inputSchema.required).toEqual(["url"]);
   });

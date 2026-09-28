@@ -33,6 +33,14 @@ const TOOLS: ToolDef[] = [
           type: "object",
           description: "Map of question key to JevQuestion (choice/score/noul).",
         },
+        decision_id: {
+          type: "string",
+          description: "Decision catalog ID, e.g. \"ui.region_gate\". Domain defaults to the prefix before the first dot.",
+        },
+        domain: {
+          type: "string",
+          description: "Owning domain for the decision log, e.g. \"ui\", \"be\", \"sec\", \"qa\", \"rev\", \"orch\", \"mem\".",
+        },
       },
       required: ["state", "questions"],
     },
@@ -92,7 +100,10 @@ async function handleJevDecide(args: any) {
     throw new Error("jev_decide requires { state, questions }");
   }
   const questions = args.questions as Record<string, JevQuestion>;
-  const result = await decide({ state: args.state, questions });
+  const decisionOpts: { decision_id?: string; domain?: string } = {};
+  if (typeof args.decision_id === "string") decisionOpts.decision_id = args.decision_id;
+  if (typeof args.domain === "string") decisionOpts.domain = args.domain;
+  const result = await decide({ state: args.state, questions }, decisionOpts);
   return {
     content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
   };
