@@ -2,19 +2,89 @@
 // they read the head, meta, links, JSON-LD, anchors and simple elements that
 // a prerendered page carries, which is what the audit checks.
 
+// Named references a prerenderer or CMS commonly emits. Names are case
+// sensitive in HTML (&Eacute; is not &eacute;), so the lookup is exact first.
 const NAMED: Record<string, string> = {
-  amp: "&", lt: "<", gt: ">", quot: '"', apos: "'", nbsp: " ", ldquo: "“", rdquo: "”",
-  lsquo: "‘", rsquo: "’", hellip: "…", copy: "©", reg: "®", middot: "·", times: "×",
+  amp: "&", lt: "<", gt: ">", quot: '"', apos: "'", nbsp: "\u00a0", ensp: "\u2002", emsp: "\u2003", thinsp: "\u2009",
+  ldquo: "\u201c", rdquo: "\u201d", lsquo: "\u2018", rsquo: "\u2019", sbquo: "\u201a", bdquo: "\u201e", laquo: "\u00ab", raquo: "\u00bb",
+  hellip: "\u2026", ndash: "\u2013", mdash: "\u2014", minus: "\u2212", bull: "\u2022", middot: "\u00b7", times: "\u00d7", divide: "\u00f7",
+  copy: "\u00a9", reg: "\u00ae", trade: "\u2122", deg: "\u00b0", plusmn: "\u00b1", frac12: "\u00bd", frac14: "\u00bc", frac34: "\u00be",
+  sup2: "\u00b2", sup3: "\u00b3", euro: "\u20ac", pound: "\u00a3", yen: "\u00a5", cent: "\u00a2", sect: "\u00a7", para: "\u00b6",
+  aacute: "\u00e1", eacute: "\u00e9", iacute: "\u00ed", oacute: "\u00f3", uacute: "\u00fa", agrave: "\u00e0", egrave: "\u00e8",
+  auml: "\u00e4", euml: "\u00eb", iuml: "\u00ef", ouml: "\u00f6", uuml: "\u00fc", ntilde: "\u00f1", ccedil: "\u00e7", szlig: "\u00df",
+  Aacute: "\u00c1", Eacute: "\u00c9", Oacute: "\u00d3", Uacute: "\u00da", Ntilde: "\u00d1", Ouml: "\u00d6", Uuml: "\u00dc",
+  zwj: "\u200d", zwnj: "\u200c", shy: "\u00ad",
 };
 
+/**
+ * Decode character references exactly once: &amp;#x27; is the text "&#x27;",
+ * not an apostrophe. Numeric references outside Unicode stay as written.
+ */
 export function decodeEntities(s: string): string {
-  return s.replace(/&(#x[0-9a-f]+|#\d+|[a-z]+);/gi, (m, e: string) => {
+  return s.replace(/&(#[xX][0-9a-fA-F]+|#\d+|[a-zA-Z][a-zA-Z0-9]*);/g, (m, e: string) => {
     if (e[0] === "#") {
       const code = e[1] === "x" || e[1] === "X" ? parseInt(e.slice(2), 16) : parseInt(e.slice(1), 10);
-      return Number.isFinite(code) ? String.fromCodePoint(code) : m;
+      return Number.isFinite(code) && code > 0 && code <= 0x10ffff ? String.fromCodePoint(code) : m;
     }
-    return NAMED[e.toLowerCase()] ?? m;
+    return NAMED[e] ?? NAMED[e.toLowerCase()] ?? m;
   });
+}
+
+// Elements that start a new line of text for a reader (innerText semantics).
+const BLOCK_TAGS = /^(address|article|aside|blockquote|br|caption|dd|details|dialog|div|dl|dt|fieldset|figcaption|figure|footer|form|h[1-6]|header|hr|li|main|nav|ol|p|pre|section|summary|table|tbody|td|tfoot|th|thead|tr|ul|option|legend|button|label)$/i;
+
+/**
+ * The text a reader sees: block boundaries become spaces, inline tags join
+ * their neighbours ("<a>rates</a>." reads "rates."), entities decode once.
+ */
+export function readableText(fragment: string): string {
+  const html = stripNonRendered(fragment);
+  const text = html.replace(/<\/?([a-zA-Z][\w:-]*)\b(?:"[^"]*"|'[^']*'|[^'">])*>/g, (_m, name: string) => (BLOCK_TAGS.test(name) ? " " : ""));
+  return collapse(decodeEntities(text.replace(/<[^>]*>/g, " ")));
+}
+
+/** A comparison key: readable text, NFC, whitespace folded, no space before closing punctuation. */
+export function textKey(s: string): string {
+  return collapse(s.normalize("NFC").replace(/[\u00a0\u2002\u2003\u2009\u202f]/g, " ").replace(/[\u00ad\u200b\u200c\u200d]/g, ""))
+    .replace(/\s+([.,;:!?)\]}\u2019\u201d%])/g, "$1")
+    .replace(/([(\[{\u2018\u201c])\s+/g, "$1");
+}
+
+export type TagToken = { name: string; closing: boolean; selfClosing: boolean; index: number; end: number; raw: string };
+
+const VOID_TAGS = /^(area|base|br|col|embed|hr|img|input|link|meta|source|track|wbr)$/i;
+
+/** Every start and end tag in document order (comments and non-rendered elements removed by the caller). */
+export function tagTokens(html: string): TagToken[] {
+  const out: TagToken[] = [];
+  const re = /<(\/?)([a-zA-Z][\w:-]*)\b(?:"[^"]*"|'[^']*'|[^'">])*>/g;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(html))) {
+    const name = m[2].toLowerCase();
+    out.push({ name, closing: m[1] === "/", selfClosing: VOID_TAGS.test(name) || m[0].endsWith("/>"), index: m.index, end: m.index + m[0].length, raw: m[0] });
+  }
+  return out;
+}
+
+/**
+ * The index where the content that follows position `from` ends: the first end
+ * tag that closes an element opened before `from` (the parent), or the first
+ * token `stop` accepts at the same nesting level. Returns html.length at the end.
+ */
+export function siblingRunEnd(html: string, tokens: TagToken[], from: number, stop: (t: TagToken) => boolean): number {
+  let depth = 0;
+  for (const t of tokens) {
+    if (t.index < from) continue;
+    if (t.selfClosing && !t.closing) continue;
+    if (t.closing) {
+      if (depth === 0) return t.index;
+      depth--;
+      continue;
+    }
+    if (depth === 0 && stop(t)) return t.index;
+    depth++;
+  }
+  return html.length;
 }
 
 export function collapse(s: string): string {

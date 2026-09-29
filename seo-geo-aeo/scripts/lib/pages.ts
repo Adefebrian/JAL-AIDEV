@@ -64,8 +64,16 @@ export function classifyPath(
   if (bare === "/") return "home";
   const slug = bare.slice(1).toLowerCase();
   for (const [kind, re] of KIND_PATTERNS) if (re.test(slug)) return kind;
+  // A one-segment slug that ends with a kind word: /youth-academy, /padel-rates.
+  if (!slug.includes("/")) {
+    const last = slug.split(/[-_]/).pop() ?? "";
+    for (const [kind, re] of KIND_PATTERNS) if (TOKEN_KINDS.has(kind) && last !== slug && re.test(last)) return kind;
+  }
   return "other";
 }
+
+// Kinds whose word can close a longer slug without changing its meaning.
+const TOKEN_KINDS = new Set<PageKind>(["money", "programme"]);
 
 export function isTrustKind(kind: PageKind): boolean {
   return kind === "privacy" || kind === "terms";

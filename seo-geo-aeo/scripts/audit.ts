@@ -14,8 +14,9 @@ import { measureDensity, DENSITY_WARN_BELOW } from "./density.ts";
 import { finding, worst, type Finding, type Status } from "./lib/findings.ts";
 import {
   anchors, bodyHtml, collapse, decodeEntities, digitsOnly, findElements, findTags, hasNoindex, headHtml, htmlLang,
-  isType, jsonLdBlocks, ldNodes, ldTypes, linkTags, meta, normText, pageTitle, pngSize, relIncludes, removeElements,
-  textContent, visibleText, wordCount, type LdBlock, type LdNode,
+  isType, jsonLdBlocks, ldNodes, ldTypes, linkTags, meta, normText, pageTitle, parseAttrs, pngSize, readableText, relIncludes,
+  removeElements, siblingRunEnd, stripNonRendered, tagTokens, textContent, textKey, visibleText, wordCount,
+  type LdBlock, type LdNode, type TagToken,
 } from "./lib/html.ts";
 import { allowlistFromConfig, HostNotAllowedError, httpRequest, type Allowlist, type FetchLike, type Hop } from "./lib/http.ts";
 import { classifyPath, isTrustKind, langOfPath, normPath, type PageKind } from "./lib/pages.ts";
@@ -344,12 +345,26 @@ function internalLinks(p: Page, origin: string): string[] {
   return [...out];
 }
 
+/**
+ * The site's own hosts (the apex, www and any subdomain such as app. or
+ * link.) are not third-party sources. IP and single-label hosts match exactly.
+ */
+export function sameSite(host: string, siteHost: string): boolean {
+  const a = host.toLowerCase();
+  const s = siteHost.toLowerCase();
+  if (a === s) return true;
+  const exactOnly = (h: string) => /:\d+$/.test(h) || /^\d+\.\d+\.\d+\.\d+$/.test(h) || h.startsWith("[") || !h.includes(".");
+  if (exactOnly(a) || exactOnly(s)) return false;
+  const base = s.replace(/^www\./, "");
+  return a === base || a.endsWith(`.${base}`);
+}
+
 function outboundAnchors(fragment: string, base: string, host: string): Array<{ href: string; text: string }> {
   const out: Array<{ href: string; text: string }> = [];
   for (const a of anchors(fragment)) {
     try {
       const u = new URL(a.href, base);
-      if ((u.protocol === "http:" || u.protocol === "https:") && u.host !== host && !SOCIAL_OR_UTILITY.test(u.hostname)) out.push({ href: u.href, text: a.text });
+      if ((u.protocol === "http:" || u.protocol === "https:") && !sameSite(u.host, host) && !SOCIAL_OR_UTILITY.test(u.hostname)) out.push({ href: u.href, text: a.text });
     } catch {
       // skip
     }
@@ -380,23 +395,117 @@ function placeNames(config: SeoConfig): string[] {
 
 export type QA = { q: string; a: string };
 
-export function visibleFaq(body: string): QA[] {
-  const out: QA[] = [];
-  for (const d of findElements(body, "details")) {
-    const sum = findElements(d.inner, "summary")[0];
-    if (!sum) continue;
-    out.push({ q: normText(sum.inner), a: normText(d.inner.slice(sum.end)) });
+// A heading that titles an FAQ section, in English or Indonesian.
+const FAQ_HEADING = /(^|[^\p{L}])(faqs?|frequently asked|questions|q\s*&\s*a|pertanyaan|tanya jawab)([^\p{L}]|$)/iu;
+const FAQ_CONTAINER = /(^|[\s_-])faqs?([\s_-]|$)/i;
+const isHeading = (t: TagToken) => !t.closing && /^h[1-6]$/.test(t.name);
+const headingLevel = (t: TagToken) => Number(t.name.slice(1));
+
+type Located = QA & { index: number };
+
+/** Content after `from` up to the next heading (or the end of the parent), climbing out of a wrapper that holds only the heading. */
+function answerAfter(html: string, tokens: TagToken[], from: number): string {
+  let start = from;
+  for (let climb = 0; climb < 3; climb++) {
+    // The answer also stops at the next heading nested in a sibling wrapper.
+    const nextHeading = tokens.find((t) => t.index >= start && isHeading(t))?.index ?? html.length;
+    const end = Math.min(nextHeading, siblingRunEnd(html, tokens, start, (t) => isHeading(t) || t.name === "details" || t.name === "dt"));
+    const text = readableText(html.slice(start, end));
+    if (text) return text;
+    const closer = tokens.find((t) => t.index === end && t.closing);
+    if (!closer) return "";
+    start = closer.end;
   }
-  for (const dl of findElements(body, "dl")) {
-    for (const m of dl.inner.matchAll(/<dt\b[^>]*>([\s\S]*?)<\/dt>\s*<dd\b[^>]*>([\s\S]*?)<\/dd>/gi)) {
-      out.push({ q: normText(m[1]), a: normText(m[2]) });
+  return "";
+}
+
+/** [start, end) ranges of the body that hold an FAQ: a titled FAQ section, or an element whose id or class names it. */
+function faqScopes(html: string, tokens: TagToken[]): Array<{ start: number; end: number; level: number; titleIndex: number }> {
+  const scopes: Array<{ start: number; end: number; level: number; titleIndex: number }> = [];
+  for (let i = 0; i < tokens.length; i++) {
+    const t = tokens[i];
+    if (t.closing) continue;
+    if (isHeading(t)) {
+      const close = tokens.find((x, j) => j > i && x.closing && x.name === t.name);
+      if (!close) continue;
+      if (!FAQ_HEADING.test(readableText(html.slice(t.end, close.index)))) continue;
+      const level = headingLevel(t);
+      const end = siblingRunEnd(html, tokens, close.end, (x) => isHeading(x) && headingLevel(x) <= level);
+      scopes.push({ start: close.end, end, level, titleIndex: t.index });
+      continue;
+    }
+    if (t.selfClosing) continue;
+    const attrs = parseAttrs(t.raw);
+    const named = FAQ_CONTAINER.test(attrs.id ?? "") || (attrs.class ?? "").split(/\s+/).some((c) => FAQ_CONTAINER.test(c)) || /schema\.org\/FAQPage/i.test(attrs.itemtype ?? "");
+    if (named) scopes.push({ start: t.end, end: siblingRunEnd(html, tokens, t.end, () => false), level: 0, titleIndex: -1 });
+  }
+  return scopes;
+}
+
+/**
+ * The FAQ a reader sees: questions inside an FAQ section (a heading such as
+ * "Frequently asked questions" or an element named faq), plus details/summary
+ * and dt/dd pairs phrased as questions anywhere. A fact list ("Address",
+ * "Hours") is not an FAQ unless it sits inside one.
+ */
+export function visibleFaq(body: string): QA[] {
+  const html = stripNonRendered(body);
+  const tokens = tagTokens(html);
+  const scopes = faqScopes(html, tokens);
+  const inScope = (i: number) => scopes.some((s) => i >= s.start && i < s.end);
+  const out: Located[] = [];
+  for (const s of scopes) {
+    for (let i = 0; i < tokens.length; i++) {
+      const t = tokens[i];
+      if (t.index < s.start || t.index >= s.end || !isHeading(t) || t.index === s.titleIndex) continue;
+      if (s.level && headingLevel(t) <= s.level) continue;
+      const close = tokens.find((x, j) => j > i && x.closing && x.name === t.name);
+      if (!close) continue;
+      const q = readableText(html.slice(t.end, close.index));
+      if (!q || (s.level === 0 && FAQ_HEADING.test(q) && !q.endsWith("?"))) continue;
+      out.push({ q, a: answerAfter(html, tokens, close.end), index: t.index });
     }
   }
-  for (const m of body.matchAll(/<h([2-4])\b[^>]*>([\s\S]*?)<\/h\1>\s*<p\b[^>]*>([\s\S]*?)<\/p>/gi)) {
-    const q = normText(m[2]);
-    if (q.endsWith("?")) out.push({ q, a: normText(m[3]) });
+  for (const d of findElements(html, "details")) {
+    const sum = findElements(d.inner, "summary")[0];
+    if (!sum) continue;
+    const q = readableText(sum.inner);
+    if (inScope(d.index) || q.endsWith("?")) out.push({ q, a: readableText(d.inner.slice(sum.end)), index: d.index });
   }
-  return out.filter((x) => x.q);
+  for (const dl of findElements(html, "dl")) {
+    const pairs = /<dt\b[^>]*>((?:(?!<\/?dt\b)[\s\S])*?)<\/dt\s*>\s*<dd\b[^>]*>((?:(?!<\/?dd\b|<dt\b)[\s\S])*?)<\/dd\s*>/gi;
+    for (const m of dl.inner.matchAll(pairs)) {
+      const q = readableText(m[1]);
+      if (inScope(dl.index) || q.endsWith("?")) out.push({ q, a: readableText(m[2]), index: dl.index + (m.index ?? 0) });
+    }
+  }
+  const seen = new Set<string>();
+  return out
+    .filter((x) => x.q)
+    .sort((a, b) => a.index - b.index)
+    .filter((x) => (seen.has(`${x.index}|${x.q}`) ? false : (seen.add(`${x.index}|${x.q}`), true)))
+    .map(({ q, a }) => ({ q, a }));
+}
+
+/** Question-shaped headings outside any FAQ section, with the content that follows each. */
+export function questionHeadings(body: string): QA[] {
+  const html = stripNonRendered(body);
+  const tokens = tagTokens(html);
+  const out: QA[] = [];
+  for (let i = 0; i < tokens.length; i++) {
+    const t = tokens[i];
+    if (!isHeading(t)) continue;
+    const close = tokens.find((x, j) => j > i && x.closing && x.name === t.name);
+    if (!close) continue;
+    const q = readableText(html.slice(t.end, close.index));
+    if (q.endsWith("?")) out.push({ q, a: answerAfter(html, tokens, close.end) });
+  }
+  return out;
+}
+
+/** Distinct questions a page shows with an answer: its FAQ plus question-shaped headings. */
+export function shownQuestions(body: string): number {
+  return new Set([...visibleFaq(body), ...questionHeadings(body)].filter((x) => x.a).map((x) => textKey(x.q))).size;
 }
 
 export function markupFaq(nodes: LdNode[]): QA[] {
@@ -406,28 +515,44 @@ export function markupFaq(nodes: LdNode[]): QA[] {
     for (const q of entities) {
       if (!q || typeof q !== "object") continue;
       const ans = Array.isArray(q.acceptedAnswer) ? q.acceptedAnswer[0] : q.acceptedAnswer;
-      out.push({ q: normText(q.name ?? ""), a: normText(ans?.text ?? "") });
+      out.push({ q: readableText(String(q.name ?? "")), a: readableText(String(ans?.text ?? "")) });
     }
   }
   return out;
 }
 
-function faqParity(p: Page): { visible: QA[]; markup: QA[]; problems: string[] } {
-  const visible = visibleFaq(p.body);
-  const markup = markupFaq(p.nodes);
+/**
+ * FAQPage markup against the rendered FAQ. Each markup question must be shown
+ * (in the FAQ, as a question heading, or verbatim in the page text) with the
+ * same answer; each question the FAQ section shows must be in the markup.
+ */
+export function faqParityOf(path: string, body: string, nodes: LdNode[]): { visible: QA[]; markup: QA[]; problems: string[] } {
+  const visible = visibleFaq(body);
+  const markup = markupFaq(nodes);
   const problems: string[] = [];
   if (markup.length === 0) return { visible, markup, problems };
-  if (visible.length === 0) {
-    problems.push(`${p.path} has FAQPage markup (${markup.length} questions) but no visible FAQ`);
+  const headings = questionHeadings(body);
+  const pageKey = textKey(readableText(body));
+  if (visible.length === 0 && headings.length === 0 && !markup.some((m) => pageKey.includes(textKey(m.q)))) {
+    problems.push(`${path} has FAQPage markup (${markup.length} questions) but no visible FAQ`);
     return { visible, markup, problems };
   }
+  const markupKeys = new Set(markup.map((m) => textKey(m.q)));
   for (const m of markup) {
-    const v = visible.find((x) => x.q === m.q);
-    if (!v) problems.push(`${p.path} markup question not shown: "${m.q.slice(0, 60)}"`);
-    else if (v.a !== m.a) problems.push(`${p.path} answer differs from markup for "${m.q.slice(0, 60)}"`);
+    const qk = textKey(m.q);
+    const ak = textKey(m.a);
+    const v = visible.find((x) => textKey(x.q) === qk) ?? headings.find((x) => textKey(x.q) === qk);
+    if (v) {
+      if (textKey(v.a) !== ak) problems.push(`${path} answer differs from markup for "${m.q.slice(0, 60)}"`);
+    } else if (!pageKey.includes(qk)) problems.push(`${path} markup question not shown: "${m.q.slice(0, 60)}"`);
+    else if (!pageKey.includes(ak)) problems.push(`${path} markup answer not shown for "${m.q.slice(0, 60)}"`);
   }
-  for (const v of visible) if (!markup.some((m) => m.q === v.q)) problems.push(`${p.path} shown question missing from markup: "${v.q.slice(0, 60)}"`);
+  for (const v of visible) if (!markupKeys.has(textKey(v.q))) problems.push(`${path} shown question missing from markup: "${v.q.slice(0, 60)}"`);
   return { visible, markup, problems };
+}
+
+function faqParity(p: Page): { visible: QA[]; markup: QA[]; problems: string[] } {
+  return faqParityOf(p.path, p.body, p.nodes);
 }
 
 // ---------------------------------------------------------------------------
@@ -456,6 +581,72 @@ const checkF02: Check = (ctx) => {
   return finding("F-02", "PASS", `${ctx.forbidden.length} forbidden patterns scanned across ${scanned} served bodies and files with no match; the project's forbidden-claims test must also pass in bun test`, undefined, "audit");
 };
 
+/** The top-level JSON-LD nodes of a page (each @graph entry, or the block itself). */
+function topNodes(p: Page): LdNode[] {
+  return p.ld.flatMap((b) => {
+    const d = b.data as any;
+    if (!d || typeof d !== "object") return [];
+    const list = Array.isArray(d) ? d : Array.isArray(d["@graph"]) ? d["@graph"] : [d];
+    return list.filter((n: unknown): n is LdNode => !!n && typeof n === "object");
+  });
+}
+
+/** A top-level node with an @id that belongs to another URL is a shared entity, not this page's content. */
+function isSharedNode(n: LdNode, p: Page): boolean {
+  const id = typeof n["@id"] === "string" ? n["@id"] : "";
+  if (!id) return false;
+  try {
+    return canonicalKey(new URL(id.split("#")[0] || p.url, p.url).href) !== canonicalKey(p.url);
+  } catch {
+    return false;
+  }
+}
+
+function offersIn(n: LdNode): LdNode[] {
+  return ldNodes(n).filter((x) => isType(x, "Offer") && x.price !== undefined);
+}
+
+function ownOffers(p: Page): LdNode[] {
+  return topNodes(p).filter((n) => !isSharedNode(n, p)).flatMap(offersIn);
+}
+
+function sharedOffers(ctx: Ctx): Map<string, LdNode[]> {
+  const out = new Map<string, LdNode[]>();
+  for (const p of ctx.indexable) {
+    for (const n of topNodes(p)) {
+      if (!isSharedNode(n, p)) continue;
+      const id = new URL(n["@id"], p.url).href;
+      const offers = out.has(id) ? [] : offersIn(n);
+      if (offers.length) out.set(id, offers);
+    }
+  }
+  return out;
+}
+
+const MULTIPLIER: Record<string, number> = { k: 1e3, rb: 1e3, ribu: 1e3, thousand: 1e3, jt: 1e6, juta: 1e6, million: 1e6, miliar: 1e9, billion: 1e9 };
+
+/** Every amount the text shows: "Rp 1.575.000", "175,000", "Rp 1.1 million", "1,8 juta", "125k". */
+export function shownAmounts(text: string): Set<number> {
+  const out = new Set<number>();
+  for (const m of text.matchAll(/(\d+(?:[.,]\d+)*)\s*(k|rb|ribu|thousand|jt|juta|million|miliar|billion)?(?![\p{L}])/giu)) {
+    const raw = m[1];
+    const mult = m[2] ? MULTIPLIER[m[2].toLowerCase()] ?? 1 : 1;
+    const values: number[] = [];
+    if (/^\d{1,3}([.,]\d{3})+$/.test(raw)) values.push(Number(raw.replace(/[.,]/g, "")));
+    if (/^\d+([.,]\d+)?$/.test(raw)) values.push(Number(raw.replace(",", ".")));
+    if (/^\d+$/.test(raw)) values.push(Number(raw));
+    for (const v of values) if (Number.isFinite(v)) out.add(Math.round(v * mult));
+  }
+  return out;
+}
+
+function priceShown(price: unknown, amounts: Set<number>): boolean {
+  const num = Number(price);
+  if (Number.isFinite(num)) return amounts.has(Math.round(num));
+  const d = Number(digitsOnly(String(price)));
+  return !d || amounts.has(d);
+}
+
 const checkF03: Check = (ctx) => {
   const problems: string[] = [];
   for (const p of ctx.indexable) {
@@ -463,19 +654,28 @@ const checkF03: Check = (ctx) => {
     const words = wordCount(visibleText(root));
     if (words < 30) problems.push(`${p.path} serves ${words} words to crawlers without JavaScript`);
     problems.push(...faqParity(p).problems);
-    const text = normText(visibleText(p.body));
+    // Decode once: visibleText already decoded, so a second decode would turn
+    // the shown text "&amp;lt;" into "<".
+    const text = textKey(readableText(p.body));
     for (const how of p.nodes.filter((n) => isType(n, "HowTo"))) {
       const steps = Array.isArray(how.step) ? how.step : how.step ? [how.step] : [];
       for (const s of steps) {
-        const label = normText(typeof s === "string" ? s : s?.name ?? s?.text ?? "");
+        const label = textKey(readableText(String(typeof s === "string" ? s : s?.name ?? s?.text ?? "")));
         if (label && !text.includes(label)) problems.push(`${p.path} HowTo step not shown: "${label.slice(0, 60)}"`);
       }
     }
-    const digits = digitsOnly(text);
-    for (const offer of p.nodes.filter((n) => isType(n, "Offer") && n.price !== undefined)) {
-      const num = Number(offer.price);
-      const d = Number.isFinite(num) ? String(Math.round(num)) : digitsOnly(String(offer.price));
-      if (d && !digits.includes(d)) problems.push(`${p.path} Offer price ${offer.price} is not shown on the page`);
+    for (const offer of ownOffers(p)) {
+      if (!priceShown(offer.price, shownAmounts(text))) problems.push(`${p.path} Offer price ${offer.price} is not shown on the page`);
+    }
+  }
+  // Offers of a shared entity (the venue node every page repeats by @id) are
+  // checked once: on the page the @id belongs to, else on any indexable page.
+  for (const [id, offers] of sharedOffers(ctx)) {
+    const owner = ctx.byUrl.get(canonicalKey(id.split("#")[0] || ctx.origin));
+    const pages = owner?.indexable ? [owner] : ctx.indexable;
+    const amounts = pages.map((p) => shownAmounts(textKey(readableText(p.body))));
+    for (const o of offers) {
+      if (!amounts.some((a) => priceShown(o.price, a))) problems.push(`${owner?.indexable ? owner.path : "no page"} does not show the Offer price ${o.price} of ${id}`);
     }
   }
   if (problems.length) return finding("F-03", "FAIL", short(problems), "prerender the page's own first paint inside #root and generate markup only from what the page shows", "audit");
@@ -787,8 +987,12 @@ const checkSEO09: Check = (ctx) => {
   if (home?.ok) {
     const preloads = linkTags(home.html).filter((a) => relIncludes(a, "preload") && (a.as ?? "") === "image");
     const homeImgs = findTags(home.body, "img");
-    if (homeImgs.length === 0) warns.push("home shows no hero img to preload");
-    else if (preloads.length === 0) warns.push("home does not preload its hero image");
+    // With no img in the served HTML the hero is drawn by JavaScript, so only
+    // an image preload in the head can start it early.
+    if (homeImgs.length === 0 && preloads.length === 0) warns.push("home preloads no image, and its served HTML has no img (a JavaScript-drawn hero starts late)");
+    else if (homeImgs.length === 0) {
+      // A preload with no served img to match: accepted, the rendered hero is checked by Lighthouse LCP.
+    } else if (preloads.length === 0) warns.push("home does not preload its hero image");
     else {
       const srcs = new Set(homeImgs.flatMap((t) => [t.attrs.src, ...(t.attrs.srcset ?? "").split(",").map((s) => s.trim().split(/\s+/)[0])]).filter(Boolean).map((s) => new URL(s!, home.url).pathname));
       const pre = preloads.flatMap((a) => [a.href, ...(a.imagesrcset ?? "").split(",").map((s) => s.trim().split(/\s+/)[0])]).filter(Boolean).map((s) => new URL(s!, home.url).pathname);
@@ -914,13 +1118,11 @@ const checkSEO13: Check = async (ctx) => {
   return finding("SEO-13", status, status === "PASS" ? `${ctx.adminPages.map((a) => a.path).join(", ")} noindex; ${plural(hashed.size, "hashed asset")} with X-Robots-Tag: noindex` : short([...fails, ...warns]), "send noindex on admin and private routes and X-Robots-Tag: noindex on hashed assets", "audit");
 };
 
-const checkSEO14: Check = (ctx) => {
-  const fails: string[] = [];
-  const warns: string[] = [];
-  const homeKey = canonicalKey(`${ctx.origin}/`);
+/** Clicks from home to every page an anchor reaches, over the fetched pages (language switches included: they are anchors). */
+function clickDepths(ctx: Ctx, homeKey: string): Map<string, number> {
   const depth = new Map<string, number>([[homeKey, 0]]);
   let frontier = [homeKey];
-  for (let d = 1; d <= 2; d++) {
+  for (let d = 1; frontier.length; d++) {
     const next: string[] = [];
     for (const k of frontier) {
       const p = ctx.byUrl.get(k);
@@ -935,14 +1137,35 @@ const checkSEO14: Check = (ctx) => {
     }
     frontier = next;
   }
+  return depth;
+}
+
+const checkSEO14: Check = (ctx) => {
+  const fails: string[] = [];
+  const warns: string[] = [];
+  const homeKey = canonicalKey(`${ctx.origin}/`);
+  // Breadth-first over every fetched page, so the evidence can say how deep a
+  // page really is, or that no anchor reaches it at all.
+  const depth = clickDepths(ctx, homeKey);
   const indexableKeys = new Set([...ctx.indexable.map((p) => canonicalKey(p.url)), ...ctx.sitemap.map((e) => canonicalKey(e.loc))]);
-  for (const k of indexableKeys) if (!depth.has(k)) fails.push(`${new URL(k).pathname} is more than 2 clicks from home`);
+  const deep: string[] = [];
+  const orphans: string[] = [];
+  for (const k of indexableKeys) {
+    const d = depth.get(k);
+    if (d === undefined) orphans.push(new URL(k).pathname);
+    else if (d > 2) deep.push(`${new URL(k).pathname} is ${d} clicks from home`);
+  }
+  fails.push(...deep);
+  if (orphans.length) fails.push(`${plural(orphans.length, "page")} that no anchor path from home reaches (only the sitemap or hreflang leads there): ${orphans.join(", ")}`);
 
   const kindPages = (kind: PageKind) => ctx.indexable.filter((p) => p.kind === kind);
+  const noFooter: string[] = [];
   for (const p of ctx.indexable) {
-    const footer = findElements(p.body, "footer")[0];
+    const info = findTags(p.body, "[a-z][a-z0-9]*").find((t) => (t.attrs.role ?? "").toLowerCase() === "contentinfo");
+    const infoName = info?.raw.match(/^<([a-z][a-z0-9]*)/i)?.[1].toLowerCase();
+    const footer = findElements(p.body, "footer")[0] ?? (infoName ? findElements(p.body, infoName).find((e) => e.index === info!.index) : undefined);
     if (!footer) {
-      fails.push(`${p.path} has no footer`);
+      noFooter.push(p.path);
       continue;
     }
     const targets = anchors(footer.inner)
@@ -965,6 +1188,7 @@ const checkSEO14: Check = (ctx) => {
       if (inLang && !linked.some((t) => t.pathLang === p.pathLang)) warns.push(`${p.path} footer links ${kind} outside the reader's language`);
     }
   }
+  if (noFooter.length) fails.push(`${plural(noFooter.length, "page")} serve no footer (no <footer> or role="contentinfo") linking contact, privacy and terms: ${noFooter.join(", ")}`);
   const status: Status = fails.length ? "FAIL" : warns.length ? "WARN" : "PASS";
   return finding("SEO-14", status, status === "PASS" ? `${indexableKeys.size} indexable pages within 2 clicks of home; every footer links contact, privacy and terms in the reader's language` : short([...fails, ...warns]), "link every money page from home or the footer, and link the legal pages in each language", "audit");
 };
@@ -1005,7 +1229,7 @@ function contentPages(ctx: Ctx): Page[] {
 const checkAEO04: Check = (ctx) => {
   const pages = contentPages(ctx);
   if (pages.length === 0) return finding("AEO-04", "N/A", "no content pages", undefined, "audit");
-  const without = pages.filter((p) => visibleFaq(p.body).length < 2);
+  const without = pages.filter((p) => shownQuestions(p.body) < 2);
   const status: Status = without.length === 0 ? "PASS" : without.length <= pages.length / 2 ? "WARN" : "FAIL";
   return finding("AEO-04", status, without.length ? `no visible FAQ (2 or more questions) on ${without.map((p) => p.path).join(", ")}` : `a visible FAQ on all ${pages.length} content pages in ${[...new Set(pages.map((p) => p.pathLang))].join(" and ")}`, "add an FAQ written the way people ask assistants, answer first, in each language", "audit");
 };
@@ -1017,7 +1241,7 @@ const checkAEO05: Check = (ctx) => {
   for (const p of ctx.indexable) {
     const r = faqParity(p);
     if (r.markup.length) withMarkup++;
-    else if (r.visible.length >= 2) warns.push(`${p.path} shows an FAQ without FAQPage markup`);
+    else if (shownQuestions(p.body) >= 2) warns.push(`${p.path} shows an FAQ without FAQPage markup`);
     problems.push(...r.problems);
   }
   if (problems.length) return finding("AEO-05", "FAIL", short(problems), "generate FAQPage markup from the same FAQ array the page renders", "audit");
@@ -1026,12 +1250,15 @@ const checkAEO05: Check = (ctx) => {
   return finding("AEO-05", "PASS", `FAQPage markup equals the rendered FAQ on ${withMarkup} pages`, undefined, "audit");
 };
 
-function keyFactsBlock(body: string): { found: boolean; early: boolean; numbers: number } {
+// Headings that title a key-facts TL;DR block, English and Indonesian.
+export const KEY_FACTS_HEADING = /^(key facts|the facts|quick facts|fast facts|facts|at a glance|in short|in brief|summary|the short version|tl;?\s?dr|fakta (utama|kunci|singkat|penting)|faktanya|ringkasnya|ringkasan|singkatnya|intinya|sekilas)(\s+(about|on|for|of|tentang|seputar|soal)\s.*)?[.:!]?$/i;
+
+export function keyFactsBlock(body: string): { found: boolean; early: boolean; numbers: number } {
   const byAttr = body.search(/<[a-z0-9]+\b[^>]*(?:\b(?:class|id)="[^"]*\b(?:key-facts|keyfacts|key_facts|tldr|tl-dr)\b[^"]*"|\bdata-key-facts\b)[^>]*>/i);
   let idx = byAttr;
   if (idx < 0) {
-    const m = body.match(/<h[2-4]\b[^>]*>\s*(key facts|at a glance|tl;?dr|fakta (utama|kunci|singkat)|sekilas)[^<]*<\/h[2-4]>/i);
-    idx = m?.index ?? -1;
+    const hits = ["h2", "h3", "h4"].flatMap((tag) => findElements(body, tag)).filter((h) => KEY_FACTS_HEADING.test(readableText(h.inner)));
+    idx = hits.length ? Math.min(...hits.map((h) => h.index)) : -1;
   }
   if (idx < 0) return { found: false, early: false, numbers: 0 };
   const region = visibleText(body.slice(idx, idx + 1500));
@@ -1094,20 +1321,54 @@ const checkAEO08: Check = (ctx) => {
   return finding("AEO-08", warns.length ? "WARN" : "PASS", warns.length ? short(warns) : `answer-first leads and topic or question headings on ${pages.length} pages (heuristic; review the wording)`, "open with the answer in one sentence and phrase headings as the question or the topic", "audit");
 };
 
+/** Number-like values a table shows ("06.00", "Rp 125.000", "16:00"), as strings. */
+function tableValues(text: string): Set<string> {
+  return new Set((text.match(/\d+(?:[.,:]\d+)*/g) ?? []).map((v) => v.replace(/^0+(?=\d)/, "")));
+}
+
+/**
+ * A table has a sentence equivalent when the caption, or the paragraph or list
+ * right under it (inside a wrapping figure too), says what the table says: at
+ * least 8 words and, when the cells hold numbers, at least 80% of those values.
+ * A list of sentences counts as well as a paragraph.
+ */
+export function tableHasEquivalent(body: string, t: { inner: string; end: number }): boolean {
+  const values = tableValues(readableText(t.inner.replace(/<caption\b[\s\S]*?<\/caption\s*>/gi, " ")));
+  const says = (text: string) => {
+    if (wordCount(text) < 8) return false;
+    if (values.size === 0) return true;
+    const shown = tableValues(text);
+    let hit = 0;
+    for (const v of values) if (shown.has(v)) hit++;
+    return hit / values.size >= 0.8;
+  };
+  const caption = findElements(t.inner, "caption")[0];
+  if (caption && says(readableText(caption.inner))) return true;
+  const after = body.slice(t.end).replace(/^(\s|<\/(?!section|main|article|body)[a-z0-9]+\s*>)*/i, "");
+  const block = after.match(/^<(p|ul|ol|dl|figcaption|div)\b[^>]*>/i);
+  if (!block) return false;
+  const el = findElements(after, block[1].toLowerCase())[0];
+  if (!el || el.index !== 0) return false;
+  let text = readableText(el.inner);
+  // A lead-in paragraph ("In words:") followed by the list that carries the values.
+  if (block[1].toLowerCase() === "p" && !says(text)) {
+    const rest = after.slice(el.end).replace(/^\s*/, "");
+    const list = rest.match(/^<(ul|ol|dl)\b/i) ? findElements(rest, rest.match(/^<(ul|ol|dl)\b/i)![1].toLowerCase())[0] : undefined;
+    if (list && list.index === 0) text = `${text} ${readableText(list.inner)}`;
+  }
+  return says(text);
+}
+
 const checkAEO09: Check = (ctx) => {
   const fails: string[] = [];
   const warns: string[] = [];
   let tables = 0;
   for (const p of ctx.indexable) {
-    for (const t of findElements(p.body, "table")) {
+    findElements(p.body, "table").forEach((t, i) => {
       tables++;
-      const merged = /\b(rowspan|colspan)\s*=\s*"?\s*([2-9]|\d\d)/i.test(t.outer);
-      const after = p.body.slice(t.end).replace(/^(\s|<\/[a-z0-9]+\s*>)*/i, "");
-      const next = after.match(/^<p\b[^>]*>([\s\S]*?)<\/p>/i);
-      const caption = findElements(t.inner, "caption")[0];
-      const sentence = (next && wordCount(visibleText(next[1])) >= 8) || (caption && wordCount(visibleText(caption.inner)) >= 8);
-      if (!sentence) (merged ? fails : warns).push(`${p.path} table ${tables}${merged ? " with merged cells" : ""} has no sentence equivalent`);
-    }
+      const merged = /\b(rowspan|colspan)\s*=\s*["']?\s*([2-9]|\d\d)/i.test(t.outer);
+      if (!tableHasEquivalent(p.body, t)) (merged ? fails : warns).push(`${p.path} table ${i + 1}${merged ? " with merged cells" : ""} has no sentence equivalent`);
+    });
   }
   if (tables === 0) return finding("AEO-09", "N/A", "no tables on indexable pages", undefined, "audit");
   const status: Status = fails.length ? "FAIL" : warns.length ? "WARN" : "PASS";
@@ -1264,27 +1525,64 @@ const checkGEO06: Check = (ctx) => {
   return finding("GEO-06", low.length ? "WARN" : "PASS", text, `raise density on money pages to ${DENSITY_WARN_BELOW} or more per 100 words with verified numbers only`, "audit");
 };
 
-function pressLinks(ctx: Ctx): { inline: Array<{ page: string; href: string }>; listOnly: Array<{ page: string; href: string }> } {
-  const inline: Array<{ page: string; href: string }> = [];
-  const listOnly: Array<{ page: string; href: string }> = [];
+// A heading that titles the press record, English and Indonesian.
+const PRESS_HEADING = /^(in the press|press|press coverage|coverage|in the news|news coverage|media coverage|as seen in|as featured in|featured in|di media|liputan( media)?|diliput( oleh)?|dalam berita|pemberitaan|kata media)[.:!]?$/i;
+
+/** The HTML of every section titled as a press record ("In the press", "Di media"). */
+export function pressSections(fragment: string): string[] {
+  const html = stripNonRendered(fragment);
+  const tokens = tagTokens(html);
+  const out: string[] = [];
+  for (let i = 0; i < tokens.length; i++) {
+    const t = tokens[i];
+    if (!isHeading(t)) continue;
+    const close = tokens.find((x, j) => j > i && x.closing && x.name === t.name);
+    if (!close || !PRESS_HEADING.test(readableText(html.slice(t.end, close.index)))) continue;
+    const level = headingLevel(t);
+    out.push(html.slice(close.end, siblingRunEnd(html, tokens, close.end, (x) => isHeading(x) && headingLevel(x) <= level)));
+  }
+  return out;
+}
+
+type PressLink = { page: string; href: string };
+
+/**
+ * Third-party links on indexable pages. inline: beside a claim (p, blockquote,
+ * figcaption, td, cite). listOnly: in a list. press: the press record itself,
+ * that is links in a press section, quote sources and cite links. The site's
+ * own subdomains (app., link.) are never third-party.
+ */
+function pressLinks(ctx: Ctx): { inline: PressLink[]; listOnly: PressLink[]; press: PressLink[] } {
+  const inline: PressLink[] = [];
+  const listOnly: PressLink[] = [];
+  const press: PressLink[] = [];
   for (const p of ctx.indexable) {
     const main = mainContent(p);
     for (const tag of ["p", "blockquote", "figcaption", "td", "cite"]) {
-      for (const el of findElements(main, tag)) for (const a of outboundAnchors(el.inner, p.url, ctx.host)) inline.push({ page: p.path, href: a.href });
+      for (const el of findElements(main, tag)) {
+        for (const a of outboundAnchors(el.inner, p.url, ctx.host)) {
+          inline.push({ page: p.path, href: a.href });
+          if (tag !== "p" && tag !== "td") press.push({ page: p.path, href: a.href });
+        }
+      }
     }
     for (const bq of findTags(main, "blockquote")) {
       if (bq.attrs.cite) {
         try {
           const u = new URL(bq.attrs.cite, p.url);
-          if (u.host !== ctx.host && !SOCIAL_OR_UTILITY.test(u.hostname)) inline.push({ page: p.path, href: u.href });
+          if (!sameSite(u.host, ctx.host) && !SOCIAL_OR_UTILITY.test(u.hostname)) {
+            inline.push({ page: p.path, href: u.href });
+            press.push({ page: p.path, href: u.href });
+          }
         } catch {
           // skip
         }
       }
     }
     for (const el of findElements(main, "li")) for (const a of outboundAnchors(el.inner, p.url, ctx.host)) listOnly.push({ page: p.path, href: a.href });
+    for (const section of pressSections(main)) for (const a of outboundAnchors(section, p.url, ctx.host)) press.push({ page: p.path, href: a.href });
   }
-  return { inline, listOnly };
+  return { inline, listOnly, press };
 }
 
 const checkGEO07: Check = (ctx) => {
@@ -1392,8 +1690,9 @@ const checkGEO09Static: Check = (ctx) => {
 };
 
 const checkGEO12: Check = async (ctx) => {
-  const { inline, listOnly } = pressLinks(ctx);
-  const links = [...new Set([...inline, ...listOnly].map((x) => x.href))];
+  const { inline, listOnly, press } = pressLinks(ctx);
+  // The press record when the site has one; otherwise every third-party link.
+  const links = [...new Set((press.length ? press : [...inline, ...listOnly]).map((x) => x.href))];
   if (links.length === 0) return finding("GEO-12", "N/A", "no press links on the site", undefined, "audit");
   const dead: string[] = [];
   const unchecked: string[] = [];
@@ -1505,13 +1804,20 @@ export async function runSeoAudit(target: string, opts: AuditOptions): Promise<A
     }
   };
   await load([...candidates]);
-  // Follow internal links and hreflang targets once, for click depth and language pairs.
-  const discovered = new Set<string>();
-  for (const p of pages.filter((x) => x.ok)) {
-    for (const l of internalLinks(p, origin)) discovered.add(l);
-    for (const a of hreflangs(p)) if (new URL(a.href).origin === origin) discovered.add(`${origin}${normPath(new URL(a.href).pathname)}`);
+  // Follow internal links and hreflang targets, for click depth and language
+  // pairs, until nothing new turns up (bounded by maxPages and four rounds).
+  const followed = new Set<string>();
+  for (let round = 0; round < 4 && pages.length < maxPages; round++) {
+    const discovered = new Set<string>();
+    for (const p of pages.filter((x) => x.ok && !followed.has(canonicalKey(x.url)))) {
+      followed.add(canonicalKey(p.url));
+      for (const l of internalLinks(p, origin)) discovered.add(l);
+      for (const a of hreflangs(p)) if (new URL(a.href).origin === origin) discovered.add(`${origin}${normPath(new URL(a.href).pathname)}`);
+    }
+    const before = pages.length;
+    await load([...discovered]);
+    if (pages.length === before) break;
   }
-  await load([...discovered]);
 
   const probe404 = await F.get(abs(`/__jal-seo-probe-404-${crypto.randomUUID().slice(0, 8)}`));
   const adminPages = await Promise.all((config.adminPaths ?? ["/admin"]).map(async (p) => ({ path: p, f: await F.get(abs(p)) })));
