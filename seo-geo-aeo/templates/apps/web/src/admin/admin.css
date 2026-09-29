@@ -1,0 +1,108 @@
+/* apps/web/src/admin/admin.css - the admin crawler view on JAL Core tokens.
+   White-first surface, hairline row dividers, one type scale, 44px controls
+   from ui.css (--control-h). No shadow, no gradient, no side line. */
+@import "../../../../packages/ui/src/tokens.css";
+@import "../../../../packages/ui/src/ui.css";
+
+.crawl {
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: var(--space-32px) var(--space-16px) var(--space-48px);
+  color: var(--color-ink);
+}
+
+.crawl-head h1 {
+  font-size: var(--text-4);
+  line-height: var(--line-4);
+  letter-spacing: var(--tracking-heading);
+  font-weight: var(--weight-semibold);
+  margin: 0 0 var(--space-8px);
+}
+
+.crawl-head p {
+  margin: 0;
+  color: var(--color-ink-muted);
+}
+
+.crawl-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--space-12px) var(--space-16px);
+  margin-top: var(--space-24px);
+  padding: var(--space-16px);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-12);
+}
+
+.crawl-controls .field { min-width: 200px; }
+
+.crawl-range {
+  display: flex;
+  gap: var(--space-8px);
+}
+
+.crawl-range .btn[aria-pressed="true"] {
+  background: var(--color-layer-2);
+  font-weight: var(--weight-semibold);
+}
+
+.crawl-notice {
+  margin-top: var(--space-16px);
+  padding: var(--space-12px) var(--space-16px);
+  color: var(--color-danger);
+  background: var(--color-danger-surface);
+  border: 1px solid var(--color-danger-border);
+  border-radius: var(--radius-8);
+}
+
+.crawl-empty {
+  margin-top: var(--space-24px);
+  color: var(--color-ink-muted);
+}
+
+.crawl section { margin-top: var(--space-32px); }
+
+.crawl h2 {
+  font-size: var(--text-2);
+  line-height: var(--line-2);
+  letter-spacing: var(--tracking-title);
+  font-weight: var(--weight-semibold);
+  margin: 0 0 var(--space-12px);
+}
+
+.crawl-table-wrap {
+  overflow-x: auto;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-12);
+}
+
+.crawl-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-variant-numeric: tabular-nums;
+  font-size: var(--text-n1);
+  line-height: var(--line-n1);
+}
+
+.crawl-table th,
+.crawl-table td {
+  text-align: start;
+  padding: var(--space-12px) var(--space-16px);
+  border-bottom: 1px solid var(--color-border);
+  white-space: nowrap;
+}
+
+.crawl-table thead th {
+  color: var(--color-ink-muted);
+  font-weight: var(--weight-medium);
+}
+
+.crawl-table tbody tr:last-child th,
+.crawl-table tbody tr:last-child td { border-bottom: 0; }
+
+.crawl-path { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+
+.crawl-tag { color: var(--color-ink-muted); font-weight: var(--weight-regular); }

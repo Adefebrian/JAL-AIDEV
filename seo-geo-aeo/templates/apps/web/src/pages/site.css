@@ -1,0 +1,170 @@
+/* apps/web/src/pages/site.css - public content pages on JAL Core tokens.
+   White-first, one type scale, 4px rhythm, hairline dividers only where a
+   group needs one. No gradient, no shadow, no eyebrow, no decorative line. */
+
+.site {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: var(--space-32px) var(--space-16px) var(--space-48px);
+  color: var(--color-ink);
+}
+
+.site-hero h1 {
+  font-size: var(--text-5);
+  line-height: var(--line-5);
+  letter-spacing: var(--tracking-heading);
+  font-weight: var(--weight-semibold);
+  margin: 0 0 var(--space-12px);
+}
+
+.site-lead {
+  font-size: var(--text-1);
+  line-height: var(--line-1);
+  color: var(--color-ink-muted);
+  margin: 0 0 var(--space-16px);
+}
+
+.seo-byline,
+.site-updated {
+  font-size: var(--text-n1);
+  line-height: var(--line-n1);
+  color: var(--color-ink-muted);
+}
+
+.site-section,
+.seo-keyfacts,
+.seo-faq {
+  margin-top: var(--space-32px);
+}
+
+.site-section h2,
+.seo-keyfacts h2,
+.seo-faq h2 {
+  font-size: var(--text-2);
+  line-height: var(--line-2);
+  letter-spacing: var(--tracking-title);
+  font-weight: var(--weight-semibold);
+  margin: 0 0 var(--space-12px);
+}
+
+.seo-keyfacts dl {
+  display: grid;
+  gap: var(--space-12px);
+  margin: 0;
+}
+
+@media (min-width: 640px) {
+  .seo-keyfacts dl { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+.seo-keyfact {
+  padding: var(--space-16px);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-12);
+}
+
+.seo-keyfact dt {
+  font-size: var(--text-n1);
+  line-height: var(--line-n1);
+  color: var(--color-ink-muted);
+}
+
+.seo-keyfact dd {
+  margin: var(--space-4px) 0 0;
+  font-weight: var(--weight-medium);
+}
+
+.site-list,
+.site-steps {
+  margin: 0;
+  padding-inline-start: var(--space-24px);
+  display: grid;
+  gap: var(--space-8px);
+}
+
+.site-table-wrap { overflow-x: auto; }
+
+.site-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-variant-numeric: tabular-nums;
+}
+
+.site-table caption {
+  text-align: start;
+  color: var(--color-ink-muted);
+  font-size: var(--text-n1);
+  padding-bottom: var(--space-8px);
+}
+
+.site-table th,
+.site-table td {
+  text-align: start;
+  padding: var(--space-12px) var(--space-8px);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.site-table-sentence {
+  margin-top: var(--space-12px);
+  color: var(--color-ink-muted);
+}
+
+.site-quote {
+  margin: var(--space-24px) 0 0;
+  padding: var(--space-16px);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-12);
+  background: var(--color-surface);
+}
+
+.site-quote blockquote { margin: 0; }
+.site-quote blockquote p { margin: 0; font-size: var(--text-1); line-height: var(--line-1); }
+
+.site-quote figcaption {
+  margin-top: var(--space-8px);
+  font-size: var(--text-n1);
+  line-height: var(--line-n1);
+  color: var(--color-ink-muted);
+}
+
+.faq-item + .faq-item { margin-top: var(--space-16px); }
+
+.faq-item h3 {
+  font-size: var(--text-0);
+  line-height: var(--line-0);
+  font-weight: var(--weight-semibold);
+  margin: 0 0 var(--space-4px);
+}
+
+.faq-item p { margin: 0; color: var(--color-ink-muted); }
+
+.site a:not(.btn) {
+  color: var(--color-ink);
+  text-underline-offset: 3px;
+}
+
+.site-footer {
+  margin-top: var(--space-48px);
+  padding-top: var(--space-24px);
+  border-top: 1px solid var(--color-border);
+  color: var(--color-ink-muted);
+  font-size: var(--text-n1);
+  line-height: var(--line-n1);
+}
+
+.site-footer-links {
+  list-style: none;
+  padding: 0;
+  margin: var(--space-8px) 0 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-8px) var(--space-16px);
+}
+
+/* 44px touch targets for footer links on touch screens. */
+.site-footer-links a {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--control-h);
+}

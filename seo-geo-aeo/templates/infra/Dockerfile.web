@@ -1,0 +1,49 @@
+# Multi-stage build for apps/web. Bun.build() produces the static SPA
+# bundle and dist/seo.json, a slim Hono server serves them. oven/bun base
+# throughout, no Vite, no Nginx.
+#
+# /jal-seo-geo-aeo integrate changes against the scaffold's file:
+#   deps    + packages/facts/package.json (or the frozen-lockfile install fails)
+#   build   + .jal/seo-geo-aeo.json (the IndexNow host allowlist and the
+#             default language, baked into dist/seo.json)
+#   runner  + server/ (the lib the server imports) and packages/facts/ (the
+#             facts meta.ts and metaCopy.ts read). Never apps/web/src/.
+FROM oven/bun:1-slim AS deps
+WORKDIR /repo
+COPY package.json bun.lock ./
+COPY apps/web/package.json apps/web/package.json
+COPY apps/api/package.json apps/api/package.json
+COPY packages/ui/package.json packages/ui/package.json
+COPY packages/config/package.json packages/config/package.json
+COPY packages/facts/package.json packages/facts/package.json
+RUN bun install --frozen-lockfile
+
+FROM deps AS build
+WORKDIR /repo
+COPY package.json turbo.json tsconfig.base.json ./
+COPY .jal/seo-geo-aeo.json .jal/seo-geo-aeo.json
+COPY packages ./packages
+COPY apps/web ./apps/web
+WORKDIR /repo/apps/web
+RUN bun run build.ts
+
+FROM oven/bun:1-slim AS runner
+# The same /repo layout as the build, so the workspace symlink
+# node_modules/@<app>/facts -> ../../packages/facts still resolves.
+WORKDIR /repo/apps/web
+ENV NODE_ENV=production
+COPY --from=build /repo/apps/web/dist ./dist
+COPY --from=build /repo/apps/web/server.ts ./server.ts
+COPY --from=build /repo/apps/web/serve.ts ./serve.ts
+COPY --from=build /repo/apps/web/server ./server
+COPY --from=build /repo/apps/web/package.json ./package.json
+COPY --from=build /repo/packages/facts /repo/packages/facts
+COPY --from=deps /repo/node_modules /repo/node_modules
+COPY --from=deps /repo/apps/web/node_modules ./node_modules
+
+EXPOSE 3000
+USER bun
+# serve.ts, not server.ts: server.ts is a pure module whose default export is
+# the Hono app, and Bun auto-serves a default export with a `fetch` method when
+# it is the entrypoint. serve.ts also starts the crawler flush and IndexNow.
+CMD ["bun", "serve.ts"]

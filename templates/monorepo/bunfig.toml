@@ -16,6 +16,11 @@
 
 [install]
 peer = true
+# Hoist every workspace dependency into the root node_modules so the Docker
+# runner stages (which copy only /repo/node_modules) can resolve hono, pg,
+# react, and the rest. Bun 1.3 defaults workspaces to the isolated linker,
+# which keeps them under apps/*/node_modules and breaks those images.
+linker = "hoisted"
 
 [test]
 preload = ["./apps/web/src/happydom.ts"]

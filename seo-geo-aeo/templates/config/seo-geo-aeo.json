@@ -1,0 +1,14 @@
+{
+  "sites": [
+    {
+      "url": "https://example.com",
+      "gscProperty": "sc-domain:example.com",
+      "bingSiteUrl": "https://example.com/",
+      "yandexHostId": "https:example.com:443",
+      "indexNowKeyEnv": "INDEXNOW_KEY"
+    }
+  ],
+  "languages": ["en", "id"],
+  "defaultLanguage": "en",
+  "keyUrls": ["/", "/rates", "/contact"]
+}

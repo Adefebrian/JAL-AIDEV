@@ -229,3 +229,11 @@ The forbidden-claims test must fail when a placeholder fact reaches a served bod
 - Titles grow past 60 characters when a language adds words. Test both languages.
 - The old privacy policy denied collecting children's data while a form collected a child's date of birth and medical history.
 - A crawl-generated llms-full.txt from a third-party tool is an audit input, never a file to host.
+
+## Install edits beyond copying the templates (found in the proof run)
+
+- `apps/web/tsconfig.json` must include `server/` and `serve.ts`.
+- Adding the `packages/facts` dependency changes `bun.lock`. Commit it so CI's `bun install --frozen-lockfile` passes.
+- The Docker build stage needs `.jal/seo-geo-aeo.json`, because the IndexNow allowlist is read at build time.
+- The scaffold's SPA fallback (unknown paths return 200) is replaced by the real 404 with noindex. The scaffold demo moves to `/app`. `seo-geo-aeo/templates` ships the replacement `server.test.ts` and `smoke.test.ts`.
+- The template's root `bunfig.toml` sets `linker = "hoisted"` (v0.4.0), so the Docker runner stages resolve every dependency from `/repo/node_modules`.
