@@ -1,7 +1,14 @@
 {
   "name": "jal-aidev-marketplace",
-  "owner": { "name": "JAL-Group" },
+  "owner": {
+    "name": "JAL-Group"
+  },
   "plugins": [
-    { "name": "jal-aidev", "source": "./", "description": "JAL-AIDEV plugin" }
-  ]
+    {
+      "name": "jal-aidev",
+      "source": "./",
+      "description": "JAL engineering constitution, the Pawang agent crew judged by JEV, one design system (JAL Core), an immersive and 3D layer, a mechanical UI audit, and a no-Vite Bun monorepo scaffolder."
+    }
+  ],
+  "description": "JAL Group internal marketplace: the JAL-AIDEV engineering constitution, the Pawang agent crew judged by JEV, one design system, and the immersive layer."
 }
