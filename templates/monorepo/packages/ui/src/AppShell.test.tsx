@@ -48,7 +48,18 @@ describe("AppShell CSS", () => {
   test("document mode pins the header sticky and the tab bar fixed, reserving its height", () => {
     expect(css).toMatch(/\.shell-header,\s*\.shell-actions\s*\{[^}]*position: sticky;[^}]*top: 0;/);
     expect(css).toMatch(/\.shell-nav\s*\{[^}]*position: fixed;[^}]*bottom: 0;[^}]*padding-bottom: env\(safe-area-inset-bottom\);/);
-    expect(css).toMatch(/\.shell\s*\{[^}]*--shell-nav-h:[^}]*padding-bottom: calc\(var\(--shell-nav-h\) \+ env\(safe-area-inset-bottom\)\);/);
+    expect(css).toMatch(/\.shell\s*\{[^}]*padding-bottom: calc\(var\(--shell-nav-h\) \+ env\(safe-area-inset-bottom\)\);/);
+  });
+
+  test("the shell heights are declared on :root, so the html scroll-padding rule can read them", () => {
+    // Custom properties inherit downward only; html never sees a value set on .shell.
+    expect(css).toMatch(/:root\s*\{[^}]*--shell-nav-h: 65px;[^}]*--shell-header-h: 57px;/);
+    const shellBlock = css.match(/\n\.shell\s*\{([^}]*)\}/)![1];
+    expect(shellBlock).not.toMatch(/--shell-(nav|header)-h:/);
+    expect(css).toMatch(/html:has\(\.shell:not\(\[data-scroll="contained"\]\)\)\s*\{[^}]*var\(--shell-header-h[^}]*var\(--shell-nav-h/);
+    // Nothing below :root redeclares them on a descendant html cannot see.
+    const decls = [...css.matchAll(/([^{}]+)\{[^}]*--shell-(?:nav|header)-h:/g)].map((m) => m[1].trim().split("\n").pop()!.trim());
+    for (const selector of decls) expect(selector === ":root" || selector.startsWith("html")).toBe(true);
   });
 
   test("contained mode keeps the viewport grid with an inner scroller", () => {
@@ -120,6 +131,51 @@ describe.skipIf(clientRenderer === null)("getScroller in a DOM", () => {
       expect(getScroller(child)).toBe(box);
     } finally {
       box.remove();
+    }
+  });
+
+  function carousel(spill: number) {
+    // Browsers compute overflow-y to auto when overflow-x is auto, so set both.
+    const track = document.createElement("div");
+    track.style.overflowX = "auto";
+    track.style.overflowY = "auto";
+    Object.defineProperty(track, "scrollHeight", { value: 200 + spill });
+    Object.defineProperty(track, "clientHeight", { value: 200 });
+    const card = document.createElement("article");
+    track.appendChild(card);
+    return { track, card };
+  }
+
+  test("a horizontal carousel with 1px of vertical spill is not the scroller", () => {
+    const { track, card } = carousel(1);
+    document.body.appendChild(track);
+    try {
+      expect(getScroller(card)).toBe(window);
+    } finally {
+      track.remove();
+    }
+  });
+
+  test("a carousel inside a declared scroller resolves to the declared scroller", () => {
+    const main = document.createElement("main");
+    main.setAttribute("data-jal-scroller", "");
+    const { track, card } = carousel(1);
+    main.appendChild(track);
+    document.body.appendChild(main);
+    try {
+      expect(getScroller(card)).toBe(main);
+    } finally {
+      main.remove();
+    }
+  });
+
+  test("a carousel that truly overflows vertically still counts", () => {
+    const { track, card } = carousel(300);
+    document.body.appendChild(track);
+    try {
+      expect(getScroller(card)).toBe(track);
+    } finally {
+      track.remove();
     }
   });
 });

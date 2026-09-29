@@ -31,19 +31,25 @@ JAL-AIDEV's skills distill knowledge from the projects below. Unless noted, the 
 |---|---|---|
 | [three.js](https://github.com/mrdoob/three.js) | MIT | Renderer, TSL, examples, and water and reflector techniques |
 | [react-three-fiber](https://github.com/pmndrs/react-three-fiber), [drei](https://github.com/pmndrs/drei), [maath](https://github.com/pmndrs/maath) (pmndrs) | MIT | R3F architecture and helpers |
-| [postprocessing](https://github.com/pmndrs/postprocessing) | Zlib | Pass ordering guidance (an approval candidate, not a default) |
+| [postprocessing](https://github.com/pmndrs/postprocessing) (pmndrs) | Zlib | Approved by Brian (2026-09-29) as a runtime dependency of the opt-in scene module (`templates/modules/scene`): N8AO, DepthOfField, tone mapping, and SMAA in the tier-gated `PostFX`, never bloom; also pass ordering guidance |
+| [@react-three/postprocessing](https://github.com/pmndrs/react-postprocessing) (pmndrs) | MIT | Approved by Brian (2026-09-29) as a runtime dependency of the scene module: the React wrapper `PostFX` is built on |
+| [n8ao](https://github.com/N8python/n8ao) (N8python) | ISC | Ambient occlusion, bundled by `@react-three/postprocessing` and used through the scene module's `PostFX` |
 | [three-mesh-bvh](https://github.com/gkjohnson/three-mesh-bvh) | MIT | Raycast acceleration guidance |
 | [glTF-Transform](https://github.com/donmccurdy/glTF-Transform) | MIT | Asset pipeline guidance (an approval candidate) |
 | [Threejs-Awesome-Graphics-Agent-Skills](https://github.com/scottstts/Threejs-Awesome-Graphics-Agent-Skills) | MIT (its GPL-3.0 and unlicensed examples are NOT used) | Graphics skill knowledge |
 | [webgpu-claude-skill](https://github.com/dgreenheck/webgpu-claude-skill) | MIT (declared) | WebGPU and TSL knowledge |
 | [threejs-game-skills](https://github.com/majidmanzarpour/threejs-game-skills) | MIT | Budgets and game-loop patterns |
-| [nixie-fx](https://github.com/azakhary/nixie-fx) | MIT | Particle runtime knowledge (an approval candidate) |
+| [nixie-fx](https://github.com/azakhary/nixie-fx) | MIT | Particle runtime knowledge and runtime (approved by Brian, used when JEV picks it) |
 | [Quick_Grass](https://github.com/simondevyoutube/Quick_Grass), [r3f-procedural-grass](https://github.com/momentchan/r3f-procedural-grass) | MIT | Grass technique (the noise file taken from Shadertoy is not used) |
 | [WebGL2 Fundamentals](https://github.com/gfxfundamentals/webgl2-fundamentals) | BSD-3-Clause | WebGL fundamentals |
 | [hash-prospector](https://github.com/skeeto/hash-prospector) | Public domain | Integer hash functions |
 | Inigo Quilez articles | Snippets MIT per the author; shader art not used | SDF and noise math |
 
 Clean-room effects (window rain, wet puddles, deformable sand, wind grass, ocean) in `skills/jal-immersive/references/effects-cleanroom.md` were written only from the permissive sources above and published papers and talks. No GPL, non-commercial (for example CC BY-NC-SA Shadertoy work, LYGIA, The Book of Shaders), or unlicensed code was copied.
+
+## Poly Haven
+
+[Poly Haven](https://polyhaven.com) models, HDRIs, and textures are CC0 (public domain dedication), approved by Brian (2026-09-29). `scripts/assets/polyhaven.ts` fetches them into client projects only, at build time, checks the license before writing anything, and writes an `ASSETS.md` beside them (id, type, resolution, source URL, CC0, authors, date). No Poly Haven asset is mirrored into this plugin or its template, and the client app serves its own copy (never a runtime fetch from Poly Haven).
 
 ## OriginKit
 

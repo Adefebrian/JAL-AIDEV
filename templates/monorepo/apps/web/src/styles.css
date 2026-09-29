@@ -1,5 +1,6 @@
 @import "../../../packages/ui/src/tokens.css";
 @import "../../../packages/ui/src/ui.css";
+@import "../../../packages/ui/src/kit.css";
 
 /* App-specific layout only. Base reset, form controls, buttons, and the
    Bento grid all live in packages/ui/src/ui.css so every app in the

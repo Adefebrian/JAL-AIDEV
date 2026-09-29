@@ -48,7 +48,7 @@ const TOOLS: ToolDef[] = [
   {
     name: "ui_audit",
     description:
-      "Run the mechanical UI audit against a URL at one or more widths. 22 rules: light-background, gradient-background, blurred-shadow, side-stripe, emoji-text, em-dash-text, purple-color, form-row-mismatch, form-control-min-height, card-row-mismatch, card-empty-band, horizontal-overflow, eyebrow-label, overlap, overflow-parent, clipped-text, icon-text-collision, form-width-cap, mobile-app-shell, reduced-motion, plus two found by scrolling the page's real scroller (the document or an app-shell inner scroller like main.shell-main) one screen at a time: stuck-reveal (content that is still invisible after it has been scrolled into view, usually a GSAP ScrollTrigger or scroll listener watching window while the page scrolls inside an inner element) and blank-viewport (a whole screen where almost nothing visible is drawn, under 10% of a 6x8 sample grid hits text, media, or controls). Returns PASS or FAIL with every violation.",
+      "Run the mechanical UI audit against a URL at one or more widths. 22 rules: light-background, gradient-background, blurred-shadow, side-stripe, emoji-text, em-dash-text, purple-color, form-row-mismatch, form-control-min-height, card-row-mismatch, card-empty-band, horizontal-overflow, eyebrow-label, overlap, overflow-parent, clipped-text, icon-text-collision, form-width-cap, mobile-app-shell, reduced-motion, plus two found by scrolling the page's real scroller (an element marked data-jal-scroller, else the document whenever it scrolls, else an app-shell inner scroller like main.shell-main) in steps of 60% of a screen so no band is skipped: stuck-reveal (content that is still invisible after it has been scrolled into view, usually a GSAP ScrollTrigger or scroll listener watching window while the page scrolls inside an inner element; stacked alternates such as a fade carousel slide covered by a visible sibling are ignored) and blank-viewport (a whole screen where almost nothing visible is drawn, under 10% of a 6x8 sample grid hits text, media, iframes, background images, or controls; never raised on a page that does not scroll). Renders with software WebGL by default; with webgl false, walk-rule messages end in \"(rendered without WebGL)\". Each width's walk gets a fair share of the 180s timeout; a walk cut short is listed in notes, and on timeout the violations found so far come back as FAIL instead of being dropped. Returns PASS or FAIL with every violation.",
     inputSchema: {
       type: "object",
       properties: {
@@ -56,8 +56,9 @@ const TOOLS: ToolDef[] = [
         widths: {
           type: "array",
           items: { type: "number" },
-          description: "Viewport widths to test, default 320/375/414/768/1280.",
+          description: "Viewport widths to test, default 320/375/414/768/1280. Rounded and clamped to 200..3840; a non-number is an error.",
         },
+        webgl: { type: "boolean", description: "Software WebGL (SwiftShader) so 3D pages render as they would for a person, default true." },
       },
       required: ["url"],
     },
@@ -65,15 +66,15 @@ const TOOLS: ToolDef[] = [
   {
     name: "ui_shots",
     description:
-      "Take real screenshots of a page the way a person scrolls it: finds the element that actually scrolls (the document or an app-shell inner scroller like main.shell-main), waits for 3D and canvas to draw, then saves one JPEG per screen per width as <width>-<NN>.jpg. Returns { files: [{ width, index, scrollY, path }], scroller, totalHeight }. Read the images to see what really renders, including sections a broken scroll reveal leaves blank.",
+      "Take real screenshots of a page the way a person scrolls it: finds the element that actually scrolls (the document or an app-shell inner scroller like main.shell-main), waits for 3D and canvas to draw, then saves one JPEG per screen per width as <width>-<NN>.jpg, after clearing every <width>-<NN>.jpg an earlier run left in out_dir. Returns { status, files: [{ width, index, scrollY, path }], scroller, totalHeight }; status PARTIAL lists the screens written before an error or timeout. Read the images to see what really renders, including sections a broken scroll reveal leaves blank.",
     inputSchema: {
       type: "object",
       properties: {
         url: { type: "string", description: "URL to capture." },
-        widths: { type: "array", items: { type: "number" }, description: "Viewport widths, default 375 and 1280." },
-        out_dir: { type: "string", description: "Output directory, default .jal/shots under the working directory." },
+        widths: { type: "array", items: { type: "number" }, description: "Viewport widths, default 375 and 1280. Rounded and clamped to 200..3840; a non-number is an error." },
+        out_dir: { type: "string", description: "Output directory, default .jal/shots. Must resolve inside the working directory." },
         webgl: { type: "boolean", description: "Software WebGL (SwiftShader) for 3D pages, default true." },
-        max_screens: { type: "number", description: "Most screens per width, default 12." },
+        max_screens: { type: "number", description: "Most screens per width, default 12, clamped to 1..40." },
       },
       required: ["url"],
     },
@@ -153,7 +154,7 @@ function respondError(id: JsonRpcId, code: number, message: string): void {
 }
 
 async function loadRunAudit(): Promise<
-  | ((url: string, opts?: { widths?: number[]; chromePath?: string; timeoutMs?: number }) => Promise<any>)
+  | ((url: string, opts?: { widths?: number[]; chromePath?: string; timeoutMs?: number; webgl?: boolean }) => Promise<any>)
   | null
 > {
   try {
@@ -186,12 +187,13 @@ async function handleUiAudit(args: any) {
   if (!args || typeof args !== "object" || typeof args.url !== "string") {
     throw new Error("ui_audit requires { url }");
   }
+  if (args.webgl !== undefined && typeof args.webgl !== "boolean") throw new Error("ui_audit webgl must be true or false");
   const runAudit = await loadRunAudit();
   if (!runAudit) {
     const report = {
       status: "SKIPPED",
       reason: "audit.ts not available",
-      widths: args.widths ?? [],
+      widths: Array.isArray(args.widths) ? args.widths : [],
       violations: [],
     };
     return {
@@ -199,29 +201,30 @@ async function handleUiAudit(args: any) {
       isError: false,
     };
   }
-  const report = await runAudit(args.url, { widths: args.widths });
+  const { normalizeWidths } = await import("./audit.ts");
+  const report = await runAudit(args.url, { widths: normalizeWidths(args.widths), webgl: args.webgl ?? true });
   return {
     content: [{ type: "text", text: JSON.stringify(report, null, 2) }],
     isError: report.status === "FAIL",
   };
 }
 
-function numberList(value: unknown): number[] | undefined {
-  if (!Array.isArray(value)) return undefined;
-  const out = value.map(Number).filter((n) => Number.isFinite(n) && n > 0);
-  return out.length ? out : undefined;
-}
-
 async function handleUiShots(args: any) {
   if (!args || typeof args !== "object" || typeof args.url !== "string") {
     throw new Error("ui_shots requires { url }");
   }
-  const { runShots } = await import("./audit.ts");
+  if (args.out_dir !== undefined && typeof args.out_dir !== "string") throw new Error("ui_shots out_dir must be a string");
+  if (args.webgl !== undefined && typeof args.webgl !== "boolean") throw new Error("ui_shots webgl must be true or false");
+  const { runShots, normalizeWidths, normalizeMaxScreens, resolveOutDir } = await import("./audit.ts");
+  // Validate everything before a browser starts, so bad input is a clear error.
+  const widths = normalizeWidths(args.widths);
+  const maxScreens = normalizeMaxScreens(args.max_screens);
+  resolveOutDir(args.out_dir);
   const report = await runShots(args.url, {
-    widths: numberList(args.widths),
-    outDir: typeof args.out_dir === "string" ? args.out_dir : undefined,
-    webgl: typeof args.webgl === "boolean" ? args.webgl : true,
-    maxScreens: typeof args.max_screens === "number" ? args.max_screens : undefined,
+    widths,
+    outDir: args.out_dir,
+    webgl: args.webgl ?? true,
+    maxScreens,
   });
   return {
     content: [{ type: "text", text: JSON.stringify(report, null, 2) }],
@@ -409,23 +412,18 @@ async function runCli(argv: string[]): Promise<void> {
   if (sub === "audit") {
     const url = rest[0];
     if (!url) {
-      console.error("usage: server.ts audit <url> [--widths 320,375]");
+      console.error("usage: server.ts audit <url> [--widths 320,375] [--webgl | --no-webgl]");
       process.exit(1);
     }
-    let widths: number[] | undefined;
     const widthsIdx = rest.indexOf("--widths");
-    if (widthsIdx >= 0 && rest[widthsIdx + 1]) {
-      widths = rest[widthsIdx + 1]
-        .split(",")
-        .map((s) => Number(s.trim()))
-        .filter((n) => !Number.isNaN(n));
-    }
     const runAudit = await loadRunAudit();
     if (!runAudit) {
       console.error("[jal-design] audit.ts not available");
       process.exit(1);
     }
-    const report = await runAudit(url, { widths });
+    const { normalizeWidths } = await import("./audit.ts");
+    const widths = widthsIdx >= 0 ? normalizeWidths((rest[widthsIdx + 1] ?? "").split(",")) : undefined;
+    const report = await runAudit(url, { widths, webgl: !rest.includes("--no-webgl") });
     console.log(JSON.stringify(report, null, 2));
     process.exit(report.status === "FAIL" ? 1 : 0);
     return;
@@ -441,14 +439,16 @@ async function runCli(argv: string[]): Promise<void> {
       const i = rest.indexOf(name);
       return i >= 0 ? rest[i + 1] : undefined;
     };
-    const widthsArg = flag("--widths");
-    const maxArg = flag("--max");
-    const { runShots } = await import("./audit.ts");
+    const { runShots, normalizeWidths, normalizeMaxScreens, resolveOutDir } = await import("./audit.ts");
+    const widths = rest.includes("--widths") ? normalizeWidths((flag("--widths") ?? "").split(",")) : undefined;
+    const maxScreens = rest.includes("--max") ? normalizeMaxScreens(flag("--max") ?? "") : undefined;
+    const outDir = flag("--out");
+    resolveOutDir(outDir);
     const report = await runShots(url, {
-      widths: widthsArg ? numberList(widthsArg.split(",")) : undefined,
-      outDir: flag("--out"),
+      widths,
+      outDir,
       webgl: !rest.includes("--no-webgl"),
-      maxScreens: maxArg ? Number(maxArg) : undefined,
+      maxScreens,
     });
     console.log(JSON.stringify(report, null, 2));
     process.exit(report.status === "OK" ? 0 : 1);

@@ -1,8 +1,20 @@
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import path from "node:path";
-import { existsSync, readFileSync, writeFileSync, mkdtempSync, readdirSync, rmSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, writeFileSync, mkdtempSync, readdirSync, rmSync, realpathSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { runAudit, runShots } from "./audit";
+import {
+  CdpClient,
+  createPageTarget,
+  launchChrome,
+  normalizeMaxScreens,
+  normalizeWidths,
+  resolveChromePath,
+  resolveOutDir,
+  runAudit,
+  runShots,
+  walkScroller,
+  withTimeout,
+} from "./audit";
 
 const FIXTURES_DIR = path.join(import.meta.dir, "fixtures");
 
@@ -226,6 +238,113 @@ describe("runAudit", () => {
   );
 
   test(
+    "a long broken page at 5 widths shares the timeout across widths and still FAILs, never SKIPPED",
+    async () => {
+      const report = await runAudit(`${baseUrl}/long-broken.html`, { widths: [320, 375, 414, 768, 1280], timeoutMs: 30000 });
+      expect(report.status).toBe("FAIL");
+      expect(report.reason).toBeUndefined();
+      expect(report.violations.some((v) => v.rule === "stuck-reveal" && v.selector === "#stuck")).toBe(true);
+      const cut = (report.notes ?? []).filter((n) => n.includes("stopped at scrollY"));
+      expect(cut.length).toBe(5);
+    },
+    60000,
+  );
+
+  test(
+    "a timeout keeps the violations already found and reports FAIL with a cut-short note",
+    async () => {
+      const report = await runAudit(`${baseUrl}/scroll-hang.html`, { widths: [1280], timeoutMs: 10000 });
+      expect(report.status).toBe("FAIL");
+      expect(report.reason).toContain("timed out after 10000ms");
+      expect(report.reason).toContain("scroll walk was cut short");
+      expect(report.violations.map((v) => v.rule)).toContain("em-dash-text");
+      expect(report.notes).toContain("partial result: audit did not finish");
+    },
+    30000,
+  );
+
+  for (const [file, what] of [
+    ["walk-notfound.html", "a centred 404 page that does not scroll"],
+    ["walk-bg-hero.html", "a full-bleed CSS background-image hero with one headline"],
+    ["walk-embed.html", "a section holding a map iframe"],
+  ]) {
+    test(
+      `no blank-viewport on ${what}`,
+      async () => {
+        const report = await runAudit(`${baseUrl}/${file}`, { widths: [375, 1280] });
+        expect(report.status).not.toBe("SKIPPED");
+        expect(report.violations.map((v) => v.rule)).not.toContain("blank-viewport");
+      },
+      30000,
+    );
+  }
+
+  test(
+    "stacked alternates (fade carousel, Swiper fade slides, word rotator) are not stuck; a real stuck section still is",
+    async () => {
+      const report = await runAudit(`${baseUrl}/stacked-alternates.html`, { widths: [375, 1280] });
+      const stuck = report.violations.filter((v) => v.rule === "stuck-reveal");
+      expect([...new Set(stuck.map((v) => v.selector))]).toEqual(["#real"]);
+    },
+    30000,
+  );
+
+  test(
+    "stuck-reveal catches a heading that sits on the seam between two full-screen steps",
+    async () => {
+      const report = await runAudit(`${baseUrl}/seam-reveal.html`, { widths: [1280] });
+      const stuck = report.violations.filter((v) => v.rule === "stuck-reveal");
+      expect(stuck.map((v) => v.selector)).toEqual(["#edge"]);
+    },
+    30000,
+  );
+
+  test(
+    "ui_audit renders with WebGL by default; without it, walk messages say so",
+    async () => {
+      const withGl = await runAudit(`${baseUrl}/webgl-gate.html`, { widths: [1280] });
+      expect(withGl.violations.map((v) => v.rule)).not.toContain("stuck-reveal");
+      const noGl = await runAudit(`${baseUrl}/webgl-gate.html`, { widths: [1280], webgl: false });
+      const stuck = noGl.violations.filter((v) => v.rule === "stuck-reveal");
+      expect(stuck.map((v) => v.selector)).toEqual(["#scene"]);
+      expect(stuck[0].detail.endsWith("(rendered without WebGL)")).toBe(true);
+      expect(noGl.notes?.some((n) => n.includes("without WebGL"))).toBe(true);
+    },
+    40000,
+  );
+
+  test(
+    "scroller detection prefers a scrolling document over a sidebar, and honours data-jal-scroller",
+    async () => {
+      const chrome = resolveChromePath();
+      expect(chrome).toBeTruthy();
+      const dir = mkdtempSync(path.join(tmpdir(), "jal-scroller-test-"));
+      const handle = await launchChrome(chrome!, dir);
+      try {
+        const target = await createPageTarget(handle.port);
+        const client = await CdpClient.connect(target.webSocketDebuggerUrl);
+        await client.send("Page.enable");
+        await client.send("Emulation.setDeviceMetricsOverride", { width: 1280, height: 1024, deviceScaleFactor: 1, mobile: false });
+        const scrollerOf = async (url: string) => {
+          const loaded = client.waitForEvent("Page.loadEventFired", 25000);
+          await client.send("Page.navigate", { url });
+          await loaded;
+          const walk = await walkScroller(client, { probe: false, maxSteps: 1, settleMs: 50 });
+          return walk.scroller;
+        };
+        expect(await scrollerOf(`${baseUrl}/scroller-pick.html`)).toBe("document");
+        expect(await scrollerOf(`${baseUrl}/scroller-pick.html?m#mark`)).toBe("#side");
+        client.close();
+      } finally {
+        handle.proc.kill();
+        await handle.proc.exited;
+        rmSync(dir, { recursive: true, force: true });
+      }
+    },
+    30000,
+  );
+
+  test(
     "good.html stays clean on the scroll-walk rules at every width",
     async () => {
       const report = await runAudit(`${baseUrl}/good.html`, { widths: [320, 375, 414, 768, 1280] });
@@ -237,16 +356,33 @@ describe("runAudit", () => {
   );
 });
 
+// ui_shots only writes inside the working directory, so shot tests run from a
+// scratch working directory and restore the real one afterwards.
+async function inScratchCwd<T>(fn: (dir: string) => Promise<T>): Promise<T> {
+  const prev = process.cwd();
+  const dir = realpathSync(mkdtempSync(path.join(tmpdir(), "jal-shots-test-")));
+  process.chdir(dir);
+  try {
+    return await fn(dir);
+  } finally {
+    process.chdir(prev);
+    rmSync(dir, { recursive: true, force: true });
+  }
+}
+
 describe("runShots", () => {
   test(
-    "writes one JPEG per screen per width, capped by maxScreens, and clears stale shots",
+    "writes one JPEG per screen per width, capped by maxScreens, and clears stale shots of every width",
     async () => {
-      const outDir = mkdtempSync(path.join(tmpdir(), "jal-shots-test-"));
-      try {
+      await inScratchCwd(async (cwd) => {
+        const outDir = path.join(cwd, "shots");
+        mkdirSync(outDir);
         writeFileSync(path.join(outDir, "375-09.jpg"), "stale");
+        writeFileSync(path.join(outDir, "640-01.jpg"), "stale, a width not requested this run");
+        writeFileSync(path.join(outDir, "hero.jpg"), "not a shot, kept");
         const report = await runShots(`${baseUrl}/blank-band.html`, {
           widths: [375, 1280],
-          outDir,
+          outDir: "shots",
           maxScreens: 3,
           webgl: false,
           loadWaitMs: 100,
@@ -265,11 +401,149 @@ describe("runShots", () => {
           expect(bytes[1]).toBe(0xd8);
         }
         expect(report.files.filter((f) => f.width === 1280).map((f) => f.scrollY)).toEqual([0, 800, 1600]);
-        expect(readdirSync(outDir)).not.toContain("375-09.jpg");
-      } finally {
-        rmSync(outDir, { recursive: true, force: true });
-      }
+        const left = readdirSync(outDir);
+        expect(left).not.toContain("375-09.jpg");
+        expect(left).not.toContain("640-01.jpg");
+        expect(left).toContain("hero.jpg");
+      });
     },
     60000,
   );
+
+  test("rejects an out_dir outside the working directory before touching disk or Chrome", async () => {
+    await inScratchCwd(async (cwd) => {
+      const outside = mkdtempSync(path.join(tmpdir(), "jal-shots-outside-"));
+      try {
+        writeFileSync(path.join(outside, "375-01.jpg"), "must survive");
+        for (const bad of [outside, "../escape", path.join(cwd, "..", "x")]) {
+          await expect(runShots(`${baseUrl}/good.html`, { outDir: bad, chromePath: "/no/such/chrome" })).rejects.toThrow(
+            "out_dir must be a directory inside the working directory",
+          );
+        }
+        expect(readdirSync(outside)).toContain("375-01.jpg");
+        expect(existsSync(path.join(cwd, "..", "escape"))).toBe(false);
+      } finally {
+        rmSync(outside, { recursive: true, force: true });
+      }
+    });
+  });
+
+  test(
+    "returns the screens already written as PARTIAL when the run times out",
+    async () => {
+      await inScratchCwd(async (cwd) => {
+        const report = await runShots(`${baseUrl}/scroll-hang.html`, {
+          widths: [1280],
+          outDir: "shots",
+          maxScreens: 3,
+          webgl: false,
+          loadWaitMs: 100,
+          timeoutMs: 8000,
+        });
+        expect(report.status).toBe("PARTIAL");
+        expect(report.reason).toContain("timed out");
+        expect(report.files.length).toBe(1);
+        expect(path.basename(report.files[0].path)).toBe("1280-01.jpg");
+        expect(existsSync(report.files[0].path)).toBe(true);
+        expect(report.out_dir).toBe(path.join(cwd, "shots"));
+      });
+    },
+    30000,
+  );
+});
+
+describe("input normalisation", () => {
+  test("widths are rounded, clamped to 200..3840, deduplicated; non-numbers are an error", () => {
+    expect(normalizeWidths([375.5, 100, 99999, "414", 376])).toEqual([376, 200, 3840, 414]);
+    expect(normalizeWidths(undefined)).toBeUndefined();
+    expect(normalizeWidths([])).toBeUndefined();
+    expect(() => normalizeWidths(["abc"])).toThrow("invalid width");
+    expect(() => normalizeWidths([375, NaN])).toThrow("invalid width");
+    expect(() => normalizeWidths([Infinity])).toThrow("invalid width");
+    expect(() => normalizeWidths("375")).toThrow("widths must be an array");
+  });
+
+  test("max_screens is finite and clamped to 1..40", () => {
+    expect(normalizeMaxScreens(3.6)).toBe(4);
+    expect(normalizeMaxScreens(0)).toBe(1);
+    expect(normalizeMaxScreens(500)).toBe(40);
+    expect(normalizeMaxScreens("7")).toBe(7);
+    expect(normalizeMaxScreens(undefined)).toBeUndefined();
+    expect(() => normalizeMaxScreens("abc")).toThrow("invalid max_screens");
+    expect(() => normalizeMaxScreens(NaN)).toThrow("invalid max_screens");
+  });
+
+  test("resolveOutDir confines output to the working directory", () => {
+    const cwd = path.join(tmpdir(), "jal-cwd");
+    expect(resolveOutDir(undefined, cwd)).toBe(path.join(cwd, ".jal", "shots"));
+    expect(resolveOutDir("out/a", cwd)).toBe(path.join(cwd, "out", "a"));
+    expect(resolveOutDir(path.join(cwd, "abs"), cwd)).toBe(path.join(cwd, "abs"));
+    expect(() => resolveOutDir("../x", cwd)).toThrow("out_dir must be");
+    expect(() => resolveOutDir("/etc", cwd)).toThrow("out_dir must be");
+    expect(() => resolveOutDir(".", cwd)).toThrow("out_dir must be");
+  });
+});
+
+describe("timeouts and the CDP client", () => {
+  test("withTimeout rejects at the deadline and aborts the run's signal", async () => {
+    let seen: AbortSignal | undefined;
+    const started = Date.now();
+    await expect(
+      withTimeout(50, async (signal) => {
+        seen = signal;
+        await new Promise((r) => setTimeout(r, 300));
+        return "late";
+      }),
+    ).rejects.toThrow("timed out after 50ms");
+    expect(Date.now() - started).toBeLessThan(250);
+    expect(seen?.aborted).toBe(true);
+  });
+
+  test("CdpClient rejects every pending send when the socket closes, and sends after close fail fast", async () => {
+    let serverSocket: any;
+    const ws = Bun.serve({
+      port: 0,
+      fetch(req, srv) {
+        if (srv.upgrade(req)) return;
+        return new Response("no", { status: 400 });
+      },
+      websocket: {
+        open(s) {
+          serverSocket = s;
+        },
+        message() {
+          // never answer
+        },
+      },
+    });
+    try {
+      const client = await CdpClient.connect(`ws://127.0.0.1:${ws.port}/`);
+      const a = client.send("Runtime.evaluate", { expression: "1" });
+      const b = client.waitForEvent("Page.loadEventFired", 60000);
+      await new Promise((r) => setTimeout(r, 50));
+      expect(client.pendingCount).toBe(2);
+      serverSocket.close();
+      await expect(a).rejects.toThrow("devtools websocket");
+      await expect(b).rejects.toThrow("devtools websocket");
+      expect(client.pendingCount).toBe(0);
+      await expect(client.send("Page.enable")).rejects.toThrow("devtools websocket");
+
+      const client2 = await CdpClient.connect(`ws://127.0.0.1:${ws.port}/`);
+      const c = client2.send("Page.enable");
+      client2.close();
+      await expect(c).rejects.toThrow("devtools client closed");
+    } finally {
+      ws.stop(true);
+    }
+  });
+});
+
+describe("shotUrl", () => {
+  test("WebGL shots ask the scene module for the full tier", async () => {
+    const { shotUrl } = await import("./audit");
+    expect(shotUrl("http://localhost:4000/", true)).toBe("http://localhost:4000/?scene-tier=full");
+    expect(shotUrl("http://localhost:4000/?a=1", true)).toBe("http://localhost:4000/?a=1&scene-tier=full");
+    expect(shotUrl("http://localhost:4000/?scene-tier=static", true)).toBe("http://localhost:4000/?scene-tier=static");
+    expect(shotUrl("http://localhost:4000/", false)).toBe("http://localhost:4000/");
+  });
 });

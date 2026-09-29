@@ -12,8 +12,8 @@ From: JAL-authored (registry checks, 2026-09-29), three.js docs (MIT), pmndrs do
 | `@types/three` | match three's minor | |
 | `@react-three/fiber` | 9.8.1 | Peer `react >=19 <19.4`, `three >=0.156`. v10 (first-class WebGPU, new scheduler) is alpha: do not ship it |
 | `@react-three/drei` | 10.7.9 | Pulls `three-stdlib`, `camera-controls`, `detect-gpu`, `maath`, `meshline`, `stats-gl`, `three-mesh-bvh`, `troika-three-text`, `zustand` |
-| `postprocessing` (approval candidate, ask Brian) | 6.39.5 | Peer `three >=0.168 <0.187`. Approving it caps three below r187 |
-| `@react-three/postprocessing` (approval candidate, ask Brian) | 3.1.3 | |
+| `postprocessing` (approved by Brian 2026-09-29, through the scene module) | 6.39.5 | Peer `three >=0.168 <0.187`: it caps three below r187 |
+| `@react-three/postprocessing` (approved by Brian 2026-09-29, through the scene module) | 3.1.3 | Peer `@react-three/fiber >=9.7.0`, `postprocessing ^6.36.0`; bundles `n8ao` 2.x |
 | `lenis` | 1.3.26 | React wrapper at `lenis/react` |
 | `gsap` / `@gsap/react` (approved, part of GSAP) | 3.15.0 / 2.1.2 | GSAP Standard License, not MIT: never copy GSAP source |
 | `@react-three/rapier` (approved, used when JEV picks it) | 2.2.0 | Pins `@dimforge/rapier3d-compat` 0.19.2. Its WASM goes through the Bun.build `file` loader (or the compat build's inlined WASM) with the 3D CSP additions in section 7.3 |
@@ -75,7 +75,7 @@ export function fit(renderer: THREE.WebGLRenderer, camera: THREE.PerspectiveCame
 
 **Material roles.** A scene uses a small set of named shared materials instead of one-off colours: primary body, secondary body, trim or edge, glass, ground contact (dark matte shadow receiver), decal dark, decal light, and accent (the one JAL accent at about 3 percent of the frame). Each role is created once and shared, with per-instance variation through `instanceColor`, and maps to JAL tokens so DOM and canvas speak one palette. Unique material count is a perf-report row: it grows faster than geometry count.
 
-**Authoring procedural objects.** Silhouette test first: render the subject as flat ink on page white; if it is not recognisable, fix the geometry before materials. Build from `ExtrudeGeometry` (with bevel) for panels, badges, and profiles; `LatheGeometry` for vessels, knobs, caps, domes; `TubeGeometry` for cables and rails; `ShapeGeometry` for flat marks; a custom `BufferGeometry` for tapered or faceted forms; `InstancedMesh` for repeats. Add functional parts (seams, fasteners, hinges, vents) where the camera looks and skip hidden faces; name meaningful child meshes and keep the raycast proxy separate. Where real bevels cost too much, fake them with thin trim strips or slightly inset darker panels. The full discipline for generated subjects is `procedural-geometry.md`.
+**Authoring procedural objects.** Only when no real asset fits: the client's asset comes first, then a Poly Haven CC0 asset (`premium-3d.md` section 2). Silhouette test first: render the subject as flat ink on page white; if it is not recognisable, fix the geometry before materials. Build from `ExtrudeGeometry` (with bevel) for panels, badges, and profiles; `LatheGeometry` for vessels, knobs, caps, domes; `TubeGeometry` for cables and rails; `ShapeGeometry` for flat marks; a custom `BufferGeometry` for tapered or faceted forms; `InstancedMesh` for repeats. Add functional parts (seams, fasteners, hinges, vents) where the camera looks and skip hidden faces; name meaningful child meshes and keep the raycast proxy separate. Where real bevels cost too much, fake them with thin trim strips or slightly inset darker panels. The full discipline for generated subjects is `procedural-geometry.md`.
 
 **Scene module layout.** Materials, geometry factories, the lighting rig, render setup, and diagnostics live in separate modules even in a small section (`scene/materials.ts`, `scene/factories/*.ts`, `scene/lighting.ts`, `scene/render.ts`, `scene/diagnostics.ts`). Every factory returns a group plus an optional raycast proxy, LOD, bounds, and a counts object (meshes, materials, geometries, triangles) the perf report can sum; GLB loaders return the same shape plus their clips. No asset-generation call ever appears in runtime code.
 
@@ -349,6 +349,10 @@ A generated material (a weave, a brushed pattern, a paper grain) derives albedo,
 
 Text-to-3D, image, and audio generation services are paid third parties: `be.new_tech`, then ask Brian; dev tooling only, never from the browser, never with keys in client code or the repo. If one is approved: record the accepted task ID in a checkpoint file before waiting; retry only status and download reads with bounded exponential backoff (about four attempts) honouring `Retry-After`; never auto-retry a paid submission and reconcile an uncertain one against provider history before any new charge; download signed outputs at once and never store signed URLs; inspect the concept or preview before paying for a dependent stage. Classify failures first: missing credentials (use a procedural or licensed alternative and disclose it), rejected auth (a permission problem), exhausted credits (stop, keep the IDs), invalid input (fix the request), transient errors (bounded retry, then pending), malformed output (retry only that stage). Image-to-3D references show one centred object in full on a plain light background with no text; riggable characters stand in a T or A pose.
 
+### 7.8 CC0 assets from Poly Haven (approved by Brian, 2026-09-29)
+
+Models (glTF with JPG textures), HDRIs (`.hdr`, `.exr`), and PBR surfaces come from Poly Haven through `scripts/assets/polyhaven.ts`, into the client app's `public/` at build time, with an `ASSETS.md` ledger. Poly Haven glTFs are plain glTF (no Draco, Meshopt, or KTX2), metres, Y up; the `.bin` is shared across resolutions and only the textures change. Commands, asset QA, and what exists: `premium-3d.md` section 2.
+
 ## 8. Disposal
 
 From: three.js docs (MIT), pmndrs docs (R3F disposal), JAL-authored (teardown order), nixie-fx (async cancellation), ai-dev-kit.
@@ -455,7 +459,7 @@ Work down the list and stop at the first hit:
 
 From: JAL-authored (recipe, tiers, budgets), three.js docs (MIT), drei (MIT), pmndrs docs.
 
-One hero object (a product, vessel, or device) resting on the page white. Cost class T4/C2 in `recipe-index.md` terms (T4 is the three or R3F tech level, C2 is 1 to 2.5 ms per frame); the device tiers T0 to T3 below are `performance.md` section 3. This section only orders the build; the details live where cited.
+One hero object (a product, vessel, or device) resting on the page white. For a lit product scene (a real surface, a shadow-casting key, practical lights, a camera across sections) build on the scene module instead (`templates/modules/scene`, bar in `premium-3d.md`); this recipe stays for a single calm object where a contact shadow is the whole grounding. Cost class T4/C2 in `recipe-index.md` terms (T4 is the three or R3F tech level, C2 is 1 to 2.5 ms per frame); the device tiers T0 to T3 below are `performance.md` section 3. This section only orders the build; the details live where cited.
 
 1. **Poster first.** The section ships a WebP poster (200KB or less, the authored first frame) and lazy-imports the scene chunk only on T1 or above as the section nears the viewport (section 6). R3F by default (`r3f.md` section 1); a vanilla build follows section 11.
 2. **Transparent canvas.** `alpha: true`, clear colour `(0, 0)`, `scene.background = null`, never `<color attach="background">` (section 3, fix 1). Canvas props per `r3f.md` section 2; embedded through drei `View` (`r3f.md` section 8) or a canvas sized to its figure. `frameloop="demand"` when nothing moves, otherwise the one clock (`r3f.md` section 3).

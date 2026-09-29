@@ -17,6 +17,8 @@ import {
   AGENTS,
   COMMANDS,
   COMMAND_MAP,
+  HERO,
+  JEV,
   JEV_CATALOG,
   NAV,
   PLUGIN_VERSION,
@@ -132,6 +134,18 @@ describe("docs site content", () => {
     const real = [...catalog.matchAll(/^### `[a-z]+\.[a-z_]+`/gm)].length;
     expect(JEV_CATALOG.reduce((sum, entry) => sum + entry.count, 0)).toBe(real);
     expect(html).toContain(`${real} decisions in total`);
+  });
+
+  test("the hero stats and the catalog title match the catalog and the rule list", () => {
+    const catalog = readFileSync(join(import.meta.dir, "..", "..", "skills", "jal-jev", "references", "catalog.md"), "utf8");
+    const jevCount = [...catalog.matchAll(/^### `[a-z]+\.[a-z_]+`/gm)].length;
+    const stat = (label: string) => HERO.stats.find((s) => s.label === label)?.value;
+    expect(stat("JEV decisions")).toBe(String(jevCount));
+    expect(stat("UI check rules")).toBe(String(UI_RULES.length));
+    expect(stat("specialist agents")).toBe(String(AGENTS.length));
+    expect(stat("commands")).toBe(String(COMMANDS.length));
+    expect(JEV.catalogTitle).toBe(`The ${jevCount} catalog decisions`);
+    expect(SECTION_MARKERS.uiCheck as string).toBe(`The ${UI_RULES.length}-rule UI check`);
   });
 
   test("the UI check lists exactly 22 rules", () => {

@@ -75,7 +75,7 @@ TAG's own `.codex/AGENTS.md` tells its author to treat unlicensed sources as MIT
 | pmndrs/drei (`MeshReflectorMaterial`, `useFBO`, `Instances`) | MIT | https://github.com/pmndrs/drei |
 | pmndrs/react-three-fiber | MIT | https://github.com/pmndrs/react-three-fiber |
 | pmndrs/maath (damping, easing, random) | MIT (`package.json`); direct import is an approval candidate, ask Brian (`THREE.MathUtils.damp` covers these recipes) | https://github.com/pmndrs/maath |
-| pmndrs/postprocessing | Zlib (permissive); not used here (tone mapping is the only post), approval candidate, ask Brian | https://github.com/pmndrs/postprocessing |
+| pmndrs/postprocessing | Zlib (permissive); not used by these effects (tone mapping is the only post); approved by Brian 2026-09-29 through the scene module's `PostFX` | https://github.com/pmndrs/postprocessing |
 | gkjohnson/three-mesh-bvh (fast raycasts for footprints, pointer trails) | MIT; direct import is an approval candidate, ask Brian | https://github.com/gkjohnson/three-mesh-bvh |
 | simondevyoutube/Quick_Grass (structure only, not `noise.glsl`) | MIT | https://github.com/simondevyoutube/Quick_Grass |
 | momentchan/r3f-procedural-grass (top-level repo only, no submodule) | MIT | https://github.com/momentchan/r3f-procedural-grass |
@@ -90,7 +90,7 @@ TAG's own `.codex/AGENTS.md` tells its author to treat unlicensed sources as MIT
 | N8python/diamonds (BVH gem refraction reference) | MIT | https://github.com/N8python/diamonds |
 | siliconjungle/inkwell-webgpu-flowers (flower field, far-LOD identity) and its painted atlases | MIT (GitHub API; atlas notice "James and Inkwell contributors") | https://github.com/siliconjungle/inkwell-webgpu-flowers |
 | achrefelouafi/VegetationGeneratorThreeJS (surface ivy, petiole-hinge wind) | MIT (GitHub API) | https://github.com/achrefelouafi/VegetationGeneratorThreeJS |
-| AmbientCG textures, Poly Haven HDRIs | CC0 | self-host under `/vendor`, never hotlink |
+| AmbientCG textures, Poly Haven models, HDRIs, and textures | CC0 | self-host in the client app, never hotlink; Poly Haven through `scripts/assets/polyhaven.ts` into the client project only (with its `ASSETS.md`), never into JAL-AIDEV (`premium-3d.md` section 2) |
 
 CC-BY assets (many Sketchfab scans) need visible attribution: dev only unless the client accepts the credit line.
 

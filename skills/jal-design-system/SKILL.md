@@ -14,6 +14,7 @@ There is one design system. Every JAL product, from an ops console to a phone-fi
 - `references/directions.md`: the variety mechanism (5 to 7 candidates, JEV screen, seeded draw), the six variation axes, the `docs/design/direction.md` contract template, and the 13 visual directions as JAL Core knob sets.
 - `references/sources.md`: provenance. Source value to JAL Core translation tables for Astryx, Carbon, and Material, and every pattern each one had that JAL law removed.
 - `references/source-map.md`: every UIUX, motion, and immersive reference Brian supplied, the file that holds it, and the pipeline step that uses it.
+- `references/identity.md`: the JAL Core identity as code. The fixed signature (4/8/12 grid, five type roles, tabular mono numerals, tonal bands and hairlines, radius tiers, the data presentation), the direction knobs, a derived identity, the composition kit in `packages/ui/src/kit`, the page recipes, and the anti-repetition law.
 
 Read order for any UI task: `jal-standards` (law), `jal-ui-taste` (tokens, section concept law, audit), `jal-frontend-rules` (recipes), then this skill, `foundations.md`, and the block and component specs you need. `jal-motion` owns motion detail.
 
@@ -43,6 +44,16 @@ Astryx is the base. It was built to be driven by agents and to stay consistent a
 | Agent workflow | Astryx | Discover, skeleton, component spec, rules, mandatory self-check re-read |
 
 **Conflict rule inside the system.** Law decides first, then JAL Core tokens. If Astryx and Carbon still disagree, the owner in the table above wins. Where no row covers it, Astryx wins. A component is never built from two anatomies.
+
+## Kit first (every page is composed from the kit)
+
+The identity lives in code, not in prose: `templates/monorepo/packages/ui/src/kit` (React 19, zero runtime dependencies) with `packages/ui/src/kit.css`. Every JAL page is composed from it: `Page`, `Section`, `SectionHead`, `Masthead` (left, centered, split, overlay), `Split`, `BentoGrid` and `BentoTile`, `SpecRail`, `SpecTable`, `StatRow`, `FeatureGrid`, `MediaFrame`, `Quote`, `LogoRow`, `FAQ`, `CTABand`, `PricingTable`, `Footer`, `StickyStory`. Import `kit.css` after `tokens.css` and `ui.css`.
+
+1. **Direction is one attribute.** Set `data-direction` (D1 to D13, or a derived identity) on `<html>` or `<Page>`. The knob values per direction are in `directions.md` section 7a; a derived identity follows `identity.md` section 3. Never restyle a composition per project.
+2. **Pick compositions, not layouts.** Start from the page recipe in `identity.md` section 5.2, gate each region with `ui.region_gate`, pick the composition and variant with `ui.component_recipe` (the kit composition is always a candidate), then run `validatePageRecipe`: a Masthead first, no two adjacent sections alike, nothing more than twice, at least one BentoGrid, SpecTable, SpecRail, or StatRow on a marketing page.
+3. **Hand-written layout only when no kit composition fits.** Build it inside `<Section>` on the kit grid with `SectionHead` and the type roles, and record it in the direction contract (`Compositions:` line and the decision ledger) with the reason. Rewriting a grid, a hero, a card, or a spec list the kit already has is a finding.
+4. **The signature is not negotiable per page:** one heading plus one lead per section (never two stacked headings, never a kicker or "01" marker), five type roles, tabular mono numerals with small units, tonal bands plus hairlines, media in a MediaFrame with the caption below.
+5. **Verify on the render.** The kit preview (`kit/preview`, `identity.md` section 6) shows the recipe in three directions; build pages the same way and run `ui_shots` and `ui_audit` on them.
 
 ## Precedence (absolute)
 

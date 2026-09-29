@@ -12,10 +12,10 @@ From: threejs-game-skills (render budgets, canvas inspector), Threejs-Awesome-Gr
 | Triangles | 300k or fewer | 150k or fewer | 80k or fewer | poster |
 | Textures | 24 or fewer | 16 or fewer | 12 or fewer | poster |
 | Texture memory (estimated) | 96 MB or less | 48 MB or less | 32 MB or less | poster |
-| Shadow casters | 1 at 2048 | 1 at 1024, or fake | fake only | poster |
-| Post passes beyond output | 0 to 1 (AA only) | 0 | 0 | none |
+| Shadow casters | up to 2 at 2048 (key plus a practical) | 1 at 1024 | 1 at 1024 (the practical when it carries the story), else fake | poster |
+| Post passes beyond output | the scene module's `PostFX`: full-res AO, subtle DoF, tone mapping, SMAA (no bloom) | 0 | 0 | none |
 | DPR | pixel budget 1.65 MP, max 1.5 | 1.0 MP, max 1.25 | max 1.0 | image `srcset` |
-| Scene chunk (gzip) | agreed per project in the ADR, enforced by the build script | same | same | none |
+| Scene chunk (gzip) | agreed per project in the ADR, enforced by the build script; measured scene module proof: 374 KB shared plus scene, plus 162 KB PostFX on desktop | same, 374 KB (no PostFX chunk) | same | none |
 | Frame time p95, real GPU | under 16.7 ms | under 16.7 ms | under 33 ms, or go static | none |
 | Particles (starting values) **[JAL]** | 100k points, 262k GPGPU or compute | 30k points, 65k GPGPU | 10k points, 16k GPGPU | poster |
 | Clean-room effects per viewport | 2 | 2 | 1 | poster |
@@ -71,7 +71,7 @@ Optimisations by payoff when profiling: instancing, sharing geometry and materia
 
 From: threejs-game-skills (composer cost, frame timing), webgpu-claude-skill (MRT, watchdog; own words), Threejs-Awesome-Graphics-Agent-Skills (render-target ownership, material costs), nixie-fx (delta clamping), pmndrs docs (`EffectComposer`), remotion (fixed plates; ideas only), JAL-authored (clean-room effect targets).
 
-**Post-processing.** Composer targets are full-resolution, usually HDR, so every pass costs fill that scales with DPR squared. One RGBA16F target at 1.65 MP is about 13 MB (1.65M px times 8 bytes); every pass reads and writes at least one. SMAA is three passes (edges, weights, blend). On WebGL with pmndrs `EffectComposer` (approval candidate, ask Brian) consecutive effects merge into one pass, with at most one convolution effect (such as DoF) per pass; recommended renderer settings there are `antialias: false`, `stencil: false`, `depth: false`. The WebGPU `RenderPipeline` fuses node chains; `scenePass.setMRT(mrt({ output, normal: normalView, depth }))` renders several targets in one scene pass (read with `scenePass.getTextureNode("normal")`), declaring only targets a pass reads; MRT attachments default to RGBA16F, drop 8-bit data (packed normals, metal and rough) to `UnsignedByteType` to halve bandwidth. Default JAL stack: none.
+**Post-processing.** Composer targets are full-resolution, usually HDR, so every pass costs fill that scales with DPR squared. One RGBA16F target at 1.65 MP is about 13 MB (1.65M px times 8 bytes); every pass reads and writes at least one. SMAA is three passes (edges, weights, blend). On WebGL with pmndrs `EffectComposer` (approved through the scene module, `premium-3d.md` section 6) consecutive effects merge into one pass, with at most one convolution effect (such as DoF) per pass; recommended renderer settings there are `antialias: false`, `stencil: false`, `depth: false`. The WebGPU `RenderPipeline` fuses node chains; `scenePass.setMRT(mrt({ output, normal: normalView, depth }))` renders several targets in one scene pass (read with `scenePass.getTextureNode("normal")`), declaring only targets a pass reads; MRT attachments default to RGBA16F, drop 8-bit data (packed normals, metal and rough) to `UnsignedByteType` to halve bandwidth. Default JAL stack: none.
 
 **Render-target ownership table.** Before adding any second pass, write one row per signal: signal, producer, consumers, colour space and format, resolution, history (yes or no). Each signal has exactly one producer (no depth prepass when the scene pass already owns depth); every target is resized from the same DPR and CSS size in one function; every pass has a named input, output, owner, and disable path. Confirm the render loop actually calls the pass graph: a composer built but never rendered is a common dead path.
 

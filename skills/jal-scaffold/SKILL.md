@@ -20,13 +20,25 @@ Output layout:
 ```
 apps/web/     React + TS SPA, built with Bun.build(), served by Hono static server.
 apps/api/     Hono on Bun: Postgres + Redis + S3 clients, security middleware, gpt-4o-mini client.
-packages/ui/  Shared React components: bento primitives, tokens, icon wrapper (no gradient presets, no decorative-line helpers).
+packages/ui/  Shared React components: tokens, AppShell, the JAL Core identity kit (src/kit + src/kit.css), icon wrapper (no gradient presets, no decorative-line helpers).
 packages/config/ shared tsconfig, eslint config, env schema.
 infra/        Per-app Dockerfile (multi-stage, slim), docker-compose for local PG + Redis.
 .github/workflows/ci.yml
 .jal/memory/
 turbo.json, package.json (workspaces), .gitignore, README.md
 ```
+
+`packages/ui/src/kit` is the composition kit every page is built from (`Page`, `Section`, `SectionHead`, `Masthead`, `Split`, `BentoGrid`, `SpecRail`, `SpecTable`, `StatRow`, `FeatureGrid`, `MediaFrame`, `Quote`, `LogoRow`, `FAQ`, `CTABand`, `PricingTable`, `Footer`, `StickyStory`, plus `validateBentoLayout`, `validatePageRecipe`, `PAGE_RECIPES`, `DIRECTIONS`), with styles in `packages/ui/src/kit.css` imported after `tokens.css` and `ui.css`. The direction is one `data-direction` attribute (D1 to D13). Spec: `jal-design-system` `SKILL.md` (Kit first) and `references/identity.md`. The kit preview (`kit/preview`) is never the app's starter page.
+
+## Opt-in modules (`templates/modules/`)
+
+The base template stays dependency-light. Heavier capabilities live in `templates/modules/<name>/` and are never copied by `/jal-new`; an agent copies one into `packages/<name>` only when a page needs it.
+
+| Module | Copy when | How |
+|---|---|---|
+| `scene` (persistent, physically lit R3F scene: `Stage`, `EnvironmentRig`, `LightRig`, `Ground`, material presets, tier-gated `PostFX`, `CameraRig`, `Product`) | A section is immersive: JEV `imm.gate` passed and `imm.tech` picked `webgl` with `r3f`, and the scene shows a product, a desk, a room, or any lit object; always when 3D appears in more than one section. Never for a 2D canvas, a CSS or DOM effect, a WebGPU/TSL-only scene, or a noyzzi piece. | From the client repo root: `cp -R <jal-aidev>/templates/modules/scene packages/scene`, replace `__APP_NAME__` in `packages/scene/package.json` and `packages/scene/src/`, add `"@<project>/scene": "workspace:*"` (and `"gsap": "3.15.0"` if the app has none) to `apps/web/package.json`, then `bun install`. Keep React below 19.4 (the template ships `~19.3.0`). Fetch assets into the app with `bun <jal-aidev>/scripts/assets/polyhaven.ts get ... --out apps/web/public/assets/polyhaven` and commit its `ASSETS.md`. Copy Draco or Basis decoders into `dist/vendor/r186/` in `apps/web/build.ts` only when a model needs them. Import the scene lazily, poster first. Record an ADR with the pinned versions and the assets. |
+
+Full steps, pinned versions (three 0.186.1, `@react-three/fiber` 9.8.1, `@react-three/drei` 10.7.9, `@react-three/postprocessing` 3.1.3, `postprocessing` 6.39.5, which caps three below r187), tiers, and budgets: `templates/modules/scene/README.md`. The quality bar: `jal-immersive` `references/premium-3d.md`.
 
 ## The no-Vite Bun.build() React recipe
 

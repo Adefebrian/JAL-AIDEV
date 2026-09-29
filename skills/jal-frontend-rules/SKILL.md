@@ -85,7 +85,7 @@ Use the shared `AppShell` component from `packages/ui` (`AppShell.tsx`, styles `
 
 - Two scroll modes, set with the `scroll` prop:
   - `scroll="document"` (the default, and required for marketing, landing, and immersive pages): the document scrolls, the header is sticky, the bottom tab bar is fixed, and the shell reserves its height so nothing hides under it. ScrollTrigger and Lenis work with zero wiring.
-  - `scroll="contained"` (dense product screens such as admin and dashboards): a `100dvh` grid whose `main` scrolls on its own. Motion code must call `ScrollTrigger.defaults({ scroller: getScroller() })` once before any trigger, or every scroll reveal stays hidden. `ui_audit` rule `stuck-reveal` catches this.
+  - `scroll="contained"` (dense product screens such as admin and dashboards): a `100dvh` grid whose `main` scrolls on its own. Motion code must call `ScrollTrigger.defaults({ scroller: getScroller() })` once before any trigger, after mount inside `useGSAP` or `useLayoutEffect` (never at module top level, where it still returns `window`), or every scroll reveal stays hidden. `ui_audit` rule `stuck-reveal` catches this.
 - Below 640px: bottom tab bar of 3 to 5 destinations, icon (24) in a 64 by 32 pill over a label, 64px tall targets, `safe-area-inset-bottom`. Active = `layer-2` pill + weight 600 `ink` + `aria-current="page"`.
 - From 640px the same destinations move into the header row as top nav (44px items, active `layer-2`). They never disappear.
 - `ui_audit` rule `mobile-app-shell` fails any screen below 640px without a pinned header and a 3 to 5 item bottom tab bar.

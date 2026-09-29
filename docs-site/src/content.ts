@@ -16,7 +16,7 @@
 // Inline `backticks` in any body text render as inline code (see
 // render.ts richText), so copy can name a file or a command plainly.
 
-export const PLUGIN_VERSION = "v0.4.0";
+export const PLUGIN_VERSION = "v0.5.0";
 
 export type NavItem = {
   id: string;
@@ -53,7 +53,7 @@ export const SECTION_MARKERS = {
   jev: "JEV, the judge",
   designSystem: "One design system: JAL Core",
   immersive: "The immersive and 3D layer",
-  uiCheck: "The 20-rule UI check",
+  uiCheck: "The 22-rule UI check",
   docs: "Publishing to JAL Docs",
   search: "SEO, AEO, dan GEO",
   studyCases: "Study cases",
@@ -68,14 +68,14 @@ export const BRAND = {
 export const HERO = {
   title: "Ship faster without shipping spaghetti.",
   body:
-    "JAL-AIDEV is a Claude Code plugin: a written constitution, a crew of 17 specialist agents, and a judge called JEV that settles the small calls. Seven commands cover everything from an empty folder to a deploy, and nothing is called done until the checks pass.",
+    "JAL-AIDEV is a Claude Code plugin: a written constitution, a crew of 17 specialist agents, and a judge called JEV that settles the small calls. Eight commands cover everything from an empty folder to a deploy, and nothing is called done until the checks pass.",
   primaryCta: { label: "Install the plugin", href: "#install" },
-  secondaryCta: { label: "See the seven commands", href: "#commands" },
+  secondaryCta: { label: "See the eight commands", href: "#commands" },
   stats: [
     { value: "17", label: "specialist agents" },
-    { value: "7", label: "commands" },
-    { value: "47", label: "JEV decisions" },
-    { value: "20", label: "UI check rules" },
+    { value: "8", label: "commands" },
+    { value: "52", label: "JEV decisions" },
+    { value: "22", label: "UI check rules" },
   ],
 };
 
@@ -97,7 +97,7 @@ export const OVERVIEW = {
     {
       title: "Proven, not promised",
       body:
-        "A write-time guard blocks banned patterns as files are saved. Tests, a review gate, and a 20-rule UI check in a real browser decide when a change is actually finished.",
+        "A write-time guard blocks banned patterns as files are saved. Tests, a review gate, and a 22-rule UI check in a real browser decide when a change is actually finished.",
     },
     {
       title: "It learns",
@@ -359,7 +359,7 @@ export const COMMANDS: Command[] = [
     argumentHint: "<what to build, or which screen or site to redesign>",
     purpose: "Anything visual",
     what:
-      "New screens, redesigns, landing pages, and immersive or 3D websites. JEV first decides whether the brief is product UI, a marketing page, or immersive. A redesign lists what is wrong before changing anything. Every section gets a purpose, one message, and one action, then it is built phone first on JAL Core and proven with the 20-rule UI check.",
+      "New screens, redesigns, landing pages, and immersive or 3D websites. JEV first decides whether the brief is product UI, a marketing page, or immersive. A redesign lists what is wrong before changing anything. Every section gets a purpose, one message, and one action, then it is built phone first on JAL Core and proven with the 22-rule UI check.",
     examples: [
       "/jal-ui a settings screen for team members and roles",
       "/jal-ui redesign the pricing page",
@@ -495,7 +495,7 @@ export const JEV = {
       body: "New tech outside the approved stack, a change of the default LLM, and scope changes that move a deadline go to Brian. JEV can help frame the tradeoff; it never approves them.",
     },
   ],
-  catalogTitle: "The 47 catalog decisions",
+  catalogTitle: "The 52 catalog decisions",
   catalogLead:
     "The standard decisions live in the `jal-jev` skill, each with its exact question, the check that runs before it, and the threshold that turns the answer into an action.",
 };
@@ -540,6 +540,10 @@ export const DESIGN_SYSTEM = {
     {
       title: "Knowledge, not packages",
       body: "No Astryx, Carbon, or Material package is ever installed. Their patterns are rebuilt once in JAL Core tokens with Bun, because their compiled CSS carries gradients, shadows, and stripes the law bans.",
+    },
+    {
+      title: "The identity is code",
+      body: "Every page is composed from the JAL Core kit in the template (`packages/ui/src/kit`): Masthead, Split, Bento, spec rails and tables, stat rows, feature grids, media frames, quotes, FAQ, CTA band, pricing, footers, and sticky stories. One `data-direction` attribute sets the look, and a validator keeps sections from repeating.",
     },
     {
       title: "Law always wins",
@@ -598,6 +602,10 @@ export const IMMERSIVE = {
     {
       title: "A GPU budget, not a fixed count",
       body: "Each device tier has a budget for canvases, draw calls, and pixels. JEV adds effects only while the page stays inside it, and every scene has a text version in the page for readers and search.",
+    },
+    {
+      title: "Real assets, real light",
+      body: "Product scenes use real models, studio HDRIs, and surfaces: the client's own, or CC0 Poly Haven assets fetched into the client project at build time (approved by Brian), never kept in the plugin. The opt-in scene module adds shadow-casting light, one scene with a moving camera, and a tier-gated post stack on `@react-three/postprocessing` (approved by Brian). Bloom stays banned.",
     },
     {
       title: "JEV picks the recipe",

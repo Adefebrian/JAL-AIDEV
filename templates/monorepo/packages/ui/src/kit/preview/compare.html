@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en" data-direction="D1">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Kit compare board</title>
+    <link rel="stylesheet" href="/css/tokens.css" />
+    <link rel="stylesheet" href="/css/ui.css" />
+    <link rel="stylesheet" href="/css/kit.css" />
+    <link rel="stylesheet" href="/css/preview.css" />
+  </head>
+  <body data-jal-shell="none">
+    <main class="pv-board" data-jal-shell="none">
+      <section class="pv-board-cell" aria-label="D1 research_notebook, first viewport">
+        <p class="kit-meta">D1 research_notebook, first viewport</p>
+        <div class="pv-board-frame"><iframe title="D1 research_notebook at 1280, first viewport" src="/landing?d=D1" loading="lazy"></iframe></div>
+      </section>
+      <section class="pv-board-cell" aria-label="D9 cinematic_hardware, first viewport">
+        <p class="kit-meta">D9 cinematic_hardware, first viewport</p>
+        <div class="pv-board-frame"><iframe title="D9 cinematic_hardware at 1280, first viewport" src="/landing?d=D9" loading="lazy"></iframe></div>
+      </section>
+      <section class="pv-board-cell" aria-label="D11 oversized_masthead, first viewport">
+        <p class="kit-meta">D11 oversized_masthead, first viewport</p>
+        <div class="pv-board-frame"><iframe title="D11 oversized_masthead at 1280, first viewport" src="/landing?d=D11" loading="lazy"></iframe></div>
+      </section>
+      <section class="pv-board-cell" aria-label="D1 research_notebook, story">
+        <p class="kit-meta">D1 research_notebook, story</p>
+        <div class="pv-board-frame"><iframe title="D1 research_notebook at 1280, story" src="/landing?d=D1#story" loading="lazy"></iframe></div>
+      </section>
+      <section class="pv-board-cell" aria-label="D9 cinematic_hardware, story">
+        <p class="kit-meta">D9 cinematic_hardware, story</p>
+        <div class="pv-board-frame"><iframe title="D9 cinematic_hardware at 1280, story" src="/landing?d=D9#story" loading="lazy"></iframe></div>
+      </section>
+      <section class="pv-board-cell" aria-label="D11 oversized_masthead, story">
+        <p class="kit-meta">D11 oversized_masthead, story</p>
+        <div class="pv-board-frame"><iframe title="D11 oversized_masthead at 1280, story" src="/landing?d=D11#story" loading="lazy"></iframe></div>
+      </section>
+      <section class="pv-board-cell" aria-label="D1 research_notebook, specifications">
+        <p class="kit-meta">D1 research_notebook, specifications</p>
+        <div class="pv-board-frame"><iframe title="D1 research_notebook at 1280, specifications" src="/landing?d=D1#specs" loading="lazy"></iframe></div>
+      </section>
+      <section class="pv-board-cell" aria-label="D9 cinematic_hardware, specifications">
+        <p class="kit-meta">D9 cinematic_hardware, specifications</p>
+        <div class="pv-board-frame"><iframe title="D9 cinematic_hardware at 1280, specifications" src="/landing?d=D9#specs" loading="lazy"></iframe></div>
+      </section>
+      <section class="pv-board-cell" aria-label="D11 oversized_masthead, specifications">
+        <p class="kit-meta">D11 oversized_masthead, specifications</p>
+        <div class="pv-board-frame"><iframe title="D11 oversized_masthead at 1280, specifications" src="/landing?d=D11#specs" loading="lazy"></iframe></div>
+      </section>
+      <section class="pv-board-cell" aria-label="D1 research_notebook, pricing">
+        <p class="kit-meta">D1 research_notebook, pricing</p>
+        <div class="pv-board-frame"><iframe title="D1 research_notebook at 1280, pricing" src="/landing?d=D1#pricing" loading="lazy"></iframe></div>
+      </section>
+      <section class="pv-board-cell" aria-label="D9 cinematic_hardware, pricing">
+        <p class="kit-meta">D9 cinematic_hardware, pricing</p>
+        <div class="pv-board-frame"><iframe title="D9 cinematic_hardware at 1280, pricing" src="/landing?d=D9#pricing" loading="lazy"></iframe></div>
+      </section>
+      <section class="pv-board-cell" aria-label="D11 oversized_masthead, pricing">
+        <p class="kit-meta">D11 oversized_masthead, pricing</p>
+        <div class="pv-board-frame"><iframe title="D11 oversized_masthead at 1280, pricing" src="/landing?d=D11#pricing" loading="lazy"></iframe></div>
+      </section>
+    </main>
+    <script>
+      // Each frame renders the desktop layout at 1280 by 800 and is zoomed to its cell.
+      function fit() {
+        for (const frame of document.querySelectorAll(".pv-board-frame")) {
+          const z = frame.clientWidth / 1280;
+          frame.querySelector("iframe").style.zoom = String(z);
+          frame.style.blockSize = Math.round(800 * z) + "px";
+        }
+      }
+      addEventListener("resize", fit);
+      fit();
+    </script>
+  </body>
+</html>

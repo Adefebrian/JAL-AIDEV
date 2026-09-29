@@ -7,7 +7,7 @@
 
 One page can mix all three.
 
-**Size (2026-09-29):** 283 rows in section 1 across 17 tables: 36 `core.*`, 44 `mu.*` and `an.*`, 8 `bang.*`, 8 `gsap.*`, 3 `frame.*`, 30 `nz.section.*`, 22 `nz.fx.*`, 26 `nz.el.*`, 5 `cr.*`, 12 `three.*`, 7 `px.*`, 14 `sh.*`, 14 `rf.*`, 18 `md.*` (Material Web), 13 `ok.*` and `hm.*` (OriginKit clean-room and the floating nav), 22 `block.*`, and 1 `dmd.*`. Three rows are classes rather than single recipes (`core.tpl.<family>`, `ok.fetch.<slug>`, `dmd.<kit>.<part>`). Section 3 maps 31 section kinds. Section 5 tracks 30 gaps: 18 resolved, 1 partly resolved, 11 open.
+**Size (2026-09-29):** 304 rows in section 1 across 18 tables: 36 `core.*`, 44 `mu.*` and `an.*`, 8 `bang.*`, 8 `gsap.*`, 3 `frame.*`, 30 `nz.section.*`, 22 `nz.fx.*`, 26 `nz.el.*`, 5 `cr.*`, 12 `three.*`, 7 `px.*`, 14 `sh.*`, 14 `rf.*`, 18 `md.*` (Material Web), 13 `ok.*` and `hm.*` (OriginKit clean-room and the floating nav), 22 `block.*`, 1 `dmd.*`, and 21 `kit.*` (the JAL Core identity kit). Six rows are classes rather than single recipes (`core.tpl.<family>`, `ok.fetch.<slug>`, `dmd.<kit>.<part>`, `kit.split.<ratio>`, `kit.bento.<map>`, `kit.footer.<archetype>`). Section 3 maps 31 section kinds. Section 5 tracks 30 gaps: 18 resolved, 1 partly resolved, 11 open.
 
 One row per recipe from every source Brian supplied, so any recipe can be mixed with any other on any surface where it is allowed. Agents assemble `ui.component_recipe` (product and marketing) and `imm.recipe` (immersive) candidates from this file in one lookup, then grow each section with the layering protocol (section 4). The full recipe always lives in the file named in the last column; this index never replaces it.
 
@@ -42,6 +42,7 @@ One row per recipe from every source Brian supplied, so any recipe can be mixed 
 | DS-F | `jal-design-system/references/foundations.md` |
 | DS-D | `jal-design-system/references/directions.md` |
 | DS-K | `jal-design-system/references/craft.md` |
+| DS-I | `jal-design-system/references/identity.md` |
 | DS | `jal-design-system/SKILL.md` |
 | FR | `jal-frontend-rules/SKILL.md` |
 | MO | `jal-motion/SKILL.md` |
@@ -54,6 +55,7 @@ One row per recipe from every source Brian supplied, so any recipe can be mixed 
 | PX | `jal-immersive/references/particles-physics.md` |
 | SC | `jal-immersive/references/scroll-choreography.md` |
 | FM | `jal-immersive/references/frames.md` |
+| P3D | `jal-immersive/references/premium-3d.md` |
 | R3 | `jal-immersive/references/r3f.md` |
 | TF | `jal-immersive/references/three-foundations.md` |
 | PF | `jal-immersive/references/performance.md` |
@@ -67,6 +69,7 @@ One row per recipe from every source Brian supplied, so any recipe can be mixed 
 - `dmd.<kit>.<part>` is the designmd class (section 1.17), never a fixed row. It was written `md.<kit>.<part>` before the Material rows took the `md.` prefix; an old `md.<kit>.<part>` in a log resolves to `dmd.` (GAP 29).
 - `ok.*` recipes (section 1.15) resolve to MC R45 to R51 and the four R02 and R06 presets; `hm.floating_nav_morph` = MC R52. `ok.fetch.<slug>` is a class: a real OriginKit component fetched through its MCP when JEV picks it.
 - `block.*` rows (section 1.16) are the DS-B page blocks; `block.hero.*` covers the ten hero variants.
+- `kit.*` rows (section 1.18) are the kit compositions in `templates/monorepo/packages/ui/src/kit`, named by their `CompositionId` in `kit/recipe.ts` plus a variant (`kit.masthead.split`, `kit.split.7-5`, `kit.bento.2x2-lead`). A `kit.*` row implements the matching `block.*` spec in code; when both fit, the kit row is the candidate and the block row is its spec.
 
 ## 1. Recipe rows
 
@@ -313,7 +316,7 @@ JAL-authored from permissive sources; every row ships a DOM text equivalent and 
 
 | ID | Source | Kind | Surf | Tier | Cost | Mobile fallback | Reduced motion | Law | Full recipe |
 |---|---|---|---|---|---|---|---|---|---|
-| `three.studio_object` | three.js, drei | 3D object | M I | 2 G | T4/C2 | DPR per tier, fake contact shadow, `<PresentationControls>` off, poster | poster | canvas | TF section 13; IM 4.5; R3 section 7 |
+| `three.studio_object` | three.js, drei, the scene module (`templates/modules/scene`), Poly Haven CC0 assets | 3D object | M I | 2 G | T4/C2 | DPR per tier, contact shadow, no post on mobile, `<PresentationControls>` off, poster | poster | canvas: a real asset first (client, then Poly Haven), no bloom | P3D sections 2 to 8; TF section 13; IM 4.5; R3 section 7 |
 | `three.scroll_camera` | three.js, gsap-skills, ai-dev-kit | scroll choreography (3D) | M I | 3 Q | T4/C2 | triggered beats; touch never scrubs a pinned 3D section over 200% vh | authored stills, crossfade 150ms or less | canvas | SC section 9; R3 section 12 |
 | `three.points_field` | three.js (px tier 3) | background field (particles) | M I | 2 G | T4/C1 (100k desktop) | 30k mobile, 10k reduced | freeze at a seeded frame | canvas: normal blend, dark sparse points | PX sections 1, 2 |
 | `three.instanced_field` | three.js (px tier 4) | background field, data viz | M I | 2 G | T4/C2 | fewer instances, no shadows | freeze | canvas | PX section 3; R3 section 5 |
@@ -464,6 +467,34 @@ Page-level sections from DS-B. A block is the layout layer of a stack and compos
 
 A kit part is proposed as its own candidate only after the screen passes for that kit, and is always rebuilt on the matching `core.*` or `md.*` spec. It never overrides a spec, a token, or law.
 
+### 1.18 JAL Core identity kit (`kit.*`)
+
+The compositions every JAL page is built from (DS section Kit first, DS-I). Each row is code in `templates/monorepo/packages/ui/src/kit` with styles in `packages/ui/src/kit.css`; a direction changes it only through the DS-I section 2 knobs (`data-direction`, D1 to D13 or a derived identity). The kit composition is always a `ui.component_recipe` candidate for its section, and the final page order must pass `validatePageRecipe` (DS-I section 5.1).
+
+| ID | Source | Kind | Surf | Tier | Cost | Mobile fallback | Reduced motion | Law | Full recipe |
+|---|---|---|---|---|---|---|---|---|---|
+| `kit.page` | JAL Core kit (`Page`) | layout (root) | P M I | 0 - | T0 | wraps the AppShell; the app-shell below 640 is unchanged | n/a | full: knobs only; `data-theme="dark"` for D13 only | DS-I sections 1.6 and 2 |
+| `kit.section` | JAL Core kit (`Section`) | layout (band) | P M I | 0 - | T0 | 4 columns, margin 16, rhythm 64 / 40 / 80 | n/a | full: tonal bands, never shadows; one rhythm per page | DS-I sections 1.1 and 1.6 |
+| `kit.section-head` | JAL Core kit (`SectionHead`) | layout (section title) | P M I | 0 - | T0 | split stacks to heading then lead | n/a | full: one h2 plus one lead; no kicker, eyebrow, or "01" marker | DS-I section 1.2 |
+| `kit.masthead.left` | JAL Core kit (`Masthead`, Astryx, Carbon) | layout (hero) | M I | 0 - | T0 | one column, display sm step | static | full; never P (Operate and Read open on a page header) | DS-I section 1.6; DS-B section 5, variant 1 |
+| `kit.masthead.centered` | JAL Core kit (`Masthead`) | layout (hero) | M I | 0 - | T0 | one column, centered | static | full: pairs with a centered `kit.quote`; Marquee or wordmark openings | DS-I section 1.6; DS-B section 5, variants 5 and 6 |
+| `kit.masthead.split` | JAL Core kit (`Masthead`) | layout (hero) | M I | 0 - | T0 | stacked below 1024, `mediaSide` flips at 1024 and up | static; media per `kit.media` | full: media in a MediaFrame, caption below | DS-I section 1.6; DS-B section 5, variant 2 |
+| `kit.masthead.overlay` | JAL Core kit (`Masthead`) | layout (hero) | M I | 0 - | T0 | stacked below 1024: media band, then the text panel | static; video poster | full: the one lawful text over media (opaque surface panel with a hairline over an `aria-hidden`, pointer-inert backdrop at 1024 and up; never a scrim) | DS-I sections 1.6 and 4; DS-B section 5, anti-patterns |
+| `kit.split.<ratio>` | JAL Core kit (`Split`), class | layout (statement and proof) | M I | 0 - | T0 | stacked, `mobileMedia` before or after | static | full: ratios 5-7, 7-5, 4-8, 8-4; two Splits on one page flip side and ratio | DS-I sections 1.6 and 5.2 |
+| `kit.bento.<map>` | JAL Core kit (`BentoGrid`, `BentoTile`), class | layout (container) | P M I | 0 - | T0 | the `md` map (1 or 2 columns), else one column | static | full: `validateBentoLayout` passes (no dead cell, rectangles only, only media tiles span rows) | DS-I section 1.6; DS-C Bento |
+| `kit.spec-rail` | JAL Core kit (`SpecRail`, Carbon structured list) | layout (records) | P M I | 0 - | T0 | rows stay label and value, 44 minimum | n/a | full: tabular mono values, units at meta size | DS-I section 1.5 |
+| `kit.spec-table` | JAL Core kit (`SpecTable`, Carbon DataTable) | layout (records) | P M | 0 - | T0 | group name above its rows; real `<table>` with row headers | n/a | full: `ui.density` rows on desktop only | DS-I section 1.5 |
+| `kit.stat-row` | JAL Core kit (`StatRow`) | layout (figures) | P M I | 0 - | T0 | two tracks or one column | final values at once | full: never directly under the Masthead, never a giant numeral | DS-I section 1.5; JC `ui.number_motion` |
+| `kit.feature-grid` | JAL Core kit (`FeatureGrid`) | layout (features) | M I | 0 - | T0 | one column in the hairline cell grid | static | full: count fills every row; icon inline on the title row, never a tile above | DS-I section 1.6; DS-B section 6 |
+| `kit.media` | JAL Core kit (`MediaFrame`) | layout (media) | P M I | 0 - | T0 | fixed ratio holds; caption below | video never autoplays; canvas per IM | full: caption below, never over; `canvas` kind keeps canvas law inside the frame | DS-I section 1.6 |
+| `kit.quote` | JAL Core kit (`Quote`) | layout (proof) | M I | 0 - | T0 | one column | static | full: a real, attributed quote; no card, rule, or quote glyph | DS-I section 1.6; DS-B section 4 |
+| `kit.logo-row` | JAL Core kit (`LogoRow`) | layout (proof) | M I | 0 - | T0 | wraps, gap only | static | full: one monochrome treatment, real customers or platforms | DS-I section 1.6; DS-B section 4 |
+| `kit.faq` | JAL Core kit (`FAQ`) | layout (disclosure list) | P M | 0 S | T0 | head above the rows, one column | instant | full: native `details` and `summary`, 44 summaries | DS-I section 1.6; DS-B section 7 |
+| `kit.cta-band` | JAL Core kit (`CTABand`) | layout (close) | M I | 0 - | T0 | stacked, actions full width | static, state layers only | full: proof from the page's own world | DS-I section 1.6; DS-B section 8 |
+| `kit.pricing` | JAL Core kit (`PricingTable`, Carbon) | layout (pricing) | P M | 0 S | T0 | plans stack in the cell grid | prices swap instantly | full: recommended plan by fill and surface, never a badge or scale | DS-I section 1.6; DS-B section 3 |
+| `kit.footer.<archetype>` | JAL Core kit (`Footer`), class | layout (footer) | P M I | 0 - | T0 | one column inside the app-shell content region | static | full: `inline`, `statement`, `masthead`, `letter`, or `index` (hubs and docs only); last on the page | DS-I section 1.6; DS-D chrome table; DS-B section 9 |
+| `kit.sticky-story` | JAL Core kit (`StickyStory`, `useStickyStory`) | scroll choreography | M I | 1 E | T1 | each step shows its media in flow below 1024 | frames swap with no travel or fade | full: inactive frames `visibility: hidden`; observer rooted on `getScroller` | DS-I section 1.6 |
+
 ## 2. Role of each kind in a stack
 
 A section stack holds at most one layer per role. The kind column maps to a role:
@@ -484,7 +515,7 @@ A section stack holds at most one layer per role. The kind column maps to a role
 
 ## 3. Section kind to candidate recipes
 
-Candidates are grouped by role, across every source and surface. Drop by the Surf, Tier, Cost, Mobile, and Law columns before any JEV call. Immersive section kinds (IM section 4) are in brackets.
+Candidates are grouped by role, across every source and surface. Drop by the Surf, Tier, Cost, Mobile, and Law columns before any JEV call. Immersive section kinds (IM section 4) are in brackets. The matching `kit.*` composition (section 1.18) is always a Layout candidate as well: `kit.masthead.*` for a hero, `kit.bento.<map>`, `kit.feature-grid`, `kit.split.<ratio>`, or `kit.sticky-story` for features and stories, `kit.logo-row` and `kit.quote` for proof, `kit.stat-row` for stats, `kit.pricing` and `kit.spec-table` for pricing, `kit.faq`, `kit.cta-band`, and `kit.footer.<archetype>` for the close.
 
 | Section kind | Layout | Text | Motion | Hover | Background | 3D | Demo | Prechecks and notes |
 |---|---|---|---|---|---|---|---|---|

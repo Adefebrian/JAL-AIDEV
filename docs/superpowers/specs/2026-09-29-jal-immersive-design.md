@@ -59,7 +59,7 @@ The agent never picks from the pool by taste alone.
   - selection, scrollbar, and cursor styling
   - a ban on icon-tile-above-heading, big-number hero, identical feature-card grids, and numbered section labels
 - **New tokens:** `--color-accent` (one hue, never purple family, used for about 3% of the surface), a `--tracking-*` set, and a `--text-display-*` set above 48px for marketing and immersive heroes only.
-- **Critique:** `ui.heuristics` (Nielsen's 10, scored 0 to 4) and a fresh-context final reviewer (`ui.finish_disposition`: ship, fix, rebuild, recapture). At most two fix rounds.
+- **Critique:** `ui.heuristics` (Nielsen's 10, scored 0 to 4) and a fresh-context final reviewer (`ui.finish_disposition`: ship, fix, rebuild, recapture). At most three fix rounds, each judged by a new critic.
 
 ## 5. Immersive workflow (`jal-immersive`)
 
@@ -135,7 +135,7 @@ Resume, in order:
 5. Full verification:
    - hooks, MCP, template, and docs-site tests
    - the em-dash and frontmatter sweep
-   - a headless plugin load that shows exactly 7 commands
+   - a headless plugin load that shows exactly 8 commands
 6. Update the docs-site for the spectrum, the learning loop, GSAP in jal-immersive, and OriginKit.
 7. With Brian's OK: merge to main, tag v0.3.0 and v0.4.0, push, and send the team update commands.
 

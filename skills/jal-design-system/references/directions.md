@@ -176,6 +176,7 @@ First viewport: <exact composition at 375 and at 1280; where the primary action 
 Signature moment: <the one authored motion or interaction moment, or none>
 Page shape: <shape from the section 2 table, and what it becomes below 960 and 640> (optional, From: hallmark)
 Nav / Footer archetype: <from the chrome tables> (optional, From: hallmark)
+Compositions: <the kit composition list in section order, Masthead variant named, validatePageRecipe result; any custom section with its reason> (identity.md section 5)
 Headline chars: <rendered count and its hm.headline_buckets bucket> (optional, From: hallmark)
 Media role evidence: <hm.image_need result; does the hero pass hm.survives_deletion> (optional, From: hallmark)
 
@@ -220,7 +221,7 @@ Rejected: <averaging traps and clone-risk items for this product>
 Verdict: <ship / fix / rebuild / recapture>, round <1 or 2>, reviewer keep line: <...>
 ```
 
-**Where knob values land.** A product sets knobs in one override block at the end of its own `packages/ui/src/tokens.css`, and only these names may appear there: `--color-accent`, `--color-accent-contrast`, `--color-primary`, `--color-primary-contrast`, `--color-primary-hover`, `--color-primary-active`, `--color-focus`, `--color-page`, `--tracking-display`, `--tracking-heading`. Every line carries a comment pointing to the contract. Radius tier, hairline, and display ceiling are applied by which existing token each component uses, never by a new value.
+**Where knob values land.** A preset is applied by one attribute: `data-direction="D1"` to `"D13"` on `<html>` (or `<Page direction>` from the kit), and `packages/ui/src/kit.css` already holds every preset's knob block (section 7a). A derived identity (`identity.md` section 3) adds one `[data-direction="<name>"]` block to the app's own stylesheet. Either way only these names may be set: `--color-accent`, `--color-accent-contrast`, `--color-primary`, `--color-primary-contrast`, `--color-primary-hover`, `--color-primary-active`, `--color-focus`, `--color-page`, `--tracking-display`, `--tracking-heading`, and the kit knobs (`--kit-font-display`, `--kit-font-figure`, `--kit-display-*`, `--kit-heading-*`, `--kit-display-weight`, `--kit-heading-weight`, `--kit-margin-lg`, `--kit-gutter-lg`, `--kit-space-lg`, `--kit-radius-card`, `--kit-radius-media`, `--kit-radius-control`, `--kit-rule-color`, `--kit-section-rule`, `--kit-signal`, `--kit-link`). Every line carries a comment pointing to the contract. A knob always takes an existing token (a radius, a space, a type step), never a new value; only the canvas and the accent take a hex, inside section 6.
 
 ```css
 /* direction: single_signal_ledger, see docs/design/direction.md */
@@ -348,6 +349,28 @@ The law filter would strip their carrier:
 - **The reflex looks** in `craft.md` section 14 (cream plus italic serif plus terracotta; broadsheet hairlines plus italic serif plus tracked mono labels), when chosen by habit.
 
 A noyzzi piece may carry dark, neon, or glow inside its own exempt section; that is a `jal-immersive` per-section recipe call (`imm.recipe`), never a page direction.
+
+## 7a. The directions as kit knobs
+
+Each direction is one `[data-direction]` block in `packages/ui/src/kit.css`; the kit compositions read only these knobs, so the same page composition changes expression with one attribute (`identity.md` section 2). Display lg is the Masthead headline at 1024 and up (sm stays at `--text-6` or below 640px unless noted); heading lg is the section h2. Radius is cards and media / controls. Margin, gutter, and rhythm apply at 1024 and up. Masthead and Footer are the defaults the contract starts from; both are still gated.
+
+| Dir | Canvas | Accent, role | Display face, weight, tracking | Display lg / heading lg | Radius | Margin / gutter / rhythm | Rule, figures | Masthead / Footer |
+|---|---|---|---|---|---|---|---|---|
+| D1 research_notebook | neutral | none | sans 500, -0.035 | display-2 / text-4 (500) | 12 / 8 | 48 / 24 / 96 | off, sans | split or left / inline |
+| D2 single_signal_ledger | cool | green `#0b7a55`, filled_primary | sans 600, -0.025 | display-2 / text-4 | 12 / 8 | 40 / 24 / 80 | on, sans | split with SpecRail proof / inline |
+| D3 blueprint_hairline | neutral | teal `#0f766e`, signal_only | sans 500, -0.04 | display-1 (md text-6) / text-4 | 16 / 8 | 40 / 24 / 64 | on strong, mono | split (Workbench) / inline |
+| D4 bone_white_gallery | white | warm `#b4461a`, text_and_icon | sans 500, -0.03 | text-6 (sm text-5) / text-3 | 16 / pill | 32 / 24 / 80 | off, sans | split or overlay with real media / statement |
+| D5 calm_productivity | warm | red-orange `#c2410c`, text_and_icon | sans 500, -0.01 | display-1 / text-4 | 12 / 8 | 48 / 24 / 80 | off, sans | left / inline |
+| D6 clean_docs | white | green `#15803d`, links | sans 500, -0.03 | text-6 (sm text-5) / text-3 | 16 / 8 | 40 / 24 / 64 | off, sans | left, Read ceiling / index |
+| D7 warm_paper_editorial (gated) | warm | none | serif 500 (Brian's yes), -0.015 | display-2 / text-4 (500) | 16 / pill | 64 / 32 / 96 | off, sans | left / letter |
+| D8 quiet_care | warm | sage `#3f6b4f`, signal_only | sans 500, -0.01 | display-1 / text-4 | 16 / pill | 48 / 32 / 96 | off, sans | left or centered / letter |
+| D9 cinematic_hardware | white | blue `#0a5bd3`, filled_primary | sans 600, -0.02 | display-3 (sm display-1) / text-5 | 28 / pill | 40 / 24 / 96 | off, sans | overlay (real renders) / statement |
+| D10 industrial_catalogue | cool | none | sans 500, -0.01 | display-1 / text-4 | 4 / 4 | 32 / 16 / 64 | on strong, mono | split (catalogue) / inline |
+| D11 oversized_masthead | white | none | sans 500, -0.04 | display-3 / text-4 (500), wordmark headline | 4 / pill | 64 / 32 / 96 | on, sans | left with an SVG wordmark / masthead |
+| D12 friendly_consumer | white | orange `#c2410c`, text_and_icon | rounded 600, -0.03 | display-2 / text-4 | 28 / pill | 40 / 24 / 80 | off, sans | split / statement |
+| D13 precision_dark (dark only) | `#171412` | chartreuse `#b5d333`, signal_only | sans 500, -0.03 | display-2 / text-4 (500) | 12 / 8 | 40 / 24 / 64 | on, sans | split / inline |
+
+D13 applies only as `[data-direction="D13"][data-theme="dark"]`, so it can never become a light default or follow the OS. D7 and D11 keep their gates from section 7 (content-led product, a real wordmark asset).
 
 ## 8. References: take the structure, never the surface or the brand
 

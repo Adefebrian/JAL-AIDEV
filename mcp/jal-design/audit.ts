@@ -8,11 +8,12 @@
 //   stuck-reveal    content still invisible after it was scrolled into view
 //   blank-viewport  a whole screen where under 10% of a 6x8 grid hits content
 // runShots (ui_shots) reuses the same walk to save one JPEG per screen.
+// Pages render with software WebGL (SwiftShader) unless webgl: false.
 
 import { existsSync } from "node:fs";
 import { mkdir, mkdtemp, readdir, rm, unlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { join, resolve } from "node:path";
+import { isAbsolute, join, relative, resolve } from "node:path";
 
 export type Violation = { rule: string; width: number; selector: string; detail: string };
 export type AuditReport = {
@@ -20,10 +21,12 @@ export type AuditReport = {
   reason?: string;
   widths: number[];
   violations: Violation[];
+  // Caveats: a scroll walk cut short by its time budget, a partial result, no WebGL.
+  notes?: string[];
 };
 
 const DEFAULT_WIDTHS = [320, 375, 414, 768, 1280];
-const DEFAULT_TIMEOUT_MS = 180000; // five widths, each with a scroll walk of up to 30 settled steps
+const DEFAULT_TIMEOUT_MS = 180000; // five widths; each walk gets a fair share of what is left (at most 45s)
 
 const STANDARD_CHROME_PATHS = [
   "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
@@ -43,10 +46,19 @@ export function resolveChromePath(explicit?: string): string | null {
   return null;
 }
 
-export function withTimeout<T>(ms: number, run: () => Promise<T>): Promise<T> {
+export class TimeoutError extends Error {}
+
+// Runs `run` with an abort signal that fires when `ms` elapses. The returned
+// promise rejects with TimeoutError at the deadline; the run itself is expected
+// to stop at its next checkpoint (throwIfAborted) or when its CDP socket closes.
+export function withTimeout<T>(ms: number, run: (signal: AbortSignal) => Promise<T>): Promise<T> {
+  const controller = new AbortController();
   return new Promise<T>((resolve, reject) => {
-    const timer = setTimeout(() => reject(new Error(`audit timed out after ${ms}ms`)), ms);
-    run().then(
+    const timer = setTimeout(() => {
+      controller.abort();
+      reject(new TimeoutError(`audit timed out after ${ms}ms`));
+    }, ms);
+    run(controller.signal).then(
       (value) => {
         clearTimeout(timer);
         resolve(value);
@@ -114,23 +126,30 @@ export async function createPageTarget(port: number): Promise<{ id: string; webS
 
 export async function closePageTarget(port: number, id: string): Promise<void> {
   try {
-    await fetch(`http://127.0.0.1:${port}/json/close/${id}`);
+    await fetch(`http://127.0.0.1:${port}/json/close/${id}`, { signal: AbortSignal.timeout(2000) });
   } catch {
     // best effort
   }
 }
 
+function throwIfAborted(signal?: AbortSignal): void {
+  if (signal?.aborted) throw new Error("audit cancelled");
+}
+
 type PendingEntry = { resolve: (v: unknown) => void; reject: (e: unknown) => void };
-type EventWaiter = { method: string; resolve: (v: unknown) => void };
+type EventWaiter = { method: string; resolve: (v: unknown) => void; reject: (e: unknown) => void };
 
 export class CdpClient {
   private ws: WebSocket;
   private nextId = 1;
   private pending = new Map<number, PendingEntry>();
   private eventWaiters: EventWaiter[] = [];
+  private closedReason: string | null = null;
 
   private constructor(ws: WebSocket) {
     this.ws = ws;
+    this.ws.addEventListener("close", () => this.failAll("devtools websocket closed"));
+    this.ws.addEventListener("error", () => this.failAll("devtools websocket error"));
     this.ws.addEventListener("message", (ev: MessageEvent) => {
       let msg: any;
       try {
@@ -164,16 +183,39 @@ export class CdpClient {
     return new CdpClient(ws);
   }
 
+  // Reject every in-flight send and event wait, so nothing hangs once the
+  // socket is gone (Chrome killed on timeout, crash, or close()).
+  private failAll(reason: string): void {
+    if (!this.closedReason) this.closedReason = reason;
+    const err = new Error(this.closedReason);
+    const pending = [...this.pending.values()];
+    this.pending.clear();
+    for (const p of pending) p.reject(err);
+    const waiters = this.eventWaiters.splice(0);
+    for (const w of waiters) w.reject(err);
+  }
+
+  get pendingCount(): number {
+    return this.pending.size + this.eventWaiters.length;
+  }
+
   send<T = any>(method: string, params: Record<string, unknown> = {}): Promise<T> {
+    if (this.closedReason) return Promise.reject(new Error(this.closedReason));
     const id = this.nextId++;
     return new Promise<T>((resolve, reject) => {
       this.pending.set(id, { resolve: resolve as (v: unknown) => void, reject });
-      this.ws.send(JSON.stringify({ id, method, params }));
+      try {
+        this.ws.send(JSON.stringify({ id, method, params }));
+      } catch (err) {
+        this.pending.delete(id);
+        reject(err);
+      }
     });
   }
 
   waitForEvent<T = any>(method: string, timeoutMs = 20000): Promise<T> {
-    return new Promise<T>((resolve, reject) => {
+    if (this.closedReason) return Promise.reject(new Error(this.closedReason));
+    const p = new Promise<T>((resolve, reject) => {
       const timer = setTimeout(() => {
         const idx = this.eventWaiters.findIndex((w) => w.resolve === wrapped);
         if (idx !== -1) this.eventWaiters.splice(idx, 1);
@@ -183,11 +225,20 @@ export class CdpClient {
         clearTimeout(timer);
         resolve(params as T);
       };
-      this.eventWaiters.push({ method, resolve: wrapped });
+      const failed = (err: unknown) => {
+        clearTimeout(timer);
+        reject(err);
+      };
+      this.eventWaiters.push({ method, resolve: wrapped, reject: failed });
     });
+    // Callers create the wait before the action that triggers it; if that
+    // action throws first, the wait must not surface as an unhandled rejection.
+    p.catch(() => {});
+    return p;
   }
 
   close(): void {
+    this.failAll("devtools client closed");
     try {
       this.ws.close();
     } catch {
@@ -587,8 +638,18 @@ const AUDIT_SCRIPT = `
         return isVisible(c) && !isOverlayExcluded(c);
       });
       if (kids.length < 2) return;
+      // A bar pinned to the top or bottom edge of the viewport (the app-shell
+      // header or bottom tab bar in document-scroll mode) sits over the
+      // scrolling content by design; the shell reserves its height.
+      var pinnedBar = function (el) {
+        var p = getComputedStyle(el).position;
+        if (p !== "fixed" && p !== "sticky") return false;
+        var r = el.getBoundingClientRect();
+        return r.top <= 1 || r.bottom >= window.innerHeight - 1;
+      };
       for (var i = 0; i < kids.length; i++) {
         for (var j = i + 1; j < kids.length; j++) {
+          if (pinnedBar(kids[i]) || pinnedBar(kids[j])) continue;
           var a = kids[i].getBoundingClientRect();
           var b = kids[j].getBoundingClientRect();
           var overlapX = Math.min(a.right, b.right) - Math.max(a.left, b.left);
@@ -796,24 +857,26 @@ const AUDIT_SCRIPT = `
 
 type RawViolation = { rule: string; selector: string; detail: string };
 
-// Scroll walk: finds the element that really scrolls (the document, or an
-// app-shell inner scroller such as main.shell-main) and steps through it one
-// viewport at a time with real scroll events, so scroll-triggered reveals get
-// the same chance to fire they would get from a person scrolling. At each
-// step it can probe for content still hidden in the middle of the screen
-// (stuck-reveal) and for screens with almost nothing on them (blank-viewport).
-// Installed once per page as window.__jalWalk.
+// Scroll walk: finds the element that really scrolls ([data-jal-scroller], the
+// document, or an app-shell inner scroller such as main.shell-main) and steps
+// through it with real scroll events, so scroll-triggered reveals get the same
+// chance to fire they would get from a person scrolling. At each step it can
+// probe for content still hidden in the middle 60% of the screen (stuck-reveal;
+// probed walks step 60% of a screen so the bands meet) and for screens with
+// almost nothing on them (blank-viewport). Installed once per page as
+// window.__jalWalk.
 const WALK_SCRIPT = `
 (function () {
   if (window.__jalWalk) return true;
   ${CSS_PATH_FN}
 
-  var MEDIA_SEL = "img, video, canvas, svg, button, input, select, textarea";
+  var MEDIA_SEL = "img, video, canvas, svg, iframe, embed, object, button, input, select, textarea";
   var SKIP_SEL = "[aria-hidden=true], [data-jal-exempt~=noyzzi], [inert], [hidden], [popover], [data-overlay], [role=dialog], [role=alertdialog], [role=menu], [role=listbox], [role=tooltip]";
   var SECTION_SEL = "section, article, [role=region], header, footer, aside";
   var LANDMARK_SEL = SECTION_SEL + ", main, [role=main]";
   var doc = document.scrollingElement || document.documentElement;
   var scroller = null;
+  var reported = new Set(); // sections already confirmed stuck on this walk
 
   function sleep(ms) { return new Promise(function (r) { setTimeout(r, ms); }); }
   function vp() {
@@ -822,20 +885,30 @@ const WALK_SCRIPT = `
   }
   function isDoc() { return scroller === doc; }
 
+  // The element a person actually scrolls. [data-jal-scroller] wins outright.
+  // Otherwise the document, whenever it scrolls at all, unless an inner
+  // scroller nearly fills the screen (an app shell). A sidebar, code block, or
+  // overflow-x table wrapper never wins over a scrolling document.
   function findScroller() {
     var v = vp();
-    if (doc.scrollHeight - doc.clientHeight > v.h * 0.5) return doc;
+    var marked = document.querySelector("[data-jal-scroller]");
+    if (marked) return marked === document.documentElement || marked === document.body ? doc : marked;
+    var docMax = doc.scrollHeight - doc.clientHeight;
+    if (docMax > v.h * 0.5) return doc;
     var best = null, bestArea = 0;
     var all = document.querySelectorAll("*");
     for (var i = 0; i < all.length; i++) {
       var el = all[i];
-      if (el === doc) continue;
-      if (el.scrollHeight <= el.clientHeight + 1) continue;
+      if (el === doc || el === document.body) continue;
+      // Under 2px of vertical overflow is rounding, e.g. an overflow-x: auto
+      // table wrapper whose overflow-y computes to auto.
+      if (el.scrollHeight - el.clientHeight < 2) continue;
       var oy = getComputedStyle(el).overflowY;
       if (oy !== "auto" && oy !== "scroll") continue;
       var area = el.clientWidth * el.clientHeight;
       if (area > bestArea) { best = el; bestArea = area; }
     }
+    if (docMax > 1) return best && best.clientHeight >= v.h * 0.8 ? best : doc;
     if (best && best.clientHeight >= v.h * 0.3) return best;
     return doc;
   }
@@ -938,18 +1011,67 @@ const WALK_SCRIPT = `
       media.push(el);
       if (!seen.has(el)) { seen.add(el); els.push(el); }
     });
+    // A CSS background image (full-bleed hero, photo band) is drawn content too.
+    Array.prototype.forEach.call(document.body.querySelectorAll("*"), function (el) {
+      if (seen.has(el)) return;
+      var bg = getComputedStyle(el).backgroundImage;
+      if (bg && bg.indexOf("url(") !== -1) media.push(el);
+    });
     return { texts: texts, media: media, els: els };
   }
 
-  function stuckCandidates(reg, c) {
+  // Stacked alternates: a fade carousel slide, Swiper fade slide, or rotating
+  // word waiting its turn in the same spot as a visible sibling. Walks from el
+  // up to the node doing the hiding and asks, at each level, whether a visible
+  // sibling covers at least 80% of that node's box.
+  function coveredByVisibleSibling(el, hider) {
+    for (var node = el; node && node.nodeType === 1; node = node.parentElement) {
+      var parent = node.parentElement;
+      if (parent) {
+        var r = node.getBoundingClientRect();
+        var area = r.width * r.height;
+        if (area > 0) {
+          for (var s = parent.firstElementChild; s; s = s.nextElementSibling) {
+            if (s === node) continue;
+            var sr = s.getBoundingClientRect();
+            var ix = Math.min(r.right, sr.right) - Math.max(r.left, sr.left);
+            var iy = Math.min(r.bottom, sr.bottom) - Math.max(r.top, sr.top);
+            if (ix <= 0 || iy <= 0 || ix * iy < area * 0.8) continue;
+            if (!hiddenState(s).hidden) return true;
+          }
+        }
+      }
+      if (!hider || node === hider) break;
+    }
+    return false;
+  }
+
+  function sectionKey(el) {
+    return cssPathRaw(el.closest(LANDMARK_SEL) || hidingNode(el) || el);
+  }
+
+  // Probe band: the middle 60% of the region. The walk steps 60% of a screen,
+  // so consecutive bands meet with no seam. The first screen also covers its
+  // top 20% and the last screen its bottom 20% (minus pinned bars), since no
+  // later or earlier step will.
+  function probeBand(reg, first, last) {
     var h = reg.bottom - reg.top;
-    var bandTop = reg.top + h * 0.2, bandBottom = reg.bottom - h * 0.2;
+    var s = (first || last) ? sampleRegion(reg) : reg;
+    return {
+      left: reg.left,
+      right: reg.right,
+      top: first ? s.top : reg.top + h * 0.2,
+      bottom: last ? s.bottom : reg.bottom - h * 0.2
+    };
+  }
+
+  function stuckCandidates(band, c) {
     var out = [];
     c.els.forEach(function (el) {
       var r = el.getBoundingClientRect();
       if (r.width <= 0 || r.height <= 0) return;
-      if (r.bottom <= bandTop || r.top >= bandBottom) return;
-      if (r.right <= reg.left || r.left >= reg.right) return;
+      if (r.bottom <= band.top || r.top >= band.bottom) return;
+      if (r.right <= band.left || r.left >= band.right) return;
       if (el.closest(SKIP_SEL) || el.closest("dialog:not([open])")) return;
       if (!hiddenState(el).hidden) return;
       var hider = hidingNode(el);
@@ -958,6 +1080,9 @@ const WALK_SCRIPT = `
         // An absolutely placed layer at opacity 0 is a hover or focus overlay, not a reveal.
         if (pos === "absolute" || pos === "fixed") return;
       }
+      if (coveredByVisibleSibling(el, hider)) return;
+      var key = sectionKey(el);
+      if (reported.has(key)) return; // already confirmed; no second recheck wait
       out.push(el);
     });
     return out;
@@ -1033,7 +1158,7 @@ const WALK_SCRIPT = `
   }
 
   window.__jalWalk = {
-    init: function () { scroller = findScroller(); return info(); },
+    init: function () { scroller = findScroller(); reported = new Set(); return info(); },
     top: function () { return go(0); },
     step: async function (y, settleMs, recheckMs, probe) {
       var at = go(y);
@@ -1041,18 +1166,16 @@ const WALK_SCRIPT = `
       at = info();
       if (!probe) return { at: at };
       var reg = region();
-      var c = collect();
-      var suspects = stuckCandidates(reg, c);
+      var band = probeBand(reg, at.scrollY <= 1, at.scrollY >= at.max - 1);
+      var suspects = stuckCandidates(band, collect());
       if (suspects.length) await sleep(recheckMs);
       var hidden = [];
-      var sections = new Set();
       suspects.forEach(function (el) {
         var st = hiddenState(el);
         if (!st.hidden) return;
-        var sec = el.closest(LANDMARK_SEL) || hidingNode(el) || el;
-        var key = cssPathRaw(sec);
-        if (sections.has(key)) return;
-        sections.add(key);
+        var key = sectionKey(el);
+        if (reported.has(key)) return;
+        reported.add(key);
         hidden.push({ section: key, el: cssPathRaw(el), opacity: st.op, visibility: st.vis });
       });
       return { at: info(), hidden: hidden, blank: blankProbe(reg, collect()) };
@@ -1070,13 +1193,25 @@ export type WalkStep = {
   hidden?: WalkHidden[];
   blank?: { hits: number; samples: number; landmark: string } | null;
 };
-export type WalkResult = { scroller: string; totalHeight: number; viewportHeight: number; steps: WalkStep[] };
+export type WalkResult = {
+  scroller: string;
+  totalHeight: number;
+  viewportHeight: number;
+  maxScroll: number;
+  stepSize: number;
+  // The walk stopped (step cap or time budget) before reaching the bottom.
+  truncated: boolean;
+  steps: WalkStep[];
+};
 type WalkInfo = { scroller: string; scrollHeight: number; clientHeight: number; max: number; scrollY: number };
 
 export const WALK_SETTLE_MS = 700;
 export const WALK_MAX_STEPS = 30;
+// A probed walk steps 60% of a screen so its middle-band probes meet with no seam.
+export const PROBE_STEP_FRACTION = 0.6;
+const PROBE_MAX_STEPS = 60;
 const WALK_RECHECK_MS = 800;
-const WALK_BUDGET_MS = 45000;
+export const WALK_BUDGET_MS = 45000;
 
 async function evalValue<T>(client: CdpClient, expression: string): Promise<T> {
   const res = await client.send<{ result: { value?: T }; exceptionDetails?: { text: string; exception?: { description?: string } } }>(
@@ -1089,52 +1224,97 @@ async function evalValue<T>(client: CdpClient, expression: string): Promise<T> {
   return res.result.value as T;
 }
 
-// Walk the page's real scroller top to bottom, one viewport per step, then
-// return to the top. onStep runs after each step settles (screenshots).
+// Walk the page's real scroller top to bottom, then return to the top. A
+// probed walk (the audit) steps 60% of a screen; an unprobed one (ui_shots)
+// steps a full screen. onStep runs after each step settles (screenshots).
+// live.walk is filled as the walk goes, so a caller cut off by a timeout still
+// has the steps taken so far.
 export async function walkScroller(
   client: CdpClient,
-  opts: { probe?: boolean; settleMs?: number; maxSteps?: number; budgetMs?: number; onStep?: (step: WalkStep) => Promise<void> } = {},
+  opts: {
+    probe?: boolean;
+    settleMs?: number;
+    maxSteps?: number;
+    budgetMs?: number;
+    stepFraction?: number;
+    signal?: AbortSignal;
+    live?: { walk?: WalkResult };
+    onStep?: (step: WalkStep) => Promise<void>;
+  } = {},
 ): Promise<WalkResult> {
-  const settleMs = opts.settleMs ?? WALK_SETTLE_MS;
-  const maxSteps = opts.maxSteps ?? WALK_MAX_STEPS;
-  const budgetMs = opts.budgetMs ?? WALK_BUDGET_MS;
   const probe = opts.probe ?? true;
+  const settleMs = opts.settleMs ?? WALK_SETTLE_MS;
+  const maxSteps = opts.maxSteps ?? (probe ? PROBE_MAX_STEPS : WALK_MAX_STEPS);
+  const budgetMs = opts.budgetMs ?? WALK_BUDGET_MS;
+  const stepFraction = opts.stepFraction ?? (probe ? PROBE_STEP_FRACTION : 1);
+  throwIfAborted(opts.signal);
   await evalValue<boolean>(client, WALK_SCRIPT);
   const start = await evalValue<WalkInfo>(client, "window.__jalWalk.init()");
-  const steps: WalkStep[] = [];
+  const walk: WalkResult = {
+    scroller: start.scroller,
+    totalHeight: start.scrollHeight,
+    viewportHeight: start.clientHeight,
+    maxScroll: start.max,
+    stepSize: Math.max(1, Math.round(start.clientHeight * stepFraction)),
+    truncated: false,
+    steps: [],
+  };
+  if (opts.live) opts.live.walk = walk;
+  const steps = walk.steps;
   const began = Date.now();
   let target = 0;
   let prev = -1;
-  let info = start;
+  let reachedEnd = false;
   while (steps.length < maxSteps) {
+    throwIfAborted(opts.signal);
     const res = await evalValue<{ at: WalkInfo; hidden?: WalkHidden[]; blank?: WalkStep["blank"] }>(
       client,
       `window.__jalWalk.step(${target}, ${settleMs}, ${WALK_RECHECK_MS}, ${probe})`,
     );
-    info = res.at;
+    const info = res.at;
+    walk.totalHeight = info.scrollHeight;
+    walk.viewportHeight = info.clientHeight;
+    walk.maxScroll = info.max;
+    walk.stepSize = Math.max(1, Math.round(info.clientHeight * stepFraction));
     const y = info.scrollY;
-    if (steps.length > 0 && y <= prev + 1) break; // the scroller will not move further
+    if (steps.length > 0 && y <= prev + 1) {
+      reachedEnd = true; // the scroller will not move further
+      break;
+    }
     const step: WalkStep = {
       index: steps.length,
       scrollY: Math.round(y),
-      partial: steps.length > 0 && y - prev < info.clientHeight - 1,
+      partial: steps.length > 0 && y - prev < walk.stepSize - 1,
       hidden: res.hidden,
       blank: res.blank,
     };
     steps.push(step);
     if (opts.onStep) await opts.onStep(step);
     prev = y;
-    if (y >= info.max - 1 || Date.now() - began > budgetMs) break;
-    target = Math.min(y + info.clientHeight, info.max);
+    if (y >= info.max - 1) {
+      reachedEnd = true;
+      break;
+    }
+    if (Date.now() - began > budgetMs) break;
+    target = Math.min(y + walk.stepSize, info.max);
   }
+  walk.truncated = !reachedEnd;
+  throwIfAborted(opts.signal);
   await evalValue<WalkInfo>(client, "window.__jalWalk.top()");
-  return { scroller: start.scroller, totalHeight: info.scrollHeight, viewportHeight: info.clientHeight, steps };
+  return walk;
 }
 
+export const NO_WEBGL_NOTE = " (rendered without WebGL)";
+
 // stuck-reveal + blank-viewport, derived from one probed walk.
-export function walkViolations(walk: WalkResult): RawViolation[] {
+export function walkViolations(walk: WalkResult, opts: { webgl?: boolean } = {}): RawViolation[] {
   const out: RawViolation[] = [];
+  const note = opts.webgl === false ? NO_WEBGL_NOTE : "";
   const seen = new Set<string>();
+  // A page that does not scroll (a centred 404 or sign-in card) is one
+  // deliberate screen, never a blank one.
+  const scrolls = walk.maxScroll >= walk.viewportHeight * 0.1;
+  let lastBlank = -Infinity;
   for (const s of walk.steps) {
     for (const h of s.hidden ?? []) {
       if (seen.has(h.section)) continue;
@@ -1143,22 +1323,34 @@ export function walkViolations(walk: WalkResult): RawViolation[] {
       out.push({
         rule: "stuck-reveal",
         selector: h.section,
-        detail: `content still hidden after scrolling into view (${why}): a scroll-triggered reveal likely watches the wrong scroller (page scrolls in ${walk.scroller}); first hidden element ${h.el} at scrollY ${s.scrollY}`,
+        detail: `content still hidden after scrolling into view (${why}): a scroll-triggered reveal likely watches the wrong scroller (page scrolls in ${walk.scroller}); first hidden element ${h.el} at scrollY ${s.scrollY}${note}`,
       });
     }
     const b = s.blank;
-    if (b && !s.partial && b.hits / b.samples < 0.1) {
-      out.push({
-        rule: "blank-viewport",
-        selector: b.landmark,
-        detail: `screen at scrollY ${s.scrollY} is empty (${b.hits} of ${b.samples} samples hit content) in scroller ${walk.scroller}`,
-      });
-    }
+    if (!scrolls || !b || b.hits / b.samples >= 0.1) continue;
+    // Steps overlap, so one empty stretch shows up on several steps: report
+    // the next empty screen only once it no longer overlaps the last reported one.
+    if (s.scrollY < lastBlank + walk.viewportHeight) continue;
+    lastBlank = s.scrollY;
+    out.push({
+      rule: "blank-viewport",
+      selector: b.landmark,
+      detail: `screen at scrollY ${s.scrollY} is empty (${b.hits} of ${b.samples} samples hit content) in scroller ${walk.scroller}${note}`,
+    });
   }
   return out;
 }
 
-async function auditAtWidth(client: CdpClient, url: string, width: number): Promise<RawViolation[]> {
+type WidthRun = {
+  budgetMs: number;
+  webgl: boolean;
+  signal?: AbortSignal;
+  sink: (v: RawViolation) => void;
+  live: { walk?: WalkResult };
+};
+
+async function auditAtWidth(client: CdpClient, url: string, width: number, run: WidthRun): Promise<WalkResult> {
+  throwIfAborted(run.signal);
   await client.send("Emulation.setDeviceMetricsOverride", {
     width,
     height: 1024,
@@ -1180,10 +1372,11 @@ async function auditAtWidth(client: CdpClient, url: string, width: number): Prom
   if (result.exceptionDetails) {
     throw new Error(`audit script error: ${result.exceptionDetails.text}`);
   }
-  const violations = result.result.value ?? [];
+  for (const v of result.result.value ?? []) run.sink(v);
   // Walk the real scroller last so reveals it triggers never touch the static rules.
-  const walk = await walkScroller(client, { probe: true });
-  return violations.concat(walkViolations(walk));
+  const walk = await walkScroller(client, { probe: true, budgetMs: run.budgetMs, signal: run.signal, live: run.live });
+  for (const v of walkViolations(walk, { webgl: run.webgl })) run.sink(v);
+  return walk;
 }
 
 // reduced-motion: with prefers-reduced-motion: reduce emulated, nothing may
@@ -1267,70 +1460,184 @@ function dedupe(violations: Violation[]): Violation[] {
   return out;
 }
 
+export const MIN_WIDTH = 200;
+export const MAX_WIDTH = 3840;
+export const MAX_SCREENS_LIMIT = 40;
+
+function toNumber(value: unknown): number {
+  if (typeof value === "number") return value;
+  if (typeof value === "string" && value.trim() !== "") return Number(value.trim());
+  return NaN;
+}
+
+// Viewport widths for CDP, which only takes integers: rounded, clamped to
+// 200..3840, deduplicated. Anything that is not a finite number is an error,
+// never silently passed on. undefined or [] means "use the default".
+export function normalizeWidths(value: unknown): number[] | undefined {
+  if (value === undefined || value === null) return undefined;
+  if (!Array.isArray(value)) throw new Error(`widths must be an array of numbers, e.g. [375, 1280]; got ${JSON.stringify(value)}`);
+  const out: number[] = [];
+  for (const v of value) {
+    const n = toNumber(v);
+    if (!Number.isFinite(n)) {
+      throw new Error(`invalid width ${JSON.stringify(v)}: widths must be finite numbers (clamped to ${MIN_WIDTH}..${MAX_WIDTH})`);
+    }
+    const w = Math.min(MAX_WIDTH, Math.max(MIN_WIDTH, Math.round(n)));
+    if (!out.includes(w)) out.push(w);
+  }
+  return out.length ? out : undefined;
+}
+
+export function normalizeMaxScreens(value: unknown): number | undefined {
+  if (value === undefined || value === null) return undefined;
+  const n = toNumber(value);
+  if (!Number.isFinite(n)) throw new Error(`invalid max_screens ${JSON.stringify(value)}: must be a number from 1 to ${MAX_SCREENS_LIMIT}`);
+  return Math.min(MAX_SCREENS_LIMIT, Math.max(1, Math.round(n)));
+}
+
+// ui_shots writes and deletes files, so its output directory must resolve
+// inside the working directory: no absolute paths elsewhere, no ../ escapes.
+export function resolveOutDir(outDir: string | undefined, cwd: string = process.cwd()): string {
+  const base = resolve(cwd);
+  const target = resolve(base, outDir ?? join(".jal", "shots"));
+  const rel = relative(base, target);
+  if (rel === "" || rel.startsWith("..") || isAbsolute(rel)) {
+    throw new Error(`out_dir must be a directory inside the working directory ${base}; got ${outDir}`);
+  }
+  return target;
+}
+
+// One headless Chrome with one page. close() is idempotent and also cleans up
+// anything open() acquires after close() ran (a timeout mid-launch), so Chrome
+// never outlives its run.
+class BrowserSession {
+  private tmpDir?: string;
+  private handle?: ChromeHandle;
+  private pageId?: string;
+  client?: CdpClient;
+  private closed = false;
+
+  async open(chromePath: string, prefix: string, webgl: boolean): Promise<CdpClient> {
+    this.tmpDir = await mkdtemp(join(tmpdir(), prefix));
+    await this.bailIfClosed();
+    this.handle = await launchChrome(chromePath, this.tmpDir, { webgl });
+    await this.bailIfClosed();
+    const page = await createPageTarget(this.handle.port);
+    this.pageId = page.id;
+    await this.bailIfClosed();
+    this.client = await CdpClient.connect(page.webSocketDebuggerUrl);
+    await this.bailIfClosed();
+    await this.client.send("Page.enable");
+    await this.client.send("Runtime.enable");
+    return this.client;
+  }
+
+  private async bailIfClosed(): Promise<void> {
+    if (!this.closed) return;
+    await this.close();
+    throw new Error("audit cancelled");
+  }
+
+  async close(): Promise<void> {
+    this.closed = true;
+    const { client, handle, pageId, tmpDir } = this;
+    this.client = undefined;
+    this.handle = undefined;
+    this.pageId = undefined;
+    this.tmpDir = undefined;
+    client?.close();
+    if (handle && pageId) await closePageTarget(handle.port, pageId);
+    if (handle) {
+      try {
+        handle.proc.kill();
+      } catch {
+        // ignore
+      }
+      // Chrome flushes its profile while shutting down; removing the profile
+      // before it exits leaves a half-written temp dir behind on every run.
+      await Promise.race([handle.proc.exited, new Promise((r) => setTimeout(r, 3000))]);
+    }
+    if (tmpDir) await rm(tmpDir, { recursive: true, force: true }).catch(() => {});
+  }
+}
+
+// Time kept back from the per-width walk budgets for the reduced-motion pass
+// and teardown, and the rough cost of loading a width plus its static rules.
+const AUDIT_RESERVE_MS = 8000;
+const WIDTH_OVERHEAD_MS = 2500;
+const MIN_WALK_BUDGET_MS = 1500;
+
 export async function runAudit(
   url: string,
-  opts: { widths?: number[]; chromePath?: string; timeoutMs?: number } = {},
+  opts: { widths?: number[]; chromePath?: string; timeoutMs?: number; webgl?: boolean } = {},
 ): Promise<AuditReport> {
-  const widths = opts.widths ?? DEFAULT_WIDTHS;
+  const widths = normalizeWidths(opts.widths) ?? DEFAULT_WIDTHS;
   const timeoutMs = opts.timeoutMs ?? DEFAULT_TIMEOUT_MS;
+  const webgl = opts.webgl ?? true;
 
   const chromePath = resolveChromePath(opts.chromePath);
   if (!chromePath) {
     return { status: "SKIPPED", reason: "no Chrome found", widths, violations: [] };
   }
 
-  let tmpDir: string | undefined;
-  let handle: ChromeHandle | undefined;
-  let client: CdpClient | undefined;
-  let pageId: string | undefined;
+  const began = Date.now();
+  const session = new BrowserSession();
+  const violations: Violation[] = [];
+  const notes: string[] = [];
+  let current: { width: number; live: { walk?: WalkResult } } | undefined;
 
   try {
-    return await withTimeout(timeoutMs, async () => {
-      const dir = await mkdtemp(join(tmpdir(), "jal-audit-"));
-      tmpDir = dir;
-      handle = await launchChrome(chromePath, dir);
-      const page = await createPageTarget(handle.port);
-      pageId = page.id;
-      client = await CdpClient.connect(page.webSocketDebuggerUrl);
-      await client.send("Page.enable");
-      await client.send("Runtime.enable");
-
-      const violations: Violation[] = [];
-      for (const width of widths) {
-        const raw = await auditAtWidth(client, url, width);
-        for (const v of raw) violations.push({ ...v, width });
+    return await withTimeout(timeoutMs, async (signal) => {
+      const client = await session.open(chromePath, "jal-audit-", webgl);
+      for (let i = 0; i < widths.length; i++) {
+        const width = widths[i];
+        // Share what is left of the timeout fairly between the widths still to go.
+        const left = timeoutMs - (Date.now() - began) - AUDIT_RESERVE_MS;
+        const budgetMs = Math.max(MIN_WALK_BUDGET_MS, Math.min(WALK_BUDGET_MS, left / (widths.length - i) - WIDTH_OVERHEAD_MS));
+        current = { width, live: {} };
+        const walk = await auditAtWidth(client, url, width, {
+          budgetMs,
+          webgl,
+          signal,
+          live: current.live,
+          sink: (v) => violations.push({ ...v, width }),
+        });
+        current = undefined;
+        if (walk.truncated) {
+          const last = walk.steps.at(-1)?.scrollY ?? 0;
+          notes.push(`scroll walk at ${width}px stopped at scrollY ${last} of ${walk.maxScroll} (time budget ${Math.round(budgetMs / 1000)}s); content below was not checked for stuck-reveal or blank-viewport`);
+        }
       }
       // One reduced-motion pass at the widest requested width.
+      throwIfAborted(signal);
       const rmWidth = Math.max(...widths);
       for (const v of await auditReducedMotion(client, url, rmWidth)) violations.push({ ...v, width: rmWidth });
+      if (!webgl) notes.push("rendered without WebGL: a 3D page may render differently than in a real browser");
 
       const deduped = dedupe(violations);
-      return {
-        status: deduped.length > 0 ? "FAIL" : "PASS",
-        widths,
-        violations: deduped,
-      } satisfies AuditReport;
+      const report: AuditReport = { status: deduped.length > 0 ? "FAIL" : "PASS", widths, violations: deduped };
+      if (notes.length) report.notes = notes;
+      return report;
     });
   } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    // Keep what the walk of the interrupted width had already seen.
+    if (current?.live.walk) {
+      const width = current.width;
+      for (const v of walkViolations(current.live.walk, { webgl })) violations.push({ ...v, width });
+    }
+    const deduped = dedupe(violations);
+    if (deduped.length === 0) return { status: "SKIPPED", reason: message, widths, violations: [] };
+    const where = current ? `during the ${current.width}px pass; the scroll walk was cut short` : "before every check finished";
     return {
-      status: "SKIPPED",
-      reason: err instanceof Error ? err.message : String(err),
+      status: "FAIL",
+      reason: `${message} ${where}; returning the ${deduped.length} violations found so far`,
       widths,
-      violations: [],
+      violations: deduped,
+      notes: [...notes, "partial result: audit did not finish"],
     };
   } finally {
-    client?.close();
-    if (handle && pageId) {
-      await closePageTarget(handle.port, pageId);
-    }
-    try {
-      handle?.proc.kill();
-    } catch {
-      // ignore
-    }
-    if (tmpDir) {
-      await rm(tmpDir, { recursive: true, force: true }).catch(() => {});
-    }
+    await session.close();
   }
 }
 
@@ -1338,7 +1645,8 @@ export async function runAudit(
 // per width, so an agent can Read what a person would actually see.
 export type ShotFile = { width: number; index: number; scrollY: number; path: string };
 export type ShotsReport = {
-  status: "OK" | "SKIPPED";
+  // PARTIAL: the run failed or timed out after writing some screens; files lists them.
+  status: "OK" | "PARTIAL" | "SKIPPED";
   reason?: string;
   out_dir: string;
   scroller: string;
@@ -1350,12 +1658,27 @@ export type ShotsReport = {
 const DEFAULT_SHOT_WIDTHS = [375, 1280];
 const DEFAULT_MAX_SCREENS = 12;
 const SHOT_LOAD_WAIT_MS = 4000;
+const SHOT_FILE_RE = /^\d+-\d+\.jpg$/;
 
 // A phone is taller than it is wide; desktop screens are shorter.
 export function shotHeight(width: number): number {
   if (width < 768) return 812;
   if (width < 1024) return 1024;
   return 800;
+}
+
+// SwiftShader reads as a software GPU, so the scene module's tier probe
+// (templates/modules/scene) would serve the poster. Critic evidence needs the
+// live scene, so WebGL shots ask for the full tier unless the caller set one.
+export function shotUrl(url: string, webgl: boolean): string {
+  if (!webgl) return url;
+  try {
+    const u = new URL(url);
+    if (!u.searchParams.has("scene-tier")) u.searchParams.set("scene-tier", "full");
+    return u.toString();
+  } catch {
+    return url;
+  }
 }
 
 export async function runShots(
@@ -1370,51 +1693,40 @@ export async function runShots(
     loadWaitMs?: number;
   } = {},
 ): Promise<ShotsReport> {
-  const widths = opts.widths && opts.widths.length ? opts.widths : DEFAULT_SHOT_WIDTHS;
-  const outDir = resolve(process.cwd(), opts.outDir ?? join(".jal", "shots"));
-  const maxScreens = Math.max(1, Math.min(WALK_MAX_STEPS, Math.floor(opts.maxScreens ?? DEFAULT_MAX_SCREENS)));
+  const widths = normalizeWidths(opts.widths) ?? DEFAULT_SHOT_WIDTHS;
+  const outDir = resolveOutDir(opts.outDir);
+  const maxScreens = normalizeMaxScreens(opts.maxScreens) ?? DEFAULT_MAX_SCREENS;
   const loadWaitMs = opts.loadWaitMs ?? SHOT_LOAD_WAIT_MS;
-  const empty: ShotsReport = { status: "SKIPPED", out_dir: outDir, scroller: "", totalHeight: 0, files: [], perWidth: [] };
+  const report: ShotsReport = { status: "OK", out_dir: outDir, scroller: "", totalHeight: 0, files: [], perWidth: [] };
 
   const chromePath = resolveChromePath(opts.chromePath);
-  if (!chromePath) return { ...empty, reason: "no Chrome found" };
+  if (!chromePath) return { ...report, status: "SKIPPED", reason: "no Chrome found" };
 
-  let tmpDir: string | undefined;
-  let handle: ChromeHandle | undefined;
-  let client: CdpClient | undefined;
-  let pageId: string | undefined;
-
+  const session = new BrowserSession();
   try {
-    return await withTimeout(opts.timeoutMs ?? 180000, async () => {
+    return await withTimeout(opts.timeoutMs ?? 180000, async (signal) => {
       await mkdir(outDir, { recursive: true });
-      const dir = await mkdtemp(join(tmpdir(), "jal-shots-"));
-      tmpDir = dir;
-      handle = await launchChrome(chromePath, dir, { webgl: opts.webgl ?? true });
-      const page = await createPageTarget(handle.port);
-      pageId = page.id;
-      client = await CdpClient.connect(page.webSocketDebuggerUrl);
-      await client.send("Page.enable");
-      await client.send("Runtime.enable");
-
-      const report: ShotsReport = { status: "OK", out_dir: outDir, scroller: "", totalHeight: 0, files: [], perWidth: [] };
+      // Drop every earlier run's shots, any width, so stale screens never mislead.
+      for (const name of await readdir(outDir)) {
+        if (SHOT_FILE_RE.test(name)) await unlink(join(outDir, name)).catch(() => {});
+      }
+      const c = await session.open(chromePath, "jal-shots-", opts.webgl ?? true);
       for (const width of widths) {
-        // Drop this width's shots from an earlier run so stale screens never mislead.
-        for (const name of await readdir(outDir)) {
-          if (new RegExp(`^${width}-\\d+\\.jpg$`).test(name)) await unlink(join(outDir, name)).catch(() => {});
-        }
+        throwIfAborted(signal);
         const height = shotHeight(width);
-        const c = client!;
         await c.send("Emulation.setDeviceMetricsOverride", { width, height, deviceScaleFactor: 1, mobile: width < 768 });
         const loaded = c.waitForEvent("Page.loadEventFired", 25000);
-        await c.send("Page.navigate", { url });
+        await c.send("Page.navigate", { url: shotUrl(url, opts.webgl ?? true) });
         await loaded;
         await new Promise((r) => setTimeout(r, loadWaitMs)); // 3D scenes and canvases need a moment to draw
         let count = 0;
         const walk = await walkScroller(c, {
           probe: false,
           maxSteps: maxScreens,
+          signal,
           onStep: async (step) => {
             const shot = await c.send<{ data: string }>("Page.captureScreenshot", { format: "jpeg", quality: 75 });
+            throwIfAborted(signal);
             const index = step.index + 1;
             const path = join(outDir, `${width}-${String(index).padStart(2, "0")}.jpg`);
             await writeFile(path, Buffer.from(shot.data, "base64"));
@@ -1431,15 +1743,10 @@ export async function runShots(
       return report;
     });
   } catch (err) {
-    return { ...empty, reason: err instanceof Error ? err.message : String(err) };
+    const reason = err instanceof Error ? err.message : String(err);
+    // The JPEGs already written are real; list them rather than claim none.
+    return { ...report, files: [...report.files], status: report.files.length ? "PARTIAL" : "SKIPPED", reason };
   } finally {
-    client?.close();
-    if (handle && pageId) await closePageTarget(handle.port, pageId);
-    try {
-      handle?.proc.kill();
-    } catch {
-      // ignore
-    }
-    if (tmpDir) await rm(tmpDir, { recursive: true, force: true }).catch(() => {});
+    await session.close();
   }
 }

@@ -79,11 +79,13 @@ export function AppShell({ title, destinations, current, actions, scroll = "docu
  * IntersectionObserver `root`. Walks up from `el` (inclusive) and returns
  * the first element that is a declared scroller (a contained shell's main, which
  * counts even before its content overflows) or that has overflow-y auto or
- * scroll and scrollHeight > clientHeight. Falls back to window, which is the
+ * scroll and scrollHeight > clientHeight. A horizontal carousel (overflow-x
+ * auto or scroll) with under 2px of vertical spill is skipped. Falls back to window, which is the
  * answer for a document-mode shell. Without `el` it returns the page's
  * declared scroller, else window. Browser only: call it in an effect.
  *
- * On a contained shell, call once before creating any trigger:
+ * On a contained shell, call once after mount (inside useGSAP or
+ * useLayoutEffect, never at module top level) before creating any trigger:
  *   ScrollTrigger.defaults({ scroller: getScroller() });
  *   new IntersectionObserver(cb, { root: scrollerRoot(getScroller()) });
  */
@@ -95,8 +97,13 @@ export function getScroller(el?: Element | null): Element | Window {
   for (let node: Element | null = el; node; node = node.parentElement) {
     if (node === document.body || node === document.documentElement) break;
     if (node.hasAttribute("data-jal-scroller")) return node;
-    const overflowY = getComputedStyle(node).overflowY;
-    if ((overflowY === "auto" || overflowY === "scroll") && node.scrollHeight > node.clientHeight) return node;
+    const { overflowX, overflowY } = getComputedStyle(node);
+    const spill = node.scrollHeight - node.clientHeight;
+    // A horizontal carousel (overflow-x auto or scroll) computes overflow-y to
+    // auto too, and often spills a pixel of rounding vertically. That is not a
+    // vertical scroller; skip it unless it truly overflows by 2px or more.
+    if ((overflowX === "auto" || overflowX === "scroll") && spill < 2) continue;
+    if ((overflowY === "auto" || overflowY === "scroll") && spill > 0) return node;
   }
   return window;
 }

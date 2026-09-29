@@ -12,7 +12,7 @@ Read before touching a file, in order:
 1. `jal-standards`
 2. `jal-ui-taste` (the hard law, tokens, and the direction and craft steps)
 3. `jal-design-system` (JAL Core, plus `references/craft.md` and `references/directions.md`)
-4. `jal-immersive`: the core, including its references `three-foundations.md`, `r3f.md`, `shaders.md`, `effects-cleanroom.md`, `particles-physics.md`, `performance.md`, `scroll-choreography.md`, `frames.md`, and `noyzzi.md`
+4. `jal-immersive`: the core, including its references `premium-3d.md` (the 3D quality bar, read first for any WebGL build), `three-foundations.md`, `r3f.md`, `shaders.md`, `effects-cleanroom.md`, `particles-physics.md`, `performance.md`, `scroll-choreography.md`, `frames.md`, and `noyzzi.md`, plus `templates/modules/scene/README.md` (the opt-in scene module)
 5. `jal-motion` and `references/components.md` (the magicui and animata recipes)
 6. `jal-jev` and its `references/catalog.md`
 
@@ -33,7 +33,8 @@ Do not load outside design or animation skills.
   - lazy `import()` of three
   - self-hosted decoders (never the drei CDN defaults)
 - Approved: Three.js (WebGL, WebGPU, TSL), React Three Fiber, drei, GSAP with all its plugins, Lenis, Framer Motion, Tailwind wired to JAL tokens, CSS/WAAPI, OriginKit patterns, and, whenever JEV picks them, nixie-fx and Rapier (rules in `jal-immersive` SKILL section 2, stack law).
-- Everything else (postprocessing, gltf-transform, cobe, fonts) is an approval candidate: propose it and wait for Brian's yes.
+- Approved by Brian (2026-09-29): CC0 models, HDRIs, and textures from Poly Haven (polyhaven.com, all assets CC0), downloaded straight into the client project at build time with `scripts/assets/polyhaven.ts`; and `@react-three/postprocessing` with `postprocessing`, through the scene module's tier-gated `PostFX`.
+- Everything else (gltf-transform, cobe, fonts) is an approval candidate: propose it and wait for Brian's yes.
 
 ## The pipeline (build from zero or redesign; skip nothing)
 
@@ -59,13 +60,14 @@ Do not load outside design or animation skills.
    - The page uses JAL tokens (including the display, tracking, and accent tokens) and Tailwind only through the JAL `@theme`.
    - Icons come from koboyo, with reicon.dev as the fallback.
    - The signature moment is the first beat brought to full fidelity.
-   - 3D quality floor: real modeled forms (lathe, extrude, bevel, subdivision, or a proper GLTF), PBR materials with environment lighting (`RoomEnvironment` through PMREM or a self-hosted HDR), contact shadows or baked AO, color management and tone mapping set, and lighting that tells the product story. A raw unbeveled primitive as the hero object is a FAIL.
+   - WebGL scenes start from the scene module: copy `templates/modules/scene` to `packages/scene` (README there), then compose `Stage`, `EnvironmentRig`, `LightRig`, `Ground`, a `Product`, `CameraRig`, and `PostFX`.
+   - 3D quality floor (`premium-3d.md`, `jal-immersive` SKILL section 3): a real asset path first (the client's asset, else Poly Haven, else a modelled asset with bevels, subdivision, and real proportions), a receiving surface under every object, at least one shadow-casting key light, environment lighting from a local HDRI, physically based materials from the asset's maps or the presets, a persistent scene with `CameraRig` whenever 3D appears in more than one section, and a practical light for any product that emits light, so it actually lights the surface. A raw primitive, a code-modelled toy, a painted light blob, or the same scene in several sections is a FAIL.
    - Typography floor: a deliberate display type scale, the hero on one `--text-display-*` step, at most five sizes per page.
 9. **Self-check.** Grep your diff for everything the law bans outside noyzzi sections. Confirm every loop stops under reduced motion, every object is disposed, the DPR cap is set, and no CDN URL remains. Walk the template-smell checklist in `jal-design-system` `references/craft.md` section 12 against your own captures and fix every hit before handing off.
 10. **Proof.**
     - `bun run build && bun test`, plus `bun run check:boundaries`.
     - `ui_audit` at 320, 375, 414, 768, and 1280 must PASS (including `reduced-motion`, `stuck-reveal`, `blank-viewport`, `mobile-app-shell`, and `form-width-cap`).
-    - `ui_shots` at 375 and 1280 (`webgl: true`), both with the poster and with the scene running. Read every image.
+    - `ui_shots` at 375 and 1280 (`webgl: true`), both with the scene running (the plain URL: `ui_shots` appends `?scene-tier=full` on its own for WebGL captures, since the tier probe would send SwiftShader to the poster) and with the poster (`?scene-tier=static` on the URL). Read every image and walk `premium-3d.md` sections 8 and 9 against them.
     - Sample frame time over CDP on the scene. If it runs over budget, drop a tier or simplify.
 11. **Taste, then the critic gate.** JEV `imm.taste`. Then hand the build to jal-lead (or the session running `/jal-ui`) as ready for review, never as finished. The lead runs `ui_shots` and dispatches a fresh critic (jal-reviewer in critic mode, or a new jal-ux; never you) that sees only the brief, the direction contract with the concept, and the images, scores the seven-point rubric (`craft.md` section 12), runs `ui.heuristics`, and answers `ui.finish_disposition` with those scores as `evidence.critic`. Any 0, or a total under 15 of 21, is a FAIL: apply the critic's per-screen fixes in one batch and hand back. At most three fix rounds. You never answer `ui.finish_disposition` and never self-approve the finish.
 11b. **Learn.** Append one line per section to `.jal/memory/design-log.jsonl` (skill `jal-memory`): the stack, taste, disposition, and audit failures. At steps 2 and 5, call `design_history` first and pass it to JEV as `evidence.history`.
@@ -78,6 +80,12 @@ Do not load outside design or animation skills.
 ## Escalation
 
 New dependencies, fonts, a dark default page, anything shipped outside the site (video files, app stores), and any request to relax a mechanical rule all go to Brian through jal-principal.
+
+## Poly Haven assets
+
+- Approved by Brian (2026-09-29). Search, inspect, and fetch with `bun scripts/assets/polyhaven.ts search|info|get` from the client project root (commands in `premium-3d.md` section 2). The script checks the license (CC0 only), contacts only `api.polyhaven.com` and `dl.polyhaven.org`, verifies size and md5, and writes only inside the project.
+- Fetch per build, only what the scene uses, at 1k unless a close-up needs 2k. Never mirror assets into the JAL-AIDEV plugin or template, and never load them from Poly Haven at runtime: the app serves its own copy.
+- Keep `ASSETS.md` next to the assets and list every asset in the build report. Run the asset QA in `premium-3d.md` section 2 (units, bounds, emitter material, polycount) before placing anything.
 
 ## GSAP and OriginKit
 

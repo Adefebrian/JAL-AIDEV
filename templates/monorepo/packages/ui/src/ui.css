@@ -19,9 +19,10 @@
   box-sizing: border-box;
 }
 
-html,
-body {
-  height: 100%;
+/* The document grows with its content (document-scroll shell); a contained
+   shell sizes itself to 100dvh, so nothing here pins the root height. */
+html {
+  min-height: 100%;
 }
 
 body {
@@ -632,11 +633,16 @@ button[data-state="success"],
    main.shell-main scrolls on its own (dense product screens).
    Below 640px: header row, content, bottom tab bar. From 640px the
    destinations join the header row. */
-.shell {
+/* The shell heights live on :root, not .shell: custom properties inherit
+   downward only, and the html scroll-padding rule below reads them, so a
+   value declared on .shell would never reach html. Override them on :root. */
+:root {
   /* Tab bar height below 640px: a 64px target row plus its 1px top border. */
   --shell-nav-h: 65px;
   /* Header row height: a 56px row plus its 1px bottom border. */
   --shell-header-h: 57px;
+}
+.shell {
   display: grid;
   min-height: 100dvh;
   grid-template-columns: minmax(0, 1fr) auto;

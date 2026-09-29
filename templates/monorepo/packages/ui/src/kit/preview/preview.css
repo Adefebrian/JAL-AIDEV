@@ -1,0 +1,191 @@
+/* Kit preview only: the sample product views (readout, week strip,
+   canvas) and the compare board. Tokens only, same law as kit.css. */
+html,
+body {
+  overflow-x: clip;
+}
+
+.pv-canvas {
+  display: block;
+  inline-size: 100%;
+  block-size: 100%;
+}
+
+/* Day readout: a real product view built from kit roles. */
+.pv-readout {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  grid-template-rows: auto minmax(0, 1fr) auto auto;
+  column-gap: var(--space-12px);
+  row-gap: var(--space-12px);
+  padding: var(--space-20px);
+  min-width: 0;
+  color: var(--color-ink);
+}
+
+.pv-readout-head {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-4px) var(--space-16px);
+  min-width: 0;
+}
+
+.pv-readout-now {
+  margin: 0;
+  margin-inline-start: auto;
+  font-size: var(--text-1);
+  line-height: var(--line-1);
+}
+
+.pv-axis {
+  grid-column: 1;
+  grid-row: 2;
+  display: grid;
+  grid-template-rows: repeat(3, minmax(0, 1fr));
+  align-items: start;
+  min-width: 0;
+}
+
+.pv-plot {
+  grid-column: 2;
+  grid-row: 2;
+  position: relative;
+  min-block-size: calc(var(--space-96px) + var(--space-24px));
+  min-width: 0;
+}
+
+.pv-plot > svg {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  inline-size: 100%;
+  block-size: 100%;
+}
+
+.pv-grid {
+  stroke: var(--color-border);
+  stroke-width: 1;
+}
+
+.pv-limit {
+  stroke: var(--color-border-strong);
+  stroke-width: 1;
+  stroke-dasharray: 4 4;
+}
+
+.pv-area {
+  fill: color-mix(in oklab, var(--color-ink) 6%, var(--color-surface));
+}
+
+.pv-line {
+  fill: none;
+  stroke: var(--color-ink);
+  stroke-width: 2;
+  stroke-linejoin: round;
+}
+
+.pv-ticks {
+  grid-column: 2;
+  grid-row: 3;
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  min-width: 0;
+}
+
+.pv-ticks-last {
+  display: flex;
+  min-width: 0;
+}
+
+.pv-ticks-last > :last-child {
+  margin-inline-start: auto;
+}
+
+@media (max-width: 639px) {
+  .pv-ticks > :nth-child(2),
+  .pv-ticks > :nth-child(4),
+  .pv-ticks-last > :first-child {
+    visibility: hidden;
+  }
+}
+
+.pv-readout-note {
+  grid-column: 1 / -1;
+  grid-row: 4;
+}
+
+/* Week strip. */
+.pv-week {
+  display: grid;
+  padding: var(--space-24px) var(--space-24px) var(--space-16px);
+  block-size: 100%;
+  min-width: 0;
+}
+
+.pv-week-bars {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  column-gap: var(--space-8px);
+  align-items: end;
+  min-width: 0;
+}
+
+.pv-week-col {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  justify-items: center;
+  row-gap: var(--space-8px);
+  block-size: 100%;
+  min-width: 0;
+}
+
+.pv-week-col > .pv-bar {
+  align-self: end;
+  inline-size: 100%;
+  max-inline-size: var(--space-40px);
+  min-block-size: var(--space-4px);
+  background: var(--color-border-strong);
+  border-radius: var(--radius-4);
+}
+
+.pv-week-col > .pv-bar[data-today] {
+  background: var(--color-ink);
+}
+
+/* Compare board: three directions side by side. */
+.pv-board {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-24px);
+  padding: var(--space-24px) var(--space-16px);
+}
+
+.pv-board-cell {
+  display: grid;
+  gap: var(--space-12px);
+  min-width: 0;
+}
+
+.pv-board-frame {
+  inline-size: 100%;
+  overflow: clip;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-12);
+  background: var(--color-surface);
+}
+
+.pv-board-frame > iframe {
+  display: block;
+  border: 0;
+  inline-size: 1280px;
+  block-size: 800px;
+}
+
+@media (min-width: 1024px) {
+  .pv-board {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    padding-inline: var(--space-24px);
+  }
+}

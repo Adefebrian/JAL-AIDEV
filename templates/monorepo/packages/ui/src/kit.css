@@ -1,0 +1,1911 @@
+/*
+ * JAL Core composition kit (packages/ui/src/kit). The signature every JAL
+ * page shares, plus the direction knobs that change its expression.
+ * Import after tokens.css and ui.css.
+ *
+ * Two layers in this file:
+ *   1. Knob layer: the only place raw values appear. Defaults on :root
+ *      (D1 research_notebook), then one block per direction keyed on
+ *      [data-direction="D1".."D13"]. Values stay inside the lawful ranges in
+ *      skills/jal-design-system/references/directions.md section 6; a
+ *      project-derived identity overrides the same names from its own
+ *      docs/design/direction.md contract.
+ *   2. Component layer: every rule reads var() only. No raw hex, no raw
+ *      font size, no shadow, no blur, no transparency fade, no side line.
+ *
+ * Fixed signature (never a knob): the 4/8/12 column grid, the 1280 content
+ * cap, the 1.2 type generator, five type roles per page (display, heading,
+ * title, body, meta), tabular mono numerals, tonal bands plus 1px hairlines,
+ * the radius scale, 44px controls, the one easing.
+ * Reference: skills/jal-design-system/references/identity.md.
+ */
+
+/* =====================================================================
+ * 1. Knob layer
+ * ===================================================================== */
+:root {
+  /* Type personality. System stacks only: a webfont is a dependency that
+     needs Brian's yes. The display stack may change per direction. */
+  --kit-font-sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --kit-font-display: var(--kit-font-sans);
+  --kit-font-mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+  --kit-display-weight: 500;
+  --kit-heading-weight: 600;
+
+  /* Display and heading steps. The generator is fixed (round(16 x 1.2^n));
+     a direction picks which steps carry the page, which sets the contrast
+     between display, heading, and body. */
+  --kit-display-sm-size: var(--text-6);
+  --kit-display-sm-line: var(--line-6);
+  --kit-display-md-size: var(--text-display-1);
+  --kit-display-md-line: var(--line-display-1);
+  --kit-display-lg-size: var(--text-display-2);
+  --kit-display-lg-line: var(--line-display-2);
+  --kit-heading-sm-size: var(--text-3);
+  --kit-heading-sm-line: var(--line-3);
+  --kit-heading-lg-size: var(--text-4);
+  --kit-heading-lg-line: var(--line-4);
+
+  /* Grid at 1024 and up. Below 1024 margins and gutters are fixed. */
+  --kit-margin-lg: var(--space-48px);
+  --kit-gutter-lg: var(--space-24px);
+  --kit-max: 1280px;
+
+  /* Section rhythm at 1024 and up (one repeated value per page). */
+  --kit-space-lg: var(--space-96px);
+
+  /* Shape, one radius per tier. */
+  --kit-radius-card: var(--radius-12);
+  --kit-radius-media: var(--radius-12);
+  --kit-radius-control: var(--radius-8);
+
+  /* Hairline and the structural rule between two same-tone sections. */
+  --kit-rule-color: var(--color-border);
+  --kit-section-rule: 0px;
+
+  /* Big figures (stat, price, bento stat) use the display face with
+     tabular numerals; row values use the mono. A direction may set mono. */
+  --kit-font-figure: var(--kit-font-display);
+
+  /* Accent roles. signal: the one key figure; link: text_and_icon role. */
+  --kit-signal: var(--color-ink);
+  --kit-link: var(--color-ink);
+}
+
+/* D1 research_notebook (the JAL Core default). Quiet, type-led, whitespace. */
+[data-direction="D1"] {
+  --color-page: #fafaf9;
+  --tracking-display: -0.035em;
+  --tracking-heading: -0.02em;
+  --kit-display-weight: 500;
+  --kit-heading-weight: 500;
+  --kit-display-lg-size: var(--text-display-2);
+  --kit-display-lg-line: var(--line-display-2);
+  --kit-heading-lg-size: var(--text-4);
+  --kit-heading-lg-line: var(--line-4);
+  --kit-margin-lg: var(--space-48px);
+  --kit-gutter-lg: var(--space-24px);
+  --kit-space-lg: var(--space-96px);
+  --kit-radius-card: var(--radius-12);
+  --kit-radius-media: var(--radius-12);
+  --kit-radius-control: var(--radius-8);
+  --kit-section-rule: 0px;
+}
+
+/* D2 single_signal_ledger. Near monochrome, one green means action. */
+[data-direction="D2"] {
+  --color-page: #f7f8f8;
+  --color-accent: #0b7a55; /* HSL 160, 5.34:1 on surface */
+  --color-accent-contrast: var(--color-surface);
+  --color-primary: var(--color-accent);
+  --color-primary-hover: color-mix(in oklab, white 8%, var(--color-accent) 92%);
+  --color-primary-active: color-mix(in oklab, white 12%, var(--color-accent) 88%);
+  --tracking-display: -0.025em;
+  --kit-display-weight: 600;
+  --kit-display-lg-size: var(--text-display-2);
+  --kit-display-lg-line: var(--line-display-2);
+  --kit-margin-lg: var(--space-40px);
+  --kit-space-lg: var(--space-80px);
+  --kit-radius-card: var(--radius-12);
+  --kit-radius-media: var(--radius-12);
+  --kit-radius-control: var(--radius-8);
+  --kit-section-rule: 1px;
+}
+
+/* D3 blueprint_hairline. Visible structure is the ornament. */
+[data-direction="D3"] {
+  --color-accent: #0f766e; /* HSL 175, signal only */
+  --tracking-display: -0.04em;
+  --kit-display-lg-size: var(--text-display-1);
+  --kit-display-lg-line: var(--line-display-1);
+  --kit-display-md-size: var(--text-6);
+  --kit-display-md-line: var(--line-6);
+  --kit-margin-lg: var(--space-40px);
+  --kit-space-lg: var(--space-64px);
+  --kit-radius-card: var(--radius-16);
+  --kit-radius-media: var(--radius-16);
+  --kit-radius-control: var(--radius-8);
+  --kit-rule-color: var(--color-border-strong);
+  --kit-section-rule: 1px;
+  --kit-signal: var(--color-accent);
+  --kit-font-figure: var(--kit-font-mono);
+}
+
+/* D4 bone_white_gallery. Media carries the page, type stays modest. */
+[data-direction="D4"] {
+  --color-page: #ffffff;
+  --color-accent: #b4461a; /* HSL 17, text and icon only */
+  --tracking-heading: -0.02em;
+  --kit-display-sm-size: var(--text-5);
+  --kit-display-sm-line: var(--line-5);
+  --kit-display-md-size: var(--text-6);
+  --kit-display-md-line: var(--line-6);
+  --kit-display-lg-size: var(--text-6);
+  --kit-display-lg-line: var(--line-6);
+  --kit-heading-lg-size: var(--text-3);
+  --kit-heading-lg-line: var(--line-3);
+  --kit-margin-lg: var(--space-32px);
+  --kit-space-lg: var(--space-80px);
+  --kit-radius-card: var(--radius-16);
+  --kit-radius-media: var(--radius-16);
+  --kit-radius-control: var(--radius-pill);
+  --kit-link: var(--color-accent);
+}
+
+/* D5 calm_productivity. Near white, soft geometry, one small punctuation. */
+[data-direction="D5"] {
+  --color-page: #faf8f5;
+  --color-accent: #c2410c; /* HSL 17, text and icon */
+  --tracking-display: -0.01em;
+  --kit-display-lg-size: var(--text-display-1);
+  --kit-display-lg-line: var(--line-display-1);
+  --kit-margin-lg: var(--space-48px);
+  --kit-space-lg: var(--space-80px);
+  --kit-radius-card: var(--radius-12);
+  --kit-radius-media: var(--radius-12);
+  --kit-radius-control: var(--radius-8);
+  --kit-link: var(--color-accent);
+}
+
+/* D6 clean_docs. A white reading surface, one hue for links. */
+[data-direction="D6"] {
+  --color-page: #ffffff;
+  --color-accent: #15803d; /* HSL 142, links only */
+  --kit-display-sm-size: var(--text-5);
+  --kit-display-sm-line: var(--line-5);
+  --kit-display-md-size: var(--text-6);
+  --kit-display-md-line: var(--line-6);
+  --kit-display-lg-size: var(--text-6);
+  --kit-display-lg-line: var(--line-6);
+  --kit-heading-lg-size: var(--text-3);
+  --kit-heading-lg-line: var(--line-3);
+  --kit-margin-lg: var(--space-40px);
+  --kit-space-lg: var(--space-64px);
+  --kit-radius-card: var(--radius-16);
+  --kit-radius-media: var(--radius-16);
+  --kit-radius-control: var(--radius-8);
+  --kit-link: var(--color-accent);
+}
+
+/* D7 warm_paper_editorial. Gated: content-led products only, and the
+   serif display needs a written reason plus Brian's yes on the face. */
+[data-direction="D7"] {
+  --color-page: #faf8f5;
+  --kit-font-display: ui-serif, "New York", "Iowan Old Style", Georgia, serif;
+  --tracking-display: -0.015em;
+  --tracking-heading: -0.01em;
+  --kit-display-weight: 500;
+  --kit-heading-weight: 500;
+  --kit-display-lg-size: var(--text-display-2);
+  --kit-display-lg-line: var(--line-display-2);
+  --kit-margin-lg: var(--space-64px);
+  --kit-gutter-lg: var(--space-32px);
+  --kit-space-lg: var(--space-96px);
+  --kit-radius-card: var(--radius-16);
+  --kit-radius-media: var(--radius-16);
+  --kit-radius-control: var(--radius-pill);
+}
+
+/* D8 quiet_care. Generous air, one gentle color. */
+[data-direction="D8"] {
+  --color-page: #faf8f5;
+  --color-accent: #3f6b4f; /* HSL 142 sage, signal only */
+  --tracking-display: -0.01em;
+  --tracking-heading: 0em;
+  --kit-display-lg-size: var(--text-display-1);
+  --kit-display-lg-line: var(--line-display-1);
+  --kit-margin-lg: var(--space-48px);
+  --kit-gutter-lg: var(--space-32px);
+  --kit-space-lg: var(--space-96px);
+  --kit-radius-card: var(--radius-16);
+  --kit-radius-media: var(--radius-16);
+  --kit-radius-control: var(--radius-pill);
+  --kit-signal: var(--color-accent);
+}
+
+/* D9 cinematic_hardware. One lit product per section, big rounded tiles. */
+[data-direction="D9"] {
+  --color-page: #ffffff;
+  --color-accent: #0a5bd3; /* HSL 216, 6.09:1, filled primary (buy) */
+  --color-accent-contrast: var(--color-surface);
+  --color-primary: var(--color-accent);
+  --color-primary-hover: color-mix(in oklab, white 8%, var(--color-accent) 92%);
+  --color-primary-active: color-mix(in oklab, white 12%, var(--color-accent) 88%);
+  --tracking-display: -0.02em;
+  --tracking-heading: -0.02em;
+  --kit-display-weight: 600;
+  --kit-heading-weight: 600;
+  --kit-display-sm-size: var(--text-display-1);
+  --kit-display-sm-line: var(--line-display-1);
+  --kit-display-md-size: var(--text-display-2);
+  --kit-display-md-line: var(--line-display-2);
+  --kit-display-lg-size: var(--text-display-3);
+  --kit-display-lg-line: var(--line-display-3);
+  --kit-heading-lg-size: var(--text-5);
+  --kit-heading-lg-line: var(--line-5);
+  --kit-margin-lg: var(--space-40px);
+  --kit-space-lg: var(--space-96px);
+  --kit-radius-card: var(--radius-28);
+  --kit-radius-media: var(--radius-28);
+  --kit-radius-control: var(--radius-pill);
+}
+
+/* D10 industrial_catalogue. Straight cuts, ink on a faint mist canvas. */
+[data-direction="D10"] {
+  --color-page: #f7f8f8;
+  --tracking-display: -0.01em;
+  --kit-display-weight: 500;
+  --kit-display-lg-size: var(--text-display-1);
+  --kit-display-lg-line: var(--line-display-1);
+  --kit-margin-lg: var(--space-32px);
+  --kit-gutter-lg: var(--space-16px);
+  --kit-space-lg: var(--space-64px);
+  --kit-radius-card: var(--radius-4);
+  --kit-radius-media: var(--radius-4);
+  --kit-radius-control: var(--radius-4);
+  --kit-rule-color: var(--color-border-strong);
+  --kit-section-rule: 1px;
+  --kit-font-figure: var(--kit-font-mono);
+}
+
+/* D11 oversized_masthead. One huge wordmark, everything else small. */
+[data-direction="D11"] {
+  --color-page: #ffffff;
+  --tracking-display: -0.04em;
+  --tracking-heading: -0.02em;
+  --kit-display-weight: 500;
+  --kit-heading-weight: 500;
+  --kit-display-lg-size: var(--text-display-3);
+  --kit-display-lg-line: var(--line-display-3);
+  --kit-heading-lg-size: var(--text-4);
+  --kit-heading-lg-line: var(--line-4);
+  --kit-margin-lg: var(--space-64px);
+  --kit-gutter-lg: var(--space-32px);
+  --kit-space-lg: var(--space-96px);
+  --kit-radius-card: var(--radius-4);
+  --kit-radius-media: var(--radius-4);
+  --kit-radius-control: var(--radius-pill);
+  --kit-section-rule: 1px;
+}
+
+/* D12 friendly_consumer. Rounded display, big radii, one bright hue. */
+[data-direction="D12"] {
+  --color-page: #ffffff;
+  --color-accent: #c2410c; /* HSL 17, text and icon, one display headline */
+  --kit-font-display: ui-rounded, "SF Pro Rounded", var(--kit-font-sans);
+  --tracking-display: -0.03em;
+  --kit-display-weight: 600;
+  --kit-display-lg-size: var(--text-display-2);
+  --kit-display-lg-line: var(--line-display-2);
+  --kit-margin-lg: var(--space-40px);
+  --kit-space-lg: var(--space-80px);
+  --kit-radius-card: var(--radius-28);
+  --kit-radius-media: var(--radius-28);
+  --kit-radius-control: var(--radius-pill);
+  --kit-link: var(--color-accent);
+}
+
+/* D13 precision_dark. Explicit dark mode only: it applies when the product
+   ships a dark theme and the root carries data-theme="dark". Never
+   OS-triggered, never the light default. */
+[data-direction="D13"][data-theme="dark"] {
+  --color-page: #171412;
+  --color-surface: #1e1b19;
+  --color-layer-1: #25221f;
+  --color-layer-2: #2c2926;
+  --color-border: #34302d;
+  --color-border-strong: #45413d;
+  --color-border-control: #8a8781;
+  --color-ink: #ecebe8;
+  --color-ink-muted: #b8b6b1;
+  --color-primary: #ecebe8;
+  --color-primary-contrast: #171412;
+  --color-primary-hover: color-mix(in oklab, black 8%, #ecebe8 92%);
+  --color-primary-active: color-mix(in oklab, black 12%, #ecebe8 88%);
+  --color-focus: #ecebe8;
+  --color-accent: #b5d333; /* HSL 71, signal only, 10.77:1 on page */
+  --kit-signal: var(--color-accent);
+  --kit-display-weight: 500;
+  --kit-heading-weight: 500;
+  --kit-margin-lg: var(--space-40px);
+  --kit-space-lg: var(--space-64px);
+  --kit-radius-card: var(--radius-12);
+  --kit-radius-media: var(--radius-12);
+  --kit-radius-control: var(--radius-8);
+  --kit-section-rule: 1px;
+}
+
+/* Breakpoint resolution. Resolved on the same element as the knobs (or a
+   descendant), so a direction on <html> or on .kit-page both work. */
+:root,
+[data-direction],
+.kit-page {
+  --kit-margin: var(--space-16px);
+  --kit-gutter: var(--space-16px);
+  --kit-cols: 4;
+  --kit-stack: var(--space-32px);
+  --kit-space: var(--space-64px);
+  --kit-space-tight: var(--space-40px);
+  --kit-space-loose: var(--space-80px);
+}
+
+@media (min-width: 640px) {
+  :root,
+  [data-direction],
+  .kit-page {
+    --kit-margin: var(--space-32px);
+    --kit-gutter: var(--space-24px);
+    --kit-cols: 8;
+    --kit-space: var(--space-80px);
+    --kit-space-tight: var(--space-48px);
+    --kit-space-loose: var(--space-96px);
+  }
+}
+
+@media (min-width: 1024px) {
+  :root,
+  [data-direction],
+  .kit-page {
+    --kit-margin: var(--kit-margin-lg);
+    --kit-gutter: var(--kit-gutter-lg);
+    --kit-cols: 12;
+    --kit-stack: var(--space-48px);
+    --kit-space: var(--kit-space-lg);
+    --kit-space-tight: var(--space-48px);
+    --kit-space-loose: calc(var(--kit-space-lg) + var(--space-32px));
+  }
+}
+
+/* =====================================================================
+ * 2. Component layer (var() only below this line)
+ * ===================================================================== */
+
+/* A kit page scrolls the document: html and body grow with it, so the
+   page root never spills out of a viewport-tall body. */
+html:has(.kit-page),
+html:has(.kit-page) > body {
+  height: auto;
+}
+
+/* Page: the root. Carries the canvas and the direction. */
+.kit-page {
+  min-block-size: 100dvh;
+  background: var(--color-page);
+  color: var(--color-ink);
+  font-family: var(--kit-font-sans);
+}
+
+.kit-page ::selection {
+  background: color-mix(in oklab, var(--color-accent) 16%, var(--color-surface));
+  color: var(--color-ink);
+}
+
+.kit-page a:not(.btn) {
+  color: var(--kit-link);
+  text-decoration-thickness: 1px;
+  text-underline-offset: var(--space-4px);
+}
+
+/* The grid: 4, 8, 12 columns, one content line capped at 1280. Every
+   composition places its parts on these column lines. */
+.kit-grid {
+  display: grid;
+  grid-template-columns: repeat(var(--kit-cols), minmax(0, 1fr));
+  column-gap: var(--kit-gutter);
+  row-gap: var(--kit-stack);
+  inline-size: min(calc(100% - 2 * var(--kit-margin)), var(--kit-max));
+  margin-inline: auto;
+  min-width: 0;
+}
+
+.kit-grid > *,
+.kit-sub > * {
+  min-width: 0;
+}
+
+.kit-full {
+  grid-column: 1 / -1;
+}
+
+/* A part that re-uses the page columns (subgrid keeps one content line). */
+.kit-sub {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: subgrid;
+  column-gap: var(--kit-gutter);
+  row-gap: var(--kit-stack);
+}
+
+/* Section: a band. Tone and rhythm are the only variables. */
+.kit-section {
+  background: transparent;
+  color: var(--color-ink);
+}
+
+.kit-section[data-tone="layer"] {
+  background: var(--color-layer-1);
+  color: var(--color-ink);
+}
+
+.kit-section > .kit-grid {
+  padding-block: var(--kit-space);
+}
+
+.kit-section[data-rhythm="tight"] > .kit-grid {
+  padding-block: var(--kit-space-tight);
+}
+
+.kit-section[data-rhythm="generous"] > .kit-grid {
+  padding-block: var(--kit-space-loose);
+}
+
+/* The structural rule: only between two sections of the same tone, where
+   no tone change already separates them. Content width, never full bleed. */
+.kit-section[data-tone="base"] + .kit-section[data-tone="base"] > .kit-grid,
+.kit-section[data-tone="layer"] + .kit-section[data-tone="layer"] > .kit-grid {
+  border-top: var(--kit-section-rule) solid var(--kit-rule-color);
+}
+
+/* ---------------------------------------------------------------------
+ * Type roles. Exactly five sizes per page: display, heading, title, body,
+ * meta. Components never set another size.
+ * ------------------------------------------------------------------- */
+.kit-display,
+.kit-heading,
+.kit-title,
+.kit-lead,
+.kit-body,
+.kit-meta {
+  margin: 0;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.kit-display {
+  font-family: var(--kit-font-display);
+  font-size: var(--kit-display-sm-size);
+  line-height: var(--kit-display-sm-line);
+  font-weight: var(--kit-display-weight);
+  letter-spacing: var(--tracking-display);
+  font-optical-sizing: auto;
+  text-wrap: balance;
+  color: var(--color-ink);
+}
+
+.kit-heading {
+  font-family: var(--kit-font-display);
+  font-size: var(--kit-heading-sm-size);
+  line-height: var(--kit-heading-sm-line);
+  font-weight: var(--kit-heading-weight);
+  letter-spacing: var(--tracking-heading);
+  font-optical-sizing: auto;
+  text-wrap: balance;
+  color: var(--color-ink);
+}
+
+.kit-title {
+  font-size: var(--text-1);
+  line-height: var(--line-1);
+  font-weight: var(--weight-semibold);
+  letter-spacing: var(--tracking-title);
+  text-wrap: balance;
+  color: var(--color-ink);
+}
+
+.kit-lead {
+  font-size: var(--text-1);
+  line-height: var(--line-1);
+  font-weight: var(--weight-regular);
+  letter-spacing: var(--tracking-body);
+  text-wrap: pretty;
+  color: var(--color-ink-muted);
+  max-inline-size: 60ch;
+}
+
+.kit-body {
+  font-size: var(--text-0);
+  line-height: var(--line-0);
+  text-wrap: pretty;
+  color: var(--color-ink-muted);
+  max-inline-size: 68ch;
+}
+
+.kit-meta {
+  font-size: var(--text-n1);
+  line-height: var(--line-n1);
+  color: var(--color-ink-muted);
+}
+
+@media (min-width: 768px) {
+  .kit-display {
+    font-size: var(--kit-display-md-size);
+    line-height: var(--kit-display-md-line);
+  }
+}
+
+@media (min-width: 1024px) {
+  .kit-display {
+    font-size: var(--kit-display-lg-size);
+    line-height: var(--kit-display-lg-line);
+  }
+  .kit-heading {
+    font-size: var(--kit-heading-lg-size);
+    line-height: var(--kit-heading-lg-line);
+  }
+}
+
+/* Numbers: Carbon-style tabular mono. Units are set at the meta size in
+   ink-muted, joined by a no-break space in the markup. */
+.kit-num {
+  font-family: var(--kit-font-mono);
+  font-variant-numeric: tabular-nums slashed-zero;
+  letter-spacing: var(--tracking-body);
+  font-weight: var(--weight-regular);
+}
+
+.kit-stat-value .kit-num,
+.kit-plan-price .kit-num,
+.kit-bento-stat .kit-num {
+  font-family: var(--kit-font-figure);
+  font-weight: var(--kit-heading-weight);
+  letter-spacing: var(--tracking-heading);
+}
+
+.kit-unit {
+  font-family: var(--kit-font-sans);
+  font-size: var(--text-n1);
+  line-height: var(--line-n1);
+  font-weight: var(--weight-regular);
+  letter-spacing: var(--tracking-body);
+  color: var(--color-ink-muted);
+}
+
+/* An authored SVG wordmark sized to its region. */
+.kit-wordmark {
+  display: block;
+  inline-size: 100%;
+  block-size: auto;
+  color: var(--color-ink);
+}
+
+/* Actions: primary then at most one secondary. Full width below 640. */
+.kit-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--space-12px);
+  min-width: 0;
+}
+
+.kit-actions .btn,
+.kit-actions button {
+  border-radius: var(--kit-radius-control);
+}
+
+@media (min-width: 640px) {
+  .kit-actions {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+}
+
+/* ---------------------------------------------------------------------
+ * SectionHead: one heading plus one lead, never two headings.
+ * split: heading on columns 1 to 5, lead on 7 to 12 (1024 and up).
+ * stack: heading and lead on columns 1 to 8.
+ * ------------------------------------------------------------------- */
+.kit-head {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: subgrid;
+  column-gap: var(--kit-gutter);
+  row-gap: var(--space-16px);
+  align-items: start;
+}
+
+.kit-head > * {
+  grid-column: 1 / -1;
+  min-width: 0;
+}
+
+@media (min-width: 640px) {
+  .kit-head[data-layout="stack"] > * {
+    grid-column: 1 / span 7;
+  }
+}
+
+@media (min-width: 1024px) {
+  .kit-head[data-layout="split"] > .kit-heading {
+    grid-column: 1 / span 5;
+    grid-row: 1 / span 2;
+  }
+  .kit-head[data-layout="split"] > .kit-lead,
+  .kit-head[data-layout="split"] > .kit-head-action {
+    grid-column: 7 / -1;
+  }
+  .kit-head[data-layout="stack"] > * {
+    grid-column: 1 / span 8;
+  }
+}
+
+.kit-head-action {
+  display: flex;
+  min-width: 0;
+}
+
+/* ---------------------------------------------------------------------
+ * Masthead: the hero. Display headline, one lead, the actions, and the
+ * variant's media or proof. 70 to 90% of the first viewport, bottom
+ * padding at least 1.3 times the top.
+ * ------------------------------------------------------------------- */
+.kit-masthead {
+  color: var(--color-ink);
+}
+
+.kit-masthead > .kit-grid {
+  padding-block: var(--space-40px) var(--space-64px);
+  align-content: center;
+  min-block-size: calc(76svh - var(--shell-header-h, 57px));
+}
+
+@media (min-width: 1024px) {
+  .kit-masthead > .kit-grid {
+    padding-block: var(--space-64px) var(--space-96px);
+  }
+}
+
+.kit-masthead-text {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  row-gap: var(--space-24px);
+  align-content: start;
+  min-width: 0;
+}
+
+/* A wordmark headline takes the full width: it is the layout. */
+.kit-masthead[data-variant] .kit-masthead-text:has(.kit-wordmark) {
+  grid-column: 1 / -1;
+}
+
+.kit-masthead-proof {
+  grid-column: 1 / -1;
+  min-width: 0;
+}
+
+.kit-masthead-media {
+  grid-column: 1 / -1;
+  min-width: 0;
+}
+
+@media (min-width: 1024px) {
+  .kit-masthead[data-variant="left"] .kit-masthead-text {
+    grid-column: 1 / span 10;
+  }
+  .kit-masthead[data-variant="left"] .kit-masthead-text > .kit-lead {
+    max-inline-size: 52ch;
+  }
+  .kit-masthead[data-variant="left"] /* A wordmark headline takes the full width: it is the layout. */
+.kit-masthead[data-variant] .kit-masthead-text:has(.kit-wordmark) {
+  grid-column: 1 / -1;
+}
+
+.kit-masthead-proof {
+    grid-column: 1 / -1;
+  }
+  .kit-masthead[data-variant="centered"] .kit-masthead-text {
+    grid-column: 2 / span 10;
+    justify-items: center;
+    text-align: center;
+  }
+  .kit-masthead[data-variant="centered"] /* A wordmark headline takes the full width: it is the layout. */
+.kit-masthead[data-variant] .kit-masthead-text:has(.kit-wordmark) {
+  grid-column: 1 / -1;
+}
+
+.kit-masthead-proof {
+    grid-column: 3 / span 8;
+  }
+  .kit-masthead[data-variant="split"] .kit-masthead-text {
+    grid-column: 1 / span 5;
+    align-self: center;
+  }
+  .kit-masthead[data-variant="split"] .kit-masthead-media {
+    grid-column: 6 / -1;
+    grid-row: 1;
+  }
+  .kit-masthead[data-variant="split"][data-media-side="start"] .kit-masthead-text {
+    grid-column: 8 / -1;
+  }
+  .kit-masthead[data-variant="split"][data-media-side="start"] .kit-masthead-media {
+    grid-column: 1 / span 7;
+  }
+  .kit-masthead[data-variant="split"] /* A wordmark headline takes the full width: it is the layout. */
+.kit-masthead[data-variant] .kit-masthead-text:has(.kit-wordmark) {
+  grid-column: 1 / -1;
+}
+
+.kit-masthead-proof {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (min-width: 640px) {
+  .kit-masthead[data-variant="centered"] .kit-actions {
+    justify-content: center;
+  }
+}
+
+/* Overlay: full-bleed media as a decorative backdrop band, the text on a
+   solid tonal panel (never a translucent scrim). Below 1024 the media and
+   the panel stack, so nothing sits on the image. */
+.kit-masthead[data-variant="overlay"] > .kit-overlay {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  min-width: 0;
+}
+
+.kit-overlay-media {
+  position: relative;
+  aspect-ratio: 4 / 3;
+  min-width: 0;
+  background: var(--color-layer-1);
+  overflow: clip;
+}
+
+.kit-overlay-media > .kit-overlay-backdrop {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.kit-overlay-backdrop > * {
+  inline-size: 100%;
+  block-size: 100%;
+}
+
+.kit-overlay-panel-row {
+  padding-block: var(--space-32px) var(--space-48px);
+}
+
+.kit-overlay-panel {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  row-gap: var(--space-24px);
+  min-width: 0;
+}
+
+@media (min-width: 1024px) {
+  .kit-masthead[data-variant="overlay"] > .kit-overlay {
+    position: relative;
+    min-block-size: calc(84svh - var(--shell-header-h, 57px));
+  }
+  .kit-overlay-media {
+    position: absolute;
+    inset: 0;
+    aspect-ratio: auto;
+    pointer-events: none;
+  }
+  .kit-overlay-panel-row {
+    position: relative;
+    align-self: end;
+    padding-block: var(--space-96px) var(--space-48px);
+  }
+  .kit-overlay-panel {
+    grid-column: 1 / span 6;
+    padding: var(--space-40px);
+    background: var(--color-surface);
+    color: var(--color-ink);
+    border: 1px solid var(--color-border);
+    border-radius: var(--kit-radius-card);
+  }
+}
+
+/* ---------------------------------------------------------------------
+ * Split: asymmetric text and media on the 12 columns.
+ * ------------------------------------------------------------------- */
+.kit-split {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: subgrid;
+  column-gap: var(--kit-gutter);
+  row-gap: var(--kit-stack);
+  align-items: center;
+}
+
+.kit-split-text {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  row-gap: var(--space-16px);
+  align-content: start;
+  min-width: 0;
+}
+
+.kit-split-text > .kit-split-extra {
+  margin-block-start: var(--space-16px);
+  min-width: 0;
+}
+
+.kit-split-media {
+  grid-column: 1 / -1;
+  min-width: 0;
+}
+
+.kit-split[data-mobile-media="before"] .kit-split-media {
+  grid-row: 1;
+}
+
+@media (min-width: 1024px) {
+  .kit-split .kit-split-media,
+  .kit-split .kit-split-text {
+    grid-row: 1;
+  }
+  .kit-split[data-ratio="5/7"] .kit-split-text { grid-column: 1 / span 5; }
+  .kit-split[data-ratio="5/7"] .kit-split-media { grid-column: 6 / -1; }
+  .kit-split[data-ratio="7/5"] .kit-split-text { grid-column: 1 / span 7; }
+  .kit-split[data-ratio="7/5"] .kit-split-media { grid-column: 8 / -1; }
+  .kit-split[data-ratio="4/8"] .kit-split-text { grid-column: 1 / span 4; }
+  .kit-split[data-ratio="4/8"] .kit-split-media { grid-column: 5 / -1; }
+  .kit-split[data-ratio="8/4"] .kit-split-text { grid-column: 1 / span 8; }
+  .kit-split[data-ratio="8/4"] .kit-split-media { grid-column: 9 / -1; }
+  .kit-split[data-media-side="start"][data-ratio="5/7"] .kit-split-media { grid-column: 1 / span 7; }
+  .kit-split[data-media-side="start"][data-ratio="5/7"] .kit-split-text { grid-column: 8 / -1; }
+  .kit-split[data-media-side="start"][data-ratio="7/5"] .kit-split-media { grid-column: 1 / span 5; }
+  .kit-split[data-media-side="start"][data-ratio="7/5"] .kit-split-text { grid-column: 6 / -1; }
+  .kit-split[data-media-side="start"][data-ratio="4/8"] .kit-split-media { grid-column: 1 / span 8; }
+  .kit-split[data-media-side="start"][data-ratio="4/8"] .kit-split-text { grid-column: 9 / -1; }
+  .kit-split[data-media-side="start"][data-ratio="8/4"] .kit-split-media { grid-column: 1 / span 4; }
+  .kit-split[data-media-side="start"][data-ratio="8/4"] .kit-split-text { grid-column: 5 / -1; }
+}
+
+/* ---------------------------------------------------------------------
+ * MediaFrame: fixed aspect ratio, hairline frame, caption below.
+ * The canvas slot keeps the frame's chrome; what draws inside a canvas
+ * follows the canvas zone rules in jal-immersive.
+ * ------------------------------------------------------------------- */
+.kit-media {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  row-gap: var(--space-12px);
+  margin: 0;
+  min-width: 0;
+}
+
+.kit-media-frame {
+  position: relative;
+  aspect-ratio: var(--kit-ratio, 16 / 9);
+  inline-size: 100%;
+  min-width: 0;
+  overflow: clip;
+  background: var(--color-layer-1);
+  border: 1px solid var(--color-border);
+  border-radius: var(--kit-radius-media);
+}
+
+.kit-media[data-tone="surface"] .kit-media-frame {
+  background: var(--color-surface);
+}
+
+.kit-media-frame > img,
+.kit-media-frame > video,
+.kit-media-frame > canvas,
+.kit-media-frame > .kit-media-slot {
+  position: absolute;
+  inset: 0;
+  inline-size: 100%;
+  block-size: 100%;
+  max-width: none;
+}
+
+.kit-media-frame > img,
+.kit-media-frame > video {
+  object-fit: cover;
+}
+
+.kit-media-slot {
+  display: grid;
+  min-width: 0;
+}
+
+/* A live DOM product view sits in flow: the ratio is its minimum, and the
+   frame grows when the view needs more height (narrow widths). */
+.kit-media[data-kind="view"] .kit-media-frame {
+  display: grid;
+  overflow: visible;
+}
+
+.kit-media-view {
+  display: grid;
+  min-width: 0;
+}
+
+.kit-media-placeholder {
+  display: grid;
+  place-items: center;
+  padding: var(--space-24px);
+  background: var(--color-layer-2);
+  color: var(--color-ink-muted);
+  text-align: center;
+}
+
+.kit-media > figcaption {
+  min-width: 0;
+}
+
+/* ---------------------------------------------------------------------
+ * SpecRail and SpecTable: Carbon-style label and value rows.
+ * ------------------------------------------------------------------- */
+.kit-spec-rail {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  margin: 0;
+  min-width: 0;
+  border-block: 1px solid var(--kit-rule-color);
+}
+
+.kit-spec-row {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
+  align-items: baseline;
+  column-gap: var(--space-16px);
+  min-block-size: var(--control-h);
+  padding-block: var(--space-12px);
+  min-width: 0;
+}
+
+.kit-spec-row + .kit-spec-row {
+  border-top: 1px solid var(--color-border);
+}
+
+.kit-spec-row > dt {
+  font-size: var(--text-n1);
+  line-height: var(--line-n1);
+  color: var(--color-ink-muted);
+  min-width: 0;
+}
+
+.kit-spec-row > dd {
+  margin: 0;
+  font-size: var(--text-0);
+  line-height: var(--line-0);
+  color: var(--color-ink);
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.kit-spec-row[data-signal] > dd .kit-num {
+  color: var(--kit-signal);
+}
+
+.kit-spec-table {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: subgrid;
+  column-gap: var(--kit-gutter);
+  row-gap: var(--kit-stack);
+}
+
+.kit-spec-group {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: subgrid;
+  column-gap: var(--kit-gutter);
+  row-gap: var(--space-16px);
+  min-width: 0;
+}
+
+.kit-spec-group > * {
+  grid-column: 1 / -1;
+  min-width: 0;
+}
+
+.kit-spec-grid {
+  inline-size: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  table-layout: fixed;
+}
+
+.kit-spec-grid tr > * {
+  border-top: 1px solid var(--color-border);
+}
+
+.kit-spec-grid tr:first-child > * {
+  border-top-color: var(--kit-rule-color);
+}
+
+.kit-spec-grid tr:last-child > * {
+  border-bottom: 1px solid var(--kit-rule-color);
+}
+
+.kit-spec-grid th,
+.kit-spec-grid td {
+  padding-block: var(--space-12px);
+  text-align: start;
+  vertical-align: baseline;
+  overflow-wrap: anywhere;
+}
+
+.kit-spec-grid th {
+  inline-size: 40%;
+  padding-inline-end: var(--space-16px);
+  font-size: var(--text-n1);
+  line-height: var(--line-n1);
+  font-weight: var(--weight-regular);
+  color: var(--color-ink-muted);
+}
+
+.kit-spec-grid td {
+  font-size: var(--text-0);
+  line-height: var(--line-0);
+  color: var(--color-ink);
+}
+
+.kit-spec-note {
+  display: block;
+  font-size: var(--text-n1);
+  line-height: var(--line-n1);
+  color: var(--color-ink-muted);
+}
+
+@media (min-width: 1024px) {
+  .kit-spec-group > .kit-title {
+    grid-column: 1 / span 4;
+  }
+  .kit-spec-group > .kit-spec-grid {
+    grid-column: 5 / -1;
+  }
+  .kit-spec-grid tr {
+    block-size: var(--density-row-h);
+  }
+  .kit-spec-grid th,
+  .kit-spec-grid td {
+    padding-block: var(--density-row-pad-block);
+  }
+}
+
+/* ---------------------------------------------------------------------
+ * StatRow: numbers at the heading step (never a giant numeral), a unit,
+ * one short caption.
+ * ------------------------------------------------------------------- */
+.kit-stats {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: subgrid;
+  column-gap: var(--kit-gutter);
+  row-gap: var(--space-32px);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.kit-stat {
+  grid-column: span 2;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  row-gap: var(--space-8px);
+  align-content: start;
+  padding-block-start: var(--space-16px);
+  border-top: 1px solid var(--kit-rule-color);
+  min-width: 0;
+}
+
+.kit-stat-value {
+  margin: 0;
+  font-size: var(--kit-heading-sm-size);
+  line-height: var(--kit-heading-sm-line);
+  color: var(--color-ink);
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.kit-stat[data-signal] .kit-stat-value .kit-num {
+  color: var(--kit-signal);
+}
+
+.kit-stats[data-count="3"] > .kit-stat:last-child {
+  grid-column: 1 / -1;
+}
+
+@media (min-width: 640px) {
+  .kit-stat {
+    grid-column: span 4;
+  }
+  .kit-stats[data-count="3"] > .kit-stat:last-child {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (min-width: 1024px) {
+  .kit-stats[data-count="2"] > .kit-stat { grid-column: span 6; }
+  .kit-stats[data-count="3"] > .kit-stat,
+  .kit-stats[data-count="3"] > .kit-stat:last-child { grid-column: span 4; }
+  .kit-stats[data-count="4"] > .kit-stat { grid-column: span 3; }
+  .kit-stat-value {
+    font-size: var(--kit-heading-lg-size);
+    line-height: var(--kit-heading-lg-line);
+  }
+}
+
+/* ---------------------------------------------------------------------
+ * Cells: the hairline cell grid (FeatureGrid, PricingTable). The 1px gap
+ * over the border tone draws every hairline; each cell is a full box, so
+ * no line is one-sided. Item counts are validated so no cell is dead.
+ * ------------------------------------------------------------------- */
+.kit-cells {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 1px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  background: var(--color-border);
+  border: 1px solid var(--color-border);
+  border-radius: var(--kit-radius-card);
+  overflow: clip;
+}
+
+.kit-cell {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-content: start;
+  row-gap: var(--space-12px);
+  padding: var(--space-24px);
+  background: var(--color-surface);
+  color: var(--color-ink);
+  min-width: 0;
+}
+
+.kit-section[data-tone="layer"] .kit-cell {
+  background: var(--color-surface);
+}
+
+@media (min-width: 640px) {
+  .kit-cells[data-md="2"] {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1024px) {
+  .kit-cells[data-lg="2"] { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .kit-cells[data-lg="3"] { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .kit-cells[data-lg="4"] { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .kit-cell {
+    padding: var(--space-32px);
+  }
+}
+
+/* FeatureGrid item: optional inline icon on the title row, title, body. */
+.kit-feature-title {
+  display: flex;
+  align-items: center;
+  gap: var(--space-12px);
+  min-width: 0;
+}
+
+.kit-feature-title > .icon {
+  color: var(--kit-link);
+}
+
+/* ---------------------------------------------------------------------
+ * BentoGrid: a declared area map, validated so no cell is dead.
+ * ------------------------------------------------------------------- */
+.kit-bento {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-auto-rows: auto;
+  gap: var(--kit-gutter);
+  min-width: 0;
+}
+
+.kit-bento-tile {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-12px);
+  min-width: 0;
+  padding: var(--space-24px);
+  background: var(--color-surface);
+  color: var(--color-ink);
+  border: 1px solid var(--color-border);
+  border-radius: var(--kit-radius-card);
+}
+
+.kit-bento-tile[data-kind="media"] {
+  padding: 0;
+  overflow: clip;
+  row-gap: 0;
+}
+
+.kit-bento-tile[data-kind="media"] > .kit-bento-visual {
+  flex: 1 1 auto;
+  min-block-size: 240px;
+  position: relative;
+  min-width: 0;
+  background: var(--color-layer-1);
+}
+
+.kit-bento-visual > * {
+  position: absolute;
+  inset: 0;
+  inline-size: 100%;
+  block-size: 100%;
+}
+
+.kit-bento-tile[data-kind="media"] > .kit-bento-caption {
+  padding: var(--space-16px) var(--space-24px);
+  border-top: 1px solid var(--color-border);
+}
+
+.kit-bento-stat {
+  margin: 0;
+  font-size: var(--kit-heading-sm-size);
+  line-height: var(--kit-heading-sm-line);
+  color: var(--color-ink);
+}
+
+.kit-bento-tile[data-signal] .kit-bento-stat .kit-num {
+  color: var(--kit-signal);
+}
+
+.kit-bento-list {
+  display: grid;
+  gap: var(--space-8px);
+  align-content: start;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.kit-bento-list > li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  column-gap: var(--space-16px);
+  padding-block: var(--space-8px);
+  min-width: 0;
+}
+
+.kit-bento-list > li + li {
+  border-top: 1px solid var(--color-border);
+}
+
+@media (min-width: 640px) {
+  .kit-bento[data-has-md] {
+    grid-template-columns: repeat(var(--kit-bento-md-cols), minmax(0, 1fr));
+    grid-template-areas: var(--kit-bento-md);
+  }
+  .kit-bento[data-has-md] > .kit-bento-tile {
+    grid-area: var(--kit-area);
+  }
+}
+
+@media (min-width: 1024px) {
+  .kit-bento,
+  .kit-bento[data-has-md] {
+    grid-template-columns: repeat(var(--kit-bento-lg-cols), minmax(0, 1fr));
+    grid-template-areas: var(--kit-bento-lg);
+  }
+  .kit-bento > .kit-bento-tile,
+  .kit-bento[data-has-md] > .kit-bento-tile {
+    grid-area: var(--kit-area);
+  }
+  .kit-bento-tile {
+    padding: var(--space-32px);
+  }
+  .kit-bento-tile[data-kind="media"] > .kit-bento-caption {
+    padding: var(--space-16px) var(--space-32px);
+  }
+  .kit-bento-stat {
+    font-size: var(--kit-heading-lg-size);
+    line-height: var(--kit-heading-lg-line);
+  }
+}
+
+/* ---------------------------------------------------------------------
+ * Quote: type alone, never a left rule.
+ * ------------------------------------------------------------------- */
+.kit-quote {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  row-gap: var(--space-24px);
+  margin: 0;
+  min-width: 0;
+}
+
+.kit-quote > blockquote {
+  margin: 0;
+  min-width: 0;
+}
+
+.kit-quote-text {
+  margin: 0;
+  font-family: var(--kit-font-display);
+  font-size: var(--kit-heading-sm-size);
+  line-height: var(--kit-heading-sm-line);
+  font-weight: var(--kit-heading-weight);
+  letter-spacing: var(--tracking-heading);
+  text-wrap: balance;
+  color: var(--color-ink);
+}
+
+.kit-quote > figcaption {
+  display: grid;
+  gap: var(--space-4px);
+  min-width: 0;
+}
+
+.kit-quote-name {
+  font-size: var(--text-0);
+  line-height: var(--line-0);
+  font-weight: var(--weight-semibold);
+  color: var(--color-ink);
+}
+
+@media (min-width: 1024px) {
+  .kit-quote {
+    grid-column: 1 / span 9;
+  }
+  .kit-quote[data-align="center"] {
+    grid-column: 2 / span 10;
+    justify-items: center;
+    text-align: center;
+  }
+  .kit-quote-text {
+    font-size: var(--kit-heading-lg-size);
+    line-height: var(--kit-heading-lg-line);
+  }
+}
+
+/* ---------------------------------------------------------------------
+ * LogoRow: real marks, one monochrome treatment, aligned by height,
+ * separated by gap alone.
+ * ------------------------------------------------------------------- */
+.kit-logos {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: subgrid;
+  column-gap: var(--kit-gutter);
+  row-gap: var(--space-24px);
+  align-items: center;
+}
+
+.kit-logos > .kit-meta {
+  grid-column: 1 / -1;
+}
+
+.kit-logo-list {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-24px) var(--kit-gutter);
+  align-items: center;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.kit-logo {
+  display: flex;
+  align-items: center;
+  min-block-size: var(--space-40px);
+  min-width: 0;
+  color: var(--color-ink-muted);
+}
+
+.kit-logo > svg,
+.kit-logo > img {
+  block-size: var(--space-32px);
+  inline-size: auto;
+  max-inline-size: 100%;
+}
+
+@media (min-width: 1024px) {
+  .kit-logos > .kit-meta {
+    grid-column: 1 / span 3;
+  }
+  .kit-logo-list {
+    grid-column: 4 / -1;
+    grid-template-columns: repeat(var(--kit-logo-count, 4), minmax(0, 1fr));
+  }
+}
+
+/* ---------------------------------------------------------------------
+ * FAQ: details and summary rows in one bordered container.
+ * ------------------------------------------------------------------- */
+.kit-faq {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  row-gap: var(--kit-stack);
+  min-width: 0;
+}
+
+.kit-faq-list {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  min-width: 0;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--kit-radius-card);
+  overflow: clip;
+}
+
+.kit-faq-item + .kit-faq-item {
+  border-top: 1px solid var(--color-border);
+}
+
+.kit-faq-item > summary {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) var(--space-20px);
+  align-items: center;
+  column-gap: var(--space-16px);
+  min-block-size: var(--control-h);
+  padding: var(--space-16px) var(--space-24px);
+  cursor: pointer;
+  list-style: none;
+  transition: background-color var(--dur-100) var(--ease-standard);
+}
+
+.kit-faq-item > summary::-webkit-details-marker {
+  display: none;
+}
+
+.kit-faq-item > summary > .kit-title {
+  font-size: var(--text-0);
+  line-height: var(--line-0);
+}
+
+.kit-faq-chevron {
+  inline-size: var(--space-20px);
+  block-size: var(--space-20px);
+  color: var(--color-ink-muted);
+  transition: transform var(--dur-200) var(--ease-standard);
+}
+
+.kit-faq-chevron > svg,
+.kit-check > svg {
+  display: block;
+  inline-size: 100%;
+  block-size: 100%;
+}
+
+.kit-faq-item[open] .kit-faq-chevron {
+  transform: rotate(180deg);
+}
+
+.kit-faq-answer {
+  padding: 0 var(--space-24px) var(--space-24px);
+  min-width: 0;
+}
+
+.kit-faq-item:not([open]) > .kit-faq-answer {
+  display: none;
+}
+
+@media (hover: hover) {
+  .kit-faq-item > summary:hover {
+    background: var(--state-hover);
+  }
+}
+
+.kit-faq-item > summary:active {
+  background: var(--state-pressed);
+}
+
+.kit-faq-item > summary:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: calc(var(--space-2px) * -1);
+}
+
+@media (min-width: 1024px) {
+  .kit-faq {
+    display: grid;
+    grid-template-columns: subgrid;
+    grid-column: 1 / -1;
+    column-gap: var(--kit-gutter);
+    row-gap: var(--kit-stack);
+  }
+  .kit-faq > .kit-head {
+    grid-column: 1 / span 4;
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .kit-faq > .kit-head > * {
+    grid-column: 1 / -1;
+  }
+  .kit-faq > .kit-faq-list {
+    grid-column: 6 / -1;
+    align-self: start;
+  }
+}
+
+
+/* ---------------------------------------------------------------------
+ * CTABand: the close, start aligned, carrying proof from the page's own
+ * world beside the actions.
+ * ------------------------------------------------------------------- */
+.kit-cta {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: subgrid;
+  column-gap: var(--kit-gutter);
+  row-gap: var(--space-32px);
+  align-items: start;
+}
+
+.kit-cta-text {
+  grid-column: 1 / -1;
+  display: grid;
+  row-gap: var(--space-16px);
+  min-width: 0;
+}
+
+.kit-cta-side {
+  grid-column: 1 / -1;
+  display: grid;
+  row-gap: var(--space-24px);
+  min-width: 0;
+}
+
+@media (min-width: 1024px) {
+  .kit-cta-text { grid-column: 1 / span 6; }
+  .kit-cta-side { grid-column: 8 / -1; }
+}
+
+/* ---------------------------------------------------------------------
+ * PricingTable: plans in cells, then a structured comparison table.
+ * ------------------------------------------------------------------- */
+.kit-plan {
+  row-gap: var(--space-16px);
+}
+
+.kit-plan[data-recommended] {
+  background: var(--color-surface);
+}
+
+.kit-cells[data-plans] > .kit-plan:not([data-recommended]) {
+  background: var(--color-layer-1);
+}
+
+.kit-plan-price {
+  margin: 0;
+  font-size: var(--kit-heading-sm-size);
+  line-height: var(--kit-heading-sm-line);
+  color: var(--color-ink);
+}
+
+.kit-plan-features {
+  display: grid;
+  gap: var(--space-8px);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.kit-plan-features > li {
+  display: grid;
+  grid-template-columns: var(--space-20px) minmax(0, 1fr);
+  column-gap: var(--space-12px);
+  align-items: start;
+  font-size: var(--text-0);
+  line-height: var(--line-0);
+  color: var(--color-ink);
+}
+
+.kit-check {
+  display: inline-block;
+  vertical-align: middle;
+  inline-size: var(--space-20px);
+  block-size: var(--space-24px);
+  color: var(--color-ink);
+}
+
+.kit-plan-action {
+  display: flex;
+  margin-block-start: var(--space-8px);
+}
+
+.kit-plan-action .btn,
+.kit-plan-action button {
+  inline-size: 100%;
+  border-radius: var(--kit-radius-control);
+}
+
+.kit-compare {
+  grid-column: 1 / -1;
+  min-width: 0;
+}
+
+.kit-compare-table {
+  inline-size: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  table-layout: fixed;
+}
+
+.kit-compare-table caption {
+  text-align: start;
+  padding-block-end: var(--space-12px);
+}
+
+.kit-compare-table th,
+.kit-compare-table td {
+  padding: var(--space-12px) var(--space-8px);
+  text-align: start;
+  vertical-align: baseline;
+  font-size: var(--text-0);
+  line-height: var(--line-0);
+  overflow-wrap: anywhere;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.kit-compare-table thead th {
+  font-size: var(--text-n1);
+  line-height: var(--line-n1);
+  font-weight: var(--weight-medium);
+  color: var(--color-ink-muted);
+}
+
+.kit-compare-table tbody th {
+  font-weight: var(--weight-regular);
+  color: var(--color-ink-muted);
+}
+
+@media (min-width: 1024px) {
+  .kit-plan-price {
+    font-size: var(--kit-heading-lg-size);
+    line-height: var(--kit-heading-lg-line);
+  }
+  .kit-compare-table th,
+  .kit-compare-table td {
+    padding-inline: var(--density-cell-pad-inline);
+  }
+}
+
+/* ---------------------------------------------------------------------
+ * Footer: one archetype per page (directions.md chrome table).
+ * ------------------------------------------------------------------- */
+.kit-footer {
+  color: var(--color-ink);
+}
+
+.kit-footer > .kit-grid {
+  padding-block: var(--space-48px) var(--space-64px);
+}
+
+/* A hairline only when the section above shares the footer's ground. */
+.kit-section[data-tone="base"] + .kit-footer > .kit-grid {
+  border-top: 1px solid var(--color-border);
+}
+
+.kit-footer-brand {
+  grid-column: 1 / -1;
+  min-width: 0;
+}
+
+.kit-footer-links {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 var(--space-24px);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.kit-footer-links a {
+  display: inline-flex;
+  align-items: center;
+  min-block-size: var(--control-h);
+  color: var(--color-ink);
+  text-decoration: none;
+  font-size: var(--text-0);
+  line-height: var(--line-0);
+}
+
+@media (hover: hover) {
+  .kit-footer-links a:hover {
+    text-decoration: underline;
+  }
+}
+
+.kit-footer-links a:active {
+  color: var(--color-ink-muted);
+}
+
+.kit-footer-legal {
+  grid-column: 1 / -1;
+  min-width: 0;
+}
+
+.kit-footer-groups {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-32px) var(--kit-gutter);
+}
+
+.kit-footer-group {
+  display: grid;
+  align-content: start;
+  gap: var(--space-8px);
+  min-width: 0;
+}
+
+.kit-footer-group > .kit-footer-links {
+  flex-direction: column;
+  gap: 0;
+}
+
+@media (min-width: 1024px) {
+  .kit-footer[data-variant="inline"] .kit-footer-brand { grid-column: 1 / span 3; }
+  .kit-footer[data-variant="inline"] .kit-footer-links { grid-column: 4 / span 6; }
+  .kit-footer[data-variant="inline"] .kit-footer-legal { grid-column: 10 / -1; justify-self: end; }
+  .kit-footer[data-variant="statement"] .kit-footer-brand { grid-column: 1 / span 8; }
+  .kit-footer[data-variant="statement"] .kit-footer-links { grid-column: 1 / span 8; }
+  .kit-footer[data-variant="statement"] .kit-footer-legal { grid-column: 9 / -1; align-self: center; justify-self: end; }
+  .kit-footer[data-variant="index"] .kit-footer-brand { grid-column: 1 / span 4; }
+  .kit-footer[data-variant="index"] .kit-footer-groups {
+    grid-column: 5 / -1;
+    grid-template-columns: repeat(var(--kit-footer-groups, 3), minmax(0, 1fr));
+  }
+  .kit-footer[data-variant="letter"] .kit-footer-brand { grid-column: 1 / span 7; }
+  .kit-footer[data-variant="inline"] > .kit-grid { align-items: center; }
+}
+
+.kit-footer-statement {
+  margin: 0;
+  font-family: var(--kit-font-display);
+  font-size: var(--kit-heading-sm-size);
+  line-height: var(--kit-heading-sm-line);
+  font-weight: var(--kit-heading-weight);
+  letter-spacing: var(--tracking-heading);
+  text-wrap: balance;
+  color: var(--color-ink);
+}
+
+@media (min-width: 1024px) {
+  .kit-footer-statement {
+    font-size: var(--kit-heading-lg-size);
+    line-height: var(--kit-heading-lg-line);
+  }
+}
+
+.kit-footer-name {
+  margin: 0;
+  font-size: var(--text-1);
+  line-height: var(--line-1);
+  font-weight: var(--weight-semibold);
+  color: var(--color-ink);
+}
+
+/* ---------------------------------------------------------------------
+ * StickyStory: a sticky media stage beside scrolling steps (1024 and up).
+ * Below 1024 each step shows its own media in flow, no pin. Inactive
+ * stage frames are visibility hidden, so frames never stack visibly.
+ * ------------------------------------------------------------------- */
+.kit-story {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: subgrid;
+  column-gap: var(--kit-gutter);
+  row-gap: var(--kit-stack);
+}
+
+.kit-story-steps {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  row-gap: var(--space-48px);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  min-width: 0;
+}
+
+.kit-story-step {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  row-gap: var(--space-12px);
+  align-content: start;
+  min-width: 0;
+}
+
+.kit-story-step-media {
+  margin-block-start: var(--space-12px);
+  min-width: 0;
+}
+
+.kit-story-stage {
+  display: none;
+}
+
+@media (min-width: 1024px) {
+  .kit-story-steps {
+    grid-column: 1 / span 5;
+    grid-row: 1;
+    row-gap: 0;
+  }
+  .kit-story-step {
+    min-block-size: 56svh;
+    align-content: start;
+    padding-block: var(--space-32px) var(--space-48px);
+  }
+  .kit-story-step > .kit-title,
+  .kit-story-step > .kit-body {
+    transition: color var(--dur-300) var(--ease-standard);
+  }
+  .kit-story-step:not([data-active]) > .kit-title,
+  .kit-story-step:not([data-active]) > .kit-body {
+    color: var(--color-ink-subtle);
+  }
+  .kit-story-step-media {
+    display: none;
+  }
+  .kit-story-stage {
+    grid-column: 7 / -1;
+    grid-row: 1;
+    display: block;
+    position: sticky;
+    top: calc(var(--shell-header-h, 57px) + var(--banner-height) + var(--space-32px));
+    align-self: start;
+    min-width: 0;
+  }
+  .kit-story-frames {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    min-width: 0;
+  }
+  .kit-story-frame {
+    grid-area: 1 / 1;
+    min-width: 0;
+    opacity: 0;
+    visibility: hidden;
+    transition:
+      opacity var(--dur-300-exit) var(--ease-standard),
+      visibility 0s linear var(--dur-300-exit);
+  }
+  .kit-story-frame[data-active] {
+    opacity: 1;
+    visibility: visible;
+    transition:
+      opacity var(--dur-300) var(--ease-standard),
+      visibility 0s linear 0s;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .kit-story-frame,
+  .kit-story-frame[data-active],
+  .kit-story-step > .kit-title,
+  .kit-story-step > .kit-body,
+  .kit-faq-chevron {
+    transition-duration: 0.01ms;
+    transition-delay: 0s;
+  }
+}

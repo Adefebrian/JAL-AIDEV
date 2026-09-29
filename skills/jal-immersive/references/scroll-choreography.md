@@ -8,12 +8,42 @@ Stack: `bun add gsap @gsap/react lenis`. Every GSAP plugin is free (since the 20
 
 **When to escalate to GSAP.** Move up from CSS or WAAPI only when the motion needs one of four things: several beats sequenced on one timeline, runtime control (pause, reverse, seek, scrub), scroll-linked progress, or values computed in JS at run time (measured widths, pointer position). A change driven by React state stays on Framer Motion. Name the trigger that forced the escalation in the build report.
 
-**Know the scroller.** Immersive and marketing pages use AppShell `scroll="document"` (the default), so ScrollTrigger and Lenis use `window`. On a contained shell (`scroll="contained"`, where `main.shell-main` scrolls and the document never does), set `ScrollTrigger.defaults({ scroller })` once before any trigger (and give Lenis `wrapper: scroller`), or every reveal stays hidden. Get the element with `getScroller()` from `@__APP_NAME__/ui` and pass `scrollerRoot(scroller)` as the IntersectionObserver `root`. `ui_audit`'s stuck-reveal rule catches this.
+**Know the scroller.** Immersive and marketing pages use AppShell `scroll="document"` (the default), so ScrollTrigger and Lenis use `window`. On a contained shell (`scroll="contained"`, where `main.shell-main` scrolls and the document never does), set `ScrollTrigger.defaults({ scroller })` once before any trigger, or every reveal stays hidden. Get the element with `getScroller()` from `@__APP_NAME__/ui` and pass `scrollerRoot(scroller)` as the IntersectionObserver `root`. `ui_audit`'s stuck-reveal rule catches this.
 
-```ts
+Call `getScroller()` after mount, inside `useGSAP` (or `useLayoutEffect`), never at module top level. At import time AppShell has not rendered yet, so there is no `[data-jal-scroller]` and it returns `window`, which is the exact stuck-reveal bug; during server rendering `document` does not exist and it throws. React runs layout effects child first and in sibling order, so put the wiring in a small leaf component rendered before the sections, or it runs after their triggers already exist.
+
+If the contained page uses Lenis, give it `wrapper: scroller` and `content: scroller.firstElementChild`, and render one wrapper element as AppShell's only child so `main` holds exactly one element. Lenis observes `content` for resizes and computes its scroll limit from `content`'s height against `wrapper`'s. Left out, `content` defaults to the document root, which never grows on a contained shell, so Lenis misses resizes and clamps scroll at the wrong limit.
+
+```tsx
+import { useGSAP } from "@gsap/react";
+import Lenis from "lenis";
 import { getScroller } from "@__APP_NAME__/ui";
-const scroller = getScroller(); // window on a document shell, main.shell-main on a contained one
-if (scroller !== window) ScrollTrigger.defaults({ scroller });
+import { gsap, ScrollTrigger } from "./motion/gsap";
+
+// Rendered first inside the page's single wrapper, before any section:
+// <AppShell scroll="contained"><div><ScrollWiring />...sections</div></AppShell>
+export function ScrollWiring() {
+  useGSAP(() => {
+    const scroller = getScroller(); // after mount: main.shell-main on a contained shell, window on a document one
+    if (scroller === window) return; // document shell: the defaults already fit
+    const wrapper = scroller as HTMLElement;
+    ScrollTrigger.defaults({ scroller: wrapper });
+    const lenis = new Lenis({
+      wrapper,
+      content: wrapper.firstElementChild as HTMLElement, // the single wrapper inside main
+      autoRaf: false,
+    });
+    lenis.on("scroll", ScrollTrigger.update);
+    const raf = (time: number) => lenis.raf(time * 1000);
+    gsap.ticker.add(raf, false, true);
+    return () => {
+      gsap.ticker.remove(raf);
+      lenis.destroy();
+      ScrollTrigger.defaults({ scroller: window });
+    };
+  }, []);
+  return null;
+}
 ```
 
 ## 1. GSAP core

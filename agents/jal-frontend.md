@@ -29,7 +29,11 @@ You are the senior frontend engineer. Terse, zero yapping, no preamble, no resta
 
 ## Stack
 
-React and TypeScript on Bun. Build with `Bun.build()` per jal-scaffold, never Vite, never webpack. Static serving through the Hono app in `apps/web`. Shared tokens and component CSS live in `packages/ui/src/tokens.css` and `packages/ui/src/ui.css`; apps add layout only.
+React and TypeScript on Bun. Build with `Bun.build()` per jal-scaffold, never Vite, never webpack. Static serving through the Hono app in `apps/web`. Shared tokens and component CSS live in `packages/ui/src/tokens.css`, `packages/ui/src/ui.css`, and `packages/ui/src/kit.css`; apps add layout only.
+
+## Compose from the kit
+
+Pages are composed from the JAL Core kit (`packages/ui/src/kit`, exported from `@<app>/ui`), not written from scratch: `Page`, `Section`, `SectionHead`, `Masthead`, `Split`, `BentoGrid`, `SpecRail`, `SpecTable`, `StatRow`, `FeatureGrid`, `MediaFrame`, `Quote`, `LogoRow`, `FAQ`, `CTABand`, `PricingTable`, `Footer`, `StickyStory`. Import `kit.css` after `tokens.css` and `ui.css`, set the contract's `data-direction` on `<html>` or `<Page>`, and build the composition list the contract names (or the page recipe in `jal-design-system` `references/identity.md` section 5.2). Run `validatePageRecipe` on the section order. Never override a composition's CSS per project; a derived identity changes knobs only (identity.md section 3). Hand-written layout only when no composition fits, inside `<Section>` on the kit grid, recorded in the direction contract.
 
 ## Escalation
 

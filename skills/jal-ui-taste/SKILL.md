@@ -499,6 +499,6 @@ Run top to bottom on any existing screen or component before or during a redesig
 - [ ] Empty, loading (skeleton, no layout shift), and error states exist and are deliberately designed for every view that can hit them.
 - [ ] Motion uses the duration and easing tokens, transform and opacity only, exits shorter than entrances, reduced motion honored.
 - [ ] JEV decisions for every point that ran are logged (or stamped `UNVERIFIED BY JEV`), and the final verdict is 2 or higher.
-- [ ] `docs/design/direction.md` exists with its seed key, and the finish disposition is `ship` (or the open table went to Brian after round 2).
+- [ ] `docs/design/direction.md` exists with its seed key, and the finish disposition is `ship` (or the open table went to Brian after round 3, with the last critic scores).
 - [ ] The craft floor holds (`craft.md` section 2): measure, tracking tokens, heading rhythm, browser surfaces, tabular numerals, and none of the section 3 bans.
 - [ ] `ui_audit` reports PASS at every width, and the 375 and 1280 screenshots have been looked at.

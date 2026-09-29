@@ -132,6 +132,7 @@ describe("jal-design MCP server (stdio)", () => {
     expect(auditTool.inputSchema.required).toEqual(["url"]);
     expect(auditTool.description).toContain("stuck-reveal");
     expect(auditTool.description).toContain("blank-viewport");
+    expect(auditTool.inputSchema.properties.webgl.type).toBe("boolean");
     const shotsTool = res.result.tools.find((t: any) => t.name === "ui_shots");
     expect(shotsTool.inputSchema.required).toEqual(["url"]);
     expect(Object.keys(shotsTool.inputSchema.properties).sort()).toEqual(["max_screens", "out_dir", "url", "webgl", "widths"]);
@@ -141,6 +142,25 @@ describe("jal-design MCP server (stdio)", () => {
     const res = await client.request("tools/call", { name: "ui_shots", arguments: {} });
     expect(res.result.isError).toBe(true);
     expect(res.result.content[0].text).toContain("ui_shots requires { url }");
+  });
+
+  test("tools/call ui_audit rejects non-numeric widths with a clear error, no browser", async () => {
+    const res = await client.request("tools/call", { name: "ui_audit", arguments: { url: "http://127.0.0.1:9/", widths: [375, "abc"] } });
+    expect(res.result.isError).toBe(true);
+    expect(res.result.content[0].text).toContain('invalid width "abc"');
+    const notArray = await client.request("tools/call", { name: "ui_audit", arguments: { url: "http://127.0.0.1:9/", widths: "375" } });
+    expect(notArray.result.content[0].text).toContain("widths must be an array");
+  });
+
+  test("tools/call ui_shots validates max_screens and out_dir before starting a browser", async () => {
+    const max = await client.request("tools/call", { name: "ui_shots", arguments: { url: "http://127.0.0.1:9/", max_screens: "abc" } });
+    expect(max.result.isError).toBe(true);
+    expect(max.result.content[0].text).toContain("invalid max_screens");
+    const out = await client.request("tools/call", { name: "ui_shots", arguments: { url: "http://127.0.0.1:9/", out_dir: "../escape" } });
+    expect(out.result.isError).toBe(true);
+    expect(out.result.content[0].text).toContain("out_dir must be a directory inside the working directory");
+    const abs = await client.request("tools/call", { name: "ui_shots", arguments: { url: "http://127.0.0.1:9/", out_dir: "/tmp" } });
+    expect(abs.result.content[0].text).toContain("out_dir must be");
   });
 
   test("unknown method with id returns -32601", async () => {
@@ -190,5 +210,31 @@ describe("jal-design MCP server (stdio)", () => {
     expect(parsed.verified).toBe(false);
     expect(parsed.stamp).toBe("UNVERIFIED BY JEV");
     expect(parsed.error).toContain("missing JEV_API_KEY");
+  });
+});
+
+describe("jal-design CLI input validation", () => {
+  const cli = async (...args: string[]) => {
+    const proc = Bun.spawn(["bun", SERVER_PATH, ...args], { stdout: "pipe", stderr: "pipe" });
+    const [code, err] = await Promise.all([proc.exited, new Response(proc.stderr).text()]);
+    return { code, err };
+  };
+
+  test("shots --max abc exits 1 with a clear error instead of taking 0 screens", async () => {
+    const { code, err } = await cli("shots", "http://127.0.0.1:9/", "--max", "abc");
+    expect(code).toBe(1);
+    expect(err).toContain("invalid max_screens");
+  });
+
+  test("shots --out outside the working directory exits 1", async () => {
+    const { code, err } = await cli("shots", "http://127.0.0.1:9/", "--out", "/tmp/jal-shots-anywhere");
+    expect(code).toBe(1);
+    expect(err).toContain("out_dir must be");
+  });
+
+  test("audit --widths abc exits 1 with a clear error", async () => {
+    const { code, err } = await cli("audit", "http://127.0.0.1:9/", "--widths", "375,abc");
+    expect(code).toBe(1);
+    expect(err).toContain("invalid width");
   });
 });
