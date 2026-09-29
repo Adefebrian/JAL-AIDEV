@@ -842,8 +842,9 @@ dialog.dlg[open]::backdrop { opacity: 1; }
 ### R23 Pinned crossfade stage (stacked-sections rewrite)
 
 - **DOM**: `<section class="stage" data-pinned?>` holding N panes. Only when JS arms the pin do panes share one grid cell; inactive panes get `inert` and `aria-hidden`. Upstream stacks sticky panes that cover each other (sibling overlap); this is one pinned stage with one visible pane.
-- **Mechanism**: GSAP ScrollTrigger pins the stage for N x 100vh (Lenis synced, `scroller` set to the app-shell content region below 640px); in the scrubbed timeline, pane i fades out with y 0 to -16px while pane i+1 fades in from 16px, each change over 0.3 of a pane's segment on `jal-standard`.
+- **Mechanism**: at 768px and wider only (the `motion.pin` floor), GSAP ScrollTrigger pins the stage for N x 100vh (Lenis synced); in the scrubbed timeline, pane i fades out with y 0 to -16px while pane i+1 fades in from 16px, each change over 0.3 of a pane's segment on `jal-standard`.
 - **Timing**: scrub; travel `--space-16px`; 3 to 6 panes.
+- **Below 768px**: never pinned. Panes stay ordinary blocks in document flow and arrive as an in-flow stagger (R01 per pane, `autoAlpha` plus 16px `y`, `--stagger-item`, played once on enter through `ScrollTrigger.batch`); no inner scroller, no shared grid cell.
 - **Reduced motion**: no pin; panes are ordinary sections in document flow.
 
 ```css
@@ -852,17 +853,23 @@ dialog.dlg[open]::backdrop { opacity: 1; }
 ```ts
 useLayoutEffect(() => {
   if (prefersReduced()) return;
-  stage.current!.dataset.pinned = "";
-  const ctx = gsap.context(() => {
+  const mm = gsap.matchMedia(stage);
+  mm.add("(max-width: 767px)", () => {            // in-flow stagger, never a pin
+    ScrollTrigger.batch(".pane", { start: "top 85%", once: true,
+      onEnter: (els) => gsap.from(els, { autoAlpha: 0, y: 16, stagger: 0.06, ease: "jal-standard" }) });
+  });
+  mm.add("(min-width: 768px)", () => {
+    stage.current!.dataset.pinned = "";
     const panes = gsap.utils.toArray<HTMLElement>(".pane"); gsap.set(panes.slice(1), { autoAlpha: 0, y: 16 });
-    const tl = gsap.timeline({ scrollTrigger: { trigger: stage.current, pin: true, scrub: true, scroller,
+    const tl = gsap.timeline({ scrollTrigger: { trigger: stage.current, pin: true, scrub: true,
       start: "top top", end: () => `+=${panes.length * innerHeight}`,
       onUpdate: (st) => { const a = Math.round(st.progress * (panes.length - 1)); panes.forEach((p, i) => (p.inert = i !== a)); } } });
     panes.slice(1).forEach((p, i) => tl
       .to(panes[i], { autoAlpha: 0, y: -16, ease: "jal-standard", duration: 0.3 }, i + 0.7)
       .to(p, { autoAlpha: 1, y: 0, ease: "jal-standard", duration: 0.3 }, i + 0.7));
-  }, stage);
-  return () => { ctx.revert(); delete stage.current!.dataset.pinned; };
+    return () => { delete stage.current!.dataset.pinned; };
+  });
+  return () => mm.revert();
 }, []);
 ```
 - **Tailwind**: `data-pinned:grid data-pinned:*:[grid-area:1/1]`.
@@ -1204,7 +1211,7 @@ Re-admitted in v0.4.0: the digest dropped Magic UI `globe` only because WebGL wa
 - **Mechanism**: the same `lonlat.json` as R38 becomes an `InstancedMesh` of small circles on a unit sphere, each oriented outward; an unlit `MeshBasicMaterial` sphere in `--color-surface` at radius 0.995 hides the back dots (flat, no shading). Markers are a second `InstancedMesh` in `--color-accent` at radius 1.002. Rotation `y = offset + playTime x 2pi / --loop-globe` (constant speed, linear exception) plus a drag offset smoothed with `THREE.MathUtils.damp` (critically damped, no overshoot). `frameloop` is `"always"` only while playing, in view, and the tab is visible; otherwise `"demand"`. `touch-action: pan-y` so vertical scrolling passes through and horizontal drag rotates.
 - **Loading**: `three` and R3F load by dynamic `import()` only when the figure nears the viewport (IntersectionObserver, 200px margin) and `imm.tier` allows WebGL; the poster renders first and is the fallback for low tiers, context loss, and reduced motion. DPR capped at 2. R3F disposes JSX-declared geometry and materials on unmount; the instance buffers are declared in JSX, so nothing leaks.
 - **Timing**: canvas fades in over the poster at `--dur-400` after the first frame, then the poster is set `hidden` (so nothing stacks at rest); one turn per `--loop-globe`; drag damping lambda 8.
-- **Reduced motion**: no canvas; the poster and the location list only.
+- **Reduced motion**: static. No canvas and no rotation; the poster and the location list only. Auto-rotation otherwise runs slowly (one turn per `--loop-globe`) and always with the visible 44px pause control; this matches `three.dot_globe` in `jal-immersive` SKILL.md section 4.5.
 
 ```tsx
 // Globe.tsx (lazy chunk)
@@ -1446,7 +1453,7 @@ The agent never picks a component recipe by taste alone. Law decides first (sect
 
 Prechecks (never asked): forms, tables, settings, and dashboards are capped at 1; any region in a regulated or trust-sensitive product rounds the score down; a region below 640px drops R12, R28, R29 (pointer-fine only); low `imm.tier` removes R44 (poster only) and R19. Rounding: nearest level elsewhere.
 
-### 7.3 `imm.recipe` (choice per section kind, plus a noul on combining the top two)
+### 7.3 `imm.recipe` (choice per section kind for the base recipe, then JEV-judged layers with no fixed limit)
 
 The candidate set for each section kind, filtered by the region's `motion.intensity` (a candidate above the allowed class is removed before the call). The lead's catalog renders the criteria from the index "When to use" column; candidates from other pools (noyzzi, Three.js scenes, clean-room effects, GSAP choreography) join the same choice.
 

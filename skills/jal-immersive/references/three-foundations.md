@@ -13,11 +13,11 @@ Distilled from the three.js manual and source (MIT), react-three-fiber and drei 
 | `postprocessing` (candidate) | 6.39.5 | Peer `three >=0.168 <0.187`. Approving it caps three below r187 |
 | `@react-three/postprocessing` (candidate) | 3.1.3 | |
 | `lenis` | 1.3.26 | React wrapper at `lenis/react` |
-| `gsap` / `@gsap/react` | 3.15.0 / 2.1.2 | GSAP Standard License, not MIT: never copy GSAP source |
-| `@react-three/rapier` (candidate) | 2.2.0 | Pins `@dimforge/rapier3d-compat` 0.19.2 |
+| `gsap` / `@gsap/react` (approved, part of GSAP) | 3.15.0 / 2.1.2 | GSAP Standard License, not MIT: never copy GSAP source |
+| `@react-three/rapier` (approved, JEV-picked) | 2.2.0 | Pins `@dimforge/rapier3d-compat` 0.19.2 |
 | `three-mesh-bvh` | 0.9.15 | Transitive through drei |
 | `maath` | 0.10.8 | Use npm `maath`, not the GitHub rewrite named `math` |
-| `nixie-fx` (candidate) | 0.1.16 | Peer `three >=0.184.0 <0.186.0`: conflicts with r186. Approving it means pinning three to 0.185.x |
+| `nixie-fx` (approved, JEV-picked) | 0.1.16 | Peer `three >=0.184.0 <0.186.0`: conflicts with r186. Using it means pinning three to 0.185.x for that app, or skipping it when the page needs a newer three (`imm.tech`) |
 
 **React version.** The JAL template ships React 18.3. Any app that uses R3F bumps `react` and `react-dom` to 19.x below 19.4. A vanilla-three section works on React 18.
 
@@ -69,7 +69,19 @@ export function fit(renderer: THREE.WebGLRenderer, camera: THREE.PerspectiveCame
 - Exactly one render loop per page. Two active loops are a top cause of broken canvases.
 - Budgets for `dprFor`: desktop 1,650,000 px with max DPR 1.5, mobile 1,000,000 px with max DPR 1.25, min DPR 1 (`performance.md`).
 
+**Material roles.** A scene uses a small set of named shared materials instead of one-off colours: primary body, secondary body, trim or edge, glass, ground contact (dark matte shadow receiver), decal dark, decal light, and accent (the one JAL accent at about 3 percent of the frame). Each role is created once and shared, with per-instance variation through `instanceColor`, and maps to JAL tokens so DOM and canvas speak one palette. Unique material count is a perf-report row: it grows faster than geometry count.
+
+**Authoring procedural objects.** Silhouette test first: render the subject as flat ink on page white; if it is not recognisable, fix the geometry before materials. Build from `ExtrudeGeometry` (with bevel) for panels, badges, and profiles; `LatheGeometry` for vessels, knobs, caps, domes; `TubeGeometry` for cables and rails; `ShapeGeometry` for flat marks; a custom `BufferGeometry` for tapered or faceted forms; `InstancedMesh` for repeats. Add functional parts (seams, fasteners, hinges, vents) where the camera looks and skip hidden faces; name meaningful child meshes and keep the raycast proxy separate. Where real bevels cost too much, fake them with thin trim strips or slightly inset darker panels. The full discipline for generated subjects is `procedural-geometry.md`.
+
+**Scene module layout.** Materials, geometry factories, the lighting rig, render setup, and diagnostics live in separate modules even in a small section (`scene/materials.ts`, `scene/factories/*.ts`, `scene/lighting.ts`, `scene/render.ts`, `scene/diagnostics.ts`). Every factory returns a group plus an optional raycast proxy, LOD, bounds, and a counts object (meshes, materials, geometries, triangles) the perf report can sum; GLB loaders return the same shape plus their clips. No asset-generation call ever appears in runtime code.
+
 **The JAL-lawful look.** White or off-white page behind a transparent canvas, soft neutral environment (RoomEnvironment, or two to three large light cards baked to PMREM with sigma about 0.03, re-bake throttled to 150 ms minimum with the old target disposed), one directional key with a soft shadow (1024 on mobile, 2048 on desktop) or a fake contact shadow, materials separated by roughness and metalness contrast rather than hue, Neutral tone mapping at exposure about 1.0, no post beyond output.
+
+**Environment scene layout** (the PMREM source): a dim neutral base shell (a back-side box) so no reflection direction returns pure black, one bright ceiling card, one tall thin key strip, and three or four narrow tall strips at spread azimuths (about 0.9, 2.6, 3.9, and -2.2 rad) at varied brightness, so polished metal and glass show a vertical streak from any orbit angle, plus two or three broad soft panels for large bright reflections. Every card neutral white or grey.
+
+**Area-light studio rig** for glossy product heroes: `RectAreaLight` gives long soft speculars. Call `RectAreaLightUniformsLib.init()` once on WebGL (WebGPU has its own setup **[verify]**), then a ceiling panel (about 4.5 by 1.0, intensity about 5.5), a tall key panel to one side (about 1.6 by 6.4, intensity about 7), and a faint cool fill (about 2.6 by 2.2, intensity about 1.4), each aimed with `lookAt`. Area lights shade only Standard and Physical materials and cast no shadows: keep the one directional shadow or a contact shadow for grounding, and a faint ambient so crevices never go true black.
+
+**Live accent retint.** To let one brand accent drive a scene, keep a registry of the live `THREE.Color` objects that carry it (material colours, uniforms, light colours) with each authored value; on change, recompute each in HSL relative to a reference (add the hue offset, scale saturation and lightness by the picked-to-reference ratios), and copy authored values verbatim when the pick equals the reference so the default stays exact. Register the material's own `color` object (constructors copy the option passed in). Re-bake PMREM, throttled, when environment cards are retinted; never animate the accent per frame.
 
 **Order of work:** forms, then materials, then lighting, then effects. Glow never makes primitives look expensive.
 
@@ -80,13 +92,34 @@ export function fit(renderer: THREE.WebGLRenderer, camera: THREE.PerspectiveCame
 | Brushed metal | metalness 1.0, roughness 0.4, envMapIntensity 1.1 |
 | Rubber | roughness 0.92, envMapIntensity 0.35 |
 | Painted metal | clearcoat 0.9, clearcoatRoughness 0.15 |
-| Real glass | transmission 1, thickness 0.5, ior 1.5. Costs an extra scene render into a transmission buffer per frame: hero object only, never repeated props |
+| Matte plastic | metalness 0, roughness about 0.6, envMapIntensity about 0.6 |
+| Glossy ceramic | `MeshPhysicalMaterial`, roughness about 0.12, clearcoat 1, clearcoatRoughness about 0.05 |
+| Fabric | `MeshPhysicalMaterial`, roughness about 0.9, sheen 1, sheenRoughness 0.5, sheen colour slightly lighter than the base (neutral, never purple), envMapIntensity about 0.5 |
+| Brushed metal, TSL | `anisotropyNode` about 0.6 to 1.0 with `anisotropyRotationNode` along the brushing direction (needs tangents) |
+| Tinted glass, TSL | `attenuationColorNode` with `attenuationDistanceNode` about the object's thickness, so colour deepens with depth instead of painting the surface |
+| Plastic or ceramic | tune `specularIntensityNode` (0.3 to 0.5 reads softer) and `iorNode` (1.45 to 1.5) rather than lowering roughness |
+| Real glass | transmission 1, thickness 0.5, ior 1.5 to 1.52, roughness about 0.03, `attenuationDistance` about 2.5 m with a pale `attenuationColor` so thick glass tints slightly with depth. Costs an extra scene render into a transmission buffer per frame: hero object only, never repeated props |
 | Fake glass | transparent, opacity 0.25, clearcoat 1, `depthWrite: false`: one transparent draw |
+| Walnut | roughness 0.42, metalness 0.04, clearcoat 0.62 at clearcoat roughness 0.28, bump about 0.02 |
+| Antique gold | roughness 0.24, metalness 0.78, clearcoat 0.24 at 0.20 |
+| Ebony | roughness 0.40, metalness 0.03, clearcoat 0.70 at 0.24 |
+| Plaster wall / mat board and floor | roughness 0.94 to 0.96 / about 0.92 |
+| Perforated or woven surface | `alphaMap`, `alphaTest` about 0.28, `opacity` about 0.6, `alphaToCoverage: true`, `DoubleSide`, MSAA on: soft edges without the transparent pass, no sorting, depth still writes. Falls back to hard alpha-test edges without MSAA |
+| Jelly or resin | roughness about 0.075, transmission 1, thickness about 0.035 m (or per vertex), ior 1.35, clearcoat about 0.4 at 0.05, `attenuationColor` from the scene's extinction (`shaders.md` section 13), `transparent: false`, front side only. Hero only, same cost as real glass |
+
+- **Closed transparent shells** whose back must show through the front: two meshes sharing one geometry, the `BackSide` one at a lower `renderOrder`, the `FrontSide` one after, both `depthWrite: false` with depth test on. Several shells are sorted far to near on the CPU each frame and assigned render order in pairs. This avoids the sort flicker of one `DoubleSide` transparent mesh.
 
 - Metals and glossy surfaces read flat grey without an environment map.
 - Lighting stack: key, fill, rim (as a darker or tinted edge, never additive), practical, contact grounding. Real shadows only for the hero object and big anchors. Small props get a fake contact shadow (a soft radial texture on a plane, or drei `<ContactShadows frames={1}>`).
-- Bevel bands (metres): hardware 0.002, panel edges 0.004, carcass or plinth 0.007. Segments by radius: up to 0.025 m use 10 to 14, up to 0.1 m use 16 to 24, 0.15 m and up use 28 to 48.
+- Bevel bands (metres): hardware 0.002, panel edges 0.004, carcass or plinth 0.007 (the full band list is in `procedural-geometry.md` section 2). Segments by radius: up to 0.025 m use 10 to 14, up to 0.1 m use 16 to 24, 0.15 m and up use 28 to 48.
+- Turned objects (bottles, cups, knobs, lenses) come from `LatheGeometry(profilePoints, segments)`, about 96 radial segments on a hero. A superellipse dome (`x = r * cos(a)^0.88`, `y = h * sin(a)^1.15`) gives a softer shoulder than a hemisphere. For a hollow wall, append the inner profile reversed and inset by the wall thickness so one lathe gives both surfaces.
 - One surface identity drives all PBR channels. Independent noise per channel gives visual soup.
+- **Material cause order:** stable coordinates (object or world, never raw UV where UVs stretch), then broad structural fields, then identity weights (which material is where), then causal modifiers (wetness, wear), then microstructure filtered by pixel footprint, and only then the PBR channels. Colour, roughness, metalness, normal, and transmission all read that one stack, so a wet patch darkens and smooths in the same place. Lighting tweaks come last and never remove energy unless the look is deliberately stylised.
+- **AO darkens indirect light only:** an `aoMap` (three applies it to ambient and environment light) or an AO term in the indirect path, never a multiply over final colour, which greys sunlit faces. Screen-space AO passes exceed the default post budget; they need a JEV cost check (`imm.tech` post stage).
+- **Shadow tuning:** fit the directional shadow camera tightly to the subject's bounds (left, right, top, bottom, near, far), since the map's resolution spreads over that box. For acne raise `normalBias` first (start near 0.02) and nudge `bias` slightly negative (near -0.0005) **[verify per scene]**; if the shadow detaches from contact (peter-panning), reduce bias again. One caster at the tier map size; when tuning cannot fix both, use the fake contact shadow.
+- **Baked vertex occlusion:** for static procedural objects, compute a darkening factor per vertex once at build time (creases, undersides, points near the ground) and store it as a `color` attribute with `vertexColors: true`: no draw calls, no passes, and objects stop looking pasted on the page. Keep it off surfaces whose colour must stay exact (a white plinth with `toneMapped = false`).
+- **Decals:** coplanar decal meshes (labels, panel lines, marks) set `polygonOffset: true` with factor and units at -1, `transparent: true`, `depthWrite: false`; drei `<Decal>` projects onto curved surfaces. Instance repeated decals, use them only to show function or scale, glyphs from the JAL icon sources.
+- **Directional shadow stability:** when the shadow camera follows a moving view (a scroll camera path), snap its centre in light space to whole shadow texels (`round(x / texel) * texel`), or edges crawl. Scale `normalBias` with the world size of a shadow texel and check acne and peter-panning on the largest and smallest receivers. A static scene sets `renderer.shadowMap.autoUpdate = false` and `needsUpdate = true` only when a caster or the light moves, removing the shadow pass from most frames.
 
 ## 3. The white-background tone-mapping trap
 
@@ -106,8 +139,9 @@ So a WebGL-painted background or white ground plane never matches the DOM's `#FF
 1. Transparent canvas over the DOM page: `alpha: true`, `setClearColor(0, 0)`, `scene.background = null`. R3F already creates its renderer with `alpha: true`; never add `<color attach="background">`.
 2. Surfaces that must read as pure white (a white plinth, paper, a UI card in 3D) get `toneMapped={false}` on their material in R3F, or `material.toneMapped = false` in vanilla. Or light them past the curve's knee and prove it by pixel sampling.
 3. Prefer `NeutralToneMapping` (Khronos PBR Neutral) for product and UI scenes: it keeps base colours true below about 0.76. In R3F: `onCreated={({ gl }) => { gl.toneMapping = THREE.NeutralToneMapping }}`.
-4. Premultiplied alpha is on by default. A dark halo at object edges on white means the alpha or premultiply settings are wrong, or a material writes colour without alpha.
-5. Verification samples canvas pixels outside the subject: they must equal the page token exactly (`performance.md` section 6).
+4. Tone mappers also bend saturated hues (ACES pushes saturated orange toward yellow and desaturates it). A brand-accent surface that must match its token gets `toneMapped = false` (or Neutral) and is pixel-sampled against the token, like the white check.
+5. Premultiplied alpha is on by default. A dark halo at object edges on white means the alpha or premultiply settings are wrong, or a material writes colour without alpha.
+6. Verification samples canvas pixels outside the subject: they must equal the page token exactly (`performance.md` section 6).
 
 A raw `ShaderMaterial` skips tone mapping and colour-space conversion unless it includes `#include <tonemapping_fragment>` and `#include <colorspace_fragment>` at the end of `main()`. Either include them or author in display space.
 
@@ -129,6 +163,8 @@ TSL essentials:
 - The gotcha that breaks most TSL: TSL sees node method calls, not JavaScript reassignment. Use `.toVar()` plus `.assign()`, `select()`, or `element(i).assign()` inside `If()`.
 - Device defaults: `maxBufferSize` 256 MiB, `maxStorageBufferBindingSize` 128 MiB, 8 storage buffers per stage, workgroup X and invocations 128. Request higher via `requiredLimits` only after reading `adapter.limits`; requesting maximums hides portability bugs.
 - Texture compression features: `texture-compression-bc` (desktop), `-etc2`, `-astc` (mobile).
+- Other features worth knowing (three requests everything the adapter offers, so only check whether the device has it through `adapter.features` **[verify]** the renderer query): `float32-filterable` (linear filtering of float state; otherwise half float or nearest), `float32-blendable`, `shader-f16` (half-precision math on mobile), `timestamp-query` (needed for `trackTimestamp`), `subgroups`, `clip-distances`, `dual-source-blending`, `depth-clip-control`. Every recipe runs without any optional feature.
+- Post API breaks when reading older WebGPU examples: r177 rescaled Gaussian blur sigma (double an older sigma); r180 replaced the Vector2 `resolution` option with scalar `resolutionScale`; r181 made depth of field `dof(color, viewZ, focusDistance, focalLength, bokehScale)` (the old options object silently stops working) and deprecated `computeAsync`; r183 renamed `PostProcessing` to `RenderPipeline`. Check each against the pinned three.
 - GPU watchdog fires around 10 s of shader work. Chrome blocks the adapter after repeated crashes (a second crash within 2 minutes fails, a third blocks all pages).
 
 ## 5. The `three/webgpu` alias plugin for Bun.build
@@ -250,13 +286,18 @@ const gltf = new GLTFLoader().setDRACOLoader(draco).setKTX2Loader(ktx2).setMesho
 | drei `useDetectGPU` / `detect-gpu` | Benchmarks from unpkg | Skip it; use `PerformanceMonitor`. Only with self-hosted benchmarks after approval |
 | Rive runtime (candidate) | `rive.wasm` from unpkg, jsdelivr fallback | `RuntimeLoader.setWasmUrl("/vendor/rive/rive.wasm")`, disable the fallback |
 
-Self-hosting everything keeps the template CSP (`connect-src 'self'` plus the API origin, `img-src 'self' data:`, `font-src 'self'`) intact. A 3D app needs three CSP additions in `apps/web/server.ts` `secureHeaders`, and only a 3D app gets them (record them in the project ADR): `workerSrc: ["'self'", "blob:"]` (DRACOLoader and KTX2Loader spawn blob workers), `imgSrc` gains `"blob:"` (GLTFLoader turns embedded textures into blob URLs), and `scriptSrc` gains `"'wasm-unsafe-eval'"` (Draco, Basis, and meshopt decoders compile WebAssembly; this allows WebAssembly compilation only, never JS `eval`). Verify with the console: zero CSP errors on a scene that loads a Draco or KTX2 asset.
+Self-hosting everything keeps the template CSP (`connect-src 'self'` plus the API origin, `img-src 'self' data:`, `font-src 'self'`) intact. A 3D app needs three CSP additions in `apps/web/server.ts` `secureHeaders`, and only a 3D app gets them (record them in the project ADR): `workerSrc: ["'self'", "blob:"]` (DRACOLoader and KTX2Loader spawn blob workers), `imgSrc` gains `"blob:"` (GLTFLoader turns embedded textures into blob URLs), and `scriptSrc` gains `"'wasm-unsafe-eval'"` (Draco, Basis, and meshopt decoders and the Rapier physics WASM compile WebAssembly; this allows WebAssembly compilation only, never JS `eval`). Verify with the console: zero CSP errors on a scene that loads a Draco or KTX2 asset.
 
 ### 7.4 Formats and budgets
 
 - **Geometry:** meshopt (EXT_meshopt_compression plus quantization) by default: tiny fast decoder, compresses animation, pairs with brotli. Draco only for dense static meshes such as scans. Never both on one asset. Reference quantization (folio-2025): position 12, normal 6, texcoord 6, colour 2, generic 2 bits.
 - **Textures:** PNG, JPG, and WebP decode to full RGBA8 in VRAM: 4 bytes per pixel plus a third for mipmaps, so one 2048 by 2048 texture costs about 22 MB. KTX2 stays compressed in GPU memory, 4 to 8 times smaller: ETC1S for colour and albedo, UASTC for normals and anything where artefacts show. Data maps (roughness, masks, SDFs) are linear and single-channel where possible; only colour maps are sRGB. Max 2048 on mobile. WebP is the fallback until the `ktx` tool is approved.
+- **Texture settings on purpose:** `colorSpace` (sRGB only for colour maps), `wrapS`/`wrapT` and `repeat`, mipmaps and `minFilter`, `anisotropy`. Small repeated marks share one small tiling or atlas texture (a `CanvasTexture` is fine), never a unique full-size image. A texture sourced from any tool or photo is seamless, orthographic, and evenly lit, with no baked shadows or highlights, so the scene's own lights shade it.
+- **Texture dimensions:** WebGL2 mipmaps non-power-of-two images, so plain images need not be power of two. Still author KTX2 sources at power-of-two sizes, square where possible (512, 1024, 2048): block-compressed formats need every edge a multiple of 4, and some Basis transcode targets on older devices need power-of-two squares.
+- **Atlases:** inset each lookup by half a texel of the tile so bilinear taps never touch a neighbour, and blend toward a wider filter as the `dFdx`/`dFdy` footprint grows. Clamping cannot fix mip levels that mixed tiles: bake the atlas with duplicated borders (2 to 4 texels per mip level used), or use KTX2 array textures.
+- **Anisotropic filtering:** floors, roads, and any colour map seen at a grazing angle blur into mush under trilinear filtering. Set `texture.anisotropy = Math.min(8, renderer.capabilities.getMaxAnisotropy())` on those maps (R3F: inside the `useTexture` callback), 4 on T2, 1 on T1. It costs bandwidth, not draw calls; leave face-on textures alone.
 - **GLB intake checklist:** file size, triangles, mesh, material, and texture counts, texture dimensions, scale in metres, pivot, bounds, clip names, mobile cost. Build collision or raycast proxies separately. Dispose on scene exit.
+- **Animated GLB intake.** Log every clip's name and track count after load: a skinned clip that drives only a few bones means the rig is broken upstream (fix the rig, not the runtime). Validate the rig: left and right limb chains with matching depth (plus or minus 1), at least three bones per limb, a plausible bone count. A dependency-free Bun script reading the GLB JSON and binary chunks flags scale tracks, non-root translation drifting past half the bone's rest offset, and rotation amplitudes over 170 degrees. Map unnamed batched clips by requested order, then rename; make a clip play in place by zeroing only the horizontal components of the root bone's position track; never strip twist-bone tracks; retarget with `SkeletonUtils.retargetClip` and a bone-name map, checking the bind pose; wrap each import in a group that normalises bounds to metres and fixes forward and up; judge it under the scene's own lights. GLB is the runtime format (USDZ only as an optional AR quick-look link, STL and 3MF never rendered, FBX converted offline). `AnimationMixer.update(dt)` runs from the one clock; reduced motion shows a still pose.
 - **Scene hygiene** (gltf-transform functions): dedup, prune, weld, instance (repeated meshes become EXT_mesh_gpu_instancing), join, simplify for LODs, resample for animation, center. Run `inspect` first and fix the dominant problem (geometry, texture, or draw-call heavy).
 - Loader triage when a model fails: base path, CORS and MIME, external buffers, colour space and flipY, Draco or meshopt requirement.
 
@@ -281,6 +322,16 @@ await io.write(src.replace(/\.glb$/, "-opt.glb"), doc);
 ```
 
 Keep `.blend` files and raw GLBs out of `public/`; commit only optimised outputs and fail the build when a GLB exceeds its budget.
+
+### 7.6 Procedural texture bakes
+
+Effect-owned textures (atlas channels for masks and grime, a normal map from a height pattern through a Sobel filter, gauge faces) can be generated at build time in a Bun script or once at runtime on an `OffscreenCanvas`, then uploaded as data textures and disposed with the effect.
+
+A generated material (a weave, a brushed pattern, a paper grain) derives albedo, normal, roughness, and AO from one height function in a single setup pass into canvases or render targets, and is never regenerated per frame. Only the albedo gets `SRGBColorSpace`; normal, roughness, and AO stay `NoColorSpace`; anisotropy at the section 7.4 value; trilinear mips. Count the memory against the tier table (a 2048 square RGBA8 is about 22 MB with mips).
+
+### 7.7 External generated assets (approval candidate)
+
+Text-to-3D, image, and audio generation services are paid third parties: `be.new_tech` and Brian's yes, dev tooling only, never from the browser, never with keys in client code or the repo. If one is approved: record the accepted task ID in a checkpoint file before waiting; retry only status and download reads with bounded exponential backoff (about four attempts) honouring `Retry-After`; never auto-retry a paid submission and reconcile an uncertain one against provider history before any new charge; download signed outputs at once and never store signed URLs; inspect the concept or preview before paying for a dependent stage. Classify failures first: missing credentials (use a procedural or licensed alternative and disclose it), rejected auth (a permission problem), exhausted credits (stop, keep the IDs), invalid input (fix the request), transient errors (bounded retry, then pending), malformed output (retry only that stage). Image-to-3D references show one centred object in full on a plain light background with no text; riggable characters stand in a T or A pose.
 
 ## 8. Disposal
 
@@ -312,6 +363,8 @@ export function disposeObject(root: THREE.Object3D) {
 
 Mutating or disposing a cached asset breaks every other user: clone first (drei `<Clone>`, or `scene.clone()`).
 
+**Async cancellation.** Every async mount step (`fetch`, texture preload, mesh parse, `compileAsync`) is followed by `if (disposed) return;`, and anything that resolves after teardown is disposed on the spot. `destroy` is idempotent behind a flag, the `pagehide` listener uses `{ once: true }`, and a failed start runs the same cleanup before showing the poster.
+
 ## 9. Context loss and device loss
 
 - three's `WebGLRenderer` already calls `preventDefault()` on `webglcontextlost`, skips rendering while lost, and reinitialises GL state on `webglcontextrestored`. Geometry and textures with source data re-upload. Render-target contents and textures whose image was released are lost.
@@ -333,6 +386,8 @@ export function guardContext(canvas: HTMLCanvasElement, h: { showPoster(): void;
 }
 ```
 
+- WebGPU loss causes: driver crashes, memory pressure, the roughly 10 s watchdog, driver updates, GPU switches; after a loss every buffer, texture, and pipeline is gone. The info carries `reason` `destroyed` (the app called `destroy()`, expected) or `unknown` (recover), plus a `message` that is logged, never parsed (it differs per browser).
+- State that survives a rebuild lives outside the renderer (scroll progress or camera beat, user selections, the seed); transient state (particle positions, sim textures) is reseeded. Never reload the page. If `requestAdapter()` returns null after a loss, the browser has blocked GPU access for now: stay on the poster silently (only an interactive tool shows a short "3D paused" note). Null on first load simply means the WebGL2 or poster path.
 - WebGPU: `renderer.onDeviceLost = (info) => { showPoster(); }`. The renderer stops for good. Either stay on the poster or tear down and recreate the renderer once, after a short delay, with a fresh adapter; keep app state outside the renderer. Listen on `device.lost` only through three's hook; never `await` it directly.
 - Test: `renderer.getContext().getExtension("WEBGL_lose_context").loseContext()`, then `.restoreContext()`. WebGPU: `device.destroy()`, or `about:gpucrash` manually.
 
@@ -343,3 +398,30 @@ export function guardContext(canvas: HTMLCanvasElement, h: { showPoster(): void;
 - Canvas `aria-hidden="true"` when decorative; interactive canvases get `tabIndex=0`, an `aria-label`, keyboard equivalents, and a visible focus ring on the wrapper.
 - Scope `touch-action` to the canvas and its controls so page scroll cannot steal input (and so the canvas does not trap page scroll when it is not interactive).
 - A diagnostics object behind a dev flag: `window.__immersive = { ready, seek(p), renderer: renderer.info }`.
+- An interactive canvas that changes state (a configurator option, a step, a selected part) writes the DOM text equivalent into a visually hidden `aria-live="polite"` region. Decorative canvases stay silent.
+- DOM text laid over a canvas meets 4.5:1 (3:1 at 24px, or 18.66px bold, and above) against the worst frame behind it, not only the page white. In the capture run (`performance.md` section 6.2) screenshot the text box with the text hidden at every authored beat, take the lightest and darkest backdrop pixels, and fail any beat under the threshold. The fix is composition (move the subject or the copy), never a scrim gradient.
+
+## 11. Vanilla scene lifecycle contract
+
+**Effect module contract.** An effect is a factory that receives the renderer, the scene or target it decorates, and shared uniforms, and returns `{ update(dt, t), setDebug(mode), dispose(), debugModes }`. It never creates the renderer, camera, controls, or page lights. Assets that are part of the effect (noise tiles, masks, height maps) live next to its module; assets that only stage a demo belong to the section.
+
+**Temporary material overrides.** A pass that swaps materials (an ID or mask pass, a clay review view, a poster render with a neutral material) records every visible mesh with its complete original `material` value (arrays included), assigns the override, renders inside `try`, restores every record in `finally`, then clears the list. Debug builds assert restore count equals swap count, and each pass re-traverses so meshes added since the last one are included. Prefer `scene.overrideMaterial` when every mesh gets the same material.
+
+
+A `vanilla_three` section exports one `mount(canvas, opts)` returning `{ ready, seek, pause, resume, dispose }`, the same surface as `window.__immersive`, so tests drive every scene the same way.
+
+- **Engine** owns the renderer, scene, and camera. **Controllers** (camera path, pointer, scroll binding) receive the engine's objects as arguments, never construct their own, and expose `enable()` and `disable()` to attach and detach their listeners. A **loop** wires them together in dependency order and is the one ticker callback.
+- Construction is free of side effects: GPU objects and listeners are created only inside `mount`, and anything not yet created is typed `null`.
+- `dispose` runs the section 8 order, the reverse of creation.
+
+## 12. Visual glitch and blank canvas triage
+
+Work down the list and stop at the first hit:
+
+1. Reproduce with the same URL and build. Confirm the server serves the expected build (a build ID in a meta tag or `__immersive.build`), which also catches the wrong app on the port. Check that the canvas is in the DOM with a non-zero CSS size, that the drawing buffer equals CSS size times the `dprFor` DPR, that the context exists and exactly one loop runs, and that resize updates renderer, camera, and any composer or `RenderPipeline` size and pixel ratio together, with no DOM overlay covering the canvas and post output actually reaching the screen.
+2. Console: shader compile errors (`shaders.md` section 18), 404 or CORS on textures and decoders, a missing KTX2 or meshopt decoder, CSP errors.
+3. Swap the suspect material for `MeshBasicMaterial` or `MeshNormalMaterial`. If the object now looks right, the fault is the material or shader; if not, geometry, transform, or camera.
+4. Read `renderer.info`: counts that grow per navigation are a leak; doubled draw calls are a duplicate mount.
+5. Camera near, far, aspect, and aim against object scale and position; material opacity, side, `depthWrite`, and colour space; lights for lit materials; a subject value that differs from the haze or background. Camera near and far against object scale (depth precision, `r3f.md` section 2) and the white-background tone-mapping trap (section 3).
+6. Loop checks: delta in seconds (not milliseconds) and clamped, `mixer.update(dt)` actually called, reset clearing listeners, timers, and bodies.
+7. Only then read the scene code.

@@ -17,12 +17,14 @@ References (this skill):
 | `references/r3f.md` | R3F architecture, `useFrame` rules, frameloops and `advance()`, instancing, events, drei helpers, `View`, Suspense, performance monitoring |
 | `references/shaders.md` | GLSL and TSL craft: noise, SDFs, domain warping, fresnel, matcaps, dithering, grading, cover-UV image hover, full-screen quads |
 | `references/effects-cleanroom.md` | Window rain, wet puddles, deformable sand or snow, wind grass, ocean: clean-room rebuilds with licenses |
-| `references/particles-physics.md` | Points, instanced, GPGPU and WebGPU compute particles, nixie-fx and rapier (approval candidates), game-loop patterns, interaction |
-| `references/performance.md` | Budget table, device tiers for `imm.tier`, fallbacks, the verification method |
+| `references/particles-physics.md` | Points, instanced, GPGPU and WebGPU compute particles, nixie-fx and Rapier (approved, JEV-picked), boids, game-loop patterns, interaction |
+| `references/performance.md` | Budget table, device tiers for `imm.tier`, fallbacks, the verification method, page shell and media budgets |
+| `references/procedural-geometry.md` | Generated products, architecture, and kits: plan then emit, operations, profiles and sweeps, joins, normals and winding, audits, LOD |
+| `references/coverage.md` | Per-repo coverage audit of the eight immersive references: what JAL holds where, what was added, what was excluded and why |
 | `references/scroll-choreography.md` | Lenis plus ScrollTrigger choreography, pinning, scrub, SplitText, Flip (written by W-motion) |
 | `references/frames.md` | The JAL frame core (`FrameProvider`, `Sequence`, `Player`) for live demo compositions (written by W-motion) |
 | `references/noyzzi.md` | The noyzzi index, taxonomy, tool usage, code review rules (Lead) |
-| `skills/jal-motion/references/components.md` | magicui and animata recipes R01 to R43 (written by W-comp) |
+| `skills/jal-motion/references/components.md` | magicui and animata recipes (R01 to R44 plus any added later, written by W-comp) |
 
 ## 1. When immersion earns its place
 
@@ -87,9 +89,12 @@ The page white must show through: transparent canvas (`alpha: true`, `scene.back
 
 ### Stack law
 
-Approved: three (WebGL and WebGPU/TSL), `@react-three/fiber` 9.x, `@react-three/drei`, GSAP with all plugins, Lenis, Framer Motion, Tailwind through `bun-plugin-tailwind` wired to JAL tokens, CSS and WAAPI.
+Approved: three (WebGL and WebGPU/TSL), `@react-three/fiber` 9.x, `@react-three/drei`, GSAP with all plugins and `@gsap/react` (part of GSAP), Lenis, Framer Motion, Tailwind through `bun-plugin-tailwind` wired to JAL tokens, CSS and WAAPI, OriginKit motion patterns (check originkit.dev before hand-rolling a pattern, per `jal-standards`; the ported result still follows JAL law), and, approved by Brian for immersive work:
 
-Approval candidates, documented but never a default, each marked **needs Brian's yes** (route through `be.new_tech` and jal-principal): `@react-three/postprocessing` and `postprocessing`, `@react-three/rapier` and `@dimforge/rapier3d-compat`, `@gltf-transform/*` plus `meshoptimizer` (dev only), the native `ktx` CLI and `sharp` (dev only), `nixie-fx`, `cobe`, `three-custom-shader-material`, `r3f-perf` and `leva` (dev only), `@gsap/react` (likely covered by "GSAP all plugins", confirm once), direct imports of drei's transitive deps (`maath`, `zustand`, `three-mesh-bvh`, `camera-controls`), `detect-gpu`, `@theatre/core`, Rive and dotLottie runtimes, PixiJS. Never: Remotion, `@theatre/studio` (AGPL), LYGIA, The Book of Shaders code, Shadertoy code, OGL, curtains.js, `framer-motion-3d`.
+- **`nixie-fx`**: usable whenever JEV (`imm.tech`, `imm.recipe`) picks it and the rules hold. Its peer range (`three >=0.184.0 <0.186.0` at 0.1.16) means either pin three to that range for the app or skip nixie-fx when the page needs a newer three; `imm.tech` weighs that trade. Outside noyzzi sections: neutral palettes and `blend: "alpha"` only (`particles-physics.md` section 8).
+- **Rapier** (`@react-three/rapier` or `@dimforge/rapier3d-compat`): usable whenever JEV picks it and interaction is the message. The WASM is served through Bun.build's file loader (or the compat build's inlined WASM), with the 3D CSP additions already in `three-foundations.md` section 7.3 (`'wasm-unsafe-eval'`, `worker-src 'self' blob:`) (`particles-physics.md` section 9).
+
+Approval candidates, documented but never a default, each marked **needs Brian's yes** (route through `be.new_tech` and jal-principal): `@react-three/postprocessing` and `postprocessing`, `@gltf-transform/*` plus `meshoptimizer` (dev only), the native `ktx` CLI and `sharp` (dev only), `cobe`, `three-custom-shader-material`, `three-bvh-csg`, `r3f-perf` and `leva` (dev only), direct imports of drei's transitive deps (`maath`, `zustand`, `three-mesh-bvh`, `camera-controls`), `detect-gpu`, `@theatre/core`, Rive and dotLottie runtimes, PixiJS. Never: Remotion, `@theatre/studio` (AGPL), LYGIA, The Book of Shaders code, Shadertoy code, OGL, curtains.js, `framer-motion-3d`.
 
 Note for every R3F project: R3F 9 needs React `>=19 <19.4`. The JAL template ships React 18.3, so an R3F section means bumping `react` and `react-dom` to 19.x below 19.4 in that app (record it in the ADR).
 
@@ -97,16 +102,21 @@ Note for every R3F project: R3F 9 needs React `>=19 <19.4`. The JAL template shi
 
 Every soft call below goes through `jev_decide` with the catalog question. Run each entry's precheck first; never ask JEV what the law or a precheck already decides. Log every decision (ID, answer, confidence, action) in the build report; stamp `UNVERIFIED BY JEV` on any outage fallback.
 
+**The build report is the continuity file:** one living file per page (for example `docs/immersive/<page>-build.md`) holding intent and constraints, a link to the direction contract, the JEV decision log, completed work, pending external jobs with their IDs, open defects, and next actions. Re-read it after any interruption. A correction updates the affected entries and pending work instead of restarting; completed assets are kept and obsolete pending ones marked obsolete. Captures, metrics, the scorecard, and the capture manifest live there; the final chat answer stays short and links to it.
+
 1. **Brief, visitor mode, direction.**
+   - **Scope from the request's own words.** "Polish", "premium", "showcase", or "less basic" means the current visual level was rejected: run all 11 steps and the section scorecard (section 7). A fix to one section is a narrow edit: keep the direction, recapture only the affected sections at 375 and 1280, rerun `ui_audit` (cheap, always), re-score only the categories touched. A full pass only when shared pieces changed (canvas, clock, tokens, the poster pipeline). Evidence from the same revision is reused; a check repeats only after a relevant change, a failure, or an open concern.
    - Restate goal, constraints, and done-when. Name the visitor mode: `explore` (first-time visitor with time), `task` (returning visitor who wants to get somewhere), or `mixed`. Task mode caps immersion at the hero.
    - Direction by the seeded pick in `jal-ui-taste`: write 5 to 7 direction candidates from the audience's world, screen each with `ui.direction_screen` (slop `noul` plus fit `score`), then a deterministic seeded pick among the survivors ranked 3 to 7. Never rank-pick the top one.
    - Write the direction contract before code (audience, job, direction, type personality, accent role, density, motion intensity) plus the immersive addendum: the page's one 3D role, surface per section (paper or a contained noyzzi dark moment), target device tiers, and the DOM text equivalent of each scene.
+   - Per scene, a visual contract: the subject and its real size in metres, the unit convention (one conversion from source units, done once at load), camera distance and lens per beat, motion per beat, and the frame budget from `performance.md` section 1. Nothing else in the scene carries its own scale factor.
 2. **Section concepts.** For each section: job, one message, primary action, the beats a visitor should notice, and its section kind from the pool (section 4). A section with no job is deleted. Non-immersive sections follow the `/jal-ui` loop (`ui.region_gate`).
-3. **Per section, `imm.gate` then `imm.recipe`.** Gate first (does it earn immersion at all, and if it is a noyzzi 3D element, does the object carry meaning and where does it sit). Only gated sections get `imm.recipe`, a `choice` over that section's assembled candidates with a `noul` on combining the top two (section 5). The agent never picks from the pool by taste alone.
+3. **Per section, `imm.gate` then `imm.recipe`.** Gate first (does it earn immersion at all, and if it is a noyzzi 3D element, does the object carry meaning and where does it sit). Only gated sections get `imm.recipe`, a `choice` over that section's assembled candidates for the base recipe (section 5). Then the section grows one layer at a time (`layer_1`, `layer_2`, and so on, no fixed limit, per Brian): each proposed layer fills a role the stack does not have yet, JEV keeps it only at 0.6 or above, and growth stops at the first no or at the tier, budget, or mechanical limit. The protocol lives in `skills/jal-design-system/references/recipe-index.md`. The agent never picks from the pool by taste alone.
 4. **`imm.tech`.** Per gated section: `css_dom`, `canvas_2d`, `webgl`, or `webgpu_tsl` (with a WebGL2 fallback), plus the integration `stack` (`vanilla_three`, `r3f`, or `r3f_views`). The lightest technique that delivers the recipe wins. The same ID runs a second, post stage after the first captures (step 10).
 5. **`imm.tier`.** Per device class, `full`, `reduced`, or `static`, against the budget table in `performance.md`. Planning uses the recipe's cost tier; the binding call uses measured numbers from a real GPU.
 6. **Poster first.** The static poster renders before any WebGL. It is the LCP element, the no-WebGL state, the reduced-motion state, the low-power state, and the failure state (section 6).
 7. **Build.**
+   - **Representative beat first.** Block the section out with grey primitives at true scale inside the real layout at 375 and 1280 (framing, subject size, scroll length, beat timing, while changes are cheap). Then bring one beat to full fidelity (real or authored object, material roles, lighting, contact shadow, poster, reduced-motion still), capture and score it, and only then author the remaining beats. Object and beat counts follow the concept, never a quota.
    - three and every scene chunk load lazily through dynamic `import()` with `splitting: true` in Bun.build.
    - The build script copies Draco and Basis decoders into `dist/vendor/r<three>/` and every drei CDN default is overridden (`three-foundations.md` section 7).
    - One clock: Lenis (`autoRaf: false`) and R3F (`frameloop="never"` plus `advance()`, or `demand` plus `invalidate()`) are driven from `gsap.ticker`, with `lagSmoothing(0)` (`r3f.md` section 3).
@@ -119,7 +129,7 @@ Every soft call below goes through `jev_decide` with the catalog question. Run e
 
 ## 4. The combined recipe pool
 
-Each recipe carries: an ID, its section kind, source and license, surface, cost tier, mobile fallback, and law note. The pool is the only place candidates come from.
+Each recipe carries: an ID, its section kind, source and license, surface, cost tier, mobile fallback, and law note, plus, when it is built, the invariant that keeps it from degrading and the debug view that proves it. Every fallback names which mechanism it keeps. The pool is the only place candidates come from.
 
 **Cost tiers** (GPU time per frame at the tier pixel budget, on a real GPU):
 
@@ -235,6 +245,9 @@ Elements with `none` can sit on the page white with a transparent canvas and sti
 | `cr.deform_sand_snow` | toy, environment | bright sand or snow | C1 (0.8 ms) / C1 (0.5 ms) | stamp only, no relax; lowest tier pooled decals | canvas: snow shade is neutral grey-blue, never purple |
 | `cr.wind_grass` | environment | daylight greens | C3 (3 ms, vertex bound) / C3 (2.5 ms) | 3-segment blades, flutter off, or cross-quad clusters | canvas: backlight done in shading, no bloom |
 | `cr.ocean_snell` | environment, story | bright shallow sea | C2 to C3 (2.5 ms) / C3 (3 ms) | 3 waves, depth tint only, no caustics | canvas: pale sea fog `#8fc7c9`, no dark abyss |
+| `cr.procedural_tree` | environment, object_showcase | one hero tree, flowers, or ivy in daylight | C2 / C2 | halved leaf cards and radial segments, whole-tree wind only | canvas: natural greens and bark, haze to page white |
+| `cr.touch_frost` | toy, hero | fogged pane over a light scene | C2 (about 1 ms) / C2 (1.5 ms) | blur without refraction | canvas: neutral cool grey, never purple |
+| `cr.snowfall` | environment | light snow and cover in daylight | C1 to C2 (0.8 ms) / C2 (1 ms) | half the flakes, shading-only cover | canvas: no sparkle, neutral grey-blue shade |
 
 ### 4.5 Three.js patterns (JAL-native)
 
@@ -249,7 +262,8 @@ Elements with `none` can sit on the page white with a transparent canvas and sti
 | `three.img_hover` | gallery_hover | the images themselves | C1 | plain `<img>` (no hover on touch) | canvas: displacement and grade only, no RGB split |
 | `three.matcap_clay` | object_showcase | soft grey clay on white | C1 | poster | canvas: bake our own matcap |
 | `three.sdf_blob` | hero | page white | C2 (48 to 96 steps at 0.5 resolution) | fewer steps, then poster | canvas: rim darkens, never glows |
-| `three.dot_globe` | data_viz | ink dots on white | C1 | static SVG dotted map (R38) | canvas: rotates on drag or scroll only, no ambient spin |
+| `three.dot_globe` | data_viz | ink dots on white | C1 | static SVG dotted map (R38) | canvas: flat and unlit; a slow auto-rotation (one turn per `--loop-globe`, linear) is allowed only with a visible 44px pause control, drag rotates; static poster under reduced motion (recipe R44) |
+| `three.mesh_sweep` | object_showcase | product models on page white | C1 (one extra discard test) | 150 ms crossfade | canvas: thin darker sweep band, never an additive edge (`shaders.md` section 16) |
 | `three.post_light` | modifier (any WebGL section) | light scenes | adds 0.3 to 1.5 ms per full-res pass | none on mobile | canvas: AA, LUT, dither, subtle DoF only |
 
 `three.dot_globe` is the lawful home of the magicui globe now that three is approved; `cobe` stays an approval candidate.
@@ -274,10 +288,10 @@ Recipes live in `skills/jal-motion/references/components.md` (W-comp). Pool IDs 
    - Drop anything whose tech is an unapproved candidate.
    - Drop anything over the section's cost ceiling: the page's target tiers (`performance.md` section 3) set a ceiling; a recipe with no mobile fallback is dropped when mobile is a target.
    - Drop cinematic recipes when a tier-3 section already exists.
-   - Drop the recipe used by the adjacent section (adjacent sections vary).
+   - Variety between adjacent sections is the default: an adjacent section's recipe stays in the shortlist only when JEV judges that reusing it serves the story (a deliberate echo or continuation), otherwise it is dropped.
    - Drop anything that cannot meet the mechanical rules without a rewrite (a hover-only mechanic with no touch path for a touch-first audience, 44px impossible).
    - Drop dark noyzzi pieces only when the brief explicitly forbids a dark moment; otherwise surface is JEV's call.
-4. **Shape the shortlist:** 2 to 6 candidates. At least one JAL-native candidate (clean-room, three, mu, gsap, frame), at least one lighter control (C0 or C1), at most three noyzzi candidates. Each candidate's criterion says when that option is right for this section's message and audience, from the pool row, never advocacy.
+4. **Shape the shortlist:** 2 to 6 candidates. When a candidate is inspired by a reference site or piece, write one line naming the mechanism that gives it character (for example "haze that shares the key light's direction") and keep that mechanism in the rebuild; swapping it for a generic category effect ("add fog", "add particles") fails the recipe even when a still looks similar. At least one JAL-native candidate (clean-room, three, mu, gsap, frame), at least one lighter control (C0 or C1), at most three noyzzi candidates. Each candidate's criterion says when that option is right for this section's message and audience, from the pool row, never advocacy.
 5. **Ask one call** with `recipe` (choice) plus the conditional questions: `surface` when candidates span paper and dark; `hover_family` and `motion_budget` when the kind is `gallery_hover`. Then **grow the section layer by layer** (`layer_1`, `layer_2`, and so on, with no fixed limit, per Brian): each proposed layer takes a role the stack lacks (layout, text, motion, hover, background, 3D, demo), and JEV keeps it only if it aligns and fits (0.6 or above). The protocol is in `jal-design-system` `references/recipe-index.md`.
 6. **A layer is proposed only if the mechanical rules hold:** canvases within the tier's count (usually one WebGL canvas per viewport, for GPU cost), shared surface or noyzzi boundary, summed cost under the tier, one scroll owner, one pointer effect per element. Typical stacks: kinetic type over a paper field with a GSAP scroll exit; `three.img_hover` inside a noyzzi gallery carousel with a text reveal on its captions; a `mu.R02` headline over `three.studio_object` with a frame-core demo below.
 
@@ -308,6 +322,10 @@ Full method, commands, and thresholds in `performance.md` section 6. The minimum
 4. Frame-time sampling: 5 seconds of scripted scroll, p50, p95, p99, frames over 1.5 times the refresh budget, long-animation-frame entries; `renderer.info.render.calls`, `triangles`, `info.memory` per beat against the tier budget.
 5. Forced context loss: `WEBGL_lose_context.loseContext()` shows the poster within one frame with no thrown error; `restoreContext()` resumes or stays on the poster by design. Blocked `*.glb` keeps the poster and logs.
 6. Navigation round trip: `renderer.info.memory` and JS heap back to baseline, WebGL context count unchanged.
+7. **Verify the built output.** Captures, sweeps, and frame timing run against the `Bun.build` output served by `Bun.serve`, never a dev server. The production build defines the test flag as false so `__immersive`, debug panels, and verbose logging are dead-code eliminated, and a check greps the built bundle for the hook name (absent except in the dedicated test build).
+8. **Section scorecard** before `imm.taste`: score each immersive section 0 to 3 in eight categories, each with one line of evidence from the captures: subject form (silhouette, authored parts), materials (roles, roughness contrast, detail), lighting and grounding, camera and composition, motion purpose, poster parity, the DOM around the canvas (Zone A), and performance evidence (renderer counters against the tier). Name what each category means for the section kind first. Pass: none under 2 and a mean of 2.3 or more; showcase: most at 3 and a mean of 2.7. Automatic fails: an unmodified primitive as the subject; any surface in frame left at a default material; empty frame the concept does not justify; haze or darkness standing in for missing geometry; only idle or poster frames captured; no renderer counters after a graphics change; canvas background not equal to page white. Never add props, particles, or noise to lift a score or a pixel metric; a deliberately minimal scene can pass; a placeholder is never reported as final. Calibration: three lawful anchor stills rendered from JAL scenes on page white (primitives with default materials and flat light; an authored object with material roles, contact shadow, calm light; reference quality) are viewed before scoring. They do not exist yet: render them on the first real-GPU build and keep them under `skills/jal-immersive/assets/taste-anchors/` (the source pack's dark neon anchors are never used). The scorecard feeds `imm.taste` as evidence.
+9. **Visual contract before tuning.** Write the effect's observable invariants (the rim stays visible with post off, the mesh boundary never shows, card roots stay attached at maximum wind), its camera envelope (near, design, far), and any deliberate divergence from the reference. Tune in causal order: domain and cost, then motion, then lifetime, then shading, then presentation, and never compensate a weak stage with a later one (a weak velocity field with stronger shading, an oversized domain with extinction).
+10. **Reject** a build when post-processing manufactures its form, when it has no debug view proving its mechanism, when deterministic reset or a fixed-camera capture is impossible, or when it silently diverges from its recipe.
 
 ## 8. Pre-return gate
 
@@ -320,8 +338,10 @@ Do not return until every line is true, or the report names the line and why:
 - [ ] three loads through dynamic `import()`; decoders are self-hosted under a versioned `/vendor/r<N>/` path; no drei, troika, detect-gpu, or Rive CDN default remains; CSP `connect-src` is still `'self'` plus the API.
 - [ ] DPR never exceeds 2 and follows the tier budget; one canvas per page; one clock; one smoother per signal.
 - [ ] Disposal, context loss, and device loss are handled and were tested.
+- [ ] Every scene system ships with a fixed seed for all procedural inputs, parameters grouped by what the eye reads (form, material, motion, atmosphere), a debug view for every field that controls the look, and a no-post baseline capture that already reads as finished. Each rung of a quality ladder names the mechanism it changes (fewer march steps, lower field resolution, a cheaper fallback), never a blind DPR cut.
+- [ ] Core Web Vitals hold in the lab run: LCP under 2.5 s with the poster as the LCP element, CLS under 0.1, INP under 200 ms (`performance.md` section 7).
 - [ ] `ui_audit` PASS at all five widths; screenshots at 375 and 1280 were looked at; frame-time numbers are from a real GPU or explicitly marked as not measured.
-- [ ] Any approval candidate used has Brian's yes on record and an ADR; none became a default.
+- [ ] Any approval candidate used has Brian's yes on record and an ADR; none became a default. nixie-fx and Rapier (approved) were picked by JEV, with the three pin trade recorded for nixie-fx.
 - [ ] `imm.taste` at or above threshold with `keep` passing; `ui.finish_disposition` is `ship`; no more than two fix rounds were spent.
 - [ ] No em-dash, emoji, or eyebrow label in any file, copy, or comment written.
 

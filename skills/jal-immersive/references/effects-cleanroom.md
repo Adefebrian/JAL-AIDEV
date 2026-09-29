@@ -1,4 +1,4 @@
-# Clean-room effects: window rain, wet puddles, deformable sand or snow, wind grass, ocean
+# Clean-room effects: window rain, wet puddles, deformable sand or snow, wind grass, ocean, trees, touch frost, snowfall
 
 These are JAL rebuilds of effects that the scottstts/Threejs-Awesome-Graphics-Agent-Skills pack (TAG) only ships under GPL-3.0, CC BY-NC-SA, no license, or an unverified "MIT by project rule". Every guide comes from three kinds of input: permissively licensed references (read in full), the physics or math itself (not copyrightable), and the one-paragraph descriptions in TAG's `SKILL.md` files (what the effect does, not how). The GPL, non-commercial, and unlicensed example source was never opened. All GLSL, TSL, and JS below is new code written for JAL. Treat each block as a sketch: check it on a real GPU before shipping.
 
@@ -11,6 +11,9 @@ Pool IDs (SKILL.md section 4.4) and where each guide lives:
 | `cr.deform_sand_snow` | 3 | 0.8 ms / 0.5 ms | user-driven prints only, pre-baked trail |
 | `cr.wind_grass` | 4 | 3 ms / 2.5 ms | frozen gust shape, push still answers input |
 | `cr.ocean_snell` | 5 | 2.5 ms / 3 ms | still surface, 150 ms crossfade above to below |
+| `cr.procedural_tree` | 8 | C2 / C2 (targets pending measurement) | wind frozen at a composed pose |
+| `cr.touch_frost` | 9 | about 1 ms / 1.5 ms | static half-cleared pane |
+| `cr.snowfall` | 10 | about 0.8 ms / 1 ms | settled cover as a still, no falling flakes |
 
 How to run the sketches:
 
@@ -35,6 +38,15 @@ How to run the sketches:
 | `threejs-procedural-vegetation/examples/gpu-computed-grass` noise/FBM chunks | momentchan/r3f-gist | none detected | The grass repo itself (momentchan/r3f-procedural-grass) is MIT, but its `packages/r3f-gist` submodule has no license. Rebuilt in section 4 with our own noise. |
 | `threejs-spectral-ocean/examples/submerged-snell-ocean` | scottstts/Pearl-Sea-Park | none detected (GitHub API `license: null`) | "MIT by project rule" is not a grant. Rebuilt in section 5. |
 | `threejs-spectral-ocean/examples/stylized-above-below-ocean` + `foam.webp`, `sand.webp` | gioeledallapozza/FFTOCEAN | none detected | Same as above. Section 5. |
+| `threejs-temporal-surfaces/examples/touch-history-frost` | takuma-hmng8/frozen | none detected ("MIT by project rule") | Idea reference only. Rebuilt in section 9. |
+| hologram shell and shape transition (`threejs-procedural-vfx`) | YasirAwan4831/holographic-shader-visualizer-three.Js | none detected | Idea reference only; the hologram look is banned in Zone B anyway. The mesh sweep handover idea is in `shaders.md` section 16. |
+| spectral ocean mechanisms (`threejs-spectral-ocean`) | owenyuwono/poseidon | none detected | Idea reference only. Section 5. |
+| `example-gallery/.../deformable-sand/assets/coconut_tree.glb` | (asset in the Sandboard example) | GPL-3.0-only | Never ship the model. |
+| diffraction-grating card art (`physical-diffraction-grating`) | TAG | "MIT by project rule" only | Idea reference only; the rainbow foil is banned in Zone B. |
+
+Permissive TAG assets, usable with their notice if a project needs them: the LUT atmosphere data (MIT, Copyright 2025 Su) and the financial-tower stone textures (MIT, Copyright 2026 @alightinastorm).
+
+TAG's own `.codex/AGENTS.md` tells its author to treat unlicensed sources as MIT, so TAG's top-level MIT file never proves that a single example is MIT. Check each source upstream. Record the reviewed commit next to each ledger row (TAG's `source_materials/README.md` names one per source) so a later license check compares the same revision.
 
 ### 0.2 Found while researching (also do not copy)
 
@@ -71,6 +83,12 @@ How to run the sketches:
 | webgl2fundamentals (render-to-texture, ping-pong articles) | BSD-3-Clause | https://github.com/gfxfundamentals/webgl2-fundamentals |
 | Inigo Quilez articles | Site says code snippets are MIT and the shader *art* is protected | https://iquilezles.org/articles/ (central-difference normals: `/articles/normalsSDF/`) |
 | CodePen public pens | MIT by CodePen's terms | https://blog.codepen.io/documentation/licensing/ |
+| dgreenheck/ez-tree (growth tables, leaf cards) | MIT | https://github.com/dgreenheck/ez-tree |
+| takram-design-engineering/three-geospatial (atmosphere and cloud reference) | MIT | https://github.com/takram-design-engineering/three-geospatial |
+| N8python/diamonds (BVH gem refraction reference) | MIT | https://github.com/N8python/diamonds |
+| AmbientCG textures, Poly Haven HDRIs | CC0 | self-host under `/vendor`, never hotlink |
+
+CC-BY assets (many Sketchfab scans) need visible attribution: dev only unless the client accepts the credit line.
 
 Idea-only references (read for concepts, no code taken): Sébastien Lagarde, "Water drop 3b: physically based wet surfaces" (blog, 2013), https://seblagarde.wordpress.com/2013/04/14/water-drop-3b-physically-based-wet-surfaces/ ; GPU Gems 1 ch. 1 (Gerstner waves) and ch. 7 "Rendering Countless Blades of Waving Grass", https://developer.nvidia.com/gpugems/gpugems/part-i-natural-effects/chapter-7-rendering-countless-blades-waving-grass ; J. Tessendorf, "Simulating Ocean Water" (SIGGRAPH course notes); Musgrave, Kolb, Mace, "The Synthesis and Rendering of Eroded Fractal Terrains" (SIGGRAPH 1989, thermal erosion); C. Barré-Brisebois, "Deformable Snow Rendering in Batman: Arkham Origins" (GDC 2014); E. Wohllaib, "Procedural Grass in Ghost of Tsushima" (GDC 2021). Talks and papers are cited by title only, because stable URLs were not confirmed.
 
@@ -104,10 +122,13 @@ import { hash } from 'three/tsl';
 export const cellHash = (cid, salt = 0) => hash(cid.x.add(4096).mul(8192).add(cid.y.add(4096)).add(salt * 104729));
 ```
 
+**Weather state.** Rain, snow, and their surfaces read one uniforms object passed by reference: time, a horizontal wind vector in world units per second, and a progress value damped toward its target with `MathUtils.damp(progress, target, 0.9, dt)`. Particles and ground materials never keep their own clocks or wind; the debug view reports whether both read the same object.
+
 Shared runtime rules for every effect:
 - Cap DPR with the pixel-budget formula (`performance.md` section 2): `dpr = clamp(sqrt(budgetPx / cssPx), 1, maxDpr)`. Budgets are 1.65 MP desktop (max 1.5) and 1.0 MP mobile (max 1.25).
 - Pause the loop when the canvas is off-screen (IntersectionObserver) or the tab is hidden (`visibilitychange`).
 - Watch reduced motion live. Every section below says what "reduced" means for that effect.
+- Decide per effect whether its state is analytic in time (compute it, allocate nothing) or depends on input history (allocate a ping-pong target). Never fake history with time-driven noise, and never keep a history buffer for an effect whose whole state is a function of time.
 
 ```js
 const rm = matchMedia('(prefers-reduced-motion: reduce)');
@@ -146,6 +167,8 @@ Sliding-drop simulation (window UV units, y up, and remember to multiply x dista
 - Lateral wander is `x += (rand − 0.5) · WANDER · vy · dt`.
 - Mass loss to the trail is `r *= 1 − LOSS · vy · dt`. Spawn a trail droplet (`0.25 r` to `0.35 r`) every `0.6 r` of travel.
 - Merging conserves volume: `r = cbrt(r₁³ + r₂³)`, and the smaller drop respawns above the top edge. O(N²) is fine for N ≤ 64.
+
+Refinements (ideas only): one `amount` control blends the layers in (static layer first, moving layers as it rises); derive the refraction offset from differences of the combined coverage so optics match the drops; cap the blur loop at a compile-time maximum and break at a runtime quality count; wrap shader time every few hours so precision never erodes the cell animation; fit a photo background by scaling one UV axis around 0.5 so it fills without stretching.
 
 ### GLSL sketch (WebGL2)
 
@@ -305,6 +328,8 @@ Daylight after rain, or light rain. Asphalt or stone gets darker and glossier as
 1. **Wetness model** (per-pixel, in the ground material). This follows Lagarde's physically based wet-surface reasoning (ideas only):
    - `wet ∈ [0,1]` from rain progress. Porous surfaces darken because water fills their pores: `albedo *= mix(1, 0.5, wet · porosity)`, with `porosity` 0.6 to 0.8 for asphalt and 0.2 for polished stone.
    - Roughness drops as wetness rises: `rough = mix(rough, 0.1, wet)`.
+   - Stage wetness in two bands of one progress value: darkening and roughness drop over `smoothstep(0, 0.75, rain)`, puddle mask and ripple normals only over `smoothstep(0.75, 1, rain)`, so the ground reads damp before flooded. Keep the ripple normal separate from the base normal until the final blend.
+   - Mixed ground (soil and grass, rock and snow) takes its blend from the world-normal up component raised to about 1.5, so flats take cover and slopes stay bare. The same blend feeds colour and roughness, and wetness near a water line lowers roughness and darkens colour together.
 2. **Puddle mask** from a ground height signal (a height texture channel or `fbm(xz · 0.35)`): `puddle = smoothstep(level − 0.04, level + 0.04, 1 − height)`. `level` rises from 0.2 to 0.55 as rain accumulates. Inside a puddle the water surface is flat, so blend the base normal toward up (`n = normalize(mix(nBase, up, puddle))`), set roughness to 0.02 and F0 to 0.02.
 3. **Ripple rings** (analytic, no simulation, good for ambient rain):
    - Tile world xz into cells of `S` metres. Per cell (and its 3x3 neighbours, so rings can cross cell borders), a hash gives a centre `c`, a phase offset, and an "active" roll against rain intensity.
@@ -327,6 +352,7 @@ Daylight after rain, or light rain. Asphalt or stone gets darker and glossier as
    - Streaks: instanced camera-facing quads (0.01 × 0.5 m), alpha 0.12 to 0.2, normal alpha blend (not additive), light grey `#dfe3e6`, recycled when they hit the ground.
    - Ground height lookup: a top-down orthographic "collision" camera renders `positionWorld` of the collision layer into a 512² or 1024² half-float RT. Particles read `.y` at their xz, so splashes land on car roofs and benches too.
    - Splash: an instanced flat quad whose alpha is a thin expanding ring, with a life of 0.3 s. That replaces the GPL splash flipbook.
+   - Splash placement without a collision render: sample ground and props with three's `MeshSurfaceSampler` (MIT) using a weight attribute that is 1 on up-facing triangles and 0 elsewhere, so splashes never land on undersides or hidden faces.
 
 ### GLSL sketch (ground fragment additions)
 
@@ -500,6 +526,7 @@ Rendering:
   - Sand: albedo `#e7d9bd`, roughness 0.9. Compressed darkening is `albedo *= mix(1, 0.82, smoothstep(0, 0.03, −h))`.
   - Snow: albedo `#f3f5f7`, roughness 0.75. A soft cool shade in prints: `albedo *= mix(1, 0.88, smoothstep(0, 0.05, −h))`. This is a neutral grey-blue, not purple.
   - Optional fine glints: a per-texel hash times a narrow specular lobe. Keep them tiny and do not bloom them.
+- Any grain glint is filtered by pixel footprint (fade to its mean at grazing distance) or it aliases while the camera moves. Displacement, airborne grains, bed shading, and shadow all advance from the same fixed-step clock and the same height state.
 - Picking stamp positions: raycast the ground with three-mesh-bvh (MIT) for pointer trails, spacing stamps 0.5 × radius apart along the drag path. For characters, stamp when the foot bone's height is under a threshold and its speed is under 0.2 m/s.
 
 ### GLSL sketch (WebGL2, two fullscreen passes with `GPUComputationRenderer` or plain RT ping-pong)
@@ -664,12 +691,15 @@ A field of individual blades, dense near the camera and thinning to a painted gr
    - Flutter: `sin(6 t + hash · 2π) · 0.04`.
    - Two uniforms, `windDir` and `windStrength`, drive everything.
 6. **Normals**: the face normal rotated by yaw. A "rounded" trick tilts the normal ±0.35 rad about y across the width, so light rolls across each blade. Blend toward terrain-up with distance (0.25 at the LOD edge) so far grass shades like a lawn.
+   - Bend along a quadratic spine so the tip travels an arc and length is kept; yaw each blade partly toward the wind for a combed read.
 7. **View-space thickening** (a Quick_Grass MIT idea): when a blade is seen edge-on, widen it slightly in view space so it does not vanish into a line.
-8. **LOD and culling**: tiles of 16 m. Per frame on the CPU, frustum-test each tile. Tiles closer than 15 m use the high-LOD mesh and farther ones the low-LOD mesh. Beyond `MAX` (60 to 100 m), fade blade height to 0 and let the ground texture take over. Each tile is one instanced draw, or use one draw per LOD with a compacted instance list on WebGPU.
+8. **LOD and culling**: tiles of 16 m. Per frame on the CPU, frustum-test each tile. Tiles closer than 15 m use the high-LOD mesh and farther ones the low-LOD mesh. Beyond `MAX` (60 to 100 m), fade blade height to 0 and let the ground texture take over. When far blades are randomly culled, widen the survivors slightly so apparent density holds, and blend normal and colour toward the ground with distance. Each tile is one instanced draw, or use one draw per LOD with a compacted instance list on WebGPU.
 9. **Shading** (`MeshStandardNodeMaterial`, roughness 0.6):
    - Albedo `mix(base, tip, t^1.5)`, with base `#35521f` and tip `#9fb45a`, randomised ±8%.
    - Root AO `mix(0.45, 1, t)`.
    - Backlight: `tip · 0.25 · max(dot(V, −L), 0)^4 · t`, added through `emissiveNode`. Cheap translucency, no bloom.
+
+**Light variant: patch a stock material.** For a few banners, fabric panels, or foliage cards, patch `begin_vertex` on a stock material instead of a full shader, so PBR lighting stays free. Weight displacement by height above the base so the base stays planted, take a per-instance phase from the instance translation so copies never move in lockstep, and sum two sines at different rates with an amplitude of a few centimetres. Nearly free on an `InstancedMesh`. Never displace a raycast target; freeze time under reduced motion.
 
 ### GLSL sketch (WebGL2, `ShaderMaterial` with `glslVersion: THREE.GLSL3`, `InstancedBufferGeometry.instanceCount = GRID*GRID`)
 
@@ -813,7 +843,11 @@ A calm, bright daylight sea. From above: rolling waves, sun glints, clear shallo
    - Outside the window, reflect: sample a flat underwater colour or a low-res reflection.
    - Anti-alias the window edge with `fwidth` on `sin²θₜ`.
 4. **Medium** (Beer-Lambert): `transmittance = exp(−σ · distance)`. Use `σ ≈ (0.40, 0.06, 0.03) m⁻¹` for clear coastal water. `color = surface · T + fogColor · (1 − T)`, with fog colour a pale sea green-blue `#8fc7c9`, not deep navy.
-5. **Caustics** (optional): the three.js `webgpu_caustics` / `webgpu_volume_caustics` examples (MIT) are the base. A cheap version projects a scrolling Worley pattern (`mx_worley_noise_float`) from the sun onto the floor, times depth fade.
+5. **Caustics** (optional): the three.js `webgpu_caustics` / `webgpu_volume_caustics` examples (MIT) are the base. A cheap version projects a scrolling Worley pattern (`mx_worley_noise_float`) from the sun onto the floor, times depth fade. The physical cheap method refracts a regular ray grid through the surface and measures how each cell's area shrinks or grows on the floor: the area ratio is the light gain, which conserves flux. Fade caustics toward their own mean (not zero) by pixel footprint and depth, because they act like albedo and fading to zero changes floor brightness with camera height.
+6. **One wave module.** Evaluate all wave bands in one function that returns both the analytic normal and a crest metric from the same slopes and phases, attenuate the smallest bands by their screen footprint, and let any foam tint read that crest value (a separate scrolling foam texture drifts out of phase). The wave list lives in one shared module read by the vertex shader, the fragment normal, and a CPU function, so floating objects and camera clearance use the same height in the same frame.
+7. **Refraction honesty.** When scene depth is unavailable, estimate the path as a fallback depth divided by the absolute vertical component of the refracted ray, label it an estimate, and keep it separate from distance haze. Tint uses the absorption form in `shaders.md` section 13.
+8. **Moving grids.** A grid that follows the camera snaps its origin to whole cells, or the surface swims; cells may grow geometrically after a flat near region to extend coverage cheaply.
+9. **FFT hero sea** (C3, hero only, the mobile fallback below unchanged): each cascade gets its own patch length and a disjoint wavenumber band; clamp small wavenumbers before masking so no `1/0` appears; pack conjugate pairs so each spatial field is real; submit each FFT stage separately so writes are visible to the next. Before connecting a spectrum, pass an impulse test (a centred DC impulse becomes a constant, a one-bin impulse a single cosine) within about 1e-3. Whitecaps come from the determinant of the horizontal displacement Jacobian with a per-texel history that snaps down on a fold and recovers slowly, thresholded only at display (a pale foam tone, never a glow). Divide summed height slopes by one plus the summed horizontal derivatives so normals follow choppy folds. Fade each cascade, normal detail, and vertex displacement by a pixel footprint (distance squared times pixel angle over camera height gap). Blend water over sand by the real water column (about `smoothstep(0.025, 0.09)` m). Under water, structures above the surface that must appear in the Snell window are projected forward to refracted screen positions (bracket the crossing solve by about 1.13 times camera depth); never add a near-surface scattering layer; close the horizon with terrain.
 
 ### GLSL sketch (underside of the surface)
 
@@ -880,6 +914,9 @@ three.js MIT (`webgpu_ocean`, `webgpu_backdrop_water`, `webgpu_caustics`, `Water
 | Deformable sand/snow | ≤ 0.8 ms | ≤ 0.5 ms | +1 | 2 MB | 0 |
 | Grass | ≤ 3 ms (vertex bound) | ≤ 2.5 ms | 6 to 20 | 0 | 0 |
 | Ocean / Snell | ≤ 2.5 ms | ≤ 3 ms | +1 to 2 | viewport copy | 0 |
+| Procedural tree (one hero plus cards) | C2, measure | C2, measure | 2 to 4 | none | 0 |
+| Touch frost | about 1 ms | about 1.5 ms | +2 | two half-float targets at display size, blur at 0.4 DPR | 0 |
+| Snowfall and cover | about 0.8 ms | about 1 ms | +1 | none | 0 |
 
 Don't stack more than two of these in one viewport on mobile. Measure on a real GPU (not headless SwiftShader) and check the renderer string before quoting any number. The numbers above are targets, not measurements.
 
@@ -890,3 +927,83 @@ Don't stack more than two of these in one viewport on mobile. Measure on a real 
 - Each canvas has `aria-hidden="true"` when decorative. A DOM text equivalent and a static WebP poster cover no-WebGL and reduced motion.
 - The loop pauses off-screen or when the tab is hidden. Everything is disposed on unmount (RTs, StorageTextures, geometries, materials, the reflector target).
 - Code is written for JAL. Attribution comments cite three.js (MIT) and hash-prospector (Unlicense) where a pattern or constant came from them.
+
+---
+
+## 8. Procedural vegetation beyond grass (`cr.procedural_tree`)
+
+From: Threejs-Awesome-Graphics-Agent-Skills `threejs-procedural-vegetation` (MIT reference text), with growth-table ideas from dgreenheck/ez-tree (MIT) and the MIT flower-field reference. All wording and code here are JAL's.
+
+### Visual goal
+One hero tree, a flower bed, or ivy on a wall, in daylight on the page white, with calm wind.
+
+### Algorithm
+- **Species table.** One small table per level: length, radius factor, taper (about 0.7), sections, radial segments, child count, start fraction, emergence angle, gnarliness, twist. Grow from a queue with a per-level vertex budget, so recursion stays inspectable.
+- **Continuations.** Every branch below the last level spawns one continuation from its tip in addition to lateral children, or the crown becomes a candelabra. Laterals take stratified positions along the parent with small jitter and an independently shuffled set of angular slots; their radius is a factor of the parent radius at the emergence point.
+- **Per section:** advance along local up, perturb by gnarliness times `max(1, 1/sqrt(radius))`, apply twist, and turn toward the growth direction by `force / radius`, so twigs react more than the trunk. Give each branch a whole number of bark wraps around its circumference so texture scale never changes with radius.
+- **Leaves:** along final branches as two perpendicular cards, alpha test 0.5, rounded normals (card normal plus the offset from the leaf origin). Wind moves the tip with a weight that is zero at the card root. Ivy leaves hinge at the petiole. Leaf, branch, and whole-tree wind are separate systems.
+- **Flowers:** heads orient to the stem's tip tangent so they bend with it; the far LOD keeps each species' colour and petal count; population density uses rotated noise octaves so no axis grid shows.
+- **Ivy:** grow a spline, reproject each step onto the host surface, creep in the tangent plane, and build tube rings with parallel-transport frames to avoid twisting.
+
+### Parameters and budget
+- A medium tree is about 6.6k branch vertices and 22k leaf vertices: one hero tree fits T3 and T2; background trees are instanced cards.
+- Cost C2 (one hero tree plus cards). Generated geometry passes the topology gate (`performance.md` section 6.2) for a fixed seed.
+
+### Mobile fallback
+Leaf cards halved, branch radial segments halved, wind on the whole-tree level only; lowest tier is the poster.
+
+### prefers-reduced-motion
+Wind time frozen at a composed pose; the loop sleeps.
+
+### Law
+Judge the tree against its ground, depth haze to the page white, and scale cues, never alone on a flat colour field. Natural greens and bark; no glow, no purple blossoms.
+
+## 9. Touch frost reveal (`cr.touch_frost`)
+
+From: Threejs-Awesome-Graphics-Agent-Skills `threejs-temporal-surfaces` description (MIT text); the upstream example (takuma-hmng8/frozen) has no license and was not copied. Mechanism written for JAL.
+
+### Visual goal
+A fogged pane over a light scene that clears where the pointer touches and slowly frosts back.
+
+### Algorithm
+- One half-float ping-pong target at display resolution: one channel is the visible cleared mask (a noisy brush for an irregular edge), a second is a smoother response channel. Both decay by `1 - exp(-rate * dt)`, so the result is identical at 30, 60, and 120 fps (`performance.md` FPS sweep).
+- Fade the brush near viewport edges and corners so it never clips abruptly.
+- Render the frost structure noise once into static targets. Blur the scene with a separable pass at about 0.4 DPR, mix sharp and blurred scene by the inverse mask, and add a subtle two-scale normal refraction only where frost remains.
+- On resize, clear the history and regenerate the static targets.
+
+### Parameters and budget
+Cost C2: two half-float targets at display size plus one blur at 0.4 DPR; about 1 ms desktop, 1.5 ms mobile (targets, not measurements).
+
+### Mobile fallback
+The blur without refraction; lowest tier is the poster.
+
+### prefers-reduced-motion
+A static half-cleared pane; pointer clearing may still answer input but frost does not regrow on a loop.
+
+### Law
+Neutral cool grey tint, never purple; no sparkle on the frost; the canvas sits inside its section box.
+
+## 10. Snowfall and snow cover (`cr.snowfall`)
+
+From: Threejs-Awesome-Graphics-Agent-Skills `threejs-precipitation-surfaces` (MIT reference text) and achrefelouafi/SnowSystemThreeJS (MIT, section 0.3). Written for JAL.
+
+### Visual goal
+Light snow falling in daylight, settling on the ground and on the tops of objects, on a white-first page.
+
+### Algorithm
+- **Snowfall** is one instanced volume centred on the camera. Each instance stores a normalised spawn point and a seed; the vertex shader moves it by wind and fall speed and wraps with `mod(base + displacement - origin, volume) + origin`, so there is no emitter edge and no CPU update. It reads the weather state object (section 0.4).
+- Starting values: flake radius about 0.07, fall speed about 3.2 with per-flake variation 0.6 to 1.3, sway about 0.5. Flakes are pale grey with normal alpha blending so they read against light surfaces.
+- **Ground cover** uses one height function (a world-space mask from thresholded FBM with a soft edge, times a drift band, times a boundary fade) that both displaces vertices and feeds finite-difference normals (step about 0.08). Albedo shifts to a cool neutral white, roughness about 0.82.
+- **Snow on objects:** coverage in the object's own space (pass a world-to-model matrix) so snow stays put when the object moves, times `smoothstep(0.35, 1, worldNormal.y)` so vertical faces stay clear. Displace along the normal by thickness (about 0.06 m at coverage 0.7, edge 0.15), converting world thickness to local units by the length of the transformed normal (`shaders.md` section 14).
+
+### Parameters and budget
+Cost C1 to C2: one instanced draw for flakes (a few thousand on T2), cover shading in existing materials. Targets about 0.8 ms desktop, 1 ms mobile (not measured).
+
+### Mobile fallback
+Half the flakes, no object cover displacement (shading only); lowest tier is the poster.
+
+### prefers-reduced-motion
+No falling flakes; the settled cover as a still.
+
+### Law
+No sparkle layer (banned in Zone B), no purple shade in shadows (neutral grey-blue), no painted sky.

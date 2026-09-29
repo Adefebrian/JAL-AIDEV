@@ -37,6 +37,10 @@ Defaults worth knowing: `antialias: true`, `alpha: true`, `powerPreference: "hig
 
 Wrap `<Canvas>` in an error boundary whose fallback is also the poster: `fallback` only covers missing WebGL, not driver or context crashes.
 
+**Depth precision.** Most depth precision sits near the near plane, so push `near` out as far as the shot allows and keep far over near under about 10,000 (the JAL default 0.1 and 100 gives 1,000). Model in metres. Coplanar surfaces (decals, labels on a face) get `polygonOffset` on the upper material, not a tiny position nudge. `logarithmicDepthBuffer` is a last resort for huge scenes: it disables early depth test and costs fill.
+
+**Z-order map.** Fix the stacking once per page and write it in the component. Bottom up: the fixed full-page canvas (`z-index: 0`, `pointer-events: none` unless interactive), page content, the sticky header, then the native top layer (`dialog`, `popover`) for anything modal. Nothing else in between. An interactive canvas enables pointer input on its own section only, with `touch-action` scoped so page scroll is never trapped.
+
 Prefer one `position: fixed; inset: 0` canvas behind the page with sections driving what it shows, or drei `View` for embedded regions. Pin the DOM section, never the canvas: pinning re-parents or resizes the canvas and reallocates the drawing buffer.
 
 ## 3. The render loop and one clock
@@ -118,6 +122,8 @@ function Follower({ pointer }: { pointer: React.RefObject<{ x: number; y: number
 - Share geometries and materials (module level, `useMemo`, or one GLTF through `useGLTF`, where the URL is the cache key).
 - Uniforms: create once with `useMemo`, mutate `.value` in `useFrame`. Never pass a fresh `uniforms={{...}}` per render.
 
+**Orientation composition.** Build orientation in two steps: a base quaternion from the travel direction or a target frame (`setFromUnitVectors(localForward, direction)` or a `makeBasis` matrix), then roll or spin as a separate quaternion about that direction, multiplied once. Smooth toward a target orientation with `slerp` using the exponential factor (or drei `dampQ`); for a physical feel, convert the quaternion error to an angular velocity and damp that. Normalise quaternions that accumulate products every frame.
+
 ## 5. Instancing
 
 ```tsx
@@ -164,7 +170,7 @@ Use:
 |---|---|---|
 | `useGLTF(url, dracoPath?, meshopt?, extendLoader?)` + `useGLTF.preload` | Cached GLTF with Draco and meshopt | Call `useGLTF.setDecoderPath("/vendor/r186/draco/")` once; default is gstatic |
 | `useKTX2(url, basisPath)` | KTX2 textures, uploaded immediately | Always pass `"/vendor/r186/basis/"`; default is jsdelivr |
-| `useTexture` | Cached textures | `colorSpace = SRGBColorSpace` on colour maps only |
+| `useTexture` | Cached textures | `colorSpace = SRGBColorSpace` on colour maps only; AO, roughness, metalness, normal, height stay linear. One repeat for every channel of a material, anisotropy per `three-foundations.md` 7.4, metalness 0 and roughness 1 as bases when maps own them, no displacement map when procedural height owns the silhouette |
 | `<Environment files>` + `<Lightformer>` | IBL; Lightformers build a studio rig with no HDR download | Never `preset` (fetches from raw.githack.com) |
 | `<ContactShadows frames={1}>`, `<AccumulativeShadows>` + `<RandomizedLight>` | Soft grounded shadows that read on white | Contact shadows re-render every frame unless `frames={1}` |
 | `<Bounds fit clip observe>`, `<Center>` | Responsive framing at any aspect | Replaces hand-tuned camera numbers per breakpoint |
@@ -249,8 +255,10 @@ extend(THREE as any);
 
 - `<PerformanceMonitor onIncline onDecline onChange={({ factor }) => ...} flipflops={3} onFallback={...}>` averages fps over time inside bounds you set so quality does not ping-pong; after `flipflops` swings it calls `onFallback` and stops. Children read it through `usePerformanceMonitor`.
 - Movement regression: `state.performance.regress()` while the camera moves; `<AdaptiveDpr pixelated />` and `<AdaptiveEvents />` drop DPR and pause raycasts until the scene rests; Canvas `performance={{ min: 0.5 }}` bounds the drop.
+- Wire every optional post step behind a uniform flag (`select(aaOn, aaNode, colorNode)` in TSL) so tier demotion flips `aaOn.value` without recompiling the pipeline, avoiding a compile hitch mid-scroll.
 - The JAL ladder, in this order, never raising quality above the authored level: drop DPR to the tier floor, disable the post pass, halve particle or instance count, switch to the poster (`onFallback`).
 - Dev overlays (`r3f-perf`, `leva`) are approval candidates, loaded only through a dynamic `import()` behind `?debug`.
+- **Progressive accumulation for a still camera** (an expensive still hero: soft shadows, raymarched glass): accumulate into a half-float target while the camera rests. The first frame after any change sits at the pixel centre and replaces history; later frames jitter by a Halton (2, 3) sequence and blend with weight `1/(n+1)` up to about 512 samples. Reset on any camera, size, or content change; an 8-bit target loses faint detail after the first blend. Stop the loop once converged (drei `<AccumulativeShadows>` is the packaged shadow case).
 
 ## 12. Scroll-driven camera binding
 
@@ -260,6 +268,9 @@ Choreography (pinning, scrub versus triggered, SplitText) lives in `scroll-chore
 - `scrub: true` (a direct link) when Lenis already smooths. A numeric `scrub: 0.8` on top of Lenis is a second smoother; a `damp` in `useFrame` would be a third. One smoother per signal. Without Lenis, the numeric scrub is the smoother.
 - Beats are labelled (`tl.addLabel("detail")`) and authored as `{ position, target, fov }`. Interpolate position on an arc-length curve (`CatmullRomCurve3.getPointAt(t)` gives constant speed; `getPoint` does not), the look target on its own curve, or slerp between beat quaternions. During a handoff, write the camera from one interpolation only; stacking a second smoother stalls mid-transition. Handoff easing `1 - (1 - t) ** 1.8`.
 - Stage subjects in the shot's own basis (camera forward, right, up), not independent world coordinates. Each shot saves and restores fov, near, and far.
+- **Beats as design frames.** Author each beat as subject, target screen occupancy (the subject's bounding sphere fills, say, 60 percent of the shorter viewport side), fov, near, far. Derive distance from the subject: `d = r / sin(fov / 2) / occupancy` for bounding radius `r`, with the horizontal fov on portrait screens. Near as large as the closest beat allows, far just past the furthest visible object (far over near under about 1000 for a product scene, so white plinths never z-fight).
+- **Degenerate look basis.** When `abs(dot(forward, up)) > 0.985` (a top-down beat), rebuild right from a fallback axis (world Z, then X) before crossing, or `lookAt` flips.
+- **Input, then constraints.** Apply orbit or pointer look first and spatial constraints second, as a separate step: clamp distance, pitch, floor clearance, and room bounds after the controls update, so each layer can be tested and disabled alone.
 - Triggered beats (`toggleActions: "play none none reverse"` or `CameraControls.setLookAt(..., true)` from `onEnter`) are kinder on mobile, where scroll velocity is erratic.
 - `ScrollTrigger.config({ ignoreMobileResize: true })` and size the canvas with `100lvh` (or measure once) so the address bar does not resize it.
 - Create triggers inside `useGSAP` (or a `gsap.context` scoped to a ref) so unmount reverts them.
@@ -302,5 +313,11 @@ window.__immersive = {
   info: () => gl.info,                    // render.calls, render.triangles, memory
 };
 ```
+
+Inspection controls behind the same flag: `debug(mode)` switching real shader branches (final, each controlling field or mask, normals, a single pass, the camera basis, history), named camera bookmarks, `pause()`, `step()`, `timeScale(x)`, `tier()`, `errors()`, and `resetHistory()`. Camera rigs also expose mode owner, basis vectors, subject screen bounds, and handoff `t`. Each recipe lists its debug modes the way it lists parameters, the capture script screenshots every mode once at 1280, and the hook is stripped from production chunks. A debug branch changes the actual pipeline, not a label, and never alters simulation state.
+
+**Hook contract extras:** `setState(name)` awaits setup, returns `{ state: name }`, and throws on unknown names (configurator variants, the poster fallback, an opened detail view); `pause(true)` freezes simulation and state transitions while rendering continues; reduced-motion and hide-debug hooks work while paused; a frame counter, with `ready` resolving only after it passes about 10; `info` also exposes the canvas CSS size, buffer size, and applied DPR. Capture order: unpause, seed, `setState` (check the acknowledgement), pause, reduced motion, hide debug, an optional settle (0 ms for frozen named states, about 750 ms for an uncontrolled live view), `document.fonts.ready`, two rAFs, all under one 10 s deadline so a hanging hook fails instead of capturing an unverified frame. Missing or no-op hooks fail loudly.
+
+Visual time comes only from the elapsed value the one clock passes in, never `Date.now()` or `performance.now()` inside a uniform, tween, or procedural motion, so `seek` and paused captures reproduce. Every random source (jitter, variation, sound pitch) draws from the seeded generator.
 
 Tests run with `frameloop="never"`, Lenis disabled, and a fixed seed for every noise and particle source (no `Math.random` in visual paths).

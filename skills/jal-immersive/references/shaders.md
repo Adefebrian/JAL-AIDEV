@@ -8,7 +8,7 @@ Law inside a canvas (Zone B): natural light and shade are allowed. No additive g
 
 | Route | When | Notes |
 |---|---|---|
-| `onBeforeCompile` on a stock material | Keep PBR lighting, patch one stage | Always set `customProgramCacheKey`, stash `material.userData.shader` to reach uniforms, reuse one material across meshes. WebGL only |
+| `onBeforeCompile` on a stock material | Keep PBR lighting, patch one stage | Always set `customProgramCacheKey`, stash `material.userData.shader` to reach uniforms, reuse one material across meshes. Meshes needing different uniform values get separate instances returning the same `customProgramCacheKey` (one compiled program, own uniforms); on an `InstancedMesh` read `instanceColor` or the `instanceMatrix` translation inside the patch instead. WebGL only |
 | `ShaderMaterial` | Full control, three prepends attributes and matrices | Skips tone mapping and colour space unless you end `main()` with `#include <tonemapping_fragment>` and `#include <colorspace_fragment>`. Write `gl_FragColor` (three defines it to its own output under `glslVersion: THREE.GLSL3`) |
 | `RawShaderMaterial` | You declare everything | With `glslVersion: THREE.GLSL3` three prepends `#version 300 es`; declare precision, attributes, uniforms, and your own `out vec4` |
 | TSL node material (`three/webgpu`) | WebGPU, or both backends | Replace a slot (`colorNode`, `positionNode`, `normalNode`, `roughnessNode`, `opacityNode`, `emissiveNode`, `outputNode`), keep PBR. `onBeforeCompile` and `ShaderMaterial` are unsupported under WebGPU |
@@ -16,9 +16,40 @@ Law inside a canvas (Zone B): natural light and shade are allowed. No additive g
 
 Load GLSL as text through Bun (`import frag from "./x.frag" with { type: "text" }`). GLSL has no file include: concatenate helper strings (`hash + noise + main`) at import time.
 
+**Uniforms are mutated, never replaced.** Change a uniform only through `uniforms.uX.value = v` or `.value.set(...)`. Reassigning `material.uniforms` or one of its entries breaks the binding three made at compile time, and the change never reaches the GPU. With `onBeforeCompile`, keep a reference to the same uniform objects handed to `shader.uniforms` (in `userData`) and write to those from the frame loop.
+
+**Assert that an `onBeforeCompile` patch applied.** Patch only by replacing a named include chunk (for example `#include <begin_vertex>`), never free text. After each `replace`, compare the result with the input and throw in dev when nothing changed: a three upgrade that renames a chunk otherwise fails silently. Re-run the check whenever the tilde pin in `three-foundations.md` section 1 moves.
+
+TSL cannot overload `+` or `*`, so every expression is a method chain read left to right: `time.mul(2).add(offset).sin().mul(0.5).add(0.5)` is `sin(time * 2 + offset) * 0.5 + 0.5`. Break long chains into named `const` nodes at no cost (the graph compiles to one expression either way).
+
 TSL rules that bite: nodes, not JavaScript variables, carry state (`.toVar()` plus `.assign()`, `select()`, `If`, `Loop`); uniforms are `uniform(value)` and you set `.value` from the frame loop; time is the `time` node; `wgslFn` and `glslFn` are the escape hatches. Built-in inputs: `positionLocal`, `positionWorld`, `normalView`, `normalWorld`, `uv()`, `screenUV`, `instanceIndex`, `vertexIndex`, `cameraPosition`, `positionViewDirection`.
 
+More TSL rules:
+
+- `.toVar("name")` gives a mutable variable with a readable name in the generated WGSL (traceable compile errors); `.toConst()` inlines a compile-time constant; `property(type, name)` shares a named value across stages. A swizzle setter on a vector node (`v.y = limit` inside `If`) is intercepted and works; a scalar has no such setter, so scalars need `.toVar()` plus `.assign()` or `select()`.
+- A uniform can compute itself: `onObjectUpdate(({ object }) => ...)` runs per rendered object and feeds per-mesh data (a hover amount on `object.userData`) to one shared material without cloning; `onRenderUpdate` runs per render call, `onFrameUpdate` per frame. Scroll and time values stay set from the single `gsap.ticker` callback so tests can seek them; the callbacks are for per-object data.
+- Oscillators (`oscSine`, `oscSquare`, `oscTriangle`, `oscSawtooth`) map a phase to 0 to 1. Feed them a JAL-owned `uniform(0)` set from the ticker, never the built-in `time` node, which never stops: under reduced motion it is set once to a composed value, and `seek(p)` stays deterministic.
+- `wgslFn(sourceString)` compiles one WGSL function whose signature defines inputs and return type; call it like a node, wrap it in a TSL `Fn` with defaults, and keep the body small and pure (math only, no bindings). Only for porting proven WGSL or math TSL cannot express: it does not run on the WebGL2 fallback, so the recipe needs a TSL or GLSL twin **[verify]**.
+
+**Node materials and slots (WebGPU).** Standard is the default; Physical only for visible clearcoat, transmission, or sheen; Basic for unlit ink or UI-in-3D surfaces; Lambert for cheap matte mobile props; Matcap for the clay look (`three.matcap_clay`); Normal as a debug view; Points, Sprite, LineBasic, LineDashed for their primitives; Toon only after a JEV taste pass. `opacityNode` needs `transparent = true` (usually `depthWrite = false`); `alphaTestNode` cuts without sorting; `normalMap(tex, strength)` takes a strength scalar; `bumpMap(heightTex, scale)` makes normals from height (about 0.03 on a unit sphere). `envNode` (named `envMapNode` in some docs **[verify]**) gives one material its own environment; `scene.environment` stays the canonical source. `outputNode` keeps lighting; `fragmentNode` replaces the whole fragment and skips lighting **[verify]** whether output transforms still run; `vertexNode` replaces the full clip-space position, so prefer `positionNode`.
+
+### TSL cheat sheet
+
+- **Types:** `float` f32, `int` i32, `uint` u32, `bool`, `vec2/3/4`, `color(hex | r, g, b)` (a vec3), `mat2/3/4`. Convert with `.toFloat()`, `.toInt()`, `.toVec4(w)`, `.toColor()`. Swizzles as in GLSL including reorder and repeat; `xyzw`, `rgba`, `stpq` are equivalent sets.
+- **Logic as methods:** `lessThan`, `greaterThanEqual`, `equal`, `notEqual`, `and`, `or`, `not`, `xor`; bitwise `bitAnd`, `bitOr`, `bitXor`, `bitNot`, `shiftLeft`, `shiftRight` for integer hashing.
+- **Geometry inputs:** `positionGeometry` is the raw attribute, `positionLocal` is after skinning and morphs, then `positionWorld`, `positionView`; normals follow the same pattern; `tangent*` and `bitangent*` in local, world, view; `uv(1)` is the second UV set; `vertexColor()`.
+- **Screen inputs:** `screenUV`, `screenCoordinate` (pixels), `screenSize`, `viewportUV`, `viewport`, `depth`, `cameraNear`, `cameraFar`, and the camera matrices.
+- **Control flow:** `Loop(n, ({ i }) => ...)` counts 0 to n-1; `Loop({ start, end, type: "int" }, ...)` sets bounds; `Loop(w, h, ({ i, j }) => ...)` nests; `Break()` and `Continue()` inside. `Switch(x).Case(0, fn).Default(fn)` replaces an `If` chain on an integer. `Discard()` is fragment-only; `Return(value)` exits a `Fn` early. Keep loop bounds uniform or constant.
+- **`Fn` parameters:** positional `Fn(([a, b = 1.0]) => ...)` or named `Fn(({ colorA, t = 0.5 }) => ...)`. Called with no arguments, the destructured object receives the build context (`material`, `geometry`, `object`), so a helper can branch at build time on `material.userData` at no runtime cost.
+- **Utilities:** `remap(x, inLow, inHigh, outLow, outHigh)`; `range(min, max)` creates a per-instance random attribute on instanced meshes (the cheapest per-instance variety); `checker(uv())` is a debug texture for UV stretching; `triplanarTexture(texX, texY, texZ, sharpness)` for meshes without usable UVs (three samples per texture: colour only, derive roughness from the same sample; see section 17 for the weighting rule).
+
 Precision: `highp` for positions and anything accumulated over time; `mediump` is fine for colour on mobile. Keep `uTime` small (wrap it with `mod(time, 1000.0)` in periodic effects) so float precision does not degrade after long sessions.
+
+**Parameter naming.** Uniform and prop names describe the perceived effect (`ridgeWidth`, `coastBlend`, `cavityDarkening`, `wetness`), never the implementation (`noise3Amount`, `k2`), grouped by role in the recipe's Parameters table so a JEV taste call or a designer can tune one visual quality without reading the shader.
+
+**Coordinate ownership.** Choose each field's domain from its cause: object-space rest position for material identity that must stick to a moving object (pass an undeformed position attribute, never the displaced one); a world plane for wetness, water, and snow that belong to the world; screen space only for image effects. Never mix domains in one field unless the coupling is intended and named. Sampling the displaced position stretches noise on steep relief; world space on a moving object makes the pattern swim.
+
+**Field bundles.** Before writing a material, list its fields: stable coordinates, macro form, meso structure, derived causes, and the channels that consume them. Each band has one job and one locked scale (silhouette, regions, surface breakup, micro normal). Secondary masks come from causes (slope `1 - abs(dot(n, up))`, cavity, exposure, distance to a water line), not new noise. Warp the coordinates, not the outputs. Displace geometry only with bands the mesh can carry and push finer bands into the normal; keep categorical masks broad so regions never break into bubbles. When the CPU needs the same field (placing props on a displaced surface, raycasting a shader-displaced ground), implement one deterministic field in both languages from the same constants and assert parity in `bun test` at fixed sample points.
 
 ## 2. Hashes
 
@@ -85,6 +116,16 @@ vec2 curl2(vec2 p) {                                     // 2D curl of a scalar 
 
 3D curl for particles: take three offset noise potentials `P = (n(p), n(p + 31.4), n(p + 71.9))` and `curl = (dPz/dy - dPy/dz, dPx/dz - dPz/dx, dPy/dx - dPx/dy)` by central differences, or use the `curlNoise` TSL addon. For a 3D simplex in GLSL, stegu/webgl-noise (MIT) may be vendored with its notice.
 
+**Crack fields.** Take the Worley F2 minus F1 border at two scales (the second about 2.7 times the frequency at half strength), combine with `max`, and put one domain warp in front of both so large and small fissures stay related. The same crack value lowers albedo, raises roughness, and cuts a groove into the normal; a colour-only crack reads as a decal.
+
+**Object-locked frames.** A pattern that belongs to an object (grooves, brushed direction, moss coverage) is evaluated in that object's frame: sample in local position, or pass axes from its world quaternion each frame. World axes make the pattern slide when the object rotates; camera axes make it follow the viewer.
+
+**Seam-free angles.** `atan` has a seam. Feed noise the unit-circle pair `(cos(a + drift), sin(a + drift))` plus the other coordinate, so the field wraps and can be advected by changing `drift`. Works for any radial or cylindrical pattern.
+
+**Distance-weighted detail.** For scenes that span near and far views, compute near, mid, and far weights from camera distance with smoothsteps and fade the contribution of fine bands (bump, sharp edges, micro variation) by them, with each band's frequency fixed. Changing frequencies with distance makes the pattern crawl.
+
+**Octave footprint fade.** In object-space FBM, weight each octave by `1 - smoothstep(0.25, 0.5, footprint * octaveFrequency)` with `footprint = fwidth(samplePosition)`, so octaves vanish once their period falls under about two pixels; otherwise fine grain at hundreds of cycles per metre aliases into drifting blotches. Give each material its own micro-variation tuple (map noise 0.25 to 0.75 into `roughness = base plus or minus amount`, bump height `strength * 0.0006 m`); never share one generic noise node across metal, polymer, and paint.
+
 **Anti-alias procedural patterns.** Any periodic band whose period drops below the pixel footprint shimmers. Fade it toward its mean (not zero) by `fwidth`:
 
 ```glsl
@@ -134,6 +175,16 @@ float march(vec3 ro, vec3 rd, float jitter) {
 
 JAL look for a blob: matte or satin surface lit by the environment, a soft contact shadow under it, rim as a slight darkening. TSL has `tsl/utils/Raymarching.js` in the addons.
 
+**Integrator hygiene.** Every march has a hard iteration cap, an early exit, and a recorded termination reason (hit, escaped, capped) visible in a debug view. A ray that hits the cap returns a defined mean value, not whatever it ended on, or it speckles. Size steps from the local feature scale where curvature is sharp, and catch thin sheets (disks, water planes) with a crossing test between samples, since a large step skips them.
+
+**Volumes and puffs** (a cloud puff, mist in a jar, a smoke plume on a light page):
+
+- Bound the march to the object's box or sphere interval and to the opaque scene depth; uniform steps over that interval, each sample weighted by step length so the look does not change with step count; start offset by at most a quarter step with per-pixel interleaved-gradient noise.
+- Shape density by letting coverage remap a base shape and fine detail erode it (full at the top, wispy at the base) rather than adding noise. Build 3D noise textures once and animate by advecting their offsets.
+- Integrate front to back with the energy-conserving step (scattered light equals source times one minus the step transmittance, divided by extinction); stop below about 0.01 transmittance. Light with a short march toward the sun, a two-lobe Henyey-Greenstein phase, a powder term for dark edges, and a few multi-scatter octaves halving each time.
+- A domain that is too long is fixed by shrinking the domain, never by adding extinction or view-angle masks.
+- Budget: the raymarch budget above (48 to 96 steps at 0.5 resolution scale). White-first: bright daylight puffs, no glow, no painted sky behind them.
+
 ## 5. Domain warping
 
 Evaluate noise at a position offset by noise: `f(p + k * fbm(p + k * fbm(p)))` (after IQ's "warp" article). One level gives soft marbling, two give fluid swirls. Animate only the inner term with time; it moves more calmly than scrolling the whole field.
@@ -153,6 +204,10 @@ Law note: a full-bleed smooth colour field reads as a gradient and is banned out
 - Schlick: `F = F0 + (1 - F0) * pow(1 - saturate(dot(N, V)), 5)`, F0 0.02 to 0.04 for dielectrics.
 - Stylised rim: `pow(1 - dot(N, V), p)` with p from 2 to 5.
 - On light scenes a rim is a subtle darken or tint that separates the silhouette from the white page. An additive bright rim is glow and banned.
+- Rim and Fresnel incidence use the normal through the inverse-transpose normal matrix (`normalMatrix`, view space), not the bare model matrix, which is only right under uniform scale.
+- **Exact Fresnel inside bodies.** Keep Schlick for surface sheen. For any path that bounces inside glass or water use the exact unpolarised form (the mean of the squared s and p ratios) and return 1 past the critical angle, so total internal reflection falls out of one expression (Schlick never reaches 1 and leaks energy). Clamp incidence cosines to about 1e-4 at silhouettes, and after the last allowed bounce add the remaining throughput along the current direction instead of dropping it, or thick cores go dark.
+- **Reflection through alpha blending.** On a transparent surface that is mostly reflection (a thin shell), alpha blending scales the reflection by alpha too. Set alpha to the mean reflectance clamped to about 0.001 to 0.985 and output reflected radiance divided by that alpha, so the blend equals the reflection and the background is attenuated by the matching amount.
+- **Energy-preserving lobes.** When a highlight lobe is narrowed or widened, keep its integral constant: a Gaussian lobe is divided by `sqrt(2 pi) * sigma`; a power-cosine lobe of exponent `n` scales by about `n` relative to its authored value. Broadening a glint where the normal is unresolved then becomes a soft sheen instead of crawling, with no brightness loss.
 
 ```js
 // TSL: TSL has no fresnel export, so write it
@@ -182,11 +237,18 @@ col += (hash21(ivec2(gl_FragCoord.xy)) - 0.5) / 255.0;    // after tone mapping 
 
 ## 9. Colour grading
 
+- **Chain order, one owner per stage, each with a disable switch:** scene in linear HDR (float or half-float targets), approved screen-space lighting work if any, distance haze, exposure, tone map, optional 3D LUT in display space, AA (FXAA needs display-space input), dither, output. Keep values unclamped until the tone map; clamping earlier turns highlights grey and breaks later exposure changes.
 - Grade in linear space before tone mapping: exposure and white balance.
 - Apply a 3D LUT in display space after tone mapping: `lut3D` (TSL), the `LUT` effect in pmndrs postprocessing (approval candidate), or `LUTPass` in three addons. A 32-cube LUT is enough.
-- Keep contrast, saturation, and hue shifts small. The LUT's job is brand consistency, not a look.
+- Keep contrast, saturation, and hue shifts small. The LUT's job is brand consistency, not a look. Colour nodes (`saturation(c, s)` with 1 neutral, `vibrance`, `hue`, `grayscale`, `posterize`, the `sepia` addon) allow only small static trims on JAL scenes (saturation 0.9 to 1.1, vibrance near 0) inside the same fused pass as the LUT; animated hue shifts, posterize, and sepia are filter looks for noyzzi or a JEV taste pass.
+- AA nodes: `fxaa` and `smaa` from `three/addons/tsl/display/FXAANode.js` and `SMAANode.js` expect display-space input (after `renderOutput`); `traa` (`TRAANode.js`) needs a velocity target and a jittered camera, pays off only with slow camera motion, and replaces rather than stacks with FXAA or SMAA.
+- Blur family (inside lawful recipes only, never a full-screen soften, each counted against the post budget): `gaussianBlur(node, sigma)` as the quality default at a fractional resolution; `boxBlur` for cheap mobile; `hashBlur` single-pass noisy frost; `bilateralBlur` edge-preserving.
+- Depth of field (`three.post_light` only, T3 only): `dof(colorNode, scenePass.getViewZNode(), focusDistance, focalLength, bokehScale)` with focus at the subject in world units and bokeh scale about 1, so it reads as a lens; never over text or UI planes.
 - WebGPU `RenderPipeline`: set `outputColorTransform = false` and call `renderOutput(scenePass)` wherever the chain needs display-space input; FXAA and LUTs need sRGB input.
-- Exposure metering (only if a scene has a real exposure problem): 64 by 36 meter, readback every 12 frames, clamp exposure 0.45 to 1.85, middle grey 0.18, adapt up 3.2 and down 1.1. Tone-map exactly once, convert to sRGB exactly once.
+- Exposure metering (only if a scene has a real exposure problem): render luminance into a 64 by 36 byte target encoded as `L / (L + 1)`, read it back asynchronously (never a second readback while one is pending, scheduled by time, about every 200 ms, not by frame count), decode with `e / max(1e-4, 1 - e)`. Average in log space with weight 1 for `L > 0.002` and 0.15 below, and in a JAL canvas also weight by alpha so transparent page pixels do not drag exposure up. Target `clamp(0.18 / avg * 2^EV, 0.45, 1.85)`, reached with `current += (target - current) * (1 - exp(-dt * speed))`, speed 3.2 brightening and 1.1 darkening; a failed readback holds the last value. Exactly one stage owns exposure (`renderer.toneMappingExposure` or the adapted multiplier, never both), and exposure never compensates for wrong light ratios, which are fixed in the lights. Tone-map exactly once, convert to sRGB exactly once.
+- **A brand LUT generated in code:** a 32-cubed RGBA `Data3DTexture` (linear filter, clamp to edge, no mipmaps, unsigned byte) built by pushing each lattice colour through a small recipe: black and white point, a gentle S-curve blended at about 0.44, contrast about 0.5 pivot, shadow, midtone, and highlight tints weighted by `1 - smoothstep(0.12, 0.54, luma)`, `max(0, 1 - abs(luma - 0.5) * 2)`, and `smoothstep(0.48, 0.92, luma)`, per-channel gamma, saturation, vibrance, clamp 0 to 1. Sample with `uv = saturate(c) * (31 / 32) + 0.5 / 32` so lattice centres line up; blend `mix(c, graded, intensity)`. Neutral stays neutral on the page white.
+
+**Aerial perspective toward the page white.** A transparent JAL canvas has no sky, so the lawful atmosphere is analytic depth haze. Per fragment take view distance `d` from the reconstructed view-space position (never raw depth, which is non-linear), transmittance `T = exp(-sigma * d)`, inscatter `(1 - T) * hazeColor`, output `surface * T + inscatter`. `hazeColor` is the linear value that tone maps to `--color-page`, so distant forms fade into the page white, not grey. Keep `T` and inscatter as separate debug terms, share `sigma` and any sun direction with the key light, and add height falloff `sigma(h) = sigma0 * exp(-h / H)` only when the camera sees a large vertical range. Never a full-screen fog colour or a sky gradient.
 
 ## 10. Image hover: cover UV and eased pointer
 
@@ -276,14 +338,74 @@ renderer.setRenderTarget(target); renderer.render(pass, passCam); renderer.setRe
 
 - three also ships `FullScreenQuad` in `three/addons/postprocessing/Pass.js`.
 - R3F: `<mesh frustumCulled={false}><planeGeometry args={[2, 2]} /><shaderMaterial vertexShader={clipSpaceVert} fragmentShader={frag} /></mesh>`, rendered into a `useFBO` target from a `useFrame` with the portal pattern (`particles-physics.md` section 4).
-- WebGPU: `const quad = new THREE.QuadMesh(nodeMaterial); renderer.setRenderTarget(rt); quad.render(renderer);`.
+- WebGPU: `const quad = new THREE.QuadMesh(nodeMaterial); renderer.setRenderTarget(rt); quad.render(renderer);`. A custom post effect is a `Fn` reading the scene pass texture node and returning a colour, assigned to `renderPipeline.outputNode` (sample other UVs with `texture(sceneTextureNode, uv)`): the JAL use is the section 8 dither after `renderOutput`. A vignette stronger than a few percent is banned.
 - Render-target formats: `HalfFloatType` for state and HDR data (portable to mobile), `NearestFilter` for simulation state, `LinearFilter` plus mipmaps for blur sources. Dispose every target on unmount.
+- **Pass hygiene.** A custom full-screen or offscreen pass saves and restores renderer state (target, viewport, `autoClear`), disposes its targets and materials, and is removed from the pipeline when disabled rather than run at zero strength. Texel size is a `vec2` of `1/width, 1/height`, never one scalar. Shaders that use `gl_FragCoord` get the drawing-buffer size (`renderer.getDrawingBufferSize`); a state target's aspect comes from its own size, not a lower-resolution helper.
+- **Finite data textures.** A bounded field later sampled with clamp-to-edge (a contact mask, a stamp field, a caustic receiver) zeroes its outer two texels and crops with a two-texel guard, or the clamp smears any edge value into streaks.
 
-## 12. Shader self-check
+**Procedural tile textures.** For a repeating pattern (hex mesh, perforation, weave), draw one seamless tile on a 2D canvas at startup (a pointy-top hex of side s has a tile period of `sqrt(3) * s` by `3 * s`), wrap it in a `CanvasTexture` with `RepeatWrapping` on both axes and anisotropy per `three-foundations.md` 7.4, cache it at module scope, and apply it as the alpha map of one swept surface instead of modelling cells: one draw call at any cell density.
 
+**Baked imperfection.** Hand-made objects read as real when irregularity is baked at build time from seeded noise: offset path control points by about 0.7% of the object height, scale the tube or edge radius by 1 plus or minus about 0.28 along the path, and write the same noise into a per-vertex attribute (clamped 0.55 to 1.32) that the material reads, so shading stays correlated with shape. Periodic noise for closed paths. Drive roughness or a slight darkening with it (wire, stitching, glaze thickness), never emission.
+
+## 12. Specular anti-aliasing and derivative bump
+
+- **Specular AA.** Glossy procedural surfaces sparkle when the normal changes faster than a pixel. Take the per-pixel normal variance as the larger squared length of `dFdx(N)` and `dFdy(N)`, and widen roughness to `min(1, sqrt(r * r + k * variance))`, `k` about 1 to start. It trades sparkle for a slightly broader highlight exactly where detail is unresolved. Compare with stock `MeshStandardMaterial` first: three already filters normal maps on some paths.
+- **Derivative bump.** When a height field exists only in the fragment stage, build the bump normal from screen derivatives of the view position and of the height, which keeps the stock lighting path and replaces only the normal input. Guard the determinant with a small epsilon and scale bump strength down with distance, so it never implies relief the silhouette lacks.
+
+## 13. Refractive bodies beyond `MeshPhysicalMaterial`
+
+The default for hero glass stays `MeshPhysicalMaterial` transmission. When a hero object needs a believable thick interior (sculpted glass, resin, ice):
+
+- **Two-pass image-space thickness.** Each frame, before the camera pass and with the same camera, render only the glass subject into a half-float RGBA target (nearest filtering, no mips, depth on) storing world normal and camera distance, double-sided with depth inverted so the farthest surface wins. The glass shader seeds the interior segment with the view-ray thickness, then refines the exit point three times by projecting the estimate into that buffer. Clamp the segment between a minimum wall (about 0.08 at unit scale, so open sheets still tint) and three times the bounding diagonal.
+- **Tint as absorption.** The author picks the colour a chosen thickness should show; extinction per channel is `sigma = -ln(max(tint, 1e-4)) / depth` and transmission is `exp(-sigma * pathLength)`, so thin edges and thick cores agree. Decode the tint from sRGB exactly once: a three `Color` from a hex literal is already linear, and a second conversion roughly doubles extinction silently. For `MeshPhysicalMaterial` the same idea is `attenuationColor` plus `attenuationDistance`.
+- **Dispersion,** if used at all, stays subtle so it never reads as RGB split: derive a Cauchy fit from the glass pair `n_d` and Abbe `V_d` on the CPU, trace about 8 wavelengths between 415 and 695 nm, weight by colour-matching curves, and divide by the weight sum (under 6 samples splits into visible copies).
+- A closed faceted gem is exact with a BVH hit against the mesh, where the image-space path is blind; direct `three-mesh-bvh` import is an approval candidate.
+- Ship three debug views (view-ray thickness, stored back normal, entry Fresnel) and three checks: one wavelength reproduces the environment with no cast; zero absorption never exceeds the brightest environment value; a single segment shows refraction with no inner structure.
+- Cost C3, hero object only: the subject is rasterised twice.
+
+## 14. Surface accumulation masks
+
+For moss, dust, or snow: one mask drives coverage and raised thickness, and the same mask blends albedo, AO, roughness, and normal, so colour and height never disagree. On a ground plane the mask is in world XZ. On a model, compute coverage in model-locked coordinates (it must not swim when the object moves), gate it by the world-normal up component above about 0.35, and convert the desired world thickness through the mesh scale before displacing along the normal. When textures carry the identity and procedural fields only place it, say so in the recipe; a texture-backed look is not "procedural".
+
+## 15. Spherical bodies (planets, globes, spherical products)
+
+- At build, store the normalised pre-displacement direction as its own attribute and sample every field from it, so noise does not stretch on displaced slopes.
+- Domain-warp on a sphere by removing the radial part of the warp vector and renormalising onto the shell.
+- Features come from causes, never isolated threshold blobs: craters as floor, wall, rim, and optional ejecta; biomes from humidity (broad noise), temperature (latitude plus a height lapse), and slope (normal against the radial direction).
+- Two coastline widths (a wider colour edge, a sharper land and water edge), both narrowing as the camera approaches; fade detail by distance with near, mid, and far weights instead of switching frequencies.
+- Whole-body views: three or four `THREE.LOD` levels with hysteresis around 0.15, all from the same height function, so the silhouette never changes between levels.
+- **Lit terminator and layered shells:** blend day and dark-side textures by `smoothstep(0.4, 0.6, dot(normalWorld, sunDir) * 0.5 + 0.5)` for a soft terminator, roughness following the same factor. A cloud or coating layer is a second sphere at 1.01 times the radius, `transparent`, `depthWrite: false`, UVs scrolled by a JAL-owned time uniform (frozen under reduced motion). No night-side emissive lights, no star field.
+- Accept a body only if it holds unlit, as flat albedo, under grazing light, from far and close, across three seeds.
+- JAL canvas: no atmosphere glow shell, no dark space field. The body sits on the page white with natural terminator shading.
+
+**Dissolve** (C1). A reveal or exit compares a stable hash of quantised local position (`hash(positionLocal.mul(density))`, or smoother noise) with a threshold from scroll progress and discards below it (`Discard()` in TSL). The edge band just above the threshold (`smoothstep(t, t + 0.1, noise)`) darkens or tints toward ink or shifts roughness, never brightens (an emissive edge is glow). Reveal and removal read differently (a reveal rising from the base blends `position.y` into the threshold). `discard` disables early depth rejection, so the patched material is used only while the object transitions and swaps back to the stock material at 0 and 1. Reduced motion: a crossfade of 150 ms or less.
+
+## 16. Mesh-to-mesh sweep handover
+
+Swapping one product model for another inside a canvas (idea only; the source repository carries no license):
+
+- Compute one shared height range from the union of every model's bounds with a small margin (about 0.1 units each end), normalise world height into it, and discard the outgoing mesh below the progress value and the incoming mesh above it, so they never overlap.
+- Progress is a linear ramp (about 1.5 s) inside a longer dwell (an eased moving line visibly decelerates); derive the current index from absolute elapsed time so a dropped frame cannot desync.
+- The edge is a thin darker band, never an additive glow. Preallocate every mesh so the handover allocates nothing. Reduced motion: a 150 ms crossfade.
+
+## 17. Parallax occlusion mapping and projected detail
+
+- **POM** (C2, hero surfaces only). Red channel is height (white is the peak); march depth `1 - h` in tangent space. Layers `mix(maxLayers, minLayers, saturate(abs(viewDir.z)))`; UV step `viewDir.xy / max(abs(viewDir.z), minViewZ) * scale / layers`. Starting tiers: low 8 to 32 layers, medium 16 to 96, high 32 to 160; T2 uses low, T1 drops POM for a normal map. Interpolate between the last two layers for the hit, and compute the march once for colour, roughness, and coverage (in TSL the normal graph compiles separately and needs its own call). Capture front, grazing, and along-axis views at every tier before shipping.
+- Bounded tiles test coverage on the marched UV and clamp height fetches to the tile so grazing rays never hit a neighbour; feather only the coverage edge (alpha to coverage). On convex hosts add curvature sag to the ray depth (a cylinder tiled `n` times around uses curvature `[2pi / n, 0]`) and inflate the shell by the maximum relief so the floor stays on the real surface. Self-shadowing marches a second ray from the hit toward the light (about 20 steps, bias 0.03) and applies to direct light only; cast-shadow carving must be built in the shadow pass.
+- **Planar and triplanar projection** paints graphics or detail across several parts without UV unwraps: project from world planes, weight by the world normal raised to about 4, and normalise the weights so a 45 degree shoulder commits to one plane instead of printing twice. A kill mask stops downward-facing surfaces low in the frame from smearing; limit the projection to a world band so unrelated objects stay clean.
+
+## 18. Shader self-check
+
+- [ ] A black, missing, or wrong mesh after a shader edit: read the console for `THREE.WebGLProgram` and `THREE.WebGLShader` errors first. Keep `renderer.debug.checkShaderErrors` on in dev and test; in production turn it off (it costs a sync stall) and set `renderer.debug.onShaderError` to log once and swap to the poster. Under TSL and WebGPU a compile error is a rejected `compileAsync` promise: await it and catch.
+- [ ] No per-pixel divergent `if` on mobile (a condition built from noise, UV, or a texture value): GPUs shade pixels in groups and a split group pays for both sides. Use `mix(a, b, step(edge, x))`, `smoothstep` blends, or `select()` in TSL. Branching on a uniform or constant is fine.
 - [ ] No `sin`-hash in anything visible on mobile; integer hash instead.
 - [ ] Periodic detail fades by `fwidth`; no shimmer in a moving capture.
 - [ ] Colour output joins three's pipeline (tone mapping where it should, colour space always) or is authored in display space; images are not tone mapped.
 - [ ] No additive rim, bloom-like falloff, neon, purple, or chromatic fringe in a JAL canvas.
 - [ ] `smoothstep` never called with edge0 greater than edge1 (undefined in GLSL and WGSL): use `1.0 - smoothstep(a, b, x)`.
 - [ ] Time is frozen, or the loop sleeps, under reduced motion.
+- [ ] Any vertex deformation (wobble, bend, wind) derives its normal from the deformation (analytic gradient on the tangent plane, or central differences of the displaced position); the rest normal makes rubber light like a sphere.
+- [ ] Displacement and shading normals come from one height function; when a CPU path also evaluates it (placement, collision, floating objects), a test samples fixed points and compares within a small tolerance.
+- [ ] Texture fetches inside loops, data-dependent branches, or after `discard` use an explicit level (`textureLod`, `.level()` in TSL): implicit derivatives are undefined there. Shadow-style comparison samples are taken unconditionally and weighted afterwards.
+- [ ] Vectors that can reach zero (a cross product at alignment, a centre-to-point direction) are length-checked before `normalize`, falling back to the last finite value or a fixed axis: one `NaN` blanks the frame.
+- [ ] Materials: no normal detail survives below one pixel; triplanar blends show no seam; roughness varies with the same causes as colour; a custom lighting term is checked against the stock material for energy; no post pass exists to calm a sparkling highlight (the fix belongs in the material, section 12).

@@ -68,6 +68,8 @@ Both frame hooks throw a clear error outside a Composition or Player.
   - Default `JAL_SPRING` is critically damped (`damping 20, stiffness 100, mass 1`) with `overshootClamping: true`, so it never passes `to`.
   - Returns `to` exactly once settled. `durationInFrames` stretches time so it settles on that frame. `delay` holds `from` until it passes.
   - `measureSpring({ fps, config })` gives the settle frame, for sizing a Sequence.
+- **Phased travel** (slow start, push, settle) chains constant-speed, constant-acceleration, and constant-deceleration phases solved so position and speed stay continuous. With normalised distance, slow distance `s0` over `t0`, speed `v0 = s0 / t0`, acceleration `a = (1 - s0 - v0 * (ta + 0.5 * td)) / (0.5 * ta * (ta + td))`, peak `v0 + a * ta`, deceleration `peak / td`. Evaluate each phase analytically from the frame so scrubbing stays exact, and derive later phase boundaries from the durations in code so one changed duration cannot desynchronise the rest.
+- **Value tracks** for any keyed value use monotone cubic Hermite interpolation (Fritsch-Carlson), never a natural cubic (it overshoots) (`procedural-geometry.md` section 3).
 - `createFrameClock({ fps, durationInFrames, loop, onFrame, onEnded })`: the Player's clock, exported for custom surfaces. Driven by elapsed time (`performance.now()` deltas), never by counting rAF callbacks: a 120Hz display, a dropped frame, or a throttled tab all land on the right frame, and `onFrame` fires only when the integer frame changes.
 
 ## 3. Authoring a composition
@@ -138,6 +140,8 @@ What the Player guarantees:
 - The clock stops when the Player leaves the viewport (IntersectionObserver) and when the tab is hidden (`visibilitychange`). The viewer's play intent is kept and resumes on return. Autoplay therefore starts only once the Player is on screen.
 - An autoplaying piece longer than 5 seconds always shows its pause control.
 - Pressing play at the end of a non-looping piece restarts from frame 0.
+
+A real `<video>` with speech or meaningful sound ships a WebVTT `<track kind="captions" srclang="en" default>` and puts its key message in visible DOM text beside it. A muted, decorative, or scroll-scrubbed video needs no captions but takes the same pause control past 5 seconds and the same reduced-motion still as a composition.
 
 Choose `live_dom` Player demos by default for on-site demos (JEV `motion.demo_medium`). They stay crisp at any DPR, stay editable, weigh nothing over the wire, and need no new tech.
 
