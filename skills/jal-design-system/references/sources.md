@@ -253,3 +253,47 @@ Source: Material Web (`@material/web` v2.5.0, tokens from Material 3 v0.192), Ap
 | Required asterisk as the only required cue (`no-asterisk` toggle) | `required` on the control plus a visible marker whose meaning the form states once |
 | `::part()` styling across Shadow DOM | No Shadow DOM; parts are classes inside the component, styled through its tokens |
 | `md-` element names, `--md-*` token names, `.md-typescale-*` classes | Never used; JAL names only |
+
+## impeccable (Paul Bakaus), the core of taste and craft
+
+Source: github.com/pbakaus/impeccable and impeccable.style/docs, Apache-2.0. JAL restates its knowledge in JAL's own words and marks the files it changed. It lives in `references/craft.md` (the craft floor, detector thresholds, ban list, critique with Nielsen's 10 heuristics, the fresh-context finish review and its four verdicts, the two-round cap) and `references/directions.md` (5 to 7 candidates from the audience's world, JEV screening, the seeded draw among survivors ranked 3 to 7, the six variation axes, the direction contract). It is removed by law where it allows cream or beige bans, bolder color strategies than one accent at about 3%, blurred shadows, motion blur, overlap, or its Node, binary, and telemetry tooling (25 conflict rows in `craft.md`). impeccable is the core; hallmark and every other source combine with it whenever JEV judges they fit.
+
+## refero (Refero Styles and refero_skill), visual directions
+
+Sources: styles.refero.design (under Refero's Terms of Use: a manual sample of 29 styles, no bulk extraction, nothing fetched at build time, and its robots.txt blocks Claude crawlers) and github.com/referodesign/refero_skill (MIT). JAL took:
+- the reference-first method
+- the anatomy of a DESIGN.md style document
+- cross-style statistics: a 1.2 type ratio in 62% of the sample, display tracking around -0.012em, card radius 12 to 16, zero or one accent hue in 69%
+- 13 visual directions, expressed as JAL Core knob sets in `references/directions.md`
+
+No Refero style content is reproduced.
+
+## hallmark, craft principles merged into the impeccable core
+
+Source: the local `hallmark` skill (an anti-slop design skill for greenfield pages, audits, redesigns, and design study). It ships no license file, so JAL takes **principles only**: every rule is restated in JAL's own words, and no hallmark text, table, code sketch, token value, or file is copied, installed, or run. It is not a design system and not a runtime; it supplies no tokens and no components. Knowledge-only: JAL agents never load the `hallmark` skill to build a JAL frontend (`jal-ui-taste` Design principles); they read the restated rules in JAL files.
+
+### How it is merged
+
+- **Into impeccable, never beside it.** hallmark strengthens the impeccable-based `craft.md` and `directions.md`. impeccable stays the core and wins every disagreement, except the five points where hallmark is clearly stronger, each marked **H>I** with its reason: the context ask (`hm.context_gate`), headline character buckets (`hm.headline_buckets`), silent success (`hm.silent_success`), copy specificity (`hm.copy_specificity`), and the reference-study protocol (`hm.reference_study`, with `hm.reference_url_safety`).
+- **Tagged and traceable.** Every adopted item carries `From: hallmark` and an `hm.` ID where it lands, so any rule traces back to this entry.
+- **Law first.** JAL law beats both sources. The 49 hallmark conflict rows in `craft.md` section 13 record each hallmark position, its winner (LAW, I, H>I, or Brian), and the lawful replacement.
+- **Combining has no fixed limit.** hallmark's cap of three animation primitives per page is not adopted (Brian's ruling); JEV judges each added layer (`ui.component_recipe`, `imm.recipe`).
+
+### Where the principles land
+
+| Principle family (hm. IDs) | JAL home |
+|---|---|
+| Hero rules: `hm.headline_buckets`, `hm.hero_space`, `hm.image_need`, `hm.survives_deletion`, `hm.video_lcp` | `craft.md` sections 2 and 3; hero block in `blocks.md` section 5 |
+| Render floor: `hm.max_sizes`, `hm.img_cls`, `hm.viewport_units`, `hm.root_overflow_clip`, `hm.decorative_a11y`, `hm.code_frame`, `hm.placeholder_honesty`, `hm.remote_assets` | `craft.md` section 2; audit candidates in section 4 |
+| Fingerprint bans: `hm.nav_fingerprint`, `hm.footer_fingerprint`, `hm.toast_stack`, `hm.tooltip_timing`, `hm.one_hover_signal`, `hm.placeholder_names`, `hm.sticky_stack`, `hm.icon_voice` | `craft.md` section 3; header and footer blocks in `blocks.md` sections 9 and 10 |
+| Color and type details: `hm.font_metrics`, `hm.dark_hue_lock`, `hm.surface_flip`, `hm.fill_canary` | `craft.md` sections 5 and 6 |
+| Layout: `hm.bar_alignment`, `hm.mobile_collapse`, `hm.logo_wall` | `craft.md` section 7; proof block in `blocks.md` section 4 |
+| Motion: `hm.zero_ms`, `hm.motion_budget` | `craft.md` section 8 |
+| Interaction and component specs: `hm.scope_first`, `hm.state_harness`, `hm.typed_confirm`, `hm.silent_success`, `hm.dialog_focus`, `hm.menu_flip`, `hm.copy_feedback`, `hm.command_palette`, `hm.drag_handle`, `hm.number_live`, `hm.hit_area`, `hm.input_geometry`, `hm.submit_rule`, `hm.touched_validation`, `hm.control_specifics`, `hm.radio_tab_jump` | `craft.md` section 9; applied in `blocks.md` sections 1, 8, 12, 13 |
+| Copy: `hm.loading_tiers`, `hm.copy_bans`, `hm.copy_specificity`, `hm.saas_voice` | `craft.md` section 10; pricing, CTA, and page-state blocks in `blocks.md` sections 3, 8, 11 |
+| Critique and study: `hm.preflight_scan`, `hm.redesign_safety`, `hm.reference_study`, `hm.reference_url_safety`, `hm.critique_axes` | `craft.md` sections 11 and 12 |
+| Structure vocabulary: `hm.context_gate`, `hm.structure_vocab` (page shapes), `hm.domain_trio`, the nav and footer chrome archetypes | `directions.md` sections 1, 2, 4, 5 |
+
+### Removed by JAL law or overruled by impeccable
+
+The full list, with each lawful replacement, is the hallmark table in `craft.md` section 13. In short: atmospheric dark genres, radial blooms, glow, gradients, grain, and shadows (LAW); tinted greys and the ban on pure white surfaces (LAW); accent footprints above about 3% (LAW); em-dash punctuation, eyebrows, tracked small caps, ornament rules, and drop caps (LAW); overlap, bleed, rotation, and captions over photos (LAW); stat-led heroes and numbered margin labels (LAW, I); mandatory font pairing and its recommended faces (I); the 1.25 ratio, fluid display clamps, and 300-unit weight contrast (LAW); three easings, springs, and hallmark durations (LAW, I); its remote imagery kits, icon canon, font CDNs, generated-media pipelines, logs, and exports (LAW, I); uneven section padding and voids left by removed cards (I, LAW).

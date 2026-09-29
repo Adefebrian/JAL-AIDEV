@@ -724,6 +724,9 @@ const AUDIT_SCRIPT = `
     var vv = window.visualViewport;
     var vw = vv ? vv.width : window.innerWidth;
     if (vw >= 640) return;
+    // Screens with nothing to navigate to yet (sign in, sign up, a fatal error
+    // page) opt out with data-jal-shell="none" on the body or main element.
+    if (document.querySelector("body[data-jal-shell=none], main[data-jal-shell=none]")) return;
     var vh = vv ? vv.height : window.innerHeight;
     var docScrolls = document.documentElement.scrollHeight > vh + 1;
     function pinned(el) {

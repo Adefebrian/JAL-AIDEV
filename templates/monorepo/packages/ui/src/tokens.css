@@ -179,6 +179,24 @@
   --color-accent: var(--color-ink);
   --color-accent-contrast: var(--color-surface);
 
+  /* Data visualization only (charts, maps, legends): a categorical set, never
+   * purple family, each at least 3:1 on --color-surface. UI chrome keeps the
+   * one-accent rule. */
+  --viz-1: #2563eb;
+  --viz-2: #0f766e;
+  --viz-3: #b45309;
+  --viz-4: #15803d;
+  --viz-5: #b91c1c;
+  --viz-6: #475569;
+
+  /* Layering and sticky offsets (header, banners). */
+  --banner-height: 0px;
+  --z-base: 0;
+  --z-sticky: 10;
+  --z-nav: 20;
+  --z-overlay: 40;
+  --z-toast: 50;
+
   /* Desaturated status colors, real state only, never decoration. */
   --color-danger: #b3261e;
   --color-danger-surface: #f7ebea;

@@ -176,4 +176,13 @@ describe("runAudit", () => {
     },
     60000,
   );
+
+  test(
+    "a sign-in screen marked data-jal-shell=none is exempt from mobile-app-shell",
+    async () => {
+      const report = await runAudit(`${baseUrl}/auth-no-shell.html`, { widths: [375] });
+      expect(report.violations.map((v) => v.rule)).not.toContain("mobile-app-shell");
+    },
+    30000,
+  );
 });
