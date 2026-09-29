@@ -7,6 +7,8 @@
 
 One page can mix all three.
 
+**Size (2026-09-29):** 283 rows in section 1 across 17 tables: 36 `core.*`, 44 `mu.*` and `an.*`, 8 `bang.*`, 8 `gsap.*`, 3 `frame.*`, 30 `nz.section.*`, 22 `nz.fx.*`, 26 `nz.el.*`, 5 `cr.*`, 12 `three.*`, 7 `px.*`, 14 `sh.*`, 14 `rf.*`, 18 `md.*` (Material Web), 13 `ok.*` and `hm.*` (OriginKit clean-room and the floating nav), 22 `block.*`, and 1 `dmd.*`. Three rows are classes rather than single recipes (`core.tpl.<family>`, `ok.fetch.<slug>`, `dmd.<kit>.<part>`). Section 3 maps 31 section kinds. Section 5 tracks 30 gaps: 18 resolved, 1 partly resolved, 11 open.
+
 One row per recipe from every source Brian supplied, so any recipe can be mixed with any other on any surface where it is allowed. Agents assemble `ui.component_recipe` (product and marketing) and `imm.recipe` (immersive) candidates from this file in one lookup, then grow each section with the layering protocol (section 4). The full recipe always lives in the file named in the last column; this index never replaces it.
 
 ## 0. How to read the tables
@@ -36,6 +38,7 @@ One row per recipe from every source Brian supplied, so any recipe can be mixed 
 | Key | File |
 |---|---|
 | DS-C | `jal-design-system/references/components.md` |
+| DS-B | `jal-design-system/references/blocks.md` |
 | DS-F | `jal-design-system/references/foundations.md` |
 | DS-D | `jal-design-system/references/directions.md` |
 | DS-K | `jal-design-system/references/craft.md` |
@@ -60,7 +63,10 @@ One row per recipe from every source Brian supplied, so any recipe can be mixed 
 - `Rnn` is the canonical key of a Magic UI or Animata recipe. The index lists it under the lead source's prefix (`mu.` Magic UI, `an.` Animata); the other prefix is an accepted alias (`mu.R13` in JC and `mu.R21` in IM section 4.6 both resolve).
 - `nz.fx.<slug>` (canonical, IM section 4.2) = `nz.effect.<slug>` (JC). `nz.el.<id>` (canonical, IM section 4.3) = `nz.element.<id>`.
 - Particle tiers 3 to 6 are the `three.*` rows marked `px tier n`; `px.tn` resolves to them.
-- `md.<kit>.<part>` is a designmd class (section 1.12), never a fixed row.
+- `md.*` rows are the Material Web component specs (section 1.14). Shared specs resolve both ways: `core.checkbox_radio` = `md.checkbox` + `md.radio`, `core.switch` = `md.switch`, `core.slider` = `md.slider`, `core.menu_popover` = `md.menu`, `core.tooltip` = `md.tooltip`, `core.segmented` = `md.segmented_button`, `core.side_nav` = `md.nav_rail` or `md.nav_drawer`.
+- `dmd.<kit>.<part>` is the designmd class (section 1.17), never a fixed row. It was written `md.<kit>.<part>` before the Material rows took the `md.` prefix; an old `md.<kit>.<part>` in a log resolves to `dmd.` (GAP 29).
+- `ok.*` recipes (section 1.15) resolve to MC R45 to R51 and the four R02 and R06 presets; `hm.floating_nav_morph` = MC R52. `ok.fetch.<slug>` is a class: a real OriginKit component fetched through its MCP when JEV picks it.
+- `block.*` rows (section 1.16) are the DS-B page blocks; `block.hero.*` covers the ten hero variants.
 
 ## 1. Recipe rows
 
@@ -88,9 +94,9 @@ One row per recipe from every source Brian supplied, so any recipe can be mixed 
 | `core.skeleton` | JAL Core (Astryx) | component (loading) | P M I | 0 S | T0 | same shape | static blocks | full | DS-C Skeleton; motion in `an.R40` |
 | `core.app_shell` | JAL Core (Astryx, Material) | layout (shell) | P | 0 - | T0 | below 640 pinned header, own-scroll content, bottom tab bar | n/a | full | DS-C AppShell; template `packages/ui` `AppShell` |
 | `core.top_nav` | JAL Core (Astryx) | layout (navigation) | P M | 0 S | T0 | swaps to `core.app_shell` tab bar below 640 | n/a | full | DS-C AppShell (640 and up) |
-| `core.side_nav` | JAL Core (Astryx) | layout (navigation) | P | 0 S | T0 | tab bar below 640 | n/a | full | DS-C AppShell (1024 and up); GAP 1 |
+| `core.side_nav` | JAL Core (Astryx, Material) | layout (navigation) | P | 0 S | T0 | bottom bar below 640, top nav 640 to 1023 | n/a | full | DS-C Navigation rail and drawer (same spec as `md.nav_rail`, `md.nav_drawer`) |
 | `core.tabs` | JAL Core (Astryx, Carbon) | component | P M I | 0 S | T0 | tabs scroll inside the list, hard edge | n/a | full | DS-C Tabs; motion in `an.R13` |
-| `core.segmented` | JAL Core (Astryx) | component | P M I | 0 S | T0 | same | n/a | full | DS-C SegmentedControl |
+| `core.segmented` | JAL Core (Astryx, Material) | component | P M I | 0 S | T0 | fills the width below 640 | selection instant | full | DS-C Segmented button (same spec as `md.segmented_button`) |
 | `core.ai_chat` | JAL Core (Astryx) | layout (conversation) | P M | 0 S | T1 | suggestion chips for prompts; composer pinned | agentic states readable without motion | full | DS-C AI chat |
 | `core.rows` | JAL Core | layout | P M I | 0 - | T0 | stacked title plus meta line | n/a | full | FR Rows vs Bento, Rows recipe |
 | `core.bento` | JAL Core | layout | P M I | 0 - | T0 | one column below 640 | n/a | full | FR Bento Grid recipes |
@@ -98,12 +104,12 @@ One row per recipe from every source Brian supplied, so any recipe can be mixed 
 | `core.plain_spacing` | JAL Core | layout | P M I | 0 - | T0 | same | n/a | full | FR Rows vs Bento; DS-F section 1 |
 | `core.master_detail` | JAL Core (Astryx) | layout | P | 0 - | T0 | side panel swaps to dialog or bottom sheet below 640 | n/a | full | DS-F section 1 (structure, breakpoints) |
 | `core.browser_surfaces` | JAL Core (impeccable) | layout (chrome) | P M I | 0 - | T0 | same | n/a | full | DS-K section 2, browser-surface recipe |
-| `core.menu_popover` | JAL Core (Astryx) | component (overlay) | P M I | 0 S | T0 | bottom sheet below 640 (inferred) | opacity only | full | DS-F section 5 top layer; GAP 2 |
-| `core.tooltip` | JAL Core (Astryx) | component (overlay) | P M | 0 S | T0 | no hover on touch | instant | full | DS-F section 8 (motion); GAP 2 |
-| `core.checkbox_radio` | JAL Core (Astryx, Material) | component | P M I | 0 S | T0 | 44 hit area | n/a | full | DS-F section 7 (what paints pressed); GAP 3 |
-| `core.switch` | JAL Core (Astryx, Material) | component | P M I | 0 S | T0 | 44 hit area | instant | full | DS-F section 7; motion in `an.R17`; GAP 3 |
-| `core.slider` | JAL Core (Material) | component | P M | 0 S | T0 | 44 thumb hit area | n/a | full | DS-F section 7; GAP 3 |
-| `core.tpl.<family>` | JAL Core (Astryx) | layout (class) | P | 0 - | T0 | per family | n/a | full | DS-F section 10: ai-chat, dashboard, incident-console, ide, kanban-board, table, settings, form-wizard, login, messaging-shell, work-item-detail, product-detail, checkout-wizard; GAP 4 |
+| `core.menu_popover` | JAL Core (Astryx, Material) | component (overlay) | P M I | 0 S | T0 | bottom sheet below 640 | opacity only | full | DS-C Menu and submenu (same spec as `md.menu`); DS-F section 5 top layer |
+| `core.tooltip` | JAL Core (Astryx, Material) | component (overlay) | P M | 0 S | T0 | no hover on touch | instant | full | DS-C Tooltip (same spec as `md.tooltip`); DS-F section 8 |
+| `core.checkbox_radio` | JAL Core (Astryx, Material) | component | P M I | 0 S | T0 | 44 hit area | instant | full | DS-C Checkbox, Radio and radio group (same specs as `md.checkbox`, `md.radio`) |
+| `core.switch` | JAL Core (Astryx, Material) | component | P M I | 0 S | T0 | 44 hit area | instant | full | DS-C Switch (same spec as `md.switch`); motion in `an.R17` |
+| `core.slider` | JAL Core (Material) | component | P M | 0 S | T0 | 44 thumb hit area | n/a | full | DS-C Slider (same spec as `md.slider`) |
+| `core.tpl.<family>` | JAL Core (Astryx) | layout (class) | P | 0 - | T0 | per family | n/a | full | DS-F section 10: ai-chat, dashboard, incident-console, ide, kanban-board, table, settings, form-wizard, login, messaging-shell, work-item-detail, product-detail, checkout-wizard; settings and login now have DS-B blocks; GAP 4 |
 
 ### 1.2 Magic UI (`mu.*`) and Animata (`an.*`) recipes
 
@@ -133,7 +139,7 @@ Every row: DOM, mechanism, timing, reduced motion, CSS and Tailwind sketches in 
 | `mu.R20` | Magic UI + Animata (hero-video-dialog, modal) | component (overlay) | P M I | 0 S | T0 | bottom sheet below 640 (`core.dialog`) | opacity only | full | MC R20 |
 | `an.R21` | Animata + Magic UI (transition-list, animated-list) | component (list) | P M I | 0 S | T2 | same | `layout` off, crossfade | full; no spring | MC R21 |
 | `an.R22` | Animata + Magic UI (faq, file-tree) | component (disclosure) | P M I | 0 S | T0 | same | instant | full; grid-track exception | MC R22 |
-| `an.R23` | Animata (stacked-sections) | scroll choreography | M I | 3 Q | T3 | panes in flow below 768 (`motion.pin`); GAP 7 | no pin, panes in flow | full; no resting overlap | MC R23 |
+| `an.R23` | Animata (stacked-sections) | scroll choreography | M I | 3 Q | T3 | in-flow stagger below 768, never pinned (`motion.pin`) | no pin, panes in flow | full; no resting overlap | MC R23 |
 | `an.R24` | Animata (split-reveal) | transition (preloader) | M I | 3 Q | T1 | same, cap 1500ms | overlay fades | full; never product | MC R24 |
 | `an.R25` | Animata (vertical-tiles) | transition | M I | 3 Q | T1 | same | layer never rendered | full; once per page | MC R25 |
 | `an.R26` | Animata + Magic UI (disclose-image, pixel-image) | reveal (media) | M I | 2 G | T1 | same | image shows at once | full; no filter | MC R26 |
@@ -146,7 +152,7 @@ Every row: DOM, mechanism, timing, reduced motion, CSS and Tailwind sketches in 
 | `an.R33` | Animata (flip-card) | component (3D flip) | M I | 2 G | T0 | tap only | crossfade faces | full; one per page | MC R33 |
 | `mu.R34` | Magic UI (animated-theme-toggler) | component | P M | 0 S | T1 | same | instant | full; only with an explicit dark mode | MC R34 |
 | `mu.R35` | Magic UI + Animata (avatar-circles, avatar-list) | layout (social proof) | P M I | 0 - (entrance via `mu.R01`) | T0 | wraps | n/a | full; no overlapping stack | MC R35 |
-| `an.R36` | Animata + Magic UI (meters, charts) | data viz | P M I | 0 S update, 1 E entrance | T0 | same | final state | full; one hue, no width animation | MC R36 |
+| `an.R36` | Animata + Magic UI (meters, charts) | data viz | P M I | 0 S update, 1 E entrance | T0 | same | final state | full; one hue per series (categorical charts may use `--viz-1` to `--viz-6`), no width animation | MC R36 |
 | `an.R37` | Animata (commit-graph) | data viz | P M | 0 - | T0 | scrolls inside own box at 320 | n/a | full; ink ramp only | MC R37 |
 | `mu.R38` | Magic UI (dotted-map) | data viz (map) | P M I | 0 - | T0 (build-time SVG) | same | static | full | MC R38; JC `ui.geo_visual` |
 | `an.R39` | Animata (spinner, icon-ripple, team-clock) | component (status) | P M I | 0 S | T0 | same | static "Loading" text, pulse off | full; live state only | MC R39 |
@@ -154,7 +160,7 @@ Every row: DOM, mechanism, timing, reduced motion, CSS and Tailwind sketches in 
 | `an.R41` | Animata + Magic UI (bento, tweet cards, widgets) | layout (tiles) | P M I | 0 - | T0 | one column (`core.bento`) | n/a | full | MC R41; FR Bento |
 | `mu.R42` | Magic UI (scroll-progress) | component (scroll) | P M I | 0 S | T1 | same | kept (information) | full; long-form only | MC R42 |
 | `an.R43` | Animata (image-carousel, expandable) | component (carousel) | P M I | 0 S | T0, expandable T2 | native swipe | instant scroll and expand | full | MC R43 |
-| `mu.R44` | Magic UI (globe) | 3D object (data viz) | M I | 2 G | T4/C1 | poster plus location list on low `imm.tier` | poster plus list, no canvas | canvas: unlit, pause control; GAP 9 | MC R44 |
+| `mu.R44` | Magic UI (globe) | 3D object (data viz) | M I | 2 G | T4/C1 | poster plus location list on low `imm.tier` | poster plus list, no canvas | canvas: unlit; slow turn per `--loop-globe` only with a visible 44 pause control | MC R44 |
 
 ### 1.3 bang-motion choreography (`bang.*`)
 
@@ -182,7 +188,7 @@ Chosen by `motion.choreography`; a story section may also list one as a C0 candi
 | `gsap.horizontal_track` | gsap-skills | scroll choreography | M I | 3 Q | T3 | below 1024 `gsap.stagger_sequence` | no pin, final state | full; linear exception | SC section 7 |
 | `gsap.splittext_reveal` | gsap-skills | text motion | M I | 2 G | T3 | `autoSplit` re-splits | no split | full | SC section 3 |
 | `gsap.flip_transition` | gsap-skills | transition | M I | 1 S | T3 (product uses `an.R21`) | same | instant | full | SC section 4 |
-| `gsap.live_dom_demo` | gsap-skills | demo | M I | 2 G (3 Q when scrubbed) | T3 | same, pause control | final-state poster | full | JC `motion.demo_medium` `live_dom`; GAP 13 |
+| `gsap.live_dom_demo` | gsap-skills | demo | M I | 2 G (3 Q when scrubbed) | T3 | same, pause control | final-state poster | full | FM section 8; JC `motion.demo_medium` `live_dom` |
 
 ### 1.5 JAL frame core (`frame.*`)
 
@@ -190,7 +196,7 @@ Chosen by `motion.choreography`; a story section may also list one as a C0 candi
 |---|---|---|---|---|---|---|---|---|---|
 | `frame.demo` | JAL frame core (Remotion idea only) | demo | M I | 2 G | T1 (T2 if it draws to canvas) | Player controls below stage, 44 | `posterFrame`, no autoplay | full; pause over 5s | FM sections 3 to 5 |
 | `frame.scroll` | JAL frame core | demo (scroll) | M I | 3 Q | T3 | no pin below 768: `frame.demo` Player | poster frame | full | FM section 6 |
-| `frame.poster_steps` | JAL (demo medium) | demo | P M I | 1 E | T1 | same | static screens | full | JC `motion.demo_medium` `poster_steps`; GAP 13 |
+| `frame.poster_steps` | JAL (demo medium) | demo | P M I | 1 E | T1 | same | static screens | full | FM section 9; JC `motion.demo_medium` `poster_steps` |
 
 ### 1.6 noyzzi sections (`nz.section.*`)
 
@@ -301,13 +307,13 @@ JAL-authored from permissive sources; every row ships a DOM text equivalent and 
 | `cr.wet_ground` | clean-room (JAL) | background field (environment) | M I | 2 G | T4/C3 with reflector; C1 mobile env only | no reflector, one ripple layer, no wave grid | `uRain = 0` mirror-still puddles | canvas: never neon night city | CR section 2 |
 | `cr.deform_sand_snow` | clean-room (JAL) | background field (toy) | M I | 2 G | T4/C1 (0.8 ms; 0.5 ms mobile) | stamp only, no relax; lowest tier pooled decals | user-driven trails only, pre-baked trail | canvas: snow neutral grey-blue | CR section 3 |
 | `cr.wind_grass` | clean-room (JAL) | background field (environment) | M I | 2 G | T4/C3 (3 ms; 2.5 ms mobile) | 3-segment blades, flutter off, or cross-quad clusters | freeze `uTime`, keep push | canvas: backlight in shading | CR section 4 |
-| `cr.ocean_snell` | clean-room (JAL) | background field (environment, story) | M I | 2 G | T4/C2 to C3 (2.5 ms; 3 ms mobile) | 3 waves, depth tint only, no caustics | frozen surface; above-below switch as 150ms crossfade | canvas: pale sea fog, no dark abyss | CR section 5; GAP 15 |
+| `cr.ocean_snell` | clean-room (JAL) | background field (environment, story) | M I | 2 G | T4/C2 to C3 (2.5 ms; 3 ms mobile) | 3 waves, depth tint only, no caustics | frozen surface; above-below switch as 150ms crossfade | canvas: pale sea fog, no dark abyss | CR section 5 (mobile fallback included) |
 
 ### 1.10 Three.js and R3F patterns (`three.*`, including particle tiers 3 to 6)
 
 | ID | Source | Kind | Surf | Tier | Cost | Mobile fallback | Reduced motion | Law | Full recipe |
 |---|---|---|---|---|---|---|---|---|---|
-| `three.studio_object` | three.js, drei | 3D object | M I | 2 G | T4/C2 | DPR per tier, fake contact shadow, `<PresentationControls>` off, poster | poster | canvas | IM 4.5; R3 section 7; TF section 3; GAP 16 |
+| `three.studio_object` | three.js, drei | 3D object | M I | 2 G | T4/C2 | DPR per tier, fake contact shadow, `<PresentationControls>` off, poster | poster | canvas | TF section 13; IM 4.5; R3 section 7 |
 | `three.scroll_camera` | three.js, gsap-skills, ai-dev-kit | scroll choreography (3D) | M I | 3 Q | T4/C2 | triggered beats; touch never scrubs a pinned 3D section over 200% vh | authored stills, crossfade 150ms or less | canvas | SC section 9; R3 section 12 |
 | `three.points_field` | three.js (px tier 3) | background field (particles) | M I | 2 G | T4/C1 (100k desktop) | 30k mobile, 10k reduced | freeze at a seeded frame | canvas: normal blend, dark sparse points | PX sections 1, 2 |
 | `three.instanced_field` | three.js (px tier 4) | background field, data viz | M I | 2 G | T4/C2 | fewer instances, no shadows | freeze | canvas | PX section 3; R3 section 5 |
@@ -316,8 +322,8 @@ JAL-authored from permissive sources; every row ships a DOM text equivalent and 
 | `three.img_hover` | three.js (JAL-native) | hover (media) | M I | 2 G | T4/C1 | plain `<img>` | plain `<img>` | canvas: displacement and grade only; GAP 8 | SH section 10 |
 | `three.matcap_clay` | three.js | 3D object | M I | 2 G | T4/C1 | poster | poster | canvas: bake our own matcap | SH section 7 |
 | `three.sdf_blob` | three.js, IQ snippets (MIT) | 3D object, background field | M I | 2 G | T4/C2 (48 to 96 steps at 0.5 res) | fewer steps, then poster | frozen | canvas: rim darkens | SH section 4 |
-| `three.dot_globe` | three.js (Magic UI globe home) | 3D object (data viz) | M I | 2 G | T4/C1 | static SVG `mu.R38` | `mu.R38` static | canvas: drag or scroll only, no ambient spin; GAP 9 | IM 4.5; MC R44 |
-| `three.post_light` | three.js addons | modifier (any WebGL host) | M I | host | adds 0.3 to 1.5 ms per full-res pass | none on mobile | n/a | canvas: AA, LUT, dither, subtle DoF only | IM 4.5; SH sections 8, 9 |
+| `three.dot_globe` | three.js (Magic UI globe home) | 3D object (data viz) | M I | 2 G | T4/C1 | static SVG `mu.R38` | `mu.R38` static | canvas: flat and unlit; slow turn per `--loop-globe` only with a visible 44 pause control; drag rotates | R3 section 14; IM 4.5; MC R44 |
+| `three.post_light` | three.js addons | modifier (any WebGL host) | M I | host | adds 0.3 to 1.5 ms per full-res pass | none on mobile | n/a | canvas: AA, LUT, dither, subtle DoF only | SH section 19; IM 4.5; SH sections 8, 9 |
 | `three.views` | drei `View` | layout (many 3D regions, one canvas) | M I | host | T4, one context | fewer views; poster per view | poster per view | canvas | R3 section 8 (ID new here) |
 
 ### 1.11 Particles and interaction (`px.*`)
@@ -326,13 +332,13 @@ Tiers 3 to 6 are the `three.*` rows above. Taste for every row: on white, ink du
 
 | ID | Source | Kind | Surf | Tier | Cost | Mobile fallback | Reduced motion | Law | Full recipe |
 |---|---|---|---|---|---|---|---|---|---|
-| `px.canvas2d_field` | threejs-game-skills (px tier 2) | background field (particles) | M I | 2 G | T2/C1 | fewer dots | freeze at a seeded frame | canvas; GAP 17 | PX section 1 (tier 2) |
+| `px.canvas2d_field` | threejs-game-skills (px tier 2) | background field (particles) | M I | 2 G | T2/C1 | fewer dots | freeze at a seeded frame | canvas (IM Zone B covers a JAL 2D canvas) | PX section 1 (tier 2) |
 | `px.pointer_repel` | threejs-game-skills | hover (field interaction) | M I | 2 G | adds to host | pointer events emit the same intents; scoped `touch-action` | nudge off, loop stopped | canvas | PX sections 1, 7 |
 | `px.fixed_step_toy` | threejs-game-skills | 3D object (toy) | M I | 2 G | T2 to T4 | fewer bodies | settled state, paused | canvas | PX section 6; custom collision in section 9 |
 | `px.orbit_bounded` | threejs-game-skills, drei | 3D object (interaction) | M I | 2 G | adds to host | `<PresentationControls>`, scoped `touch-action` | still usable (direct manipulation), no ambient | canvas | PX section 7 |
 | `px.pointer_look` | threejs-game-skills | 3D object (spatial tour) | M I | 2 G | adds to host | touch intents, 44 DOM controls | no ambient motion | canvas | PX section 7 |
-| `px.nixie_fx` | nixie-fx (approval candidate) | background field (particles) | M I | 2 G | T4/C1 to C2 | per-emitter cap | `seek(t)` to a fixed frame, stopped | canvas: `blend: "alpha"` only; GAP 18 | PX section 8 |
-| `px.rapier_toy` | react-three-rapier (approval candidate) | 3D object (toy) | M I | 2 G | T4 plus WASM chunk | tens of bodies | `paused`, settled state | canvas; GAP 18 | PX section 9 |
+| `px.nixie_fx` | nixie-fx (approved by Brian, JEV-picked) | background field (particles) | M I | 2 G | T4/C1 to C2 | per-emitter cap | `seek(t)` to a fixed frame, stopped | canvas: `blend: "alpha"` only; pins three to 0.185.x | PX section 8 |
+| `px.rapier_toy` | react-three-rapier (approved by Brian, JEV-picked) | 3D object (toy) | M I | 2 G | T4 plus WASM chunk | tens of bodies | `paused`, settled state | canvas | PX section 9 |
 
 ### 1.12 Shader recipes (`sh.*`)
 
@@ -376,13 +382,87 @@ A direction is page-level (DS-D section 7): its knob values come only from the t
 | `rf.D13.precision_dark` | refero D13 precision_dark | layout (stepped dark surfaces) | P M | 0 - | T0 | same | n/a | full; gate explicit dark brief only | DS-D section 7 D13 |
 | `rf.display_hero` | refero calibration, impeccable | type (display set) | M I | 0 - | T0 | `--text-display-1` at most below 640 | n/a | full; one per page, at most about 8 words, tracking -0.03 to -0.04em | DS-D sections 6, 9; DS-K section 2 |
 
-### 1.14 designmd (`md.*`, class)
+### 1.14 Material Web components (`md.*`)
+
+Each row is a JAL Core spec in DS-C marked "From: Material Web", re-keyed to JAL tokens with law applied (the source values and what law removed are in `sources.md`). CSS-built parts live in the Material Web block of `packages/ui/src/ui.css`. Every control keeps the JAL eight-state recipe. Where a `core.*` row names the same component, both IDs resolve to one spec (section 0 aliases).
 
 | ID | Source | Kind | Surf | Tier | Cost | Mobile fallback | Reduced motion | Law | Full recipe |
 |---|---|---|---|---|---|---|---|---|---|
-| `md.<kit>.<part>` | designmd.ai kit (MCP, read tools only) | layout or component idea | P M | 0 - | T0 | the JAL Core responsive contract of the nearest `core.*` spec | per the `core.*` or `mu.*`/`an.*` recipe it is rebuilt on | full after translate: every value becomes a JAL Core token; kit shadows become hairline plus tonal step | DS designmd policy; JC `ui.designmd_screen` (slop under 0.5 and fit 1.5 or more, else never a candidate) |
+| `md.state_layer` | Material Web (`md-ripple`, `md-sys-state`) | primitive (every control) | P M I | 0 S | T0 | same; hover only under `(hover: hover)` | opacity or background change only, release `--dur-150-exit` | full: bounded, flat, never a circle, never spreads from the pointer | DS-C State layer |
+| `md.focus_ring` | Material Web (`md-focus-ring`) | primitive (every control) | P M I | 0 S | T0 | same; inward variant inside rows, menus, and tabs | never animated | full: outline only, 3:1, never a `box-shadow` | DS-C Focus ring |
+| `md.icon` | Material Web (`md-icon`), re-sourced to koboyo | primitive (every control) | P M I | 0 - | T0 | same sizes (16, 20, 24) | n/a | full: koboyo SVG in `currentColor`, never an icon font | DS-C Icon |
+| `md.divider` | Material Web (`md-divider`) | primitive (structure) | P M I | 0 - | T0 | same | n/a | full: a structural boundary only, never ornament or connector | DS-C Divider |
+| `md.icon_button` | Material Web (icon button family, toggle) | component | P M I | 0 S | T0 | 44 at every width; at most two in the mobile header, the rest in an overflow `md.menu` | state layer only, no press scale | full | DS-C Icon button |
+| `md.segmented_button` | Material Web labs, Astryx | component | P M I | 0 S | T0 | fills the width below 640; a Select when segments would ellipsize | selection instant; indicator motion jumps (`an.R13`) | full | DS-C Segmented button; motion in `an.R13` |
+| `md.split_button` | Material Web labs (shape morph removed) | component | P M | 0 S | T0 | fills the width below 640 when it is the region's primary action | chevron turns instantly | full | DS-C Split button |
+| `md.toolbar` | Material Web labs (docked mode only) | component (group) | P | 0 S | T0 | overflow into a "More" `md.menu`, never a horizontal scroll; pinned above the tab bar only in editors | n/a | full: never a floating pill over content | DS-C Toolbar |
+| `md.checkbox` | Material Web (`md-checkbox`) | component | P M I | 0 S | T0 | 44 row, the whole row toggles | mark changes instantly (no motion at any setting) | full | DS-C Checkbox |
+| `md.radio` | Material Web (`md-radio`) | component | P M I | 0 S | T0 | 44 rows stacked with a 4 gap | selection changes instantly | full: never a single radio | DS-C Radio and radio group |
+| `md.switch` | Material Web (`md-switch`) | component | P M I | 0 S | T0 | same; the settings row is the target | handle jumps | full: no overshoot | DS-C Switch; motion in `an.R17` (GAP 24) |
+| `md.slider` | Material Web (`md-slider`, bubble and tick dots removed) | component | P M | 0 S | T0 | fills the region; range readouts stack below 640 | none needed (the thumb follows the pointer) | full | DS-C Slider |
+| `md.combobox` | Material Web autocomplete tokens, WAI-ARIA combobox | component | P M | 0 S | T1 | full-screen dialog with the input pinned at the top below 640 | listbox opacity only | full | DS-C Combobox |
+| `md.menu` | Material Web (`md-menu`, `md-sub-menu`) | component (overlay) | P M I | 0 S | T0 | bottom sheet below 640; a submenu replaces the sheet's content | opacity only, no scale | full | DS-C Menu and submenu |
+| `md.tooltip` | Material Web tooltip tokens (plain and rich) | component (overlay) | P M | 0 S | T0 | no hover tooltip on touch; rich tooltip opens on tap | instant | full: never focusable, never holds links; GAP 26 | DS-C Tooltip |
+| `md.progress` | Material Web (linear and circular progress) | component (status) | P M I | 0 S | T0 | linear fills its region; page-level pins under the header | travel and rotation stop; static 38% indicator plus busy text | full: one color, no four-color cycle | DS-C Progress |
+| `md.nav_rail` | Material Web navigation rail tokens | layout (navigation) | P | 0 S | T0 | top nav 640 to 1023, bottom bar below 640 | n/a | full: tonal separation only, no side line | DS-C Navigation rail and drawer |
+| `md.nav_drawer` | Material Web labs navigation drawer (standard and modal) | layout (navigation) | P | 0 S | T0 | from 1024 only; below 1024 a modal drawer for secondary destinations | modal drawer enters by opacity, no travel | full | DS-C Navigation rail and drawer |
 
-A kit part is proposed as its own candidate (for example `md.nav_bar`, JC) only after the screen passes for that kit, and is always rebuilt on the matching `core.*` spec. It never overrides a spec, a token, or law.
+### 1.15 OriginKit clean-room recipes (`ok.*`) and the floating nav (`hm.*`)
+
+Clean-room JAL recipes written from OriginKit's public technique names only; no OriginKit code sits behind any row (MC section 1). Brian approved OriginKit, so when JEV picks a real OriginKit component for a client project it can be fetched on demand through the OriginKit MCP under the MC section 1 rules (`ok.fetch.<slug>`, last row). The `ok.` recipe stays the default and the fallback.
+
+| ID | Source | Kind | Surf | Tier | Cost | Mobile fallback | Reduced motion | Law | Full recipe |
+|---|---|---|---|---|---|---|---|---|---|
+| `ok.compare_slider` | OriginKit idea (compare-slider), clean-room | demo (before and after) | P M | 0 S | T1 | same; 44 handle, `touch-action: pan-y` | keyboard steps instant, no hover-follow | full: labels outside the image, no divider line | MC R45 |
+| `ok.row_preview` | OriginKit idea (hover-image-reveal, link-preview), clean-room | hover (list media) | M I | 2 G | T1 | inline thumbnail per row below 1024 and on touch | instant preview swap | full: no cursor follow, no tilt, never covers a row | MC R46 |
+| `ok.weight_shift` | OriginKit idea (dynamic-weight, weight-hover), clean-room | hover (text) | M I | 2 G | T1 | proximity mode off below 640 and on touch; focus-only hover mode | instant weight swap, proximity off | full: 400, 500, 600 only, opacity crossfade, never body text | MC R47 |
+| `ok.center_focus_slider` | OriginKit idea (smooth-scroll-slider), clean-room | component (carousel) | M I | 2 G | T1 | same track, 80% items, native swipe | no scale, instant scroll | full: scale 0.94 to 1, no dimming | MC R48 |
+| `ok.tab_preview` | OriginKit idea (features-01), clean-room | layout (tabbed walkthrough) | P M | 1 E (indicator 0 S) | T2 | an `an.R22` disclosure below 640 | indicator jumps, crossfade at `--dur-reduced` | full: tonal indicator, no side bar | MC R49 |
+| `ok.press_plate` | OriginKit idea (tactile-button), clean-room | component (press) | M | 0 S | T0 | same, 48 target | no travel, pressed state layer | full: no shadow; one per section | MC R50 |
+| `ok.entry_fill` | OriginKit idea (radial-reveal-button, slide-fill-button), clean-room | hover (component) | M | 0 S | T1 | touch: pressed state layer only | fill fades in at `--dur-reduced` | full: flat fill, marketing CTAs only (GAP 25) | MC R51 |
+| `hm.floating_nav_morph` | hallmark principle | transition (navigation scroll state) | M | 1 S | T1 | below 640 the app-shell header stays pinned and unmorphed | opacity swap, no travel | full: opaque pill, no blur or shadow, the four nav laws | MC R52; DS-B section 10 |
+| `ok.slot_roll` | OriginKit idea (rolling-letters), clean-room | text motion | M I | 2 G | T1 | same; titles under 24 characters | no split, whole-string crossfade | full: deterministic fillers | MC R02 preset (full recipe after R52) |
+| `ok.char_flip` | OriginKit idea (mechanical-flip), clean-room | text motion | M I | 2 G | T1 | same; titles under 24 characters | no split, whole-string crossfade | full: the only R02 `rotateX`, rests flat at 0 | MC R02 preset (full recipe after R52) |
+| `ok.skew_rise` | OriginKit idea (skew-in-text-effect), clean-room | text motion | M I | 2 G | T1 | same | no split, whole-string crossfade | full: skew at most 8 degrees, settles to 0 | MC R02 preset (full recipe after R52) |
+| `ok.edge_roll` | OriginKit idea (random-letter-swap, directionhover), clean-room | hover (text) | P M I | 0 S nav, 2 G showcase | T1 | touch: state layer only | no roll, state layer | full | MC R06 variant (full recipe after R52) |
+| `ok.fetch.<slug>` | OriginKit component via its MCP (Brian approved), class | per component | M I | per component | est. (re-tier after reading) | the matching `ok.` recipe's fallback | JAL adds one if missing | full after re-key; a pick fails if the effect needs gradient, glow, blur, or spring | MC section 1 (fetch rules); never vendored into JAL-AIDEV |
+
+### 1.16 JAL Core blocks (`block.*`)
+
+Page-level sections from DS-B. A block is the layout layer of a stack and composes `core.*` and `md.*` specs; each block's own recipe list in DS-B names its usual layers.
+
+| ID | Source | Kind | Surf | Tier | Cost | Mobile fallback | Reduced motion | Law | Full recipe |
+|---|---|---|---|---|---|---|---|---|---|
+| `block.kpi_row` | JAL Core blocks (Astryx, Carbon) | layout (KPI tile and row) | P M | 0 - (entrance `mu.R01` at 1) | T0 | two tracks or one column below 640, never a scroll strip | final values at once | full: no count-up on product (`ui.number_motion`) | DS-B section 1 |
+| `block.chart` | JAL Core blocks, `dataviz` skill | layout (chart) | P M I | 0 - (entrance `an.R36`) | T0 to T1 | plot 192 tall below 640, 3 ticks, aggregate rather than scroll | static, instant updates | full: `--viz-1` to `--viz-6` categorical palette inside the chart only; one accent elsewhere | DS-B section 2 |
+| `block.pricing` | JAL Core blocks | layout (pricing) | P M | 0 S | T0 | tiers stack; comparison becomes a tier switcher | indicator jumps, prices swap instantly | full: no scaled featured card, no hover lift | DS-B section 3 |
+| `block.proof` | JAL Core blocks | layout (testimonial, logos, case metrics) | M I | 0 - | T0 | one column; `an.R43` with 44 controls when over 3 quotes | static wrapped rows | full: real, named customers | DS-B section 4 |
+| `block.hero.type_led` | JAL Core blocks (hero 1) | layout (hero) | M I | 0 - | T0 | one column, display-1 at most | static | full; never P | DS-B section 5, variant 1 |
+| `block.hero.split_studio` | JAL Core blocks (hero 2) | layout (hero) | M I | 0 - | T0 | stacked below 768 | static | full | DS-B section 5, variant 2 |
+| `block.hero.workbench` | JAL Core blocks (hero 3) | layout (hero) | M I | 0 - | T0 | one column, the live tool below the text | static | full: real JAL components, no fake chrome | DS-B section 5, variant 3 |
+| `block.hero.media_led` | JAL Core blocks (hero 4) | layout (hero) | M I | 0 - | T0 | media leads, text follows | poster | full: captions below media, never over | DS-B section 5, variant 4 |
+| `block.hero.marquee` | JAL Core blocks (hero 5) | layout (hero) | M I | 0 - | T0 | display step drops one bucket | static | full: fixed display steps, never viewport-width type | DS-B section 5, variant 5 |
+| `block.hero.masthead` | JAL Core blocks (hero 6) | layout (hero) | M I | 0 - | T0 | wordmark `width: 100%` leads | static | full: needs a real wordmark | DS-B section 5, variant 6 |
+| `block.hero.quote_led` | JAL Core blocks (hero 7) | layout (hero) | M I | 0 - | T0 | one column | static | full: a real, attributed quote | DS-B section 5, variant 7 |
+| `block.hero.index_first` | JAL Core blocks (hero 8) | layout (hero) | M I | 0 - | T0 | index rows stack | static | full | DS-B section 5, variant 8 |
+| `block.hero.letter` | JAL Core blocks (hero 9) | layout (hero) | M I | 0 - | T0 | reading measure holds | static | full: a signed note from a real person | DS-B section 5, variant 9 |
+| `block.hero.bento_opening` | JAL Core blocks (hero 10) | layout (hero) | M I | 0 - | T0 | one column (`core.bento`) | static | full: no void tiles | DS-B section 5, variant 10 |
+| `block.feature_grid` | JAL Core blocks | layout (features) | M I | 0 - | T0 | one column; a Feature Stack's panes in flow; tabs to a Select over 4 | static | full: no identical icon-card grid | DS-B section 6 |
+| `block.faq` | JAL Core blocks | layout (disclosure list) | P M | 0 S | T0 | one column, questions wrap | instant | full | DS-B section 7 |
+| `block.cta_band` | JAL Core blocks | layout (close) | M I | 0 - | T0 | stacked, field and button full width | static, state layers only | full: silent success in place | DS-B section 8 |
+| `block.footer` | JAL Core blocks | layout (footer) | P M I | 0 - | T0 | one column inside the app-shell content region | static | full: not the AI footer fingerprint | DS-B section 9 |
+| `block.header` | JAL Core blocks | layout (header and top nav) | P M I | 0 S | T0 | app-shell header plus bottom bar below 640 | state layers only | full: not the AI nav fingerprint | DS-B section 10 |
+| `block.page_state` | JAL Core blocks | layout (empty, loading, error) | P M I | 0 S | T0 | centered between header and tab bar | static skeleton and "Loading" label | full: never blank, never a dead end | DS-B section 11 |
+| `block.auth` | JAL Core blocks | layout (sign in, sign up) | P M | 0 S | T0 | single column, keyboard never covers the field | instant swap | full: tier 0, no account enumeration | DS-B section 12 |
+| `block.settings` | JAL Core blocks | layout (settings page) | P | 0 S | T0 | list-detail swap below 640 | instant | full: silent success | DS-B section 13 |
+
+### 1.17 designmd (`dmd.*`, class)
+
+| ID | Source | Kind | Surf | Tier | Cost | Mobile fallback | Reduced motion | Law | Full recipe |
+|---|---|---|---|---|---|---|---|---|---|
+| `dmd.<kit>.<part>` | designmd.ai kit (MCP, read tools only) | layout or component idea | P M | 0 - | T0 | the JAL Core responsive contract of the nearest `core.*` or `md.*` spec | per the `core.*`, `md.*`, or `mu.*`/`an.*` recipe it is rebuilt on | full after translate: every value becomes a JAL Core token; kit shadows become hairline plus tonal step | DS designmd policy; JC `ui.designmd_screen` (slop under 0.5 and fit 1.5 or more, else never a candidate) |
+
+A kit part is proposed as its own candidate only after the screen passes for that kit, and is always rebuilt on the matching `core.*` or `md.*` spec. It never overrides a spec, a token, or law.
 
 ## 2. Role of each kind in a stack
 
@@ -399,6 +479,8 @@ A section stack holds at most one layer per role. The kind column maps to a role
 | demo | demo | frame core, live DOM, typing demo |
 | component (any qualifier) | control-bound | attaches to one control inside the layout; takes no section role; each control carries at most one motion recipe and one hover recipe |
 | modifier (`sh.*`, `three.post_light`) | host-bound | rides on a background, 3D, or hover host; takes no role; cost adds to the host |
+| primitive (`md.state_layer`, `md.focus_ring`, `md.icon`, `md.divider`) | every control | part of every control's spec; takes no role and never counts as a layer |
+| class rows (`ok.fetch.<slug>`, `dmd.<kit>.<part>`) | the role of the row they stand in for | a fetched OriginKit component takes the role of the `ok.` or other recipe it replaces; a designmd part takes the role of the `core.*` or `md.*` spec it is rebuilt on |
 
 ## 3. Section kind to candidate recipes
 
@@ -406,34 +488,37 @@ Candidates are grouped by role, across every source and surface. Drop by the Sur
 
 | Section kind | Layout | Text | Motion | Hover | Background | 3D | Demo | Prechecks and notes |
 |---|---|---|---|---|---|---|---|---|
-| Hero [hero] | `core.plain_spacing`, `core.bento` (areas), `rf.D1.type_led`, `rf.D9.plinth`, `rf.D11.masthead`, `rf.D4.media_led`, `rf.display_hero`, `nz.section.gallery-carousel`, `nz.section.helix-portfolio`, `md.*` | `an.R02`, `an.R03`, `mu.R05`, `mu.R09`, `mu.R11`, `gsap.splittext_reveal`, `bang.stagger_word`, `bang.stagger_char`, `nz.section.kinetic-type`, `nz.section.type-mask`, `nz.section.magnetic-scatter`, `nz.section.word-rotator` | `mu.R01`, `bang.staged_reveal`, `gsap.stagger_sequence`, `gsap.scrub`, `bang.shot_size`, `bang.breathing_scale`, `an.R24` (first load), `an.R26` | `an.R06`, `mu.R15` (CTA) | `nz.section.gaze`, `.loom`, `.draw`, `.ink-drift`, `.veil`, `.particle-field`, `.sine-currents`, `.waveform`, `.flaming-hot`, `.cosmic-dust`, `.starfield-warp`, `.ascii-art`, `.noise-terrain`, `.geometric-order`, `.magnetic-field`, `.digital-decay`, `.spotlight`, `cr.window_rain`, `cr.wet_ground`, `cr.wind_grass`, `cr.ocean_snell`, `three.points_field`, `px.canvas2d_field`, `px.pointer_repel` | `three.studio_object`, `three.matcap_clay`, `three.sdf_blob`, `nz.el.*`, `mu.R44`, `px.orbit_bounded` | `frame.demo`, `mu.R10` | never on P; one display per page; one tier-3 section per page; `mu.R09` only for a devtool or security brand |
-| Feature grid or walkthrough [story] | `core.bento`, `core.rows`, `core.divided_section`, `rf.D3.spec_rows`, `an.R41`, `md.*` | `an.R02` fade-through, `an.R03` (heading) | `mu.R01`, `gsap.reveal`, `an.R23`, `an.R13` with `an.R02`, `an.R32`, `an.R21`, `gsap.pinned_sequence`, `gsap.horizontal_track` | `core.clickable_card`, `mu.R15` | `three.instanced_field` | `three.views`, `nz.el.*` (placement `section`) | `frame.demo`, `mu.R10` | DS-K section 3 bans the identical feature-card grid and the icon tile above a heading |
-| Proof or logos | `an.R41` static wall, `mu.R35`, `core.rows` | none | `mu.R18`, `mu.R01`, `gsap.reveal` | none (logos single ink, no hover burst) | none | none | none | marquee needs more items than fit, plus a pause control |
-| Stats (marketing) | `core.plain_spacing`, `core.bento`, `rf.D2.ledger_numbers` | `mu.R07`, `an.R08` | `mu.R01`, `an.R36` entrance | none | none | none | none | DS-K bans the big-number hero; JC `ui.number_motion` |
-| Dashboard KPI row [data_viz] | `core.bento`, `core.card`, `core.rows`, `core.tpl.dashboard`, `rf.D2.ledger_numbers`, `rf.D13.precision_dark` (dark brief only) | none | `mu.R01` product preset only | `core.clickable_card` | none | none | none | P capped at tier 1; control-bound: `an.R08` live, `an.R36` update, `an.R37`, `core.badge`, `core.skeleton`; GAP 5 |
-| Pricing | `core.selectable_card`, `core.card`, `core.table` (real comparison), `rf.D2.ledger_numbers` | `an.R08` (price on billing toggle) | `mu.R01` | `mu.R15` | none | none | none | pricing tables are tier 0 (JC `motion.intensity`); control-bound: `an.R13` billing toggle, `core.segmented`, `an.R14`; GAP 6 |
-| Testimonial | `an.R41` (tweet-card layout), `core.card`, `rf.D8.generous_air`, `rf.D7.editorial_measure` | `an.R02` per-word-crossfade | `an.R32`, `mu.R18` (quote wall), `mu.R01` | none | none | none | none | one testimonial at a time for `an.R32`; GAP 6 |
+| Hero [hero] | `core.plain_spacing`, `core.bento` (areas), `rf.D1.type_led`, `rf.D9.plinth`, `rf.D11.masthead`, `rf.D4.media_led`, `rf.display_hero`, `nz.section.gallery-carousel`, `nz.section.helix-portfolio`, `block.hero.*` (ten variants), `dmd.*` | `an.R02`, `an.R03`, `mu.R05`, `mu.R09`, `mu.R11`, `gsap.splittext_reveal`, `bang.stagger_word`, `bang.stagger_char`, `nz.section.kinetic-type`, `nz.section.type-mask`, `nz.section.magnetic-scatter`, `nz.section.word-rotator`, `ok.slot_roll`, `ok.char_flip`, `ok.skew_rise`, `ok.weight_shift` | `mu.R01`, `bang.staged_reveal`, `gsap.stagger_sequence`, `gsap.scrub`, `bang.shot_size`, `bang.breathing_scale`, `an.R24` (first load), `an.R26` | `an.R06`, `ok.edge_roll`, `mu.R15`, `ok.entry_fill`, `ok.press_plate` (CTA) | `nz.section.gaze`, `.loom`, `.draw`, `.ink-drift`, `.veil`, `.particle-field`, `.sine-currents`, `.waveform`, `.flaming-hot`, `.cosmic-dust`, `.starfield-warp`, `.ascii-art`, `.noise-terrain`, `.geometric-order`, `.magnetic-field`, `.digital-decay`, `.spotlight`, `cr.window_rain`, `cr.wet_ground`, `cr.wind_grass`, `cr.ocean_snell`, `three.points_field`, `px.canvas2d_field`, `px.pointer_repel` | `three.studio_object`, `three.matcap_clay`, `three.sdf_blob`, `nz.el.*`, `mu.R44`, `px.orbit_bounded` | `frame.demo`, `mu.R10` | never on P; one display per page; one tier-3 section per page; `mu.R09` only for a devtool or security brand; the `block.hero.*` variant is drawn by the page-shape roll (DS-D section 2) |
+| Feature grid or walkthrough [story] | `core.bento`, `core.rows`, `core.divided_section`, `rf.D3.spec_rows`, `an.R41`, `block.feature_grid`, `ok.tab_preview`, `dmd.*` | `an.R02` fade-through, `an.R03` (heading) | `mu.R01`, `gsap.reveal`, `an.R23`, `an.R13` with `an.R02`, `an.R32`, `an.R21`, `gsap.pinned_sequence`, `gsap.horizontal_track` | `core.clickable_card`, `mu.R15` | `three.instanced_field` | `three.views`, `nz.el.*` (placement `section`) | `frame.demo`, `mu.R10`, `ok.compare_slider` | DS-K section 3 bans the identical feature-card grid and the icon tile above a heading |
+| Proof or logos | `block.proof`, `an.R41` static wall, `mu.R35`, `core.rows` | none | `mu.R18`, `mu.R01`, `gsap.reveal` | none (logos single ink, no hover burst) | none | none | none | marquee needs more items than fit, plus a pause control |
+| Stats (marketing) | `block.proof` (case metrics), `core.plain_spacing`, `core.bento`, `rf.D2.ledger_numbers` | `mu.R07`, `an.R08` | `mu.R01`, `an.R36` entrance | none | none | none | none | DS-K bans the big-number hero; JC `ui.number_motion` |
+| Dashboard KPI row [data_viz] | `block.kpi_row`, `block.chart`, `core.bento`, `core.card`, `core.rows`, `core.tpl.dashboard`, `rf.D2.ledger_numbers`, `rf.D13.precision_dark` (dark brief only) | none | `mu.R01` product preset only | `core.clickable_card` | none | none | none | P capped at tier 1; control-bound: `an.R08` live, `an.R36` update, `an.R37`, `core.badge`, `core.skeleton`, `md.progress`, `md.segmented_button` (period switch), `md.icon_button`, `md.menu`, `md.tooltip`; chart color per `block.chart` (`--viz-1` to `--viz-6` inside the plot only) |
+| Pricing | `block.pricing`, `core.selectable_card`, `core.card`, `core.table` (real comparison), `rf.D2.ledger_numbers` | `an.R08` (price on billing toggle) | `mu.R01` | `mu.R15` | none | none | none | pricing tables are tier 0 (JC `motion.intensity`); control-bound: `an.R13` billing toggle, `core.segmented` (`md.segmented_button`), `an.R14`, `md.tooltip` (feature notes) |
+| Testimonial | `block.proof`, `an.R41` (tweet-card layout), `core.card`, `rf.D8.generous_air`, `rf.D7.editorial_measure` | `an.R02` per-word-crossfade | `an.R32`, `mu.R18` (quote wall), `mu.R01` | none | none | none | none | one testimonial at a time for `an.R32` |
 | Story, steps, or manifesto [story] | `core.divided_section`, `core.plain_spacing`, `rf.D7.editorial_measure` | `mu.R04`, `an.R02` line-by-line-slide, `gsap.splittext_reveal`, `an.R03` | `an.R23`, `gsap.pinned_sequence`, `gsap.scrub`, `gsap.stagger_sequence`, `bang.continuous_world`, `bang.shot_size` | none | `nz.section.ink-drift`, `.veil`, `.parallax-layers`, `.cinematic-reel`, `cr.ocean_snell` | `three.scroll_camera`, `three.studio_object`, `three.views` | `frame.scroll` | numbered labels only for a real ordered process; `motion.pin` before any pin; one `mu.R04` per page |
-| Product demo [demo] | `core.plain_spacing` (figure plus caption), `core.app_shell` (real components) | `mu.R10` | `bang.camera_follow_click`, `bang.shot_size`, `bang.staged_reveal`, `bang.directional_blur` (blocked, GAP 12) | none | none | `three.studio_object` | `frame.demo`, `gsap.live_dom_demo`, `frame.poster_steps`, `mu.R10`, `nz.section.terminal` | `motion.demo_medium` first; pause over 5s; control-bound in the demo: `an.R21`, `an.R14` |
-| Gallery [gallery_hover] | `an.R43`, `core.bento`, `rf.D4.media_led`, `rf.D10.catalogue`, `nz.section.gallery-carousel`, `.moodboard`, `.visual-board`, `.helix-portfolio`, `.cinematic-reel` | none | `an.R32`, `an.R26`, `gsap.horizontal_track`, `mu.R01` | `an.R27`, `mu.R28`, `three.img_hover` (+ `sh.cover_uv_hover`), `nz.fx.*` by family | none | `three.views` | none | `imm.recipe` `hover_family` and `motion_budget`; paper heroes pair with calm or editorial-grade hovers |
-| CTA or close | `core.plain_spacing`, `rf.D11.masthead`, `md.*` | `an.R02` micro-scale-fade | `mu.R01` | `an.R06`, `mu.R15`, `mu.R16` (touch) | none | none | none | display type only if the hero did not use it; control-bound: `core.button`, `an.R14`, `core.text_input` (email capture) |
-| Data table | `core.table`, `core.rows`, `core.list`, `rf.D3.spec_rows` | none | none | none | none | none | none | tier 0 to 1; control-bound: `an.R21` row add and remove, `an.R22` expand, `an.R40`, `an.R08` live cells, `core.empty_state`, `core.notification` |
-| Form | `core.divided_section`, `core.plain_spacing` (640 cap), `core.tpl.form_wizard` | none | none | none | none | none | none | tier 0; control-bound: `core.text_input`, `core.select`, `core.date_picker`, `core.chips`, `core.checkbox_radio`, `core.button` with `an.R14`, `an.R22`, `an.R17`, `core.notification` |
-| Settings | `core.divided_section`, `core.list`, `core.tpl.settings` | none | none | none | none | none | none | tier 0 to 1; control-bound: `core.switch` with `an.R17`, `core.select`, `core.segmented` with `an.R13`, `core.notification` toast, `core.dialog`, `core.alert_dialog`, `mu.R34` (explicit dark mode only) |
-| Empty state | `core.empty_state`, `rf.D1.type_led` | none | `mu.R01` product preset | none | none | none | none | never 3D, never faked illustration |
-| Loading state | `core.skeleton` | none | none | none | none | none | none | control-bound: `an.R40`, `an.R39`, `an.R14`; `an.R24` only on an immersive first load |
-| Navigation | `core.app_shell`, `core.top_nav`, `core.side_nav`, `rf.D6.docs_sidebar` | none | `mu.R42` (long-form) | `an.R06`, `an.R30`, `mu.R29` (pointer-fine showcase) | none | none | none | control-bound: `core.tabs` with `an.R13`, `core.segmented`, `core.fab`, `an.R31` (mobile secondary actions) |
-| Footer | `core.divided_section`, `core.rows` (link groups), `core.plain_spacing`, `rf.D11.masthead` | none | none | `an.R06`, `an.R30` | none | none | none | GAP 6 (no footer spec) |
-| FAQ | `core.divided_section`, `core.list` | none | none | none | none | none | none | control-bound: `an.R22` |
+| Product demo [demo] | `core.plain_spacing` (figure plus caption), `core.app_shell` (real components) | `mu.R10` | `bang.camera_follow_click`, `bang.shot_size`, `bang.staged_reveal`, `bang.directional_blur` (blocked, GAP 12) | none | none | `three.studio_object` | `frame.demo`, `gsap.live_dom_demo`, `frame.poster_steps`, `mu.R10`, `nz.section.terminal`, `ok.compare_slider` | `motion.demo_medium` first; pause over 5s; control-bound in the demo: `an.R21`, `an.R14` |
+| Gallery [gallery_hover] | `an.R43`, `ok.center_focus_slider`, `core.bento`, `rf.D4.media_led`, `rf.D10.catalogue`, `nz.section.gallery-carousel`, `.moodboard`, `.visual-board`, `.helix-portfolio`, `.cinematic-reel` | none | `an.R32`, `an.R26`, `gsap.horizontal_track`, `mu.R01` | `an.R27`, `mu.R28`, `three.img_hover` (+ `sh.cover_uv_hover`), `nz.fx.*` by family, `ok.row_preview` (named work rows) | none | `three.views` | none | `imm.recipe` `hover_family` and `motion_budget`; paper heroes pair with calm or editorial-grade hovers |
+| CTA or close | `block.cta_band`, `core.plain_spacing`, `rf.D11.masthead`, `dmd.*` | `an.R02` micro-scale-fade | `mu.R01` | `an.R06`, `ok.edge_roll`, `mu.R15`, `ok.entry_fill`, `ok.press_plate`, `mu.R16` (touch) | none | none | none | display type only if the hero did not use it; control-bound: `core.button`, `an.R14`, `core.text_input` (email capture) |
+| Data table | `core.table`, `core.rows`, `core.list`, `rf.D3.spec_rows` | none | none | none | none | none | none | tier 0 to 1; control-bound: `an.R21` row add and remove, `an.R22` expand, `an.R40`, `an.R08` live cells, `core.empty_state`, `core.notification`, `md.checkbox` (row select), `md.toolbar` (bulk actions), `md.icon_button`, `md.menu` (row actions), `md.tooltip`, `md.progress`, `md.divider` |
+| Form | `core.divided_section`, `core.plain_spacing` (640 cap), `core.tpl.form_wizard` | none | none | none | none | none | none | tier 0; control-bound: `core.text_input`, `core.select`, `core.date_picker`, `core.chips`, `md.checkbox`, `md.radio`, `md.slider`, `md.combobox`, `md.segmented_button`, `md.split_button`, `md.progress`, `core.button` with `an.R14`, `an.R22`, `core.notification`; a setting that applies at once is `md.switch`, not a form field |
+| Settings | `block.settings`, `core.divided_section`, `core.list`, `core.tpl.settings`, `core.master_detail` | none | none | none | none | none | none | tier 0 to 1; control-bound: `md.switch` with `an.R17`, `md.radio`, `md.checkbox`, `md.slider`, `core.select`, `md.segmented_button` with `an.R13`, `md.menu`, `md.divider`, `core.notification` toast, `core.dialog`, `core.alert_dialog`, `mu.R34` (explicit dark mode only) |
+| Empty state | `block.page_state`, `core.empty_state`, `rf.D1.type_led` | none | `mu.R01` product preset | none | none | none | none | never 3D, never faked illustration |
+| Loading state | `block.page_state`, `core.skeleton` | none | none | none | none | none | none | control-bound: `an.R40`, `an.R39`, `md.progress`, `an.R14`; `an.R24` only on an immersive first load |
+| Navigation | `block.header`, `core.app_shell`, `core.top_nav`, `core.side_nav`, `md.nav_rail`, `md.nav_drawer`, `rf.D6.docs_sidebar` | none | `mu.R42` (long-form), `hm.floating_nav_morph` (M, 640 and up) | `an.R06`, `ok.edge_roll`, `an.R30`, `ok.weight_shift`, `mu.R29` (pointer-fine showcase) | none | none | none | control-bound: `core.tabs` with `an.R13`, `core.segmented`, `core.fab`, `an.R31` (mobile secondary actions), `md.icon_button`, `md.menu`, `md.tooltip`; rail or drawer from 1024 only |
+| Footer | `block.footer`, `core.divided_section`, `core.rows` (link groups), `core.plain_spacing`, `rf.D11.masthead` | none | none | `an.R06`, `an.R30` | none | none | none | footer archetype named in the contract (DS-B section 9) |
+| FAQ | `block.faq`, `core.divided_section`, `core.list` | none | none | none | none | none | none | control-bound: `an.R22`, `md.divider`, `core.text_input` (search over 15 questions) |
 | Global presence or map [data_viz] | `an.R41` (location list), `core.rows` | none | `mu.R01` | none | none | `mu.R44`, `three.dot_globe`, `three.instanced_field` | none | JC `ui.geo_visual`; under 3 locations a static list; P never gets `mu.R44`; `mu.R38` static map as layout |
 | Object showcase [object_showcase] | `rf.D9.plinth`, `core.plain_spacing`, `nz.section.perspective-cube` | `an.R02`, `an.R03` | `bang.shot_size`, `gsap.scrub` | `px.orbit_bounded` | none | `three.studio_object`, `three.matcap_clay`, `three.sdf_blob`, `nz.el.*`, `an.R33` (back side on tap) | `frame.demo` | host-bound: `sh.fresnel_rim`, `sh.matcap`, `three.post_light`; `noyzzi_object` `earns_place` |
 | Kinetic type band [strip, text_motion] | `core.plain_spacing` | `mu.R19`, `mu.R12`, `nz.section.kinetic-type`, `nz.section.word-rotator` | `mu.R18` | `mu.R12` | none | none | none | one `mu.R19` per page; `mu.R12` pointer-fine only |
 | Section handoff [transition] | none | none | `an.R25`, `mu.R01`, `an.R24` (first load), `gsap.flip_transition`, MO section 3 route crossfade | none | none | none | none | `an.R25` once per page; `bang.directional_blur` blocked (GAP 12) |
-| Environment or toy [environment, toy] | `core.plain_spacing` | none | `gsap.scrub` | `px.pointer_repel` | `cr.window_rain`, `cr.wet_ground`, `cr.deform_sand_snow`, `cr.wind_grass`, `cr.ocean_snell`, `nz.section.draw`, `.magnetic-field`, `.floating-playground`, `.magnetic-scatter` | `px.fixed_step_toy`, `px.rapier_toy` (approval), `px.pointer_look`, `nz.el.shards`, `nz.el.voxel` | none | interaction is the message (IM section 1); at most two `cr.*` per mobile viewport |
-| Particles [particles] | `core.plain_spacing` | none | none | `px.pointer_repel` | `three.points_field`, `three.gpgpu_particles`, `three.compute_particles`, `px.canvas2d_field`, `px.nixie_fx` (approval), `nz.section.particle-field`, `.cosmic-dust`, `.starfield-warp` | none | none | pick the lowest particle tier that reads (PX section 1); host-bound: `sh.curl_drift` |
-| AI chat or conversation | `core.ai_chat`, `core.tpl.ai_chat`, `core.tpl.messaging_shell` | `an.R02` (content swap) | none | none | none | none | none | P tier 0 to 1; control-bound: `core.chips` suggestion, `an.R21` message add, `an.R39` live thinking state, `an.R14` |
-| Docs or article reading | `rf.D6.docs_sidebar`, `rf.D7.editorial_measure`, `core.side_nav`, `core.browser_surfaces` | none | `mu.R42` | none | none | none | none | Read mode, tier 0; control-bound: `an.R22` file tree; `an.R41` code comparison as layout |
-| Auth or checkout | `core.tpl.login`, `core.tpl.checkout_wizard`, `core.plain_spacing` | none | none | none | none | none | none | tier 0; content read fast, never immersive; control-bound as Form |
+| Environment or toy [environment, toy] | `core.plain_spacing` | none | `gsap.scrub` | `px.pointer_repel` | `cr.window_rain`, `cr.wet_ground`, `cr.deform_sand_snow`, `cr.wind_grass`, `cr.ocean_snell`, `nz.section.draw`, `.magnetic-field`, `.floating-playground`, `.magnetic-scatter` | `px.fixed_step_toy`, `px.rapier_toy`, `px.pointer_look`, `nz.el.shards`, `nz.el.voxel` | none | interaction is the message (IM section 1); at most two `cr.*` per mobile viewport |
+| Particles [particles] | `core.plain_spacing` | none | none | `px.pointer_repel` | `three.points_field`, `three.gpgpu_particles`, `three.compute_particles`, `px.canvas2d_field`, `px.nixie_fx`, `nz.section.particle-field`, `.cosmic-dust`, `.starfield-warp` | none | none | pick the lowest particle tier that reads (PX section 1); host-bound: `sh.curl_drift` |
+| AI chat or conversation | `core.ai_chat`, `core.tpl.ai_chat`, `core.tpl.messaging_shell` | `an.R02` (content swap) | none | none | none | none | none | P tier 0 to 1; control-bound: `core.chips` suggestion, `an.R21` message add, `an.R39` live thinking state, `an.R14`, `md.icon_button`, `md.menu`, `md.tooltip`, `md.progress` |
+| Docs or article reading | `rf.D6.docs_sidebar`, `rf.D7.editorial_measure`, `core.side_nav`, `md.nav_drawer`, `core.browser_surfaces` | none | `mu.R42` | none | none | none | none | Read mode, tier 0; control-bound: `an.R22` file tree, `md.divider`, `ok.row_preview` link-preview variant (pointer-fine); `an.R41` code comparison as layout |
+| Auth or checkout | `block.auth`, `core.tpl.login`, `core.tpl.checkout_wizard`, `core.plain_spacing` | none | none | none | none | none | none | tier 0; content read fast, never immersive; control-bound as Form, plus `md.checkbox` (remember me) |
+| Work or case list | `core.rows`, `core.list`, `rf.D10.catalogue` | none | `mu.R01` | `ok.row_preview`, `an.R06` | none | none | none | the preview stage runs from 1024 on pointer-fine only; inline thumbnails below |
+| Editor or tool chrome | `core.app_shell`, `core.master_detail` | none | none | none | none | none | none | P tier 0 to 1; control-bound: `md.toolbar`, `md.icon_button`, `md.split_button`, `md.segmented_button`, `md.menu`, `md.tooltip`, `md.divider`, `md.progress` |
+| Any section (primitives) | none | none | none | none | none | none | none | every control in every row above carries `md.state_layer`, `md.focus_ring`, and `md.icon`; `md.divider` marks structural boundaries only |
 
 ## 4. Mixing rules and the layering protocol
 
@@ -442,8 +527,8 @@ Brian's ruling: **no fixed limit on how many recipes mix in one section**, as lo
 ### 4.1 Precheck (no JEV)
 
 1. Section kind from the concept, then candidates from section 3.
-2. Drop a row when: its Surf lacks the section's surface; its Tier is above the section's `motion.intensity` tier; its Cost is over the section's ceiling (`imm.tier` budget, PF section 1; product UI never above T2); it has no mobile fallback and mobile is a target; its Law note needs an exemption the section does not have (a `noyzzi` row needs M or I plus the exempt wrapper; an `rf.*` row needs a matching direction contract; an `md.*` row needs a passed `ui.designmd_screen`); it is on the MC DROP list; it names an approval candidate without Brian's yes.
-3. Page-level caps (count across the page, not the section): one tier-3 section; one WebGL canvas (more 3D regions through `three.views`); one each of `mu.R04`, `mu.R19`, `an.R23` per story, `an.R24`, `an.R25`, `mu.R44`, `an.R33`, `mu.R05`; at most two `cr.*` in one mobile viewport.
+2. Drop a row when: its Surf lacks the section's surface; its Tier is above the section's `motion.intensity` tier; its Cost is over the section's ceiling (`imm.tier` budget, PF section 1; product UI never above T2); it has no mobile fallback and mobile is a target; its Law note needs an exemption the section does not have (a `noyzzi` row needs M or I plus the exempt wrapper; an `rf.*` row needs a matching direction contract; a `dmd.*` row needs a passed `ui.designmd_screen`; an `ok.fetch.<slug>` row needs a JEV pick for this section and the MC section 1 fetch rules, and fails if its effect needs a gradient, glow, blur, or spring); it is on the MC DROP list (the OriginKit families there included); it names an approval candidate without Brian's yes.
+3. Page-level caps (count across the page, not the section): one tier-3 section; one WebGL canvas (more 3D regions through `three.views`); one each of `mu.R04`, `mu.R19`, `an.R23` per story, `an.R24`, `an.R25`, `mu.R44`, `an.R33`, `mu.R05`, `hm.floating_nav_morph`; `ok.char_flip` never in a section with `an.R33` or `mu.R44`; at most two `cr.*` in one mobile viewport.
 
 ### 4.2 The protocol
 
@@ -462,7 +547,7 @@ Brian's ruling: **no fixed limit on how many recipes mix in one section**, as lo
 5. **Stop** at the first of: a no (under 0.6, or low confidence); the next layer would exceed the section's motion tier; the next layer would exceed the performance budget; no role is left; a mechanical rule in step 3 would break.
 6. **Record** in the build report, per section: `section | stack: ID (role, JEV confidence), ... | stop reason`. Any outage fallback is stamped `UNVERIFIED BY JEV`.
 
-The MC section 7.2 and 7.3 caps of "exactly one G per section" and "combine only the top two" are superseded by this protocol: the section tier still sets which classes may appear (tier 0 S only, tier 1 adds E, tier 2 adds G, tier 3 adds Q), and focal competition between layers is JEV's call per layer.
+MC sections 7.2 and 7.3 now state the same rule: the section tier sets which classes may appear (tier 0 S only, tier 1 adds E, tier 2 adds G, tier 3 adds Q), never how many layers stack, and focal competition between layers is JEV's call per layer. The older caps (one G per section, and a fixed two-layer combine) are gone from every file.
 
 ### 4.3 Adjacent sections
 
@@ -478,26 +563,35 @@ The MC section 7.2 and 7.3 caps of "exactly one G per section" and "combine only
 
 ## 5. Gaps (mentioned but not fully specified)
 
-1. `core.side_nav`: DS-C allows a side nav from 1024 "with a fixed width budget" but gives no width, item anatomy, or collapse behaviour.
-2. `core.menu_popover`, `core.tooltip`: DS-F sections 5 and 8 set top-layer chrome and timing; no anatomy, trigger, keyboard, or placement spec in DS-C.
-3. `core.checkbox_radio`, `core.switch`, `core.slider`: DS-F section 7 lists what paints pressed; DS-C has no spec (anatomy, sizes, states). `an.R17` covers switch motion only.
-4. `core.tpl.<family>`: DS-F section 10 names 13 template families; no region map, width budget, or container policy exists for any of them.
-5. Dashboard KPI tile and charts: no JAL Core KPI tile or chart spec in DS-C; only motion (`an.R08`, `an.R36`, `an.R37`) and FR Bento. The `dataviz` skill is the nearest home and is not wired here.
-6. No JAL Core spec for a pricing table, testimonial block, hero layout, or footer; section 3 composes them from `core.*` layouts.
-7. `an.R23` pins below 640 through the app-shell scroller (MC R23) while JC `motion.pin` never pins below 768. This index uses the `motion.pin` rule; MC R23 needs its owner to reconcile.
+Resolved items keep their number so older build reports still resolve.
+
+1. Resolved. `core.side_nav` now has a width budget, item anatomy, and collapse rules: DS-C Navigation rail and drawer (`md.nav_rail` 80 wide, `md.nav_drawer` 256 wide, modal drawer below 1024).
+2. Resolved. `core.menu_popover` and `core.tooltip` now have anatomy, trigger, keyboard, and placement specs: DS-C Menu and submenu (`md.menu`) and Tooltip (`md.tooltip`). The tooltip delay conflict moved to gap 26.
+3. Resolved. `core.checkbox_radio`, `core.switch`, and `core.slider` now have DS-C specs (anatomy, sizes, all states): `md.checkbox`, `md.radio`, `md.switch`, `md.slider`. The switch motion conflict moved to gap 24.
+4. Partly resolved. `core.tpl.<family>`: DS-F section 10 names 13 template families. `core.tpl.settings` and `core.tpl.login` now have DS-B blocks (`block.settings`, `block.auth`), and `core.tpl.dashboard` has `block.kpi_row` and `block.chart`. The other 10 families still have no region map, width budget, or container policy.
+5. Resolved. The dashboard KPI tile and charts are specified in DS-B sections 1 and 2 (`block.kpi_row`, `block.chart`). Chart color is ruled: the `--viz-1` to `--viz-6` categorical palette (non-purple, at least 3:1 on the surface) is allowed inside data visualizations only; the one-accent rule holds everywhere else.
+6. Resolved. Pricing, testimonial and proof, hero (ten variants), feature grid, FAQ, CTA band, footer, header, page states, auth, and settings are DS-B blocks (section 1.16).
+7. Resolved. MC R23 never pins below 768 (the `motion.pin` floor) and falls back to an in-flow stagger there.
 8. `an.R27` scales an image on hover, which DS-K section 3 bans ("Animating an image on hover") and DS-D D4 strips. `three.img_hover` distorts images inside a canvas; the ban does not state whether the canvas exemption covers it. Needs Brian's ruling.
-9. `mu.R44` runs an ambient 60s turn with a pause control (MC R44); `three.dot_globe` forbids ambient spin (IM 4.5). Same globe, two rules.
+9. Resolved. `mu.R44` and `three.dot_globe` agree: a slow turn per `--loop-globe` only with a visible 44 pause control, static under reduced motion (MC R44, IM 4.5, R3 section 14).
 10. bang stagger values (24ms char, 70 to 120ms word, MS) differ from the tokens (`--stagger-char` 20ms, `--stagger-word` 40ms, Brian v0.4.0, MC section 2.1). The tokens win.
 11. `bang.shot_size`, `bang.camera_follow_click`: MO section 4 says "worked GSAP timeline examples live in `references/showcase.md`", but MS has no code sketch for either.
 12. `bang.directional_blur`: resolved by the lead. DOM `filter: blur` stays banned: DOM motion is transform and opacity only, for performance and reduced motion. Directional or motion blur is allowed inside a WebGL canvas as shader shading (`sh.*`), and inside noyzzi sections as designed. On DOM transitions, use the opacity crossfade fallback.
-13. `gsap.live_dom_demo` and `frame.poster_steps` exist only as JC `motion.demo_medium` criteria; neither has a build section.
+13. Resolved. `gsap.live_dom_demo` is built in FM section 8 and `frame.poster_steps` in FM section 9.
 14. `nz.section.moodboard`: resolved. Brian allows everything from noyzzi, including its designed overlap, inside a `data-jal-exempt="noyzzi"` section; `ui_audit` exempts overlap there.
-15. `cr.ocean_snell`: CR section 5 has no mobile fallback subsection; the fallback here comes from IM 4.4.
-16. `three.*` rows other than `three.scroll_camera`, `three.img_hover`, `three.matcap_clay`, `three.sdf_blob`, and the particle tiers have no single build section; the recipe is spread across IM 4.5, R3, TF, and SH.
-17. `px.canvas2d_field`: IM Zone B covers "a 3D canvas"; the law for a JAL 2D canvas is not stated. This index applies canvas law.
-18. `px.nixie_fx`, `px.rapier_toy`: approval candidates (need Brian's yes); nixie-fx pins three to 0.185.x; the Rapier one-clock wiring is marked `[verify]` in PX section 9.
+15. Resolved. `cr.ocean_snell` has its mobile fallback in CR section 5.
+16. Resolved. Every `three.*` recipe has one build section, listed in the IM section 4.5 table (including `three.studio_object`, TF section 13, and `three.post_light`, SH section 19).
+17. Resolved. IM Zone B now states the law for a JAL 2D canvas; `px.canvas2d_field` follows it.
+18. Resolved. `px.nixie_fx` and `px.rapier_toy` are approved by Brian and JEV-picked. Still true: nixie-fx pins three to 0.185.x, and the Rapier one-clock wiring is marked `[verify]` in PX section 9.
 19. noyzzi: effect code is not retrievable (`noyzzi_get` returns MANUAL); every cost tier is an estimate; the technique (2D canvas or WebGL) of every C1 section is unknown until `noyzzi_get`; dark house buttons and the Draw Clear pill are under 44px.
 20. ID drift: resolved. Canonical noyzzi IDs are `nz.section.<slug>`, `nz.fx.<slug>`, and `nz.el.<id>` (the catalog now uses `nz.fx.*`). Magic UI and Animata recipes resolve by number: `mu.Rnn` and `an.Rnn` are the same row.
-21. Stale combine text in files owned elsewhere: IM section 3 step 3 ("a `noul` on combining the top two"), IM section 5 step 3 ("Drop the recipe used by the adjacent section"), and MC section 7.3 ("combining the top two ... never two G") predate Brian's ruling; section 4 of this file is the current protocol. JC has no named key for the adjacent-repeat question in 4.3.
-22. Forms: MC section 7.2 caps forms at tier 1; JC `motion.intensity` fixes them at tier 0. This index uses tier 0.
+21. Resolved. IM sections 3 and 5 and MC section 7 now carry Brian's no-limit, JEV-judged layering; JC `ui.component_recipe` covers the adjacent-repeat question.
+22. Resolved. MC section 7.2 now puts forms at tier 0, matching JC `motion.intensity`.
 23. Resolved: `jal-motion` now cites `skills/jal-immersive/references/...`.
+24. `an.R17` (MC) draws the Animata switch: a 32 by 20 track, a 16 thumb, and `--dur-100`. DS-C Switch (`md.switch`) is a 52 by 32 track, a 24 handle scaled by transform, and `--dur-150`. DS-C is the product spec; MC R17 needs its geometry and timing re-cut to match.
+25. The DS-C state layer never spreads from the pointer and is never a circle, while `mu.R16` (press ripple, P M I), the `mu.R15` fill sweep, and `ok.entry_fill` all grow a circle. This index keeps `ok.entry_fill` on M only; `mu.R16` on product UI needs a ruling (drop it from P, or accept it as a stated exception).
+26. Tooltip hover delay: DS-C Tooltip uses a 300ms intent delay, while DS-K `hm.tooltip_timing` says 800 to 1000ms. Both agree on 0ms for keyboard focus. `ok.row_preview` link previews follow whichever wins.
+27. DS-B section 2 still draws chart series as an ink lightness ramp and lists "multi-hue categorical rainbows" as an anti-pattern. It does not yet name the `--viz-1` to `--viz-6` palette that the ruling allows inside charts (the tokens are in `tokens.css`). DS-B needs its owner to add the palette and say when a categorical chart uses it.
+28. Resolved. `--z-nav` and `--banner-height` (`hm.sticky_stack`, used by `hm.floating_nav_morph` and `ok.row_preview`) are defined in `tokens.css`.
+29. The `md.` prefix now names the Material Web rows. JC `ui.component_recipe` still gives `md.nav_bar` as a sample candidate, which reads as designmd; the designmd class is now `dmd.<kit>.<part>`. JC's example needs its owner to switch to `dmd.` or to a real `md.*` ID.
+30. `ok.fetch.<slug>`: a fetched OriginKit component has no cost tier or mobile fallback until someone reads it. Its row borrows the matching `ok.` recipe's fallback and is re-tiered after reading, as `est.` noyzzi rows are.

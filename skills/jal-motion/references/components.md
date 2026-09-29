@@ -1,24 +1,33 @@
-# Motion component recipes (Magic UI and Animata ports)
+# Motion component recipes (Magic UI and Animata ports, OriginKit clean-room recipes)
 
-The lawful component layer under `jal-motion`. Every row here is a KEEP or ADAPT verdict from a full read of both libraries, re-cut for v0.4.0: Tailwind is approved (wired to JAL tokens), Three.js, React Three Fiber, and drei are approved, and the visual law is unchanged. Read `jal-motion` first (tokens, product versus showcase, accessibility), then this file for the concrete component. Anything in section 6 (DROP) is never built, never "lightly adapted".
+The lawful component layer under `jal-motion`. Every Magic UI and Animata row here is a KEEP or ADAPT verdict from a full read of both libraries, re-cut for v0.4.0: Tailwind is approved (wired to JAL tokens), Three.js, React Three Fiber, and drei are approved, and the visual law is unchanged. The OriginKit rows (R45 to R52 and four presets) are clean-room technique recipes written from OriginKit's public catalog names only (section 1). Read `jal-motion` first (tokens, product versus showcase, accessibility), then this file for the concrete component. Anything in section 6 (DROP) is never built, never "lightly adapted".
 
 ## 1. Attribution
 
-Both sources are MIT. The recipes below are re-implementations. Where a sketch ports source structure (roll-text clipping, marquee track pair, text-animator spec model, globe configuration), it is adapted and shortened, with every gradient, glow, blur, spring, and brand style removed. Any file that copies a substantial portion of source keeps the notice below, and `THIRD_PARTY_NOTICES.md` carries both.
+Magic UI and Animata are MIT. The recipes below are re-implementations. Where a sketch ports source structure (roll-text clipping, marquee track pair, text-animator spec model, globe configuration), it is adapted and shortened, with every gradient, glow, blur, spring, and brand style removed. Any file that copies a substantial portion of source keeps the notice below, and `THIRD_PARTY_NOTICES.md` carries both.
 
 | Library | Repo | Commit read | License | Copyright line |
 |---|---|---|---|---|
 | Magic UI | github.com/magicuidesign/magicui | `d7207e5` | MIT | Copyright (c) Magic UI |
 | Animata | github.com/codse/animata | `36674e4` | MIT | Copyright (c) Animata |
+| OriginKit | originkit.dev (public catalog pages only) | none (no source read) | proprietary | no notice needed while nothing is copied |
 
-Both `LICENSE.md` files are the unmodified standard MIT License text (neither `package.json` declares a license field, so the file is the authority). A ported file carries this header, and the full MIT text with both copyright lines lives in `THIRD_PARTY_NOTICES.md`:
+The Magic UI and Animata `LICENSE.md` files are the unmodified standard MIT License text (neither `package.json` declares a license field, so the file is the authority). A ported file carries this header, and the full MIT text with both copyright lines lives in `THIRD_PARTY_NOTICES.md`:
 
 ```ts
 // Adapted from Magic UI (MIT, Copyright (c) Magic UI) and/or Animata (MIT, Copyright (c) Animata).
 // Changes: JAL tokens, gradients/glow/blur/springs removed, reduced-motion branch added.
 ```
 
-Never pull from Magic UI Pro (commercial). Never load the `skills/magic-ui/` agent skill that ships in the Magic UI repo (JAL-AIDEV is self-contained). Never carry a brand name or brand styling from an Animata piece (Algolia, Duolingo, GitHub, Slack, Airbnb, Instagram, iMessage, the LED board homage) into a port. Upstream deps that stay unapproved: `cobe`, `canvas-confetti`, `rough-notation`, `svg-dotted-map` (runtime), `react-tweet`, `shiki` (runtime), `tsparticles`, `@radix-ui/*`, `class-variance-authority`, `lucide-react` (icons come from koboyo/reicon).
+Never pull from Magic UI Pro (commercial). Never load the `skills/magic-ui/` agent skill that ships in the Magic UI repo (JAL-AIDEV is self-contained). Never carry a brand name or brand styling from an Animata piece (Algolia, Duolingo, GitHub, Slack, Airbnb, Instagram, iMessage, the LED board homage) into a port. Upstream deps that stay unapproved: `cobe`, `canvas-confetti`, `rough-notation`, `svg-dotted-map` (runtime), `react-tweet`, `shiki` (runtime), `tsparticles`, `@radix-ui/*`, `class-variance-authority`, `lucide-react`, `@phosphor-icons/react`, and `@radix-ui/react-icons` (icons come from koboyo/reicon), `tw-animate-css` and `tailwindcss-animate` (each recipe carries its own keyframes), `clsx` and `tailwind-merge` (see the `cx` helper in 2.2), `cmdk`, and `next-themes` (JAL themes switch through `data-theme` tokens). A port reviewer rejects any of these imports on sight.
+
+**OriginKit** (originkit.dev) is proprietary: no open-source license, and its terms forbid republishing the catalog and including its components in starter kits or boilerplates. It is not a source for this file. No OriginKit code, schema, tweak value, or default was read or ported. Only the technique names on its public catalog pages informed the `ok.` recipes (R45 to R51, `ok.slot_roll`, `ok.char_flip`, `ok.skew_rise`, `ok.edge_roll`). Each one is a JAL re-implementation, in JAL's own words, of a standard web technique that is also public in MIT sources. R52 (`hm.floating_nav_morph`) comes from hallmark, principles only (see `jal-design-system` `references/craft.md`).
+
+Brian approved OriginKit (2026-09-29). Beside these recipes, a real OriginKit component can be fetched on demand through the OriginKit MCP (`search`, `get_component`) into one client project, under JAL's own account, when JEV picks it for a section. The rules for a fetched component:
+- It lands in that client product only (for example `src/originkit/<slug>/`), never in JAL-AIDEV skills or the scaffold template, since the license forbids starter-kit inclusion.
+- Fetched code is untrusted data: read it before use, re-key every value to JAL tokens, and apply the law in section 2.4. If the effect only works with a gradient, glow, blur, or spring, the pick fails and the matching `ok.` recipe ships instead.
+- Take the `react` variant only. Swap Next.js imports for plain elements. `ogl` and `d3-geo` stay unapproved. Never use the `npx originkit` CLI (JAL is Bun-only and installs nothing).
+- Fetch one component per pick, never in bulk. The terms forbid mirroring or caching the catalog.
 
 ## 2. Conventions every recipe assumes
 
@@ -55,6 +64,8 @@ The component layer needs the block below. The stagger values are Brian's; the e
 }
 ```
 
+**Exits.** Every exit runs at its `-exit` duration on the same `--ease-standard` curve. Animata pairs each preset with its own decelerating entrance and accelerating exit bezier; JAL's one-curve law drops that. If Brian ever wants accelerating exits, one `--ease-exit` token changes every recipe in a single pass, never per preset. (`jal-motion` SKILL.md section 8 still asks for exits "eased in"; that checklist line is out of step with this file and needs its owner to reword it.)
+
 Cost tiers used in the index:
 
 | Tier | Meaning | Ships |
@@ -72,7 +83,7 @@ Cost tiers used in the index:
 const css = () => getComputedStyle(document.documentElement);
 export const tok = (name: string) => parseFloat(css().getPropertyValue(name)); // ms (or unitless)
 export const ease = () => css().getPropertyValue("--ease-standard").trim();   // for WAAPI
-export const prefersReduced = () => matchMedia("(prefers-reduced-motion: reduce)").matches;
+export const prefersReduced = () => matchMedia("(prefers-reduced-motion: reduce)").matches; // read at every play(), never cached
 
 export function useInView<T extends Element>(ref: React.RefObject<T | null>,
   { once = true, rootMargin = "0px 0px -10% 0px" } = {}) {
@@ -109,6 +120,54 @@ export const T = {
 - **`will-change`**: set on start, removed on `transitionend` or `animation.finished`. Never left standing.
 - **Showcase only** means landing heroes and demo pieces (`jal-motion` section 4). Product UI uses product tokens.
 - **Transform means transform**: the individual `translate`, `scale`, and `rotate` properties (which Tailwind v4 utilities emit) count as transform. Nothing else animates, except the one disclosure exception (`grid-template-rows`) and state-layer `background-color`/`color` at `--dur-100`.
+- **Hidden means hidden**: a unit resting at opacity 0 is also taken out of focus order and the accessibility tree. That covers inactive R05 words, the outgoing R02 copy during a crossfade, undealt R32 cards, the R24 overlay after reveal, and collapsed R43 labels. Give it `inert`, plus `aria-hidden` when it repeats the sr-only string, or unmount it once its exit ends. Opacity alone leaves it focusable and announced.
+- **Registered properties**: a custom variable interpolates in a transition or keyframe only when it is registered with `@property` and a typed `syntax` (`<number>`, `<angle>`, `<percentage>`). JAL registers one only when it feeds transform or opacity, for example `--p` into `scaleX` (R24, R36) or an angle into `rotate` (R39). It never drives a spinning conic border. Browsers without support jump to the end value, so the end state must be right on its own.
+- **Container-relative travel** (showcase tiles only): set `container-type: inline-size` on the card and size internal travel in `cqi`, clamped between two spacing tokens (`clamp(var(--space-4px), 3cqi, var(--space-16px))`), so a demo moves the same share of the card at 280px and at 480px. Product UI keeps fixed token travel (4px and 8px).
+- **Class joining**: a local `cx(...parts)` drops falsy values and joins the rest with spaces. `tailwind-merge` stays unapproved: unconfigured, it cannot tell JAL's `text-n2` (size) from `text-ink` (color) or its `p-8px` spacing keys apart and silently drops one as a conflict; if Brian approves it, it ships extended with the JAL theme groups. Object-form conditional classes from upstream become `data-*` state attributes, since JAL recipes key state on attributes.
+
+```ts
+// packages/ui/src/motion/runtime.ts (continued)
+export const cx = (...p: (string | false | null | undefined)[]) => p.filter(Boolean).join(" ");
+
+// Live media queries: server and no-JS snapshots are false, so first paint is the complete, motion-free state.
+export function useMedia(q: string) {
+  return React.useSyncExternalStore(
+    (cb) => { const m = matchMedia(q); m.addEventListener("change", cb); return () => m.removeEventListener("change", cb); },
+    () => matchMedia(q).matches, () => false);
+}
+export const useReducedMotion = () => useMedia("(prefers-reduced-motion: reduce)");
+export const usePointerFine = () => useMedia("(hover: hover) and (pointer: fine)");
+export const useBelow640 = () => useMedia("(max-width: 639px)");
+
+// One controller per multi-step WAAPI chain (R02 swaps, R05, R10, center build). Abort cancels every live
+// animation, clears timers, and settles pending waits, so closures and DOM refs are released on unmount
+// or when reduced motion flips mid-session.
+export function sequence() {
+  const ac = new AbortController(), live = new Set<Animation>(), timers = new Set<number>();
+  const run = (el: Element, k: Keyframe[], o: KeyframeAnimationOptions) => {
+    const a = el.animate(k, o); live.add(a); a.finished.catch(() => {}).finally(() => live.delete(a)); return a.finished; };
+  const wait = (ms: number) => new Promise<void>((res) => {
+    if (ac.signal.aborted) return res();
+    const id = window.setTimeout(() => { timers.delete(id); res(); }, ms); timers.add(id);
+    ac.signal.addEventListener("abort", () => res(), { once: true }); });
+  const abort = () => { ac.abort(); live.forEach((a) => a.cancel()); timers.forEach(clearTimeout); live.clear(); timers.clear(); };
+  return { signal: ac.signal, run, wait, abort };
+}
+
+// Element-local pointer point: the rect is cached and refreshed only on pointerenter, resize, and scroll
+// (capture, passive); at most one frame per burst of moves; the callback writes CSS variables, never state.
+export function pointerLocal(el: HTMLElement, cb: (x: number, y: number) => void) {
+  if (!matchMedia("(hover: hover) and (pointer: fine)").matches) return () => {};
+  let r = el.getBoundingClientRect(), raf = 0, x = 0, y = 0;
+  const measure = () => { r = el.getBoundingClientRect(); };
+  const move = (e: PointerEvent) => { x = e.clientX - r.left; y = e.clientY - r.top;
+    if (!raf) raf = requestAnimationFrame(() => { raf = 0; cb(x, y); }); };
+  el.addEventListener("pointerenter", measure); el.addEventListener("pointermove", move, { passive: true });
+  addEventListener("resize", measure); addEventListener("scroll", measure, { capture: true, passive: true });
+  return () => { cancelAnimationFrame(raf); el.removeEventListener("pointerenter", measure); el.removeEventListener("pointermove", move);
+    removeEventListener("resize", measure); removeEventListener("scroll", measure, { capture: true }); };
+}
+```
 
 ### 2.3 Tailwind wiring (one `@theme`, JAL names only)
 
@@ -185,15 +244,19 @@ Class conventions: durations and delays read tokens with the v4 variable shortha
 
 Banned classes in any JAL component (the guard and review treat them like the CSS they emit): `transition-all`, bare `transition` in motion work (it includes shadow and filter), `bg-linear-*`, `bg-radial-*`, `bg-conic-*`, `bg-gradient-*`, `from-*`, `via-*`, `to-*`, `shadow-*`, `inset-shadow-*`, `drop-shadow-*`, `text-shadow-*`, `blur-*`, `backdrop-blur-*`, `animate-bounce`, `animate-ping`, `mask-*` fades, and any arbitrary value that smuggles one of these in (`[box-shadow:...]`, `[filter:blur(...)]`). Tailwind v4 transition helpers: `transition-transform` covers `transform, translate, scale, rotate`; use `transition-[opacity,translate]` or `transition-[opacity,translate,scale]` when both change.
 
+**Upstream animation utilities do not exist here.** The theme resets `--animate-*`, so any animation class pasted from upstream other than `animate-marquee`, `animate-spin`, and `animate-pulse` compiles to nothing, and the element snaps with no warning (upstream's own setup page names a missing keyframe as the usual reason a paste does not move). That covers `animate-in`, `animate-out`, `fade-in-*`, `slide-in-from-*`, `zoom-in-*` (tw-animate-css), `animate-fadeIn`, `animate-flip-words`, `animate-[reveal-up...]`, `animate-accordion-down`, `animate-bg-position`, and `animate-ping`. The guard treats any `animate-*` utility outside the three JAL names as an error, not a warning. Each recipe keeps its keyframes in its component stylesheet with a `jal-` prefix. Replacements: accordion is R22 grid rows, fadeIn is R01, flip-words is R05, reveal-up and reveal-down are the R02 character preset, and ping is the R39 opacity pulse.
+
 ### 2.4 The law, restated once for every recipe
 
 No gradient, no blurred shadow (no shadow at all), no glow or neon, no blur filter, no emoji, no em-dash, no purple, violet, or indigo, no overlap at rest (only true overlay layers stack), no side stripe, marker dot, underline draw-on, or connector line, 44px controls with 8px between targets, transform and opacity motion only, one curve, linear only for constant-speed loops (marquee, spinner, velocity band drift, globe turn), `steps()` only for hard cuts (caret, editorial swap), no bounce, overshoot, or spring, loops over 5s ship a pause control, ambient loops are a pure function of elapsed time, and `prefers-reduced-motion: reduce` leaves no infinite CSS or WAAPI animation and no rAF loop above 10 calls per second running (the v0.4.0 `reduced-motion` audit rule).
+
+Two bounded transform additions exist for the OriginKit text presets only: `skewX` up to 8 degrees in `ok.skew_rise` and a per-glyph `rotateX` in `ok.char_flip`, both settling to 0 with no overshoot, showcase only. Everything else above holds for R45 to R52 unchanged.
 
 Inside a WebGL canvas (R44 only in this file) natural lighting and shading are exempt per the v0.4.0 spec, but this file's globe stays unlit and flat by choice, and bloom, neon, and purple stay banned there.
 
 ## 3. Index of every KEEP and ADAPT component
 
-Cost tiers are defined in section 2.1. Rows are grouped by source in upstream order; several components share one recipe.
+Cost tiers are defined in section 2.1. Rows are grouped by source in upstream order; several components share one recipe. OriginKit rows name the public catalog item whose technique a JAL recipe covers; no OriginKit code sits behind them (section 1). OriginKit items dropped by law are in section 6.
 
 | Component | Source | Category | Verdict | Recipe | Cost | When to use |
 |---|---|---|---|---|---|---|
@@ -244,6 +307,7 @@ Cost tiers are defined in section 2.1. Rows are grouped by source in upstream or
 | `button/animated-follow-button` | Animata | button | ADAPT | R14 | T1 | Every submit, save, follow, or toggle with a pending state. |
 | `button/arrow-button` | Animata | button | ADAPT | R15 | T0 | Arrow nudge, fill sweep, label slide on buttons and menu rows. |
 | `button/external-link-button` | Animata | button | ADAPT | R15 | T0 | Arrow nudge, fill sweep, label slide on buttons and menu rows. |
+| `button/get-started-button` | Animata | button | ADAPT | R15 | T0 | Chip arrow swap on a primary CTA. |
 | `button/ripple-button` | Animata | button | ADAPT | R16 | T1 | Touch-heavy surfaces that want tactile press feedback. |
 | `button/slide-arrow-button` | Animata | button | ADAPT | R15 | T0 | Arrow nudge, fill sweep, label slide on buttons and menu rows. |
 | `button/status-button` | Animata | button | ADAPT | R14 | T1 | Every submit, save, follow, or toggle with a pending state. |
@@ -364,6 +428,35 @@ Cost tiers are defined in section 2.1. Rows are grouped by source in upstream or
 | `widget/water-tracker` | Animata | widget tile | ADAPT | R36 | T0 | Progress, usage, bars, rings, gauges. |
 | `widget/weather-card` | Animata | widget tile | ADAPT | R41 | T0 | Layout and content reference only; no motion. |
 | `widget/weekly-progress` | Animata | widget tile | ADAPT | R36 | T0 | Progress, usage, bars, rings, gauges. |
+| `mask-text-reveal`, `text-wipe` | OriginKit (name only) | text | KEEP idea | R03 | T1 | Signature hero headline of 2+ lines (showcase). |
+| `stagger-text-rise`, `letter-swing`, `popcorn-text`, `text-emerge`, `text-gather` | OriginKit (name only) | text | ADAPT | R02 | T1 | Any headline, label, or content swap; pick the preset by context. |
+| `rolling-letters` | OriginKit (name only) | text | ADAPT | R02 `ok.slot_roll` | T1 | Short showcase title where a mechanical, counter-like arrival fits the brand. |
+| `mechanical-flip` | OriginKit (name only) | text | ADAPT | R02 `ok.char_flip` | T1 | Short showcase title with a split-flap or departures-board voice. |
+| `skew-in-text-effect` | OriginKit (name only) | text | ADAPT | R02 `ok.skew_rise` | T1 | Showcase headline that wants forward lean on arrival. |
+| `text-colour-sweep` | OriginKit (name only) | text | ADAPT | R11 | T1 | One-shot emphasis on a short new label. |
+| `type-sequence`, `typewriter` | OriginKit (name only) | text | KEEP idea | R10 | T1 | CLI or API product demo under 5s (showcase). |
+| `text-carousel` | OriginKit (name only) | text | ADAPT | R05 | T1 | Hero value prop naming 3 to 5 audiences or benefits (showcase). |
+| `random-letter-swap`, `directionhover` | OriginKit (name only) | text / hover | ADAPT | R06 `ok.edge_roll` | T1 | Nav links and CTA labels where the roll should answer the pointer's direction. |
+| `dynamic-weight`, `weight-hover` | OriginKit (name only) | text / hover | ADAPT | R47 | T1 | Display word or nav label where weight is the hover signal (showcase). |
+| `scroll-text-reveal`, `scroll-text-highlight`, `block-text-reveal` | OriginKit (name only) | scroll text | ADAPT | R04 | T3 | One manifesto or story paragraph per page (showcase). |
+| `scrambletext`, `encrypt-button` | OriginKit (name only) | text | KEEP idea | R09 | T1 | One short devtool or security brand word, once (showcase). |
+| `label-slide-button`, `arrow-reveal-button` | OriginKit (name only) | button | KEEP idea | R06, R15 | T0 | Arrow nudge, fill sweep, label slide on buttons and menu rows. |
+| `radial-reveal-button`, `slide-fill-button` | OriginKit (name only) | button | ADAPT | R51 | T1 | Marketing CTA whose hover fill starts where the pointer entered. |
+| `tactile-button` | OriginKit (name only) | button | ADAPT | R50 | T0 | One marketing CTA that wants a physical press. |
+| `magnetic-hover-button` | OriginKit (name only) | button | ADAPT | R15 note | T1 | Pointer-fine showcase CTA; travel 4px or less inside its own box. |
+| `compare-slider` | OriginKit (name only) | media / control | ADAPT | R45 | T1 | Before and after of a product result, retouch, or redesign. |
+| `hover-image-reveal`, `link-preview` | OriginKit (name only) | list / media | ADAPT | R46 | T1 | Named rows (work, cases, articles) with an image per row on desktop. |
+| `smooth-scroll-slider` | OriginKit (name only) | carousel | ADAPT | R48 | T1 | Browsable media where the centered item should read as the current one. |
+| `image-flipper` | OriginKit (name only) | media | KEEP idea | R26 | T1 | Hero or case-study image reveal (showcase). |
+| `image-magnifier` | OriginKit (name only) | media | KEEP idea | R28 | T1 | Product imagery where detail matters, pointer-fine. |
+| `deck-carousel`, `swipe-stack`, `coverflowcarousel`, `stacked-carousel` | OriginKit (name only) | card / deck | KEEP idea | R32 | T2 | Card storytelling, one testimonial at a time (showcase). |
+| `flip-gallery` | OriginKit (name only) | card / 3D | ADAPT | R33 | T0 | Reveal a back side on explicit tap, once per page (showcase). |
+| `live-chat` | OriginKit (name only) | list / feed | ADAPT | R21 | T2 | Chat or feed demo, clearly labelled sample data. |
+| `sync-scroll` | OriginKit (name only) | scroll strip | KEEP idea | R19 | T3 | One kinetic type band per immersive page (showcase). |
+| `globe`, `dither-globe` | OriginKit (name only) | 3D / visual | KEEP idea | R44 | T4 | Global reach story where rotation carries meaning (showcase). |
+| `features-01` | OriginKit (name only) | section | ADAPT | R49 | T2 | Feature walkthrough: a vertical tab list switching one preview. |
+| `pricing-03` | OriginKit (name only) | section | ADAPT | R13 | T2 | Tabs, segmented control, billing toggle, nav pill. |
+| floating nav (bar to pill) | hallmark (principles only) | navigation | ADAPT | R52 | T1 | Marketing top nav from 640px that detaches into a pill on scroll. |
 
 ## 4. Recipes
 
@@ -399,7 +492,7 @@ export function Reveal({ i = 0, as: Tag = "div", ...p }: { i?: number; as?: any 
 ### R02 Text motion engine (text-animator spec model, text-animate, all text presets)
 
 - **DOM**: `<Tag><span class="sr-only">{text}</span><span aria-hidden="true" class="tm">{units}</span></Tag>`. Units are words, characters (inside word spans), or lines (measured once with `Range.getClientRects()` after `document.fonts.ready`, re-split on debounced resize, never mid-animation).
-- **Mechanism**: one spec object per preset (Animata's model), executed with WAAPI per unit. Swap modes: `sequential` (exit all, then enter) or `crossfade` (old and new grid-stacked in one cell, so no layout jump). In-view start via `useInView`. The spec type only admits `opacity`, `x`, `y`, `scale`; a `blur`, `rotateX/Y`, or overshoot key fails a lint over the preset table.
+- **Mechanism**: one spec object per preset (Animata's model), executed with WAAPI per unit. Swap modes: `sequential` (exit all, then enter, with an optional gap of 0 or `--dur-100` between them, never a literal) or `crossfade` (old and new grid-stacked in one cell, so no layout jump, with an optional overlap: the new copy starts entering `--dur-100` before the old exit ends, capped at half the exit duration; during the overlap the outgoing copy is `aria-hidden` and `inert`). Every multi-step swap runs under one `sequence()` controller (2.2). In-view start via `useInView`. The spec type only admits `opacity`, `x`, `y`, `scale`, plus `skewX` (at most 8deg, `ok.skew_rise` only) and `rotateX` (`ok.char_flip` only); a `blur`, `rotateY`, overshoot key, or either extra key on any other preset fails a lint over the preset table.
 - **Timing**: enter on `--ease-standard`, exit on the same curve at the `-exit` duration. Budget: last delay plus duration at most 1200ms for a hero, 400ms in product UI. Scale stays within 0.96 to 1.04.
 
 | Preset (source) | Unit | From | Enter | Stagger | Exit to | Exit | Context |
@@ -410,21 +503,41 @@ export function Reveal({ i = 0, as: Tag = "div", ...p }: { i?: number; as?: any 
 | shared-axis-y | word | opacity cut, `steps(1)` | `--dur-100` | `--stagger-word` | opacity cut | `--dur-100-exit` | editorial hard swap |
 | scale-down-fade | whole | y 8px, scale 1.04 | `--dur-400` | 0 | y -8px, scale 0.96 | `--dur-400-exit` | showcase |
 | per-word-crossfade | word | y 8px | `--dur-600` | `--stagger-word` | y -6px | `--dur-600-exit` | showcase hero line |
-| blur-out-up, kinetic-center-build, short-slide-down, short-slide-right, wave-reveal (blur dropped) | word | y or x 8px | `--dur-400` | `--stagger-word` | opposite 6px | `--dur-400-exit` | showcase |
+| blur-out-up, short-slide-down, short-slide-right, wave-reveal (blur dropped) | word | y or x 8px | `--dur-400` | `--stagger-word` | opposite 6px | `--dur-400-exit` | showcase |
 | per-character-rise, soft-blur-in, staggered-letter, top-down-letters, bottom-up-letters | char | y 0.6em in a clipped line (top-down: -0.6em) | `--dur-600` | `--stagger-char` | y -0.4em | `--dur-600-exit` | showcase title under 24 chars |
+| center-build (kinetic-center-build rewrite, see below) | word | y 6px, opacity 0 | `--dur-400` | one word per arrival | y -6px (whole line) | `--dur-400-exit` | showcase phrase of 3 to 5 words |
 | line-by-line-slide | line | x -48px | `--dur-600` | `--stagger-line` | x 48px | `--dur-600-exit` | showcase multi-line statement |
 | shimmer-sweep (blur dropped) | whole | x -24px | `--dur-400` | 0 | x 24px | `--dur-400-exit` | showcase |
 | spring-scale-in (overshoot removed) | word | scale 0.96 | `--dur-300` | `--stagger-word` | scale 0.96 | `--dur-300-exit` | showcase |
 | text-animate fadeIn and slide presets | word, char, line | y or x 8px (source 20px) | `--dur-200` to `--dur-400` | by unit | mirrored | `-exit` | as above |
+| `ok.slot_roll` (full recipe after R52) | char | a 3-glyph column at y 0, clipped per glyph | `--dur-600` | `--stagger-char` | opacity 0 | `--dur-600-exit` | showcase title under 24 chars |
+| `ok.char_flip` (full recipe after R52) | char | rotateX 90deg, opacity 0 | `--dur-400` | `--stagger-char` | rotateX -90deg | `--dur-400-exit` | showcase title under 24 chars |
+| `ok.skew_rise` (full recipe after R52) | word | y 8px, skewX -8deg, opacity 0 | `--dur-400` | `--stagger-word` | y -6px, opacity 0 | `--dur-400-exit` | showcase headline |
 
+- **Order**: a preset may set `order`. `normal` is index order; `reverse` starts from the last unit; `center-out` ranks units by distance from the middle index (lower index first on a tie); `edges-in` takes the outermost remaining pair and works inward. A unit's delay is its rank times the stagger token, so the total budget is the same as index order. Use center-out for a centered display word (it grows from the axis), edges-in for closing moments, and reverse for exits (last in, first out). Reduced motion ignores order.
+- **Center build** (kinetic-center-build rewrite): the words of a phrase arrive one at a time in a line box with reserved height. On each arrival, read every word's width in one pass before any write, compute centered x positions with a `--space-16px` gap, then move the words already placed to their new x by transform at `--dur-400` while the new word fades in and rises 6px. After `--hold-word` the line exits upward at `--dur-400-exit`. Upstream's entry and reflow blur is dropped. Showcase only, 3 to 5 words, one pass or a pause control; reduced motion shows the whole phrase at once.
 - **Reduced motion**: skip splitting entirely; crossfade the whole string at `--dur-reduced`.
 
 ```ts
-type Frame = { opacity?: number; x?: string; y?: string; scale?: number };
+type Frame = { opacity?: number; x?: string; y?: string; scale?: number;
+  skewX?: `${number}deg`;   // ok.skew_rise only, |value| <= 8
+  rotateX?: `${number}deg`; // ok.char_flip only, needs perspective on the word span
+};
 type Phase = { from: Frame; dur: `--dur-${number}`; stagger?: `--stagger-${"char" | "word" | "line"}` };
-type Preset = { unit: "whole" | "line" | "word" | "char"; enter: Phase; exit: Phase & { to: Frame } };
+type Order = "normal" | "reverse" | "center-out" | "edges-in";
+type Preset = { unit: "whole" | "line" | "word" | "char"; order?: Order; enter: Phase; exit: Phase & { to: Frame } };
 
-const tf = (f: Frame) => `translate3d(${f.x ?? 0}, ${f.y ?? 0}, 0) scale(${f.scale ?? 1})`;
+export function rank(n: number, order: Order = "normal") {           // delay rank per unit index
+  const idx = [...Array(n).keys()];
+  const seq = order === "reverse" ? idx.reverse()
+    : order === "center-out" ? idx.sort((a, b) => Math.abs(a - (n - 1) / 2) - Math.abs(b - (n - 1) / 2) || a - b)
+    : order === "edges-in" ? idx.map((_, k) => (k % 2 ? n - 1 - (k >> 1) : k >> 1))
+    : idx;
+  const r = new Array<number>(n); seq.forEach((u, k) => (r[u] = k)); return r;
+}
+
+const tf = (f: Frame) => `translate3d(${f.x ?? 0}, ${f.y ?? 0}, 0) scale(${f.scale ?? 1})`
+  + (f.skewX ? ` skewX(${f.skewX})` : "") + (f.rotateX ? ` rotateX(${f.rotateX})` : "");
 export function play(units: HTMLElement[], p: Preset, dir: "enter" | "exit") {
   const reduced = prefersReduced();
   const ph = p[dir], a = dir === "enter" ? ph.from : (ph as Preset["exit"]).to;
@@ -433,13 +546,13 @@ export function play(units: HTMLElement[], p: Preset, dir: "enter" | "exit") {
     : dir === "enter" ? [{ opacity: a.opacity ?? 0, transform: tf(a) }, { opacity: 1, transform: "none" }]
                       : [{ opacity: 1, transform: "none" }, { opacity: a.opacity ?? 0, transform: tf(a) }];
   const dur = reduced ? tok("--dur-reduced") : tok(dir === "exit" ? `${ph.dur}-exit` : ph.dur);
-  const step = reduced || !ph.stagger ? 0 : tok(ph.stagger);
+  const step = reduced || !ph.stagger ? 0 : tok(ph.stagger), r = rank(units.length, p.order);
   return Promise.all((reduced ? units.slice(0, 1) : units).map((u, i) =>
-    u.animate(frames, { duration: dur, delay: i * step, easing: ease(), fill: "both" }).finished));
+    u.animate(frames, { duration: dur, delay: r[i] * step, easing: ease(), fill: "both" }).finished));
 }
 ```
 - **Tailwind**: structure only, motion stays in WAAPI: units `inline-block whitespace-pre`, clipped lines `block overflow-clip py-[0.08em] -my-[0.08em]`, crossfade slot `grid *:[grid-area:1/1]`.
-- **Law**: no blur preset survives; no 3D rotate; no overshoot; product presets never exceed `--dur-300`.
+- **Law**: no blur preset survives; no 3D rotate except the per-glyph `ok.char_flip`, which settles flat at 0; no overshoot; product presets never exceed `--dur-300`.
 
 ### R03 Line mask reveal (mask-reveal-up, box-reveal idea)
 
@@ -530,6 +643,9 @@ function rotate(els: HTMLElement[], prev: number, next: number) {
 ```
 - **Tailwind**: parent `group`; unit `relative inline-grid overflow-clip [clip-path:inset(0)] [contain:paint] align-baseline`; sizer `[grid-area:1/1] invisible whitespace-pre`; stack `absolute inset-x-0 top-0 flex flex-col whitespace-pre transition-transform duration-(--dur-200-exit) ease-standard delay-(--d) group-hover:-translate-y-1/2 group-hover:duration-(--dur-200) group-focus-visible:-translate-y-1/2 motion-reduce:transition-none motion-reduce:group-hover:translate-y-0 motion-reduce:group-focus-visible:translate-y-0`.
 - **Law**: transform only; the focus ring still appears instantly on the parent, never animated.
+- **Kerning**: per-character units set `font-kerning: none` (the sizer too), so the split glyphs match the sizer's width and the label does not jiggle sideways at the start and end of a roll.
+- **Play-through variant** (showcase words): the roll runs through WAAPI and always completes once started, even if the pointer leaves; new triggers are ignored while `animation.finished` is pending; a replay resets to the start state and waits two animation frames before starting, so the browser registers the reset. The transition version above stays the default for nav, where reversing on leave is correct.
+- **Variant**: `ok.edge_roll` rolls from the edge the pointer entered (full recipe after R52).
 
 ### R07 Number count-up (number-ticker, counter)
 
@@ -693,6 +809,8 @@ chars.forEach((c, i) => c.animate({ opacity: [1, 0.55, 1] }, { duration: tok("--
 ```
 - **Tailwind**: button `group relative isolate overflow-clip min-h-control`; icon `transition-transform duration-(--dur-150-exit) ease-standard motion-safe:group-hover:translate-x-2px motion-safe:group-focus-visible:translate-x-2px group-hover:duration-(--dur-150)`; fill `absolute left-1/2 top-1/2 -z-10 w-[250%] aspect-square rounded-full -translate-x-1/2 -translate-y-1/2 scale-0 bg-ink transition-transform duration-(--dur-300-exit) ease-standard motion-safe:group-hover:scale-100 group-hover:duration-(--dur-300) motion-reduce:hidden`.
 - **Law**: never `transition: all`; no underline draw-on (work-button), no brand styling (algolia), no shadow lift.
+- **Chip arrow swap** (Animata get-started-button): a round chip of at least 28px inside the 44px control, clipped, holds a strip twice its width with two identical arrows side by side. On hover and focus-visible the strip moves from `translateX(-50%)` to `0`, so one arrow leaves as its twin enters, at `--dur-200` (back at `--dur-200-exit`). The button's color change comes from the state layer, never the upstream amber and orange. Reduced motion: the arrow swaps with no travel.
+- **Magnetic note** (OriginKit `magnetic-hover-button` idea): on pointer-fine showcase CTAs only, the label and icon may follow the pointer by at most `--space-4px`, clamped inside the button's own padding box, set through `translate` from pointer vars and returned at `--dur-150-exit`. Never on touch, never under reduced motion, and never together with the arrow nudge (one hover signal per element).
 
 ### R16 Press ripple (ripple-button, both libraries)
 
@@ -745,6 +863,7 @@ export function ripple(b: HTMLElement, x?: number, y?: number) {
 - **Mechanism**: two identical tracks in a flex row inside a clipping container; each animates `translateX(0)` to `translateX(calc(-100% - gap))`, linear, infinite. Duration is computed once per resize from track width (`trackWidth / --marquee-pps` seconds, ResizeObserver). Paused on `data-paused`, on hover or focus-within, offscreen (IntersectionObserver), and on `document.hidden`. No gradient edge fade; a hard clip is fine.
 - **Timing**: linear, the constant-speed-loop exception. Pause control required (runs past 5s).
 - **Reduced motion**: no animation; the first track wraps into a static row, the duplicate is removed.
+- **Options**: vertical (`data-axis="y"`) stacks the same track pair in a column inside a block-size clip; each track moves `translateY(0)` to `translateY(calc(-100% - gap))`, with the same pause rules. Reverse (`data-reverse`) sets `animation-direction: reverse` on both tracks, for a second band moving the other way. Upstream repeats the children a fixed five times; JAL computes the repeat count from the measured item width against the container, in the ResizeObserver R18 already runs, so the track always overflows by at least one item and never by many.
 
 ```css
 .mq { --mq-gap: var(--space-32px); display: flex; gap: var(--mq-gap); overflow: clip; }
@@ -800,6 +919,16 @@ dialog.dlg[open]::backdrop { opacity: 1; }
 @media (prefers-reduced-motion: reduce) { dialog.dlg, dialog.dlg[open] { scale: 1; transition-duration: var(--dur-reduced); } }
 ```
 - **Tailwind**: `border border-border-strong rounded-lg bg-surface p-24px opacity-0 scale-98 open:opacity-100 open:scale-100 starting:open:opacity-0 starting:open:scale-98 transition-[opacity,scale,overlay,display] transition-discrete duration-(--dur-300-exit) open:duration-(--dur-300) ease-standard backdrop:bg-scrim motion-reduce:scale-100 motion-reduce:duration-(--dur-reduced)`.
+- **Background scroll lock**: `showModal()` makes the page inert but does not stop it scrolling behind the dialog (iOS Safari, wheel over the backdrop). While a modal is open, set `overflow: hidden` on the root with `scrollbar-gutter: stable` so nothing shifts sideways. On iOS, also fix the body at `top: -scrollY` with inline inset 0, full width, and `touch-action: none`. On close, restore the previous inline styles and jump back to the saved position instantly, never smoothly. With Lenis, call `stop()` on open and `start()` on close, and mark scroll areas inside the dialog `data-lenis-prevent`. CSS-first form: `html:has(dialog:modal) { overflow: hidden; scrollbar-gutter: stable; }`, still with the iOS fallback.
+
+```ts
+export function lockScroll() {
+  const b = document.body, y = scrollY, prev = b.getAttribute("style") ?? "";
+  document.documentElement.style.overflow = "hidden";
+  if (/iP(hone|ad|od)/.test(navigator.userAgent)) Object.assign(b.style, { position: "fixed", top: `${-y}px`, insetInline: "0", width: "100%", touchAction: "none" });
+  return () => { document.documentElement.style.overflow = ""; b.setAttribute("style", prev); scrollTo({ top: y, behavior: "instant" }); };
+}
+```
 - **Law**: no backdrop blur, no shadow (the hairline is the edge), no rotate; the dialog is a true overlay layer, so stacking is lawful.
 
 ### R21 FLIP lists and list-to-detail (animated-list, transition-list, comment-reply-card, transaction-list)
@@ -846,6 +975,7 @@ dialog.dlg[open]::backdrop { opacity: 1; }
 - **Timing**: scrub; travel `--space-16px`; 3 to 6 panes.
 - **Below 768px**: never pinned. Panes stay ordinary blocks in document flow and arrive as an in-flow stagger (R01 per pane, `autoAlpha` plus 16px `y`, `--stagger-item`, played once on enter through `ScrollTrigger.batch`); no inner scroller, no shared grid cell.
 - **Reduced motion**: no pin; panes are ordinary sections in document flow.
+- **Nested scrollers**: when the stage sits inside its own overflow container (a docs preview, a dialog, an app-shell pane), find the nearest ancestor whose computed `overflow-y` is `auto` or `scroll`, pass it as the ScrollTrigger `scroller` and the IntersectionObserver `root`, and listen for scroll on it, not on window. Lenis drives only the window (or a wrapper given to it), so nested panes keep native scrolling and carry `data-lenis-prevent`.
 
 ```css
 .stage[data-pinned] { display: grid; } .stage[data-pinned] > .pane { grid-area: 1 / 1; }
@@ -879,6 +1009,7 @@ useLayoutEffect(() => {
 
 - **DOM**: an overlay layer with two halves (`.sh-top`, `.sh-bottom`, each `inset-inline: 0; block-size: 50%`, surface tone) and a centered hairline progress track (`role="progressbar"`).
 - **Mechanism**: preload critical images with `img.decode()`; progress is `transform: scaleX(p)` (upstream animated width); when ready, the progress fades out, then the shutters translate to -100% and 100%; the overlay is removed on finish and scroll unlocks. Hard cap: reveal at `--cap-preloader` even if images are pending. Skip on repeat visits in the session (sessionStorage flag inside try/catch).
+- **Tasks**: the preloader waits on a list of tasks, not only images: image decode, `document.fonts.ready`, the first critical fetch, and the lazy three chunk (R3F `useProgress` readiness becomes one task). Each task reports loaded and total and takes an AbortSignal; progress is the sum of loaded over the sum of total. Phases run in order: loading, fade-ui (the progress fades), reveal (the shutters), done (overlay removed, scroll unlocked). The image task resolves on error too, so one broken image never holds the page; it treats `complete` with a non-zero `naturalWidth` as a cache hit before waiting on load, and sets `decoding="async"` before awaiting `decode()`. At `--cap-preloader` the signal aborts whatever is still pending. An optional "03 / 12" counter uses tabular numerals in `--color-ink-muted`.
 - **Timing**: progress fade `--dur-200-exit`; shutters `--dur-600`.
 - **Reduced motion**: no shutters; overlay fades out at `--dur-reduced`.
 
@@ -958,6 +1089,7 @@ Promise.all(cols.map((c) => c.getAnimations()[0].finished)).then(() => layer.rem
 @media (pointer: fine) { .lens:hover .lens-copy { opacity: 1; transition-duration: var(--dur-150); } }
 ```
 - **Tailwind**: box `relative overflow-clip group`; copy `absolute inset-0 pointer-events-none opacity-0 [clip-path:circle(var(--r)_at_var(--x)_var(--y))] scale-(--zoom) origin-[var(--x)_var(--y)] transition-opacity duration-(--dur-150-exit) pointer-fine:group-hover:opacity-100`.
+- **Pointer**: `pointerLocal` (2.2) writes `--x` and `--y`, so the rect is not re-read on every move.
 - **Law**: product imagery where detail matters (commerce, photography), pointer-fine only; the layer lives inside the media box.
 
 ### R29 Dock magnification (dock, animated-dock)
@@ -977,6 +1109,7 @@ nav.addEventListener("pointermove", (e) => { for (const s of slots) { const r = 
 .dock-slot > a { inline-size: var(--space-40px); aspect-ratio: 1; transform: scale(var(--s, 1)); transform-origin: bottom center; transition: transform var(--dur-150) var(--ease-standard); }
 ```
 - **Tailwind**: nav `flex gap-8px p-8px bg-surface border border-border rounded-lg`; slot `size-[calc(var(--space-40px)*1.4)] grid items-end justify-center`; icon `size-40px origin-bottom scale-(--s) transition-transform duration-(--dur-150) ease-standard`.
+- **Pointer**: read the slot rects once on `pointerenter` and on resize (the sketch above re-reads them per move for brevity), and drive the loop through `pointerLocal` (2.2), so a burst of moves costs one frame.
 - **Law**: no glass blur (animated-dock), showcase and pointer-fine only; touch gets the plain row.
 
 ### R30 Sibling dim (sibling-focus-nav)
@@ -1273,6 +1406,381 @@ export default function Globe({ land, markers, colors, playing, inView, onLost }
 - **Tailwind**: figure `grid aspect-square w-full [contain:layout_paint]`; stage `grid *:[grid-area:1/1] *:size-full`; canvas wrapper `opacity-0 transition-opacity duration-(--dur-400) ease-standard group-data-live:opacity-100`; pause button `min-h-control px-16px rounded-md border border-border-control`.
 - **Law**: unlit flat materials, so no lighting gradient on the sphere; no atmosphere glow (upstream `glowColor` dropped), no bloom, no gradient rim, no purple markers; the page around it stays white-first; the pause control is mandatory (the turn runs past 5s); one globe per page; `cobe` is not a dependency.
 
+### R45 Compare slider (`ok.compare_slider`; OriginKit compare-slider idea)
+
+- **DOM**: `<figure class="cs" style="--p: 50">` holding a `.cs-frame` grid whose children share one cell: the after `<img>` (with alt text), a `.cs-clip` wrapper around the before `<img>` (with alt text), and a `.cs-rail` layer (`pointer-events: none`) that carries the handle `<div role="slider" tabindex="0" aria-label="Before and after split" aria-valuemin="0" aria-valuemax="100" aria-valuenow="50" aria-valuetext="50 percent before">`. The handle is a 44px circle (`surface`, 1px `border-strong`, a koboyo grip icon) and takes pointer events itself. A `<figcaption>` row under the frame holds the visible "Before" and "After" labels. Both images share one `aspect-ratio`, so nothing shifts on load.
+- **Mechanism**: the split is transform only. `.cs-clip` has `overflow: clip` and moves by `translateX((p - 100)%)`, and the before image inside it moves back by `translateX((100 - p)%)`, so the left p% of the frame shows the before image and the rest shows the after image. The rail moves by `translateX((p - 50)%)` with the handle centered in it. `pointerdown` on the frame captures the pointer and sets `p` from `clientX`; `pointermove` while captured updates `--p` once per frame (rAF-coalesced). Keys on the handle: Left and Right step 1, PageUp and PageDown (or Shift plus an arrow) step 10, Home 0, End 100. Optional hover-follow (`data-follow`) runs only under `(hover: hover) and (pointer: fine)`. `touch-action: pan-y` lets vertical page scroll pass through while horizontal drags move the split.
+- **Timing**: drag and hover-follow track the pointer directly (no transition). A keyboard step eases at `--dur-100`. There is no entrance sweep.
+- **Reduced motion**: keyboard steps are instant; hover-follow is off; drag stays (direct manipulation).
+- **OriginKit**: Brian approved OriginKit, so the real `compare-slider` can also be fetched on demand through the OriginKit MCP into a client project when JEV picks it (section 1 rules); this recipe stays the default and the fallback.
+
+```css
+.cs-frame { display: grid; overflow: clip; border-radius: var(--radius-lg); touch-action: pan-y; }
+.cs-frame > * { grid-area: 1 / 1; }
+.cs-frame img { inline-size: 100%; aspect-ratio: var(--cs-ratio, 16 / 10); object-fit: cover; }
+.cs-clip { overflow: clip; transform: translateX(calc((var(--p) - 100) * 1%)); }
+.cs-clip > img { transform: translateX(calc((100 - var(--p)) * 1%)); }
+.cs-rail { display: grid; place-items: center; pointer-events: none; transform: translateX(calc((var(--p) - 50) * 1%)); }
+.cs-handle { pointer-events: auto; inline-size: var(--control-h); aspect-ratio: 1; display: grid; place-items: center;
+  border-radius: var(--radius-pill); background: var(--color-surface); border: 1px solid var(--color-border-strong); cursor: ew-resize; }
+.cs-clip, .cs-clip > img, .cs-rail { transition: transform var(--dur-100) var(--ease-standard); }
+.cs[data-dragging] :is(.cs-clip, .cs-clip > img, .cs-rail) { transition: none; }
+.cs figcaption { display: flex; justify-content: space-between; padding-block-start: var(--space-8px); color: var(--color-ink-muted); }
+@media (prefers-reduced-motion: reduce) { .cs-clip, .cs-clip > img, .cs-rail { transition: none; } }
+```
+```ts
+export function bindCompare(fig: HTMLElement, handle: HTMLElement) {
+  const frame = fig.querySelector<HTMLElement>(".cs-frame")!; let raf = 0;
+  const set = (p: number) => { p = Math.max(0, Math.min(100, Math.round(p)));
+    fig.style.setProperty("--p", String(p)); handle.setAttribute("aria-valuenow", String(p));
+    handle.setAttribute("aria-valuetext", `${p} percent before`); };
+  const fromX = (x: number) => { const r = frame.getBoundingClientRect(); return ((x - r.left) / r.width) * 100; };
+  frame.addEventListener("pointerdown", (e) => { frame.setPointerCapture(e.pointerId); fig.dataset.dragging = ""; set(fromX(e.clientX)); });
+  frame.addEventListener("pointermove", (e) => {
+    const follow = "follow" in fig.dataset && matchMedia("(hover: hover) and (pointer: fine)").matches && !prefersReduced();
+    if (!frame.hasPointerCapture(e.pointerId) && !follow) return;
+    cancelAnimationFrame(raf); raf = requestAnimationFrame(() => set(fromX(e.clientX)));
+  });
+  frame.addEventListener("pointerup", () => delete fig.dataset.dragging);
+  handle.addEventListener("keydown", (e) => {
+    const p = Number(handle.getAttribute("aria-valuenow")), big = e.shiftKey ? 10 : 1;
+    const next = ({ ArrowLeft: p - big, ArrowRight: p + big, PageDown: p - 10, PageUp: p + 10, Home: 0, End: 100 } as Record<string, number>)[e.key];
+    if (next === undefined) return; e.preventDefault(); set(next);
+  });
+}
+```
+- **Tailwind**: frame `grid overflow-clip rounded-lg touch-pan-y *:[grid-area:1/1]`; clip `overflow-clip translate-x-(--cs-a) transition-transform duration-(--dur-100) ease-standard motion-reduce:transition-none` with before image `translate-x-(--cs-b)`, where the component sets `--cs-a: calc((var(--p) - 100) * 1%)` and `--cs-b: calc((100 - var(--p)) * 1%)`; rail `grid place-items-center pointer-events-none translate-x-(--cs-r)`; handle `pointer-events-auto size-control grid place-items-center rounded-pill bg-surface border border-border-strong`; caption `flex justify-between pt-8px text-ink-muted`. Add `data-dragging:transition-none` on each moving part.
+- **Law**: the two images share one cell, but the clip splits the frame so no pixel ever shows both (the stack is the mechanism, like the R02 crossfade slot); labels sit outside the image, never text on a photo; no drawn divider line (the image edge is the boundary) and no glow on the handle; 44px handle; the split starts at 50 and is never animated on load.
+
+### R46 Row preview (`ok.row_preview`; OriginKit hover-image-reveal and link-preview ideas)
+
+- **DOM**: `<section class="rp">` as a two-column grid: a `<ul class="rp-list">` of rows, each `<li><a href data-i="n"><span>Name</span><img class="rp-thumb" alt="..."></a></li>`, and a `.rp-stage` (`aria-hidden="true"`, since its images repeat the row thumbnails) that holds every preview image in one grid cell, with `data-on` on the active one. The link-preview variant uses a `popover` element for inline links in prose, anchored with CSS anchor positioning.
+- **Mechanism**: from 1024 under `(hover: hover) and (pointer: fine)`, the row thumbnails hide and the stage shows as the second column, sticky below the 64px nav plus `--banner-height` (`hm.sticky_stack`). `pointerenter` or `focus` on a row makes its preview active: the old image fades out and the new one fades in (opacity only). Leaving the list keeps the last preview, so the stage never flashes empty. The first row starts active. All preview images decode on idle (`img.decode()`), so a hover never shows a blank frame. The row answers hover with `ink-muted` to `ink` only; the preview is its one hover signal. Link-preview variant: above the link, flipping below when there is no room, never covering the link; a thumbnail plus a title, 240 wide at most; it opens after the tooltip hover delay (`hm.tooltip_timing`) and instantly on keyboard focus, and closes on pointer leave, blur, or Escape. It holds no links or buttons.
+- **Timing**: preview crossfade `--dur-200` in, `--dur-200-exit` out; popover opacity in at `--dur-100`, out instantly (DS-C Tooltip).
+- **Reduced motion**: the preview swaps instantly; the popover appears without a fade.
+- **Below 1024 or on touch**: no stage; each row shows its own inline thumbnail at a fixed aspect ratio. The link preview never opens (the link text carries the meaning).
+- **OriginKit**: Brian approved OriginKit, so the real `hover-image-reveal` or `link-preview` can also be fetched on demand through the OriginKit MCP into a client project when JEV picks it (section 1 rules); this recipe stays the default and the fallback.
+
+```css
+.rp { display: grid; gap: var(--space-32px); }
+.rp-stage { display: none; }
+.rp-thumb { inline-size: 100%; aspect-ratio: 4 / 3; object-fit: cover; border-radius: var(--radius-md); }
+.rp-list a { color: var(--color-ink-muted); transition: color var(--dur-100) var(--ease-standard); }
+.rp-list a:is(:hover, :focus-visible, [aria-current="true"]) { color: var(--color-ink); }
+@media (min-width: 1024px) and (hover: hover) and (pointer: fine) {
+  .rp { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  .rp-thumb { display: none; }
+  .rp-stage { display: grid; position: sticky; inset-block-start: calc(var(--space-64px) + var(--banner-height)); align-self: start; }
+  .rp-stage > img { grid-area: 1 / 1; inline-size: 100%; aspect-ratio: 4 / 3; object-fit: cover; border-radius: var(--radius-lg);
+    opacity: 0; transition: opacity var(--dur-200-exit) var(--ease-standard); }
+  .rp-stage > img[data-on] { opacity: 1; transition-duration: var(--dur-200); }
+}
+@media (prefers-reduced-motion: reduce) { .rp-stage > img { transition: none; } }
+```
+```ts
+export function bindRowPreview(list: HTMLElement, stage: HTMLElement) {
+  const imgs = [...stage.querySelectorAll<HTMLImageElement>("img")];
+  requestIdleCallback?.(() => imgs.forEach((i) => i.decode().catch(() => {})));
+  const show = (i: number) => imgs.forEach((im, k) => im.toggleAttribute("data-on", k === i));
+  list.querySelectorAll<HTMLElement>("a[data-i]").forEach((a) => {
+    const i = Number(a.dataset.i); a.addEventListener("pointerenter", () => show(i)); a.addEventListener("focus", () => show(i));
+  });
+  show(0);
+}
+```
+- **Tailwind**: section `grid gap-32px lg:pointer-fine:grid-cols-2`; thumb `w-full aspect-[4/3] object-cover rounded-md lg:pointer-fine:hidden`; stage `hidden lg:pointer-fine:grid lg:pointer-fine:sticky top-[calc(var(--space-64px)+var(--banner-height))] self-start *:[grid-area:1/1]`; preview `w-full aspect-[4/3] object-cover rounded-lg opacity-0 transition-opacity duration-(--dur-200-exit) ease-standard data-on:opacity-100 data-on:duration-(--dur-200) motion-reduce:transition-none`; row link `text-ink-muted hover:text-ink focus-visible:text-ink transition-colors duration-(--dur-100)`.
+- **Law**: no image follows the cursor and nothing tilts; the preview never covers a row; one preview visible at rest; the stage images are decorative duplicates (`aria-hidden`), the row thumbnails carry the alt text; real work imagery only.
+
+### R47 Weight shift (`ok.weight_shift`; OriginKit dynamic-weight and weight-hover ideas)
+
+- **DOM**: `<span class="ws"><span class="sr-only">Word</span><span class="ws-row" aria-hidden="true">{letters}</span></span>`. Each letter is `<span class="ws-l" data-w="0">` holding copies of the same glyph in one grid cell: 400 and 600 for hover mode, 400, 500, and 600 for proximity mode. The cell sizes to the widest copy, so the word's width never changes.
+- **Mechanism**: `font-weight` never animates. Each letter crossfades between its static copies by opacity, and `data-w` names the visible copy. Hover mode: hover or focus-visible on the parent link or button sets every letter to 600. Proximity mode (pointer-fine only): a rAF-coalesced `pointermove` inside the word gives the nearest letter 600, its direct neighbors 500, and the rest 400, and `pointerleave` resets every letter to 400. Every letter always rests on exactly one copy, so glyphs never ghost at rest. Any static face with 400, 500, and 600 works. The variable-font route (interpolating `font-weight`) is not used: it animates a layout property and needs a new font dependency, both Brian's call.
+- **Timing**: hover mode `--dur-150` in, `--dur-150-exit` out; proximity mode `--dur-100` per letter.
+- **Reduced motion**: hover mode swaps the weight instantly (a state change, still visible); proximity mode is off.
+- **Touch and below 640**: proximity mode off; hover mode answers focus only.
+- **OriginKit**: Brian approved OriginKit, so the real `dynamic-weight` or `weight-hover` can also be fetched on demand through the OriginKit MCP into a client project when JEV picks it (section 1 rules); this recipe stays the default and the fallback. A fetched version that animates a variable axis still needs Brian's font approval.
+
+```css
+.ws-l { display: inline-grid; } .ws-l > * { grid-area: 1 / 1; opacity: 0; transition: opacity var(--dur-150-exit) var(--ease-standard); }
+.ws-l > .w0 { font-weight: var(--weight-regular); } .ws-l > .w1 { font-weight: var(--weight-medium); } .ws-l > .w2 { font-weight: var(--weight-semibold); }
+.ws-l[data-w="0"] > .w0, .ws-l[data-w="1"] > .w1, .ws-l[data-w="2"] > .w2 { opacity: 1; transition-duration: var(--dur-150); }
+:is(a, button):is(:hover, :focus-visible) .ws[data-mode="hover"] .ws-l > .w0 { opacity: 0; }
+:is(a, button):is(:hover, :focus-visible) .ws[data-mode="hover"] .ws-l > .w2 { opacity: 1; transition-duration: var(--dur-150); }
+.ws[data-mode="near"] .ws-l > * { transition-duration: var(--dur-100); }
+@media (prefers-reduced-motion: reduce) { .ws-l > * { transition: none; } }
+```
+```ts
+export function bindNear(word: HTMLElement) {
+  if (prefersReduced() || !matchMedia("(hover: hover) and (pointer: fine) and (min-width: 640px)").matches) return;
+  const ls = [...word.querySelectorAll<HTMLElement>(".ws-l")]; let raf = 0;
+  word.addEventListener("pointermove", (e) => { cancelAnimationFrame(raf); raf = requestAnimationFrame(() => {
+    let near = 0, best = Infinity;
+    ls.forEach((l, i) => { const r = l.getBoundingClientRect(), d = Math.abs(e.clientX - (r.left + r.width / 2)); if (d < best) { best = d; near = i; } });
+    ls.forEach((l, i) => (l.dataset.w = String(Math.max(0, 2 - Math.abs(i - near)))));
+  }); }, { passive: true });
+  word.addEventListener("pointerleave", () => { cancelAnimationFrame(raf); ls.forEach((l) => (l.dataset.w = "0")); });
+}
+```
+- **Tailwind**: letter `inline-grid *:[grid-area:1/1] *:opacity-0 *:transition-opacity *:duration-(--dur-150-exit) *:ease-standard motion-reduce:*:transition-none`; copies `font-normal`, `font-medium`, `font-semibold` (Tailwind's default weight keys equal the JAL 400, 500, and 600 tokens; no other weight utility is used); visible copy `data-[w=0]:[&>.w0]:opacity-100 data-[w=1]:[&>.w1]:opacity-100 data-[w=2]:[&>.w2]:opacity-100`; hover mode on the parent `group` with `group-hover:[&>.w0]:opacity-0 group-hover:[&>.w2]:opacity-100 group-focus-visible:[&>.w2]:opacity-100`.
+- **Law**: weights 400, 500, and 600 only (the JAL scale); transform and opacity only; display words and nav labels only, never body text or links in running copy; the word is set on 600 widths, so the 400 state reads slightly open, which is why this stays on short words; one hover signal (no roll, no nudge with it).
+
+### R48 Center focus slider (`ok.center_focus_slider`; OriginKit smooth-scroll-slider idea)
+
+- **DOM**: R43 markup (`aria-roledescription="carousel"` on the region, a `<ul class="cf" tabindex="0">` track, items `.cf-item`, 44px previous and next buttons), with inline padding so the first and last items can center.
+- **Mechanism**: native horizontal scrolling with `scroll-snap-type: x mandatory` and `scroll-snap-align: center`. Each item runs a CSS scroll-driven animation on `view(inline)` that scales it from 0.94 at the track edges to 1 at the center, eased on `--ease-standard` per keyframe. It sits behind `@supports (animation-timeline: view())` and `prefers-reduced-motion: no-preference`; other browsers get plain R43. The buttons call `scrollBy` one item width. The source's lerped JS momentum is dropped: the browser's own scrolling is the physics.
+- **Timing**: scroll is the clock (no duration); buttons use native smooth scrolling.
+- **Reduced motion**: no scale, instant `scrollBy`, no smooth scrolling.
+- **Mobile**: the same track with items at 80% width; native swipe.
+- **OriginKit**: Brian approved OriginKit, so the real `smooth-scroll-slider` can also be fetched on demand through the OriginKit MCP into a client project when JEV picks it (section 1 rules); this recipe stays the default and the fallback. Its lerped momentum is removed on adoption.
+
+```css
+.cf { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 80%); gap: var(--space-16px); overflow-x: auto;
+  scroll-snap-type: x mandatory; overscroll-behavior-x: contain; padding-inline: 10%; }
+@media (min-width: 768px) { .cf { grid-auto-columns: minmax(0, 40%); padding-inline: 30%; } }
+.cf-item { scroll-snap-align: center; }
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    .cf { scroll-behavior: smooth; }
+    .cf-item { animation: cf-focus linear both; animation-timeline: view(inline); }
+    @keyframes cf-focus {
+      0% { scale: 0.94; animation-timing-function: var(--ease-standard); }
+      50% { scale: 1; animation-timing-function: var(--ease-standard); }
+      100% { scale: 0.94; }
+    }
+  }
+}
+```
+- **Tailwind**: track `grid grid-flow-col auto-cols-[minmax(0,80%)] md:auto-cols-[minmax(0,40%)] gap-16px overflow-x-auto snap-x snap-mandatory overscroll-x-contain px-[10%] md:px-[30%]`; item `snap-center`; the scroll-timeline block stays in the component stylesheet; buttons `min-h-control min-w-control`.
+- **Law**: scale only, never below 0.94 and never above 1, so an item never grows past its own box and never overlaps a neighbor; no opacity dimming, so text contrast holds on every item; no 3D, no tilt, no blur; the track scrolls inside itself (no page overflow); auto-advance is off.
+
+### R49 Tab preview (`ok.tab_preview`; OriginKit features-01 idea)
+
+- **DOM**: `<section class="tp">` as a two-column grid: a `role="tablist"` with `aria-orientation="vertical"` and an `aria-label`, holding `<button role="tab" aria-selected aria-controls>` rows (title 16 / 600 plus a one-line description, at least 44 tall), and a `.tp-stage` holding one `role="tabpanel"` per tab in one grid cell. Only the active panel is visible; the others are `hidden` (during a swap, the outgoing panel stays until its exit finishes).
+- **Mechanism**: the R13 tonal indicator (a `layoutId` child of the selected tab, `layer-2`), moving vertically. The panel swaps with the R02 fade-through preset in crossfade mode. Keyboard: roving tabindex; Up and Down move focus, Home and End jump, and Enter or Space selects (manual activation, as R13). Below 640 the list becomes an R22 disclosure: each tab becomes a disclosure button with its preview inside its own panel, one open at a time.
+- **Timing**: indicator `T.base`; panel fade-through `--dur-200` in, `--dur-200-exit` out. There is no auto-advance by default. If one is added, it is a pure time clock with a pause control, and any user input stops it.
+- **Reduced motion**: the indicator jumps (`T.none`); the panel crossfades at `--dur-reduced`.
+- **OriginKit**: Brian approved OriginKit, so the real `features-01` section can also be fetched on demand through the OriginKit MCP into a client project when JEV picks it (section 1 rules; Next.js imports are replaced); this recipe stays the default and the fallback.
+
+```tsx
+<section className="tp">
+  <div role="tablist" aria-orientation="vertical" aria-label="Features" className="tp-list" onKeyDown={roving}>
+    {items.map((t) => { const on = t.id === sel; return (
+      <button key={t.id} role="tab" id={`t-${t.id}`} aria-selected={on} aria-controls={`p-${t.id}`} tabIndex={on ? 0 : -1}
+        className="tp-tab" onClick={() => setSel(t.id)}>
+        {on && <motion.span layoutId="tp-ind" className="tp-ind" style={{ borderRadius: radiusPx }} transition={reduced ? T.none : T.base} />}
+        <span className="tp-title">{t.title}</span><span className="tp-desc">{t.desc}</span>
+      </button>); })}
+  </div>
+  <div className="tp-stage">
+    {items.map((t) => (<div key={t.id} role="tabpanel" id={`p-${t.id}`} aria-labelledby={`t-${t.id}`} hidden={t.id !== shown}>
+      <img src={t.src} alt={t.alt} /></div>))}
+  </div>
+</section>
+```
+```css
+.tp { display: grid; gap: var(--space-32px); }
+@media (min-width: 768px) { .tp { grid-template-columns: minmax(0, 2fr) minmax(0, 3fr); align-items: start; } }
+.tp-list { display: grid; gap: var(--space-4px); }
+.tp-tab { position: relative; isolation: isolate; display: grid; gap: var(--space-4px); text-align: start; min-block-size: var(--control-h);
+  padding: var(--space-12px) var(--space-16px); border-radius: var(--radius-md); color: var(--color-ink-muted); }
+.tp-tab[aria-selected="true"] { color: var(--color-ink); }
+.tp-ind { position: absolute; inset: 0; z-index: -1; background: var(--color-layer-2); }
+.tp-stage { display: grid; } .tp-stage > * { grid-area: 1 / 1; }
+.tp-stage img { inline-size: 100%; border-radius: var(--radius-lg); border: 1px solid var(--color-border); }
+```
+- **Tailwind**: section `grid gap-32px md:grid-cols-[minmax(0,2fr)_minmax(0,3fr)] md:items-start`; list `grid gap-4px`; tab `relative isolate grid gap-4px text-start min-h-control px-16px py-12px rounded-md text-ink-muted aria-selected:text-ink`; indicator `absolute inset-0 -z-10 bg-layer-2`; stage `grid *:[grid-area:1/1]`; image `w-full rounded-lg border border-border`.
+- **Law**: the indicator is a tonal fill, never a side bar or accent edge (the vertical list tempts one, and it is banned); real product screenshots in a hairline frame, no fake device chrome; tabs carry numbers only for a real ordered process; one visible panel at rest.
+
+### R50 Press plate (`ok.press_plate`; OriginKit tactile-button idea)
+
+- **DOM**: `<button class="pp"><span class="pp-cap">Label</span></button>`. The button is the hit area (44 cap plus a 4px plate, 48 in all). Its `::before` is the plate, a `layer-2` block offset 4px down behind the cap, so only a 4px strip of it shows under the cap at rest.
+- **Mechanism**: on `:active` (and on `data-pressed`, set from keydown for Enter, which has no native `:active`), the cap moves down `--space-4px` onto the plate and takes the 12% pressed state layer. The press travel replaces the standard `scale(0.98)`; the two never combine. Hover gives the cap the 8% state layer only. The only hairline is the cap's 1px `border-control`; the plate is a tonal step with no border. The return is eased, with no spring.
+- **Timing**: press `--dur-100`; return `--dur-150-exit`; state layer `--dur-100`.
+- **Reduced motion**: no travel; the pressed state layer carries the press.
+- **OriginKit**: Brian approved OriginKit, so the real `tactile-button` can also be fetched on demand through the OriginKit MCP into a client project when JEV picks it (section 1 rules); this recipe stays the default and the fallback. Any shadow or spring in it is removed on adoption.
+
+```css
+.pp { position: relative; isolation: isolate; display: inline-grid; padding: 0 0 var(--space-4px); border: 0; background: none; border-radius: var(--radius-md); }
+.pp::before { content: ""; position: absolute; inset: var(--space-4px) 0 0; z-index: -1; border-radius: var(--radius-md); background: var(--color-layer-2); }
+.pp-cap { display: inline-flex; align-items: center; justify-content: center; gap: var(--space-8px); min-block-size: var(--control-h);
+  padding-inline: var(--space-16px); border-radius: var(--radius-md); border: 1px solid var(--color-border-control);
+  background: var(--color-surface); color: var(--color-ink);
+  transition: transform var(--dur-150-exit) var(--ease-standard), background-color var(--dur-100) var(--ease-standard); }
+@media (hover: hover) { .pp:hover .pp-cap { background: color-mix(in oklab, var(--color-ink) 8%, var(--color-surface)); } }
+.pp:is(:active, [data-pressed]) .pp-cap { transform: translateY(var(--space-4px)); transition-duration: var(--dur-100);
+  background: color-mix(in oklab, var(--color-ink) 12%, var(--color-surface)); }
+@media (prefers-reduced-motion: reduce) { .pp:is(:active, [data-pressed]) .pp-cap { transform: none; } }
+```
+- **Tailwind**: button `group relative isolate inline-grid pb-4px rounded-md before:absolute before:inset-x-0 before:bottom-0 before:top-4px before:-z-10 before:rounded-md before:bg-layer-2`; cap `inline-flex items-center justify-center gap-8px min-h-control px-16px rounded-md border border-border-control bg-surface text-ink transition-[translate,background-color] duration-(--dur-150-exit) ease-standard hover:bg-state-hover group-active:bg-state-pressed motion-safe:group-active:translate-y-4px group-active:duration-(--dur-100) group-data-pressed:bg-state-pressed motion-safe:group-data-pressed:translate-y-4px`.
+- **Law**: no shadow and no offset block shadow (the plate is a tonal step inside the button's own box and never extends past it); no spring back; the cap resting over the plate is one control's own parts, like the R17 thumb on its track; marketing CTAs only, one per section, never product UI.
+
+### R51 Entry fill (`ok.entry_fill`; OriginKit radial-reveal-button and slide-fill-button ideas)
+
+- **DOM**: a button or link with `position: relative; isolation: isolate; overflow: clip`, holding `<span class="ef-fill" aria-hidden="true">` under the label.
+- **Mechanism**: the hover fill starts where the pointer entered. Radial variant: on `pointerenter` (mouse or pen only), the component places a circle, twice the box diagonal wide, centered on the entry point, and scales it from 0 to 1. On `pointerleave` it moves the circle's center to the exit point with no transition (at scale 1 the circle covers the box from any center, so nothing jumps), then scales it back to 0. Straight variant: the fill is `inset: 0` and scales on the inline axis from the entry side (`transform-origin` set to the left or right edge), shrinking toward the exit side on leave. Two tones: `tint` (default) is the flat 8% hover state layer, so the label never changes color; `solid` (marketing only) fills with `ink` and switches the label to `surface` at `--dur-100`, delayed half the fill duration. Keyboard focus shows the focus ring only and no fill (`hm.zero_ms`).
+- **Timing**: fill `--dur-200` in, `--dur-200-exit` out; `solid` label color `--dur-100` after a `--dur-100` delay.
+- **Reduced motion**: no wipe; the fill fades in at full size at `--dur-reduced`.
+- **Touch**: no hover fill; the pressed state layer only.
+- **OriginKit**: Brian approved OriginKit, so the real `radial-reveal-button` or `slide-fill-button` can also be fetched on demand through the OriginKit MCP into a client project when JEV picks it (section 1 rules); this recipe stays the default and the fallback. Liquid waves and gradients in them are removed on adoption.
+
+```css
+.ef { position: relative; isolation: isolate; overflow: clip; }
+.ef-fill { position: absolute; z-index: -1; pointer-events: none; background: color-mix(in oklab, var(--color-ink) 8%, transparent);
+  scale: 0; transition: scale var(--dur-200-exit) var(--ease-standard); }
+.ef[data-shape="radial"] .ef-fill { inline-size: var(--d); aspect-ratio: 1; border-radius: 50%;
+  inset-inline-start: calc(var(--x) - var(--d) / 2); inset-block-start: calc(var(--y) - var(--d) / 2); }
+.ef[data-shape="straight"] .ef-fill { inset: 0; scale: 0 1; transform-origin: var(--from, left) center; }
+.ef[data-tone="solid"] .ef-fill { background: var(--color-ink); }
+.ef[data-in] .ef-fill { scale: 1; transition-duration: var(--dur-200); }
+.ef[data-tone="solid"][data-in] { color: var(--color-surface); transition: color var(--dur-100) var(--ease-standard) var(--dur-100); }
+@media (prefers-reduced-motion: reduce) {
+  .ef-fill { scale: 1; opacity: 0; transition: opacity var(--dur-reduced) var(--ease-standard); }
+  .ef[data-in] .ef-fill { opacity: 1; }
+}
+```
+```ts
+export function bindEntryFill(el: HTMLElement) {
+  const at = (e: PointerEvent) => { const r = el.getBoundingClientRect();
+    el.style.setProperty("--x", `${e.clientX - r.left}px`); el.style.setProperty("--y", `${e.clientY - r.top}px`);
+    el.style.setProperty("--d", `${Math.hypot(r.width, r.height) * 2}px`);
+    el.style.setProperty("--from", e.clientX - r.left < r.width / 2 ? "left" : "right"); };
+  el.addEventListener("pointerenter", (e) => { if (e.pointerType === "touch") return; at(e); el.dataset.in = ""; });
+  el.addEventListener("pointerleave", (e) => { if (e.pointerType === "touch") return; at(e); delete el.dataset.in; });
+}
+```
+- **Tailwind**: host `group relative isolate overflow-clip`; fill `absolute -z-10 pointer-events-none bg-state-hover scale-0 transition-[scale] duration-(--dur-200-exit) ease-standard group-data-in:scale-100 group-data-in:duration-(--dur-200)`; radial `w-(--d) aspect-square rounded-full left-[calc(var(--x)-var(--d)/2)] top-[calc(var(--y)-var(--d)/2)]`; straight `inset-0 scale-x-0 origin-(--from) group-data-in:scale-x-100`; solid tone `bg-ink` plus `group-data-in:text-surface`; reduced `motion-reduce:scale-100 motion-reduce:opacity-0 motion-reduce:group-data-in:opacity-100`.
+- **Law**: one flat color, clipped inside its own box, no gradient, no waves; one hover signal (never together with the R15 arrow nudge or fill sweep; R15 grows from the center, R51 from the entry point); marketing CTAs only. Product controls keep the DS-C state layer, which never spreads from the pointer; the `solid` label must pass contrast in both resting states.
+
+### R52 Floating nav morph (`hm.floating_nav_morph`; hallmark principle)
+
+- **DOM**: `<header class="fn">` (sticky, fixed block size) holding a `.fn-bar` background layer (`aria-hidden`) and `<nav class="fn-row" aria-label="Main">`, a content-sized group (logo, links, CTA) centered in the header, with its own `.fn-pill` background layer (`aria-hidden`, `inset: 0`). A 1px `.fn-sentinel` (`aria-hidden`) sits 64px (`--space-64px`) from the top of the page.
+- **Mechanism**: an IntersectionObserver on the sentinel sets `data-morphed` on the header once the sentinel scrolls out (so after 64px of scroll) and clears it when the sentinel returns. The morph changes only three properties: `.fn-bar` opacity 1 to 0, `.fn-pill` opacity 0 to 1, and `.fn-row` `translate` 0 to `--space-8px`, which detaches the pill from the top edge. The bar is `surface` with a bottom 1px `border` hairline across the full width. The pill is opaque `surface` with a 1px `border` hairline on all sides and `--radius-pill`, sized to the nav group. The four laws:
+  1. **Constant height**: the header's block size never changes between states.
+  2. **Transform offset**: detachment is `translate` on the row, never `top`, `margin`, or `padding`.
+  3. **Explicit ownership and neutralization**: each morphing property has one owner selector and an explicit value in both states (bar opacity, pill opacity, row translate). Nothing else differs between states (no width, radius, border, padding, or color change), and a property set in one state but not reset in the other is a bug.
+  4. **One curve, one listener rule**: all three properties run on `--ease-standard` at one duration and start together. The trigger is the sentinel observer; if a scroll listener is used instead, it is `passive`, rAF-throttled, and uses a threshold of 60px or more (64 here).
+  The header sits above in-page stickies on the named nav z-level (`--z-nav`, `hm.sticky_stack`), and in-page stickies dock at `--banner-height` below it (`hm.sticky_stack`).
+- **Timing**: `--dur-300` into the pill, `--dur-300-exit` back to the bar.
+- **Below 640**: the app-shell header stays pinned and unmorphed (the observer is not created and the styles are gated at 640).
+- **Reduced motion**: the backgrounds swap by opacity at `--dur-reduced`; the row does not travel (the pill stays attached at the top).
+- **OriginKit**: no OriginKit item backs this recipe. Brian approved OriginKit, so if JEV picks an OriginKit navigation component for a client project instead, it can be fetched on demand through the OriginKit MCP (section 1 rules), and it must still pass the four laws above.
+
+```css
+@media (min-width: 640px) {
+  .fn { position: sticky; inset-block-start: 0; z-index: var(--z-nav); block-size: var(--space-64px); display: grid; place-items: center; }
+  .fn-bar { position: absolute; inset: 0; background: var(--color-surface); border-block-end: 1px solid var(--color-border);
+    opacity: 1; transition: opacity var(--dur-300-exit) var(--ease-standard); }
+  .fn-row { position: relative; isolation: isolate; display: flex; align-items: center; gap: var(--space-24px);
+    padding-inline: var(--space-16px); min-block-size: var(--control-h);
+    translate: 0 0; transition: translate var(--dur-300-exit) var(--ease-standard); }
+  .fn-pill { position: absolute; inset: 0; z-index: -1; border-radius: var(--radius-pill); background: var(--color-surface);
+    border: 1px solid var(--color-border); opacity: 0; transition: opacity var(--dur-300-exit) var(--ease-standard); }
+  .fn[data-morphed] .fn-bar { opacity: 0; transition-duration: var(--dur-300); }
+  .fn[data-morphed] .fn-pill { opacity: 1; transition-duration: var(--dur-300); }
+  .fn[data-morphed] .fn-row { translate: 0 var(--space-8px); transition-duration: var(--dur-300); }
+}
+@media (min-width: 640px) and (prefers-reduced-motion: reduce) {
+  .fn-bar, .fn-pill { transition: opacity var(--dur-reduced) var(--ease-standard); }
+  .fn-row, .fn[data-morphed] .fn-row { translate: 0 0; transition: none; }
+}
+```
+```ts
+export function bindFloatingNav(header: HTMLElement, sentinel: HTMLElement) {
+  const mq = matchMedia("(min-width: 640px)"); let io: IntersectionObserver | null = null;
+  const arm = () => { io?.disconnect(); io = null; header.removeAttribute("data-morphed"); if (!mq.matches) return;
+    io = new IntersectionObserver(([e]) => header.toggleAttribute("data-morphed", !e.isIntersecting)); io.observe(sentinel); };
+  mq.addEventListener("change", arm); arm();
+  return () => { io?.disconnect(); mq.removeEventListener("change", arm); };
+}
+```
+- **Tailwind**: header `sm:sticky sm:top-0 sm:z-(--z-nav) sm:h-64px sm:grid sm:place-items-center group`; bar `absolute inset-0 bg-surface border-b border-border transition-opacity duration-(--dur-300-exit) ease-standard group-data-morphed:opacity-0 group-data-morphed:duration-(--dur-300)`; row `relative isolate flex items-center gap-24px px-16px min-h-control transition-[translate] duration-(--dur-300-exit) ease-standard motion-safe:group-data-morphed:translate-y-8px group-data-morphed:duration-(--dur-300)`; pill `absolute inset-0 -z-10 rounded-pill bg-surface border border-border opacity-0 transition-opacity duration-(--dur-300-exit) group-data-morphed:opacity-100 group-data-morphed:duration-(--dur-300)`.
+- **Law**: no blur, no shadow, no glow, no translucency (the pill is opaque, so scrolled content never shows through its text); no height change and no layout property in the morph; marketing pages only, never the product app-shell; one floating nav per site.
+
+### OriginKit presets on R02 and R06
+
+These four ride on the R02 engine or the R06 structure. Each gets the full recipe shape here; the R02 preset table carries the three text rows.
+
+#### `ok.slot_roll` (R02 preset; OriginKit rolling-letters idea)
+
+- **DOM**: the R02 split pattern at character level. Each glyph is `<span class="sl"><span class="sl-size">A</span><span class="sl-col"><span>k</span><span>r</span><span>A</span></span></span>`. The box sizes to the real glyph (the hidden sizer) and clips on both axes. The column holds two filler glyphs, picked from the string's own letters with the R09 integer hash (never `Math.random`), then the real glyph last.
+- **Mechanism**: WAAPI moves each column from `translateY(0)` to `translateY(-66.667%)`, so two fillers roll past and the real glyph lands, with opacity 0 to 1 over the same span. The delay is `i x --stagger-char`. It lands exactly on the real glyph, with no overshoot and no settle bounce.
+- **Timing**: `--dur-600` per glyph; titles under 24 characters keep the total under 1200ms (23 x 20 + 600 = 1060ms); exit is an opacity fade at `--dur-600-exit`.
+- **Reduced motion**: no split; the whole string crossfades at `--dur-reduced` (the R02 rule).
+- **OriginKit**: Brian approved OriginKit, so the real `rolling-letters` can also be fetched on demand through the OriginKit MCP into a client project when JEV picks it (section 1 rules); this preset stays the default and the fallback.
+
+```css
+.sl { position: relative; display: inline-grid; block-size: 1lh; overflow: clip; vertical-align: bottom; }
+.sl-size { grid-area: 1 / 1; visibility: hidden; white-space: pre; }
+.sl-col { position: absolute; inset-inline: 0; inset-block-start: 0; display: flex; flex-direction: column; align-items: center; }
+.sl-col > span { block-size: 1lh; white-space: pre; }
+```
+```ts
+export const slotRoll = (cols: HTMLElement[]) => Promise.all(cols.map((c, i) => c.animate(
+  [{ transform: "translateY(0)", opacity: 0 }, { transform: "translateY(-66.667%)", opacity: 1 }],
+  { duration: tok("--dur-600"), delay: i * tok("--stagger-char"), easing: ease(), fill: "both" }).finished));
+```
+- **Tailwind**: box `relative inline-grid h-[1lh] overflow-clip align-bottom`; sizer `[grid-area:1/1] invisible whitespace-pre`; column `absolute inset-x-0 top-0 flex flex-col items-center *:h-[1lh] *:whitespace-pre`; motion stays in WAAPI.
+- **Law**: the fillers are `aria-hidden` (the sr-only string carries the text) and deterministic; the resting glyph is never clipped (it rests at its own cell); showcase titles only, one per page.
+
+#### `ok.char_flip` (R02 preset; OriginKit mechanical-flip idea)
+
+- **DOM**: the R02 split pattern at character level; each word span gets `perspective: 4em` (relative to the type, so it scales with size), and each glyph is `display: inline-block; backface-visibility: hidden; transform-origin: 50% 50%`.
+- **Mechanism**: the R02 engine with `from: { rotateX: "90deg", opacity: 0 }` and `exit.to: { rotateX: "-90deg", opacity: 0 }`. Each glyph turns on its horizontal axis into place and rests flat at exactly 0. This is the one `rotateX` the R02 lint admits. There is no shading, no flap shadow, and no bounce (the real mechanical flip overshoots; dropped).
+- **Timing**: `--dur-400` per glyph, `--stagger-char`; exit `--dur-400-exit`; titles under 24 characters (under 1000ms total).
+- **Reduced motion**: no split; whole-string crossfade at `--dur-reduced`.
+- **OriginKit**: Brian approved OriginKit, so the real `mechanical-flip` can also be fetched on demand through the OriginKit MCP into a client project when JEV picks it (section 1 rules); this preset stays the default and the fallback. Its overshoot is removed on adoption.
+
+```ts
+export const charFlip: Preset = { unit: "char",
+  enter: { from: { rotateX: "90deg", opacity: 0 }, dur: "--dur-400", stagger: "--stagger-char" },
+  exit: { from: {}, to: { rotateX: "-90deg", opacity: 0 }, dur: "--dur-400", stagger: "--stagger-char" } };
+```
+```css
+.tm-flip .w { perspective: 4em; } .tm-flip .c { display: inline-block; backface-visibility: hidden; transform-origin: 50% 50%; }
+```
+- **Tailwind**: word `[perspective:4em]`; glyph `inline-block backface-hidden origin-center`; motion stays in WAAPI.
+- **Law**: the glyph always rests flat at 0 and fully legible; no 3D at rest; showcase titles only, never product UI; it never runs beside another 3D recipe (R33, R44) in one section.
+
+#### `ok.skew_rise` (R02 preset; OriginKit skew-in-text-effect idea)
+
+- **DOM**: the R02 split pattern at word level; each word is `transform-origin: 0 100%` (it leans from its baseline start).
+- **Mechanism**: the R02 engine with `from: { y: "8px", skewX: "-8deg", opacity: 0 }` and `exit.to: { y: "-6px", opacity: 0 }` (no skew on exit). Each word rises and straightens to 0 on the one curve.
+- **Timing**: `--dur-400`, `--stagger-word`; exit `--dur-400-exit`; hero budget 1200ms.
+- **Reduced motion**: no split; whole-string crossfade at `--dur-reduced`.
+- **OriginKit**: Brian approved OriginKit, so the real `skew-in-text-effect` can also be fetched on demand through the OriginKit MCP into a client project when JEV picks it (section 1 rules); this preset stays the default and the fallback.
+
+```ts
+export const skewRise: Preset = { unit: "word",
+  enter: { from: { y: "8px", skewX: "-8deg", opacity: 0 }, dur: "--dur-400", stagger: "--stagger-word" },
+  exit: { from: {}, to: { y: "-6px", opacity: 0 }, dur: "--dur-400", stagger: "--stagger-word" } };
+```
+- **Tailwind**: words `inline-block whitespace-pre origin-bottom-left`; motion stays in WAAPI.
+- **Law**: skew at most 8 degrees, settling to 0; no blur; one per page hero; never product UI.
+
+#### `ok.edge_roll` (R06 variant; OriginKit random-letter-swap and directionhover ideas)
+
+- **DOM**: the R06 structure, with the stack holding three identical copies (above, label, below) and resting at `translateY(-33.333%)` on the middle copy. The sizer keeps the box at one line.
+- **Mechanism**: on `pointerenter`, compare `clientY` with the box's vertical midpoint. Entering from the top rolls the stack to `translateY(0)` (the copy above slides in); entering from the bottom rolls it to `translateY(-66.667%)`. When the roll finishes, the stack snaps back to the middle with no transition; since the copies are identical, the snap is invisible. On `pointerleave` it rolls toward the exit edge the same way and snaps back again. Side entries use the nearer vertical edge. `focus-visible` rolls from the bottom (as R06). Per-character stagger from R06 applies when the label is split.
+- **Timing**: enter `--dur-200`, leave `--dur-200-exit`; showcase nav words `--dur-400` / `--dur-400-exit`.
+- **Reduced motion**: no roll; the state layer alone signals hover.
+- **OriginKit**: Brian approved OriginKit, so the real `random-letter-swap` or `directionhover` can also be fetched on demand through the OriginKit MCP into a client project when JEV picks it (section 1 rules); this variant stays the default and the fallback.
+
+```ts
+export function bindEdgeRoll(host: HTMLElement, stack: HTMLElement) {
+  if (prefersReduced()) return;
+  const REST = "translateY(-33.333%)"; stack.style.transform = REST;
+  const roll = (e: PointerEvent, dur: string) => {
+    const r = host.getBoundingClientRect(), fromTop = e.clientY < r.top + r.height / 2;
+    stack.animate([{ transform: REST }, { transform: fromTop ? "translateY(0)" : "translateY(-66.667%)" }],
+      { duration: tok(dur), easing: ease() }).finished.then(() => (stack.style.transform = REST));
+  };
+  host.addEventListener("pointerenter", (e) => { if (e.pointerType !== "touch") roll(e, "--dur-200"); });
+  host.addEventListener("pointerleave", (e) => { if (e.pointerType !== "touch") roll(e, "--dur-200-exit"); });
+}
+```
+- **Tailwind**: the R06 unit, sizer, and stack classes, with the stack at `-translate-y-1/3` at rest and no hover utilities (motion stays in WAAPI).
+- **Law**: identical copies, all `aria-hidden` behind the sr-only label; transform only; one hover signal; the focus ring still appears instantly on the parent.
+
 ## 5. Top 20, prioritized
 
 Ranked by value for a high-taste product or an immersive marketing page: reuse frequency x craft x margin inside the law. "Surface" says where it earns its place first.
@@ -1300,7 +1808,7 @@ Ranked by value for a high-taste product or an immersive marketing page: reuse f
 | 19 | R22 | Disclosure (Animata faq, notification-card; Magic file-tree) | product | FAQ, expandable rows, file trees on the one permitted layout exception. |
 | 20 | R32 | Deck carousel and deal-in (Animata card-stack, card-spread) | immersive | Card storytelling without a peeking stack at rest. |
 
-Runners-up: R30 sibling dim, R31 speed dial, R36 meter entrances, R26 panel slide-off, R29 dock, R19 velocity band, R38 dotted map, R09 scramble, R25 tile transition.
+Runners-up: R30 sibling dim, R31 speed dial, R36 meter entrances, R26 panel slide-off, R29 dock, R19 velocity band, R38 dotted map, R09 scramble, R25 tile transition, R45 compare slider (product before and after), R49 tab preview (feature walkthrough), R52 floating nav morph (marketing nav).
 
 ## 6. DROP list (never build these)
 
@@ -1371,7 +1879,6 @@ The effect's essence is unlawful, so no rewrite keeps what makes it that compone
 - `bento-grid/gradient`: Gradient is the point.
 - `button/ai-button`: Sparkle, purple, shimmer, unapproved dep.
 - `button/duolingo`: The ledge is a shadow/bottom bar; JAL press is scale 0.98.
-- `button/get-started-button`: Gradient.
 - `button/shining-button`: Shine sweep, violet.
 - `card/blur-stack-card`: Overlap at rest plus blur.
 - `card/card-stack-profile`: Overlap at rest, layout animation.
@@ -1381,7 +1888,7 @@ The effect's essence is unlawful, so no rewrite keeps what makes it that compone
 - `card/glowing-card`: Glow, gradient.
 - `card/led-board`: Decorative ambient loop, brand homage, purple.
 - `card/score-card`: Dark default, layout animation, novelty.
-- `card/swap-card`: Overlap at rest.
+- `card/swap-card`: A flip card nested inside a slide swap (two gimmicks stacked, the flip duplicating R33), text laid over a photo, a heavy shadow, and 700ms of travel. Only one pane shows at a time, so overlap is not the issue. To swap two content panes, use R02 fade-through.
 - `card/tilted-card`: Tilt gimmick, shadow.
 - `container/animated-border-trail`: Gradient, ornament.
 - `container/cursor-tracker`: Decorative cursor follower.
@@ -1422,10 +1929,30 @@ The effect's essence is unlawful, so no rewrite keeps what makes it that compone
 - `widget/cycling`: Dark default, multicolor.
 - `widget/direction-card`: Glow, dark.
 - `widget/fund-widget`: Dark default, blur.
-- `widget/live-score`: Dark default.
+- `widget/live-score`: Hover-only content (the score panel slides away to reveal a hidden status strip, lost on touch), dark default. Use an R41 static tile with the status as visible text; the slide mechanism itself is R06.
 - `widget/mobile-detail`: Dark, faux device.
 - `widget/music-stack-interaction`: Overlap at rest, dark.
 - `widget/video-chat`: Overlapping picture-in-picture at rest.
+
+### OriginKit (technique names only; nothing was fetched)
+
+These families also stay dropped when Brian's OriginKit approval would let a real component be fetched: the effect itself is unlawful.
+
+- `gradient-text`: Gradient is the whole effect. Use R02 or R03.
+- `glitch-text`, `spring-text`: Chromatic slices, spring physics, overlapping trails. Use R09 for a devtool word.
+- `electricborder`, `glow-border`, `neon-border`, `pulsating-border`, `moving-gradient-button`: Glow, neon, gradient, marker motion.
+- `light-glass-button`, `frost-glass-card`, `scan-grid-button`: Glass, blur, HUD glitch.
+- `dotted-offset-button`: Hard offset block shadow. Use R15 or R50.
+- `keycap-button`: Floats on its own colored glow. Use R50.
+- `cube-flip-button`: The hidden label face hurts accessibility. Use R06.
+- `interactive-grid`: 3D hover logo wall with a glow pulse. Use a static R41 logo wall.
+- `repetition-hover`, `image-spotlight`: Image hover motion and a dark veil on product and marketing. `zoom-grid` and `pixelate-image` go to the `jal-immersive` pool (canvas only).
+- `gyro-loader`, `pulse-roll`, `coin-loader`, and the other WebGL loaders: Heavy WebGL for a wait state. Use R39 and R40.
+- `dot-cursor`, `text-button-cursor`, and every cursor outside an immersive section: Decorative cursors. Immersive only, under the `jal-immersive` custom-cursor rules, with no spring.
+- `wire-terrain`, `accretion-disc`, `blackhole`, `nebula-drift`, `cosmic-bg`, `hyperspace`, aurora ribbons, `snowfall`, `money-rain`, `fireworks`, `emoji-particle`, `emojiburst`: Dark default, neon, glow, cosmic void, emoji.
+- games (`pixel-run-game`, `deparkanoid`, `pixel-tetris`, and the rest): Outside scope.
+- `hero-01` to `hero-47`, `features-02` to `features-04`, `pricing-01`, `pricing-02`, footers, CTAs: Next.js-coupled bands with fake device frames, big-number panels, and dark stat panels. Structure vocabulary only (`hm.structure_vocab`); `features-01` survives as R49 and `pricing-03` as R13.
+- the 23 site templates: Static Framer exports, not React, and the license forbids them in starter kits.
 
 Legacy Magic UI registry names absent from the live catalog (`script-copy-btn`, `flip-text`, `scratch-to-reveal`, `box-reveal`, `arc-timeline`, `grid-beams`, `iphone-15-pro`) are not components; only the `box-reveal` idea survives, as R03 and R26.
 
@@ -1437,21 +1964,21 @@ The agent never picks a component recipe by taste alone. Law decides first (sect
 
 | Class | Recipes | Runs at |
 |---|---|---|
-| State (S): carries a state change | R13, R14, R15, R16, R17, R20, R21, R22, R30, R31, R34, R36 value updates, R39, R40, R42, R43 | product tokens, every intensity level |
-| Entrance (E): arrival of content | R01, R02 product presets, R07 (showcase only), R08, R36 entrance, R35 and R37 and R38 and R41 with R01 | product tokens at level 1, showcase tokens at 2 and up |
-| Signature (G): the one move a section is remembered by | R02 showcase presets, R03, R05, R06 showcase, R09, R10, R11, R12, R26, R27, R28, R29, R32, R33, R44 | showcase tokens |
+| State (S): carries a state change | R13, R14, R15, R16, R17, R20, R21, R22, R30, R31, R34, R36 value updates, R39, R40, R42, R43, R45, R50, R51, R52 | product tokens, every intensity level |
+| Entrance (E): arrival of content | R01, R02 product presets, R07 (showcase only), R08, R36 entrance, R35 and R37 and R38 and R41 with R01, R49 panel crossfade | product tokens at level 1, showcase tokens at 2 and up |
+| Signature (G): a move a section is remembered by | R02 showcase presets (including `ok.slot_roll`, `ok.char_flip`, `ok.skew_rise`), R03, R05, R06 showcase and `ok.edge_roll`, R09, R10, R11, R12, R26, R27, R28, R29, R32, R33, R44, R46, R47, R48 | showcase tokens |
 | Sequence (Q): scroll or page-level choreography | R04, R18, R19, R23, R24, R25 | showcase tokens, scroll-driven or page-level |
 
-### 7.2 `motion.intensity` (score, one key per region) selects the allowed set
+### 7.2 `motion.intensity` (score, one key per region) selects the allowed classes
 
 | Level | Allowed | Caps |
 |---|---|---|
 | 0 still | S only | no entrances; state feedback at product tokens |
 | 1 product-restrained | S + E at product tokens (R01 at `--dur-200`, 4px; R02 micro-scale-fade and fade-through) | nothing showcase |
-| 2 one signature | S + E + exactly one G for the region, showcase tokens | one G per section; hero budget 1200ms |
-| 3 choreographed | S + E + one G + one Q, staged (G first, then Q, never simultaneous) | per page at most: one R04, one R19, one R23 per story, one R24, one R25, one R44, one R33 |
+| 2 signature | S + E + G, showcase tokens | how many G layers stack is JEV's call per layer (7.3); hero budget 1200ms |
+| 3 choreographed | S + E + G + Q, staged (G first, then Q, never simultaneous) | never two Q on one scroll range; per page at most: one R04, one R19, one R23 per story, one R24, one R25, one R44, one R33, one R52 |
 
-Prechecks (never asked): forms, tables, settings, and dashboards are capped at 1; any region in a regulated or trust-sensitive product rounds the score down; a region below 640px drops R12, R28, R29 (pointer-fine only); low `imm.tier` removes R44 (poster only) and R19. Rounding: nearest level elsewhere.
+The level sets which classes may appear; it never sets a count of layers (Brian's no-limit ruling, 7.3). Prechecks (never asked): forms, pricing tables, legal, and docs are tier 0, and tables, settings, and dashboards are capped at 1 (JC `motion.intensity`); any region in a regulated or trust-sensitive product rounds the score down; a region below 640px drops R12, R28, R29, the R46 stage, R47 proximity mode, and R52 (pointer-fine or 640-and-up only); low `imm.tier` removes R44 (poster only) and R19. Rounding: nearest level elsewhere.
 
 ### 7.3 `imm.recipe` (choice per section kind for the base recipe, then JEV-judged layers with no fixed limit)
 
@@ -1459,21 +1986,27 @@ The candidate set for each section kind, filtered by the region's `motion.intens
 
 | Section kind | Component candidates |
 |---|---|
-| hero headline | R03, R02 per-word-crossfade, R02 per-character-rise, R05, R09 (devtool or security brand only), R11 |
+| hero headline | R03, R02 per-word-crossfade, R02 per-character-rise, `ok.slot_roll`, `ok.char_flip`, `ok.skew_rise`, R47, R05, R09 (devtool or security brand only), R11 |
 | hero media | R26, R44, R24 (first load only), R33 |
 | manifesto or story | R04, R23, R02 line-by-line-slide |
 | stats | R07, R08, R36 entrance |
 | logos and social proof | R18, R35, R41 static wall |
-| feature walkthrough | R23, R13 with R02 fade-through, R32, R21 |
-| product demo | R10, R21 feed demo, R14 |
+| feature walkthrough | R49, R23, R13 with R02 fade-through, R32, R21, R45 (before and after) |
+| product demo | R10, R21 feed demo, R14, R45 |
 | global presence | R44, R38, R41 static location list |
 | section handoff | R25, R01 |
 | kinetic type band | R19, R18 |
-| navigation | R06, R30, R29, R42 |
-| gallery | R43, R27, R28, R32 |
+| navigation | R52 (640 and up), R06, `ok.edge_roll`, R47 (hover mode), R30, R29, R42 |
+| gallery | R43, R48, R46, R27, R28, R32 |
+| work or case list | R46, R06, R01 |
+| CTA or close | R15, R51, R50, R06, R14 |
 
-Layering rule (no fixed limit on layers, per Brian; JEV judges each added layer with the protocol in `jal-design-system` `references/recipe-index.md`). The mechanical constraints on any stack: each layer fills a different role; never two scroll owners (two Q) on one scroll range; never two pinned stages overlapping in scroll distance; one pointer effect per element; the summed cost stays within the section's tier. Any number of G, E, and S recipes may stack when they take different roles and JEV judges them aligned.
+OriginKit immersive pointers: the canvas-only ideas from OriginKit's public catalog (topo contour field, halftone ripple, dot field, cell magnify, image tear, image fold, ring and corridor galleries, WebGL type, ascii for devtool brands, cursors) are routed to the `jal-immersive` pool under its canvas rules, not to this file.
+
+Layering rule: there is no fixed limit on how many layers a section stacks (Brian's ruling). JEV judges each added layer, one at a time, with the protocol in `jal-design-system` `references/recipe-index.md` section 4, and the stack stops at the first no. The mechanical constraints on any stack: each layer fills a different role; never two scroll owners (two Q) on one scroll range; never two pinned stages overlapping in scroll distance; one pointer effect per element; the summed cost stays within the section's tier. Any number of G, E, and S recipes may stack when they take different roles and JEV judges each one aligned; Q layers stack too, as long as no two share a scroll range.
 
 ## 8. Component-specific JEV decisions
 
 `ui.text_reveal_granularity`, `ui.number_motion`, and `ui.geo_visual` live in `jal-jev` `references/catalog.md` (section UI/UX). The catalog is the single source.
+
+No new decision type is needed for the OriginKit recipes. `ui.component_recipe` and `imm.recipe` candidate lines accept `ok.*` IDs (R45 to R51 and the four presets) and `hm.floating_nav_morph` (R52) beside `mu.`, `an.`, `nz.`, `bang.`, and `md.` IDs, and they layer with any other source when JEV judges each layer aligned. When JEV picks a real OriginKit component instead of its `ok.` recipe, the fetch follows the section 1 rules and the build report logs the slug next to the section.
