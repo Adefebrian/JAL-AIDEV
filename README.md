@@ -85,7 +85,7 @@ The old commands still exist as internal playbooks inside `skills/jal-orchestrat
 - `jal-design-system` also holds the craft floor (`references/craft.md`, from impeccable) and the visual directions with the seeded direction pick (`references/directions.md`, from impeccable and refero), so every product gets a fresh, deliberate look instead of the obvious first idea.
 - `jal-immersive`: all motion and 3D in one place: GreenSock's eight official GSAP skills (MIT) with the JAL layer, Lenis, the JAL frame core, and the immersive and 3D core. Three.js (WebGL and WebGPU/TSL), React Three Fiber and drei, shaders, particles, clean-room effects (rain, puddles, sand, grass, ocean), performance tiers, poster-first loading, GSAP and Lenis scroll choreography, the JAL frame core for live product demos, and the noyzzi catalogue. JEV picks and combines recipes per section.
 - `jal-motion`: restrained product motion plus richer showcase choreography, and 167 component motion recipes from Magic UI and Animata (plain CSS and Tailwind), always with reduced-motion support.
-- `jal-jev`: the decision catalog, 51 standard decisions (orchestration, UI, motion, immersive, backend, security, QA, review, memory, docs, search) with their exact questions and thresholds.
+- `jal-jev`: the decision catalog, 52 standard decisions (orchestration, UI, motion, immersive, backend, security, QA, review, memory, docs, search) with their exact questions and thresholds.
 - `jal-frontend-rules`: the CSS recipes that keep UI tidy.
 
 - `jal-orchestration`: the one engine behind every command: waves of truly parallel agents, JEV as every agent's decision helper, verification and commits by the lead, and the playbooks the old commands became.
@@ -111,7 +111,7 @@ Every reference is integrated as knowledge (no extra packages) and is used by a 
 
 ## Bundled tools (MCP)
 
-- **jal-design**: `jev_decide` (ask JEV), `ui_audit` (the automatic UI check, 20 rules), `noyzzi_list` / `noyzzi_get` (the noyzzi catalogue and live prompts or code), `docs_verify` (checks every documentation claim against the source and scans for secrets), and `design_history` (what past builds stacked and how it scored). Runs on Bun, no extra dependencies.
+- **jal-design**: `jev_decide` (ask JEV), `ui_audit` (the automatic UI check, 22 rules), `ui_shots` (real screenshots of every screen through the page scroller, for the critic gate), `noyzzi_list` / `noyzzi_get` (the noyzzi catalogue and live prompts or code), `docs_verify` (checks every documentation claim against the source and scans for secrets), and `design_history` (what past builds stacked and how it scored). Runs on Bun, no extra dependencies.
 - **designmd**: design references from designmd.ai. Supplementary only, read-only, and every kit is screened by JEV before use.
 - **koboyo-icons**: the icon library. Fallback: https://reicon.dev.
 - **originkit**: OriginKit components on demand (search, list, get, fetch). JEV picks them; they are fetched into client projects only, never into this plugin.

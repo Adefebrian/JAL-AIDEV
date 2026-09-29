@@ -1,6 +1,8 @@
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import path from "node:path";
-import { runAudit } from "./audit";
+import { existsSync, readFileSync, writeFileSync, mkdtempSync, readdirSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { runAudit, runShots } from "./audit";
 
 const FIXTURES_DIR = path.join(import.meta.dir, "fixtures");
 
@@ -47,6 +49,7 @@ const ALL_RULES = [
   "mobile-app-shell",
   "reduced-motion",
 ];
+// Scroll-walk rules, proven by their own fixtures below: stuck-reveal, blank-viewport.
 
 describe("runAudit", () => {
   test(
@@ -184,5 +187,89 @@ describe("runAudit", () => {
       expect(report.violations.map((v) => v.rule)).not.toContain("mobile-app-shell");
     },
     30000,
+  );
+  test(
+    "stuck-reveal fires when a reveal listens to window but the page scrolls in an inner scroller",
+    async () => {
+      const report = await runAudit(`${baseUrl}/reveal-wrong-scroller.html`, { widths: [375] });
+      const stuck = report.violations.filter((v) => v.rule === "stuck-reveal");
+      expect(stuck.length).toBe(1);
+      expect(stuck[0].selector).toBe("#late");
+      expect(stuck[0].detail).toContain("content still hidden after scrolling into view");
+      expect(stuck[0].detail).toContain("main.shell-main");
+    },
+    60000,
+  );
+
+  test(
+    "no stuck-reveal or blank-viewport when the same reveal listens to the real scroller",
+    async () => {
+      const report = await runAudit(`${baseUrl}/reveal-right-scroller.html`, { widths: [375, 1280] });
+      const rules = report.violations.map((v) => v.rule);
+      expect(rules).not.toContain("stuck-reveal");
+      expect(rules).not.toContain("blank-viewport");
+    },
+    60000,
+  );
+
+  test(
+    "blank-viewport fires on a screen filled by a 1500px empty section",
+    async () => {
+      const report = await runAudit(`${baseUrl}/blank-band.html`, { widths: [1280] });
+      const blank = report.violations.filter((v) => v.rule === "blank-viewport");
+      expect(blank.length).toBeGreaterThan(0);
+      expect(blank[0].selector).toBe("#void");
+      expect(blank[0].detail).toMatch(/^screen at scrollY \d+ is empty \(\d+ of 48 samples hit content\)/);
+      expect(report.violations.map((v) => v.rule)).not.toContain("stuck-reveal");
+    },
+    60000,
+  );
+
+  test(
+    "good.html stays clean on the scroll-walk rules at every width",
+    async () => {
+      const report = await runAudit(`${baseUrl}/good.html`, { widths: [320, 375, 414, 768, 1280] });
+      const rules = report.violations.map((v) => v.rule);
+      expect(rules).not.toContain("stuck-reveal");
+      expect(rules).not.toContain("blank-viewport");
+    },
+    60000,
+  );
+});
+
+describe("runShots", () => {
+  test(
+    "writes one JPEG per screen per width, capped by maxScreens, and clears stale shots",
+    async () => {
+      const outDir = mkdtempSync(path.join(tmpdir(), "jal-shots-test-"));
+      try {
+        writeFileSync(path.join(outDir, "375-09.jpg"), "stale");
+        const report = await runShots(`${baseUrl}/blank-band.html`, {
+          widths: [375, 1280],
+          outDir,
+          maxScreens: 3,
+          webgl: false,
+          loadWaitMs: 100,
+        });
+        expect(report.status).toBe("OK");
+        expect(report.scroller).toBe("document");
+        expect(report.totalHeight).toBeGreaterThan(2000);
+        expect(report.files.length).toBe(6);
+        expect(report.files.map((f) => path.basename(f.path)).sort()).toEqual(
+          ["1280-01.jpg", "1280-02.jpg", "1280-03.jpg", "375-01.jpg", "375-02.jpg", "375-03.jpg"],
+        );
+        for (const f of report.files) {
+          expect(existsSync(f.path)).toBe(true);
+          const bytes = readFileSync(f.path);
+          expect(bytes[0]).toBe(0xff);
+          expect(bytes[1]).toBe(0xd8);
+        }
+        expect(report.files.filter((f) => f.width === 1280).map((f) => f.scrollY)).toEqual([0, 800, 1600]);
+        expect(readdirSync(outDir)).not.toContain("375-09.jpg");
+      } finally {
+        rmSync(outDir, { recursive: true, force: true });
+      }
+    },
+    60000,
   );
 });

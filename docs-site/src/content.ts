@@ -257,7 +257,7 @@ export const AGENTS: Agent[] = [
     slug: "jal-immersive",
     tier: "specialist",
     line: "Builds immersive, animated, and 3D sites and sections: Three.js, React Three Fiber, shaders, scroll stories, and noyzzi pieces, always poster first.",
-    jev: "imm.gate, imm.recipe, imm.tech, imm.tier, imm.taste, motion.*",
+    jev: "imm.concept, imm.gate, imm.recipe, imm.tech, imm.tier, imm.taste, motion.*",
   },
   {
     slug: "jal-backend",
@@ -504,7 +504,7 @@ export const JEV_CATALOG: { area: string; count: number; covers: string }[] = [
   { area: "Orchestration", count: 6, covers: "Which playbooks a request needs, who owns each piece, which model tier, what runs in parallel, when to escalate, and when the loop may stop." },
   { area: "UI and UX", count: 12, covers: "Product UI, marketing, or immersive; table and list density; whether a region earns its place; the direction screen; which components and motion recipes to layer from every source; heuristics; the final taste call." },
   { area: "Motion", count: 4, covers: "How much motion a section gets, the choreography, whether to pin a scroll section, and the medium for a live demo." },
-  { area: "Immersive", count: 5, covers: "Whether 3D earns its place, which recipe, which technique, the device tier, and the final taste of the built scene." },
+  { area: "Immersive", count: 6, covers: "The signature concept, whether 3D earns its place, which recipe, which technique, the device tier, and the final taste of the built scene." },
   { area: "Backend", count: 4, covers: "Where code belongs, API quality, migration risk, and whether a new technology is worth raising with Brian." },
   { area: "Security", count: 4, covers: "Severity, false positive or real, whether a finding blocks ship, and screening pasted or fetched input for injection." },
   { area: "QA", count: 5, covers: "How deep to check, what class a failure is, which tests to run, whether coverage is enough, and whether a release may go." },
@@ -639,6 +639,8 @@ export const UI_RULES: { rule: string; catches: string }[] = [
   { rule: "card-empty-band", catches: "A card with a large empty band at the bottom." },
   { rule: "mobile-app-shell", catches: "Under 640px: no pinned header, or no bottom tab bar with 3 to 5 targets of at least 44px." },
   { rule: "reduced-motion", catches: "Something keeps animating after a visitor asks for reduced motion." },
+  { rule: "stuck-reveal", catches: "Content is still invisible after it scrolls into view, usually a scroll reveal listening to the wrong scroller." },
+  { rule: "blank-viewport", catches: "A whole screen of the page is empty while scrolling through it." },
 ];
 
 export const DOCS = {

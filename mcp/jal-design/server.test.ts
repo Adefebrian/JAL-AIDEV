@@ -117,7 +117,7 @@ describe("jal-design MCP server (stdio)", () => {
     const res = await client.request("tools/list", {});
     expect(res.error).toBeUndefined();
     const names = res.result.tools.map((t: any) => t.name).sort();
-    expect(names).toEqual(["design_history", "docs_verify", "jev_decide", "noyzzi_get", "noyzzi_list", "ui_audit"]);
+    expect(names).toEqual(["design_history", "docs_verify", "jev_decide", "noyzzi_get", "noyzzi_list", "ui_audit", "ui_shots"]);
     for (const tool of res.result.tools) {
       expect(tool.inputSchema).toBeDefined();
       expect(tool.inputSchema.type).toBe("object");
@@ -130,6 +130,17 @@ describe("jal-design MCP server (stdio)", () => {
     expect(jevTool.inputSchema.properties.domain.type).toBe("string");
     const auditTool = res.result.tools.find((t: any) => t.name === "ui_audit");
     expect(auditTool.inputSchema.required).toEqual(["url"]);
+    expect(auditTool.description).toContain("stuck-reveal");
+    expect(auditTool.description).toContain("blank-viewport");
+    const shotsTool = res.result.tools.find((t: any) => t.name === "ui_shots");
+    expect(shotsTool.inputSchema.required).toEqual(["url"]);
+    expect(Object.keys(shotsTool.inputSchema.properties).sort()).toEqual(["max_screens", "out_dir", "url", "webgl", "widths"]);
+  });
+
+  test("tools/call ui_shots without a url is an error, no browser", async () => {
+    const res = await client.request("tools/call", { name: "ui_shots", arguments: {} });
+    expect(res.result.isError).toBe(true);
+    expect(res.result.content[0].text).toContain("ui_shots requires { url }");
   });
 
   test("unknown method with id returns -32601", async () => {

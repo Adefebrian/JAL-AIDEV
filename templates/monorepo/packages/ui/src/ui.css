@@ -621,23 +621,43 @@ button[data-state="success"],
   }
 }
 
-/* App-shell (AppShell.tsx). A grid sized to the viewport: the document
-   never scrolls, the content region scrolls on its own, nothing is fixed,
-   so nothing can hide under the bar. Below 640px: header row, content,
-   bottom tab bar. From 640px the destinations join the header row. */
+/* App-shell (AppShell.tsx). Two scroll modes, keyed on data-scroll.
+   document (default, also a bare .shell): the document scrolls, so
+   ScrollTrigger, Lenis, pins, iOS address-bar collapse, scroll restoration,
+   and anchor links work unwired. The header row is sticky at top 0. Below
+   640px the tab bar is fixed at bottom 0 and the shell reserves its height
+   (--shell-nav-h plus the safe area) as bottom padding, so nothing hides
+   under it.
+   contained: a grid sized to the viewport, the document never scrolls and
+   main.shell-main scrolls on its own (dense product screens).
+   Below 640px: header row, content, bottom tab bar. From 640px the
+   destinations join the header row. */
 .shell {
+  /* Tab bar height below 640px: a 64px target row plus its 1px top border. */
+  --shell-nav-h: 65px;
+  /* Header row height: a 56px row plus its 1px bottom border. */
+  --shell-header-h: 57px;
   display: grid;
-  height: 100dvh;
+  min-height: 100dvh;
   grid-template-columns: minmax(0, 1fr) auto;
-  grid-template-rows: auto minmax(0, 1fr) auto;
+  grid-template-rows: auto 1fr;
   grid-template-areas:
     "header actions"
-    "main main"
-    "nav nav";
+    "main main";
+  padding-bottom: calc(var(--shell-nav-h) + env(safe-area-inset-bottom));
   background: var(--color-page);
+}
+/* Anchor links and focus scrolling land below the sticky header and above
+   the fixed tab bar. */
+html:has(.shell:not([data-scroll="contained"])) {
+  scroll-padding-top: calc(var(--shell-header-h, 57px) + env(safe-area-inset-top));
+  scroll-padding-bottom: calc(var(--shell-nav-h, 65px) + env(safe-area-inset-bottom));
 }
 .shell-header,
 .shell-actions {
+  position: sticky;
+  top: 0;
+  z-index: 1;
   display: flex;
   align-items: center;
   min-height: 56px;
@@ -658,12 +678,15 @@ button[data-state="success"],
 }
 .shell-main {
   grid-area: main;
-  min-height: 0;
-  overflow-y: auto;
-  overscroll-behavior: contain;
+  min-width: 0;
+  /* Content z-indexes stay below the pinned header and tab bar. */
+  isolation: isolate;
 }
 .shell-nav {
-  grid-area: nav;
+  position: fixed;
+  inset-inline: 0;
+  bottom: 0;
+  z-index: 1;
   display: grid;
   grid-auto-flow: column;
   grid-auto-columns: minmax(0, 1fr);
@@ -671,6 +694,30 @@ button[data-state="success"],
   border-top: 1px solid var(--color-border);
   background: var(--color-surface);
 }
+
+/* contained: the viewport-sized grid with an inner scroller. */
+.shell[data-scroll="contained"] {
+  height: 100dvh;
+  min-height: 0;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  grid-template-areas:
+    "header actions"
+    "main main"
+    "nav nav";
+  padding-bottom: 0;
+}
+.shell[data-scroll="contained"] > .shell-header,
+.shell[data-scroll="contained"] > .shell-actions,
+.shell[data-scroll="contained"] > .shell-nav {
+  position: static;
+}
+.shell[data-scroll="contained"] > .shell-nav { grid-area: nav; }
+.shell[data-scroll="contained"] > .shell-main {
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
 .shell-nav-item {
   display: flex;
   flex-direction: column;
@@ -707,14 +754,21 @@ button[data-state="success"],
 }
 
 @media (min-width: 640px) {
-  .shell {
+  .shell,
+  .shell[data-scroll="contained"] {
     grid-template-columns: auto minmax(0, 1fr) auto;
-    grid-template-rows: auto minmax(0, 1fr);
     grid-template-areas:
       "header nav actions"
       "main main main";
+    padding-bottom: 0;
   }
+  .shell { grid-template-rows: auto 1fr; }
+  .shell[data-scroll="contained"] { grid-template-rows: auto minmax(0, 1fr); }
+  html:has(.shell:not([data-scroll="contained"])) { scroll-padding-bottom: 0; }
   .shell-nav {
+    position: sticky;
+    top: 0;
+    grid-area: nav;
     display: flex;
     align-items: center;
     justify-content: flex-end;

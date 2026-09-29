@@ -8,6 +8,14 @@ Stack: `bun add gsap @gsap/react lenis`. Every GSAP plugin is free (since the 20
 
 **When to escalate to GSAP.** Move up from CSS or WAAPI only when the motion needs one of four things: several beats sequenced on one timeline, runtime control (pause, reverse, seek, scrub), scroll-linked progress, or values computed in JS at run time (measured widths, pointer position). A change driven by React state stays on Framer Motion. Name the trigger that forced the escalation in the build report.
 
+**Know the scroller.** Immersive and marketing pages use AppShell `scroll="document"` (the default), so ScrollTrigger and Lenis use `window`. On a contained shell (`scroll="contained"`, where `main.shell-main` scrolls and the document never does), set `ScrollTrigger.defaults({ scroller })` once before any trigger (and give Lenis `wrapper: scroller`), or every reveal stays hidden. Get the element with `getScroller()` from `@__APP_NAME__/ui` and pass `scrollerRoot(scroller)` as the IntersectionObserver `root`. `ui_audit`'s stuck-reveal rule catches this.
+
+```ts
+import { getScroller } from "@__APP_NAME__/ui";
+const scroller = getScroller(); // window on a document shell, main.shell-main on a contained one
+if (scroller !== window) ScrollTrigger.defaults({ scroller });
+```
+
 ## 1. GSAP core
 
 From: gsap-skills (`gsap-core`, `gsap-timeline`, `gsap-plugins`, `gsap-utils`), GSAP docs, JAL-authored (tokens, the one curve, plugin and ease law).
@@ -482,6 +490,7 @@ From: gsap-skills (common mistakes across `gsap-core`, `gsap-scrolltrigger`, `gs
 
 Before returning motion work, grep and check:
 
+- [ ] Scroller not known: a contained AppShell (`scroll="contained"`) with no `ScrollTrigger.defaults({ scroller })` before the first trigger, or an IntersectionObserver without that `root`, so reveals never fire.
 - [ ] Plugin used before `registerPlugin`, or registered inside a component.
 - [ ] ScrollTrigger on a tween nested in a timeline, or nested triggers.
 - [ ] `scrub` and `toggleActions` on the same trigger.

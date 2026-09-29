@@ -1,0 +1,92 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Reveal wrong scroller</title>
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; background: #ffffff; color: #1f2933; font-family: sans-serif; }
+  .shell { display: grid; height: 100dvh; grid-template-rows: auto minmax(0, 1fr) auto; }
+  .shell-header { display: flex; align-items: center; min-height: 56px; padding: 0 16px; border-bottom: 1px solid #e5e7eb; }
+  .shell-header h1 { margin: 0; font-size: 19px; }
+  .shell-main { min-height: 0; overflow-y: auto; }
+  .shell-nav { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); border-top: 1px solid #e5e7eb; }
+  .shell-nav a { display: flex; align-items: center; justify-content: center; min-height: 56px; color: #1f2933; text-decoration: none; }
+  .block { max-width: 720px; margin: 0 auto; padding: 24px; }
+  .block p { margin: 0 0 16px 0; line-height: 24px; }
+  .late { opacity: 0; visibility: hidden; transition: opacity 0.3s; }
+  .late.in { opacity: 1; visibility: visible; }
+</style>
+</head>
+<body>
+<div class="shell">
+<header class="shell-header"><h1>Reveal wrong scroller</h1></header>
+<main class="shell-main">
+  <section class="block" id="one">
+    <h2>Section 1</h2>
+    <p>Halo reads the light in the room and shifts its own warmth and brightness to match the hour, so a long evening of focused work stays calm on the eyes.</p>
+    <p>Halo reads the light in the room and shifts its own warmth and brightness to match the hour, so a long evening of focused work stays calm on the eyes.</p>
+    <p>Halo reads the light in the room and shifts its own warmth and brightness to match the hour, so a long evening of focused work stays calm on the eyes.</p>
+    <p>Halo reads the light in the room and shifts its own warmth and brightness to match the hour, so a long evening of focused work stays calm on the eyes.</p>
+    <p>Halo reads the light in the room and shifts its own warmth and brightness to match the hour, so a long evening of focused work stays calm on the eyes.</p>
+  </section>
+  <section class="block" id="two">
+    <h2>Section 2</h2>
+    <p>Halo reads the light in the room and shifts its own warmth and brightness to match the hour, so a long evening of focused work stays calm on the eyes.</p>
+    <p>Halo reads the light in the room and shifts its own warmth and brightness to match the hour, so a long evening of focused work stays calm on the eyes.</p>
+    <p>Halo reads the light in the room and shifts its own warmth and brightness to match the hour, so a long evening of focused work stays calm on the eyes.</p>
+    <p>Halo reads the light in the room and shifts its own warmth and brightness to match the hour, so a long evening of focused work stays calm on the eyes.</p>
+    <p>Halo reads the light in the room and shifts its own warmth and brightness to match the hour, so a long evening of focused work stays calm on the eyes.</p>
+  </section>
+  <section class="block">
+    <h2>Section 3</h2>
+    <p>Halo reads the light in the room and shifts its own warmth and brightness to match the hour, so a long evening of focused work stays calm on the eyes.</p>
+    <p>Halo reads the light in the room and shifts its own warmth and brightness to match the hour, so a long evening of focused work stays calm on the eyes.</p>
+    <p>Halo reads the light in the room and shifts its own warmth and brightness to match the hour, so a long evening of focused work stays calm on the eyes.</p>
+    <p>Halo reads the light in the room and shifts its own warmth and brightness to match the hour, so a long evening of focused work stays calm on the eyes.</p>
+    <p>Halo reads the light in the room and shifts its own warmth and brightness to match the hour, so a long evening of focused work stays calm on the eyes.</p>
+  </section>
+  <section class="block late" id="late">
+    <h2>Section 4</h2>
+    <p>Halo reads the light in the room and shifts its own warmth and brightness to match the hour, so a long evening of focused work stays calm on the eyes.</p>
+    <p>Halo reads the light in the room and shifts its own warmth and brightness to match the hour, so a long evening of focused work stays calm on the eyes.</p>
+    <p>Halo reads the light in the room and shifts its own warmth and brightness to match the hour, so a long evening of focused work stays calm on the eyes.</p>
+    <p>Halo reads the light in the room and shifts its own warmth and brightness to match the hour, so a long evening of focused work stays calm on the eyes.</p>
+    <p>Halo reads the light in the room and shifts its own warmth and brightness to match the hour, so a long evening of focused work stays calm on the eyes.</p>
+  </section>
+  <section class="block">
+    <h2>Section 5</h2>
+    <p>Halo reads the light in the room and shifts its own warmth and brightness to match the hour, so a long evening of focused work stays calm on the eyes.</p>
+    <p>Halo reads the light in the room and shifts its own warmth and brightness to match the hour, so a long evening of focused work stays calm on the eyes.</p>
+    <p>Halo reads the light in the room and shifts its own warmth and brightness to match the hour, so a long evening of focused work stays calm on the eyes.</p>
+    <p>Halo reads the light in the room and shifts its own warmth and brightness to match the hour, so a long evening of focused work stays calm on the eyes.</p>
+    <p>Halo reads the light in the room and shifts its own warmth and brightness to match the hour, so a long evening of focused work stays calm on the eyes.</p>
+  </section>
+  <section class="block">
+    <h2>Section 6</h2>
+    <p>Halo reads the light in the room and shifts its own warmth and brightness to match the hour, so a long evening of focused work stays calm on the eyes.</p>
+    <p>Halo reads the light in the room and shifts its own warmth and brightness to match the hour, so a long evening of focused work stays calm on the eyes.</p>
+    <p>Halo reads the light in the room and shifts its own warmth and brightness to match the hour, so a long evening of focused work stays calm on the eyes.</p>
+    <p>Halo reads the light in the room and shifts its own warmth and brightness to match the hour, so a long evening of focused work stays calm on the eyes.</p>
+    <p>Halo reads the light in the room and shifts its own warmth and brightness to match the hour, so a long evening of focused work stays calm on the eyes.</p>
+  </section>
+</main>
+<nav class="shell-nav" aria-label="Primary">
+  <a href="#one">One</a>
+  <a href="#two">Two</a>
+  <a href="#late">Late</a>
+</nav>
+</div>
+<script>
+  // Mimics a ScrollTrigger bound to window: the start offset is measured once
+  // against the window, and the check reads window.scrollY, which never moves
+  // because the page scrolls inside main.shell-main.
+  var late = document.getElementById("late");
+  var start = late.getBoundingClientRect().top + window.scrollY - window.innerHeight * 0.85;
+  window.addEventListener("scroll", function () {
+    if (window.scrollY >= start) late.classList.add("in");
+  });
+</script>
+</body>
+</html>

@@ -1,11 +1,18 @@
 // Zero-dependency Chrome DevTools Protocol UI audit driver.
 // Bun built-ins only: Bun.spawn, native WebSocket, fetch, node:fs/os/path compat.
 // No puppeteer, no playwright, no npm deps.
+//
+// 22 rules. 19 static rules run once per width on the loaded page, reduced-motion
+// runs once at the widest width, and two come from a scroll walk through the
+// page's real scroller (document or an app-shell inner scroller):
+//   stuck-reveal    content still invisible after it was scrolled into view
+//   blank-viewport  a whole screen where under 10% of a 6x8 grid hits content
+// runShots (ui_shots) reuses the same walk to save one JPEG per screen.
 
 import { existsSync } from "node:fs";
-import { mkdtemp, rm } from "node:fs/promises";
+import { mkdir, mkdtemp, readdir, rm, unlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { join, resolve } from "node:path";
 
 export type Violation = { rule: string; width: number; selector: string; detail: string };
 export type AuditReport = {
@@ -16,7 +23,7 @@ export type AuditReport = {
 };
 
 const DEFAULT_WIDTHS = [320, 375, 414, 768, 1280];
-const DEFAULT_TIMEOUT_MS = 60000;
+const DEFAULT_TIMEOUT_MS = 180000; // five widths, each with a scroll walk of up to 30 settled steps
 
 const STANDARD_CHROME_PATHS = [
   "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
@@ -189,6 +196,37 @@ export class CdpClient {
   }
 }
 
+// Shared by the audit and walk scripts: a short, stable CSS path for an element.
+const CSS_PATH_FN = `
+  function cssPathRaw(el) {
+    if (!el || el.nodeType !== 1) return "";
+    if (el.id) return "#" + el.id;
+    var parts = [];
+    var node = el;
+    var depth = 0;
+    while (node && node.nodeType === 1 && depth < 6) {
+      if (node.id) { parts.unshift("#" + node.id); break; }
+      var part = node.tagName.toLowerCase();
+      if (node.classList && node.classList.length) {
+        part += "." + node.classList[0];
+      }
+      var parent = node.parentElement;
+      if (parent) {
+        var siblings = Array.prototype.filter.call(parent.children, function (c) {
+          return c.tagName === node.tagName;
+        });
+        if (siblings.length > 1) {
+          part += ":nth-of-type(" + (siblings.indexOf(node) + 1) + ")";
+        }
+      }
+      parts.unshift(part);
+      node = parent;
+      depth++;
+    }
+    return parts.join(" > ");
+  }
+`;
+
 // Injected into the page via Runtime.evaluate. Plain ES5-ish JS, no backticks,
 // no external references: it must stand alone inside the browser context.
 const AUDIT_SCRIPT = `
@@ -220,33 +258,7 @@ const AUDIT_SCRIPT = `
     return p;
   }
 
-  function cssPathRaw(el) {
-    if (!el || el.nodeType !== 1) return "";
-    if (el.id) return "#" + el.id;
-    var parts = [];
-    var node = el;
-    var depth = 0;
-    while (node && node.nodeType === 1 && depth < 6) {
-      if (node.id) { parts.unshift("#" + node.id); break; }
-      var part = node.tagName.toLowerCase();
-      if (node.classList && node.classList.length) {
-        part += "." + node.classList[0];
-      }
-      var parent = node.parentElement;
-      if (parent) {
-        var siblings = Array.prototype.filter.call(parent.children, function (c) {
-          return c.tagName === node.tagName;
-        });
-        if (siblings.length > 1) {
-          part += ":nth-of-type(" + (siblings.indexOf(node) + 1) + ")";
-        }
-      }
-      parts.unshift(part);
-      node = parent;
-      depth++;
-    }
-    return parts.join(" > ");
-  }
+  ${CSS_PATH_FN}
 
   function isOverlayExcluded(el) {
     var node = el;
@@ -784,6 +796,368 @@ const AUDIT_SCRIPT = `
 
 type RawViolation = { rule: string; selector: string; detail: string };
 
+// Scroll walk: finds the element that really scrolls (the document, or an
+// app-shell inner scroller such as main.shell-main) and steps through it one
+// viewport at a time with real scroll events, so scroll-triggered reveals get
+// the same chance to fire they would get from a person scrolling. At each
+// step it can probe for content still hidden in the middle of the screen
+// (stuck-reveal) and for screens with almost nothing on them (blank-viewport).
+// Installed once per page as window.__jalWalk.
+const WALK_SCRIPT = `
+(function () {
+  if (window.__jalWalk) return true;
+  ${CSS_PATH_FN}
+
+  var MEDIA_SEL = "img, video, canvas, svg, button, input, select, textarea";
+  var SKIP_SEL = "[aria-hidden=true], [data-jal-exempt~=noyzzi], [inert], [hidden], [popover], [data-overlay], [role=dialog], [role=alertdialog], [role=menu], [role=listbox], [role=tooltip]";
+  var SECTION_SEL = "section, article, [role=region], header, footer, aside";
+  var LANDMARK_SEL = SECTION_SEL + ", main, [role=main]";
+  var doc = document.scrollingElement || document.documentElement;
+  var scroller = null;
+
+  function sleep(ms) { return new Promise(function (r) { setTimeout(r, ms); }); }
+  function vp() {
+    var vv = window.visualViewport;
+    return { w: vv ? vv.width : window.innerWidth, h: vv ? vv.height : window.innerHeight };
+  }
+  function isDoc() { return scroller === doc; }
+
+  function findScroller() {
+    var v = vp();
+    if (doc.scrollHeight - doc.clientHeight > v.h * 0.5) return doc;
+    var best = null, bestArea = 0;
+    var all = document.querySelectorAll("*");
+    for (var i = 0; i < all.length; i++) {
+      var el = all[i];
+      if (el === doc) continue;
+      if (el.scrollHeight <= el.clientHeight + 1) continue;
+      var oy = getComputedStyle(el).overflowY;
+      if (oy !== "auto" && oy !== "scroll") continue;
+      var area = el.clientWidth * el.clientHeight;
+      if (area > bestArea) { best = el; bestArea = area; }
+    }
+    if (best && best.clientHeight >= v.h * 0.3) return best;
+    return doc;
+  }
+
+  function info() {
+    return {
+      scroller: isDoc() ? "document" : cssPathRaw(scroller),
+      scrollHeight: scroller.scrollHeight,
+      clientHeight: isDoc() ? doc.clientHeight : scroller.clientHeight,
+      max: Math.max(0, scroller.scrollHeight - (isDoc() ? doc.clientHeight : scroller.clientHeight)),
+      scrollY: isDoc() ? window.scrollY : scroller.scrollTop
+    };
+  }
+
+  function go(y) {
+    if (isDoc()) window.scrollTo({ top: y, left: 0, behavior: "instant" });
+    else scroller.scrollTo({ top: y, left: scroller.scrollLeft, behavior: "instant" });
+    (isDoc() ? document : scroller).dispatchEvent(new Event("scroll"));
+    window.dispatchEvent(new Event("scroll"));
+    return info();
+  }
+
+  function region() {
+    var v = vp();
+    if (isDoc()) return { left: 0, top: 0, right: v.w, bottom: v.h };
+    var r = scroller.getBoundingClientRect();
+    var left = Math.max(0, r.left + scroller.clientLeft);
+    var top = Math.max(0, r.top + scroller.clientTop);
+    return {
+      left: left,
+      top: top,
+      right: Math.min(v.w, r.left + scroller.clientLeft + scroller.clientWidth),
+      bottom: Math.min(v.h, r.top + scroller.clientTop + scroller.clientHeight)
+    };
+  }
+
+  // Region minus pinned bands: fixed or sticky bars touching its top or bottom.
+  function sampleRegion(reg) {
+    var out = { left: reg.left, top: reg.top, right: reg.right, bottom: reg.bottom };
+    var w = reg.right - reg.left, h = reg.bottom - reg.top;
+    var all = document.querySelectorAll("*");
+    for (var i = 0; i < all.length; i++) {
+      var el = all[i];
+      var pos = getComputedStyle(el).position;
+      if (pos !== "fixed" && pos !== "sticky") continue;
+      var r = el.getBoundingClientRect();
+      if (r.width < w * 0.5 || r.height <= 0 || r.height > h * 0.4) continue;
+      if (r.top <= reg.top + 2 && r.bottom > out.top) out.top = Math.min(reg.bottom, r.bottom);
+      else if (r.bottom >= reg.bottom - 2 && r.top < out.bottom) out.bottom = Math.max(reg.top, r.top);
+    }
+    return out;
+  }
+
+  function effOpacity(el) {
+    var o = 1;
+    for (var n = el; n && n.nodeType === 1; n = n.parentElement) {
+      o *= parseFloat(getComputedStyle(n).opacity);
+      if (o < 0.001) return 0;
+    }
+    return o;
+  }
+
+  // The outermost ancestor doing the hiding: its own opacity is low, or it is
+  // where visibility: hidden starts.
+  function hidingNode(el) {
+    var found = null;
+    for (var n = el; n && n.nodeType === 1; n = n.parentElement) {
+      var cs = getComputedStyle(n);
+      var pv = n.parentElement ? getComputedStyle(n.parentElement).visibility : "visible";
+      if (parseFloat(cs.opacity) < 0.5 || (cs.visibility !== "visible" && pv === "visible")) found = n;
+    }
+    return found;
+  }
+
+  function hiddenState(el) {
+    var op = effOpacity(el);
+    var vis = getComputedStyle(el).visibility !== "visible";
+    return { op: op, vis: vis, hidden: op < 0.1 || vis };
+  }
+
+  function collect() {
+    var texts = [];
+    var els = [];
+    var seen = new Set();
+    var walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, null);
+    var node;
+    while ((node = walker.nextNode())) {
+      if (!node.nodeValue || !node.nodeValue.trim()) continue;
+      var p = node.parentElement;
+      if (!p) continue;
+      var tag = p.tagName;
+      if (tag === "SCRIPT" || tag === "STYLE" || tag === "NOSCRIPT" || tag === "TEMPLATE" || tag === "OPTION") continue;
+      texts.push({ node: node, p: p });
+      if (!seen.has(p)) { seen.add(p); els.push(p); }
+    }
+    var media = [];
+    Array.prototype.forEach.call(document.querySelectorAll(MEDIA_SEL), function (el) {
+      if (el.tagName.toLowerCase() === "svg" && el.parentElement && el.parentElement.closest("svg")) return;
+      if (el.tagName === "INPUT" && el.type === "hidden") return;
+      media.push(el);
+      if (!seen.has(el)) { seen.add(el); els.push(el); }
+    });
+    return { texts: texts, media: media, els: els };
+  }
+
+  function stuckCandidates(reg, c) {
+    var h = reg.bottom - reg.top;
+    var bandTop = reg.top + h * 0.2, bandBottom = reg.bottom - h * 0.2;
+    var out = [];
+    c.els.forEach(function (el) {
+      var r = el.getBoundingClientRect();
+      if (r.width <= 0 || r.height <= 0) return;
+      if (r.bottom <= bandTop || r.top >= bandBottom) return;
+      if (r.right <= reg.left || r.left >= reg.right) return;
+      if (el.closest(SKIP_SEL) || el.closest("dialog:not([open])")) return;
+      if (!hiddenState(el).hidden) return;
+      var hider = hidingNode(el);
+      if (hider) {
+        var pos = getComputedStyle(hider).position;
+        // An absolutely placed layer at opacity 0 is a hover or focus overlay, not a reveal.
+        if (pos === "absolute" || pos === "fixed") return;
+      }
+      out.push(el);
+    });
+    return out;
+  }
+
+  function inside(r, x, y, pad) {
+    return x >= r.left - pad && x <= r.right + pad && y >= r.top - pad && y <= r.bottom + pad;
+  }
+
+  function blankProbe(reg, c) {
+    var s = sampleRegion(reg);
+    var w = s.right - s.left, h = s.bottom - s.top;
+    if (w < 100 || h < 100) return null;
+    var mediaRects = [];
+    c.media.forEach(function (el) {
+      var r = el.getBoundingClientRect();
+      if (r.width <= 0 || r.height <= 0) return;
+      if (r.bottom <= s.top || r.top >= s.bottom || r.right <= s.left || r.left >= s.right) return;
+      var st = hiddenState(el);
+      if (st.hidden) return;
+      mediaRects.push(r);
+    });
+    var textRects = [];
+    var opCache = new Map();
+    c.texts.forEach(function (t) {
+      var pr = t.p.getBoundingClientRect();
+      if (pr.width <= 0 || pr.height <= 0) return;
+      if (pr.bottom < s.top - 24 || pr.top > s.bottom + 24) return;
+      var st = opCache.get(t.p);
+      if (!st) { st = hiddenState(t.p); opCache.set(t.p, st); }
+      if (st.hidden) return;
+      var range = document.createRange();
+      range.selectNodeContents(t.node);
+      Array.prototype.forEach.call(range.getClientRects(), function (r) {
+        if (r.width > 0 && r.height > 0) textRects.push({ r: r, p: t.p });
+      });
+    });
+    var cols = 6, rows = 8, hits = 0;
+    for (var i = 0; i < cols; i++) {
+      for (var j = 0; j < rows; j++) {
+        var x = s.left + (i + 0.5) * (w / cols);
+        var y = s.top + (j + 0.5) * (h / rows);
+        var ok = false;
+        for (var m = 0; m < mediaRects.length && !ok; m++) if (inside(mediaRects[m], x, y, 0)) ok = true;
+        if (!ok) {
+          var hit = document.elementFromPoint(x, y);
+          if (hit) {
+            for (var k = 0; k < textRects.length && !ok; k++) {
+              var t = textRects[k];
+              if (inside(t.r, x, y, 24) && (hit === t.p || hit.contains(t.p) || t.p.contains(hit))) ok = true;
+            }
+          }
+        }
+        if (ok) hits++;
+      }
+    }
+    // Name the landmark that fills most of the screen.
+    var landmark = null, bestOverlap = 0, bestHeight = Infinity;
+    Array.prototype.forEach.call(document.querySelectorAll(SECTION_SEL), function (el) {
+      var r = el.getBoundingClientRect();
+      if (r.right <= s.left || r.left >= s.right) return;
+      var ov = Math.min(r.bottom, s.bottom) - Math.max(r.top, s.top);
+      if (ov <= 0) return;
+      if (ov > bestOverlap + 1 || (Math.abs(ov - bestOverlap) <= 1 && r.height < bestHeight)) {
+        landmark = el; bestOverlap = ov; bestHeight = r.height;
+      }
+    });
+    return {
+      hits: hits,
+      samples: cols * rows,
+      landmark: landmark && bestOverlap >= h * 0.5 ? cssPathRaw(landmark) : (isDoc() ? "html" : cssPathRaw(scroller))
+    };
+  }
+
+  window.__jalWalk = {
+    init: function () { scroller = findScroller(); return info(); },
+    top: function () { return go(0); },
+    step: async function (y, settleMs, recheckMs, probe) {
+      var at = go(y);
+      await sleep(settleMs);
+      at = info();
+      if (!probe) return { at: at };
+      var reg = region();
+      var c = collect();
+      var suspects = stuckCandidates(reg, c);
+      if (suspects.length) await sleep(recheckMs);
+      var hidden = [];
+      var sections = new Set();
+      suspects.forEach(function (el) {
+        var st = hiddenState(el);
+        if (!st.hidden) return;
+        var sec = el.closest(LANDMARK_SEL) || hidingNode(el) || el;
+        var key = cssPathRaw(sec);
+        if (sections.has(key)) return;
+        sections.add(key);
+        hidden.push({ section: key, el: cssPathRaw(el), opacity: st.op, visibility: st.vis });
+      });
+      return { at: info(), hidden: hidden, blank: blankProbe(reg, collect()) };
+    }
+  };
+  return true;
+})()
+`;
+
+export type WalkHidden = { section: string; el: string; opacity: number; visibility: boolean };
+export type WalkStep = {
+  index: number;
+  scrollY: number;
+  partial: boolean;
+  hidden?: WalkHidden[];
+  blank?: { hits: number; samples: number; landmark: string } | null;
+};
+export type WalkResult = { scroller: string; totalHeight: number; viewportHeight: number; steps: WalkStep[] };
+type WalkInfo = { scroller: string; scrollHeight: number; clientHeight: number; max: number; scrollY: number };
+
+export const WALK_SETTLE_MS = 700;
+export const WALK_MAX_STEPS = 30;
+const WALK_RECHECK_MS = 800;
+const WALK_BUDGET_MS = 45000;
+
+async function evalValue<T>(client: CdpClient, expression: string): Promise<T> {
+  const res = await client.send<{ result: { value?: T }; exceptionDetails?: { text: string; exception?: { description?: string } } }>(
+    "Runtime.evaluate",
+    { expression, awaitPromise: true, returnByValue: true },
+  );
+  if (res.exceptionDetails) {
+    throw new Error(`walk script error: ${res.exceptionDetails.exception?.description ?? res.exceptionDetails.text}`);
+  }
+  return res.result.value as T;
+}
+
+// Walk the page's real scroller top to bottom, one viewport per step, then
+// return to the top. onStep runs after each step settles (screenshots).
+export async function walkScroller(
+  client: CdpClient,
+  opts: { probe?: boolean; settleMs?: number; maxSteps?: number; budgetMs?: number; onStep?: (step: WalkStep) => Promise<void> } = {},
+): Promise<WalkResult> {
+  const settleMs = opts.settleMs ?? WALK_SETTLE_MS;
+  const maxSteps = opts.maxSteps ?? WALK_MAX_STEPS;
+  const budgetMs = opts.budgetMs ?? WALK_BUDGET_MS;
+  const probe = opts.probe ?? true;
+  await evalValue<boolean>(client, WALK_SCRIPT);
+  const start = await evalValue<WalkInfo>(client, "window.__jalWalk.init()");
+  const steps: WalkStep[] = [];
+  const began = Date.now();
+  let target = 0;
+  let prev = -1;
+  let info = start;
+  while (steps.length < maxSteps) {
+    const res = await evalValue<{ at: WalkInfo; hidden?: WalkHidden[]; blank?: WalkStep["blank"] }>(
+      client,
+      `window.__jalWalk.step(${target}, ${settleMs}, ${WALK_RECHECK_MS}, ${probe})`,
+    );
+    info = res.at;
+    const y = info.scrollY;
+    if (steps.length > 0 && y <= prev + 1) break; // the scroller will not move further
+    const step: WalkStep = {
+      index: steps.length,
+      scrollY: Math.round(y),
+      partial: steps.length > 0 && y - prev < info.clientHeight - 1,
+      hidden: res.hidden,
+      blank: res.blank,
+    };
+    steps.push(step);
+    if (opts.onStep) await opts.onStep(step);
+    prev = y;
+    if (y >= info.max - 1 || Date.now() - began > budgetMs) break;
+    target = Math.min(y + info.clientHeight, info.max);
+  }
+  await evalValue<WalkInfo>(client, "window.__jalWalk.top()");
+  return { scroller: start.scroller, totalHeight: info.scrollHeight, viewportHeight: info.clientHeight, steps };
+}
+
+// stuck-reveal + blank-viewport, derived from one probed walk.
+export function walkViolations(walk: WalkResult): RawViolation[] {
+  const out: RawViolation[] = [];
+  const seen = new Set<string>();
+  for (const s of walk.steps) {
+    for (const h of s.hidden ?? []) {
+      if (seen.has(h.section)) continue;
+      seen.add(h.section);
+      const why = `opacity ${h.opacity.toFixed(2)}${h.visibility ? ", visibility hidden" : ""}`;
+      out.push({
+        rule: "stuck-reveal",
+        selector: h.section,
+        detail: `content still hidden after scrolling into view (${why}): a scroll-triggered reveal likely watches the wrong scroller (page scrolls in ${walk.scroller}); first hidden element ${h.el} at scrollY ${s.scrollY}`,
+      });
+    }
+    const b = s.blank;
+    if (b && !s.partial && b.hits / b.samples < 0.1) {
+      out.push({
+        rule: "blank-viewport",
+        selector: b.landmark,
+        detail: `screen at scrollY ${s.scrollY} is empty (${b.hits} of ${b.samples} samples hit content) in scroller ${walk.scroller}`,
+      });
+    }
+  }
+  return out;
+}
+
 async function auditAtWidth(client: CdpClient, url: string, width: number): Promise<RawViolation[]> {
   await client.send("Emulation.setDeviceMetricsOverride", {
     width,
@@ -806,7 +1180,10 @@ async function auditAtWidth(client: CdpClient, url: string, width: number): Prom
   if (result.exceptionDetails) {
     throw new Error(`audit script error: ${result.exceptionDetails.text}`);
   }
-  return result.result.value ?? [];
+  const violations = result.result.value ?? [];
+  // Walk the real scroller last so reveals it triggers never touch the static rules.
+  const walk = await walkScroller(client, { probe: true });
+  return violations.concat(walkViolations(walk));
 }
 
 // reduced-motion: with prefers-reduced-motion: reduce emulated, nothing may
@@ -954,5 +1331,115 @@ export async function runAudit(
     if (tmpDir) {
       await rm(tmpDir, { recursive: true, force: true }).catch(() => {});
     }
+  }
+}
+
+// ui_shots: real screenshots through the real scroller, one JPEG per screen
+// per width, so an agent can Read what a person would actually see.
+export type ShotFile = { width: number; index: number; scrollY: number; path: string };
+export type ShotsReport = {
+  status: "OK" | "SKIPPED";
+  reason?: string;
+  out_dir: string;
+  scroller: string;
+  totalHeight: number;
+  files: ShotFile[];
+  perWidth: Array<{ width: number; height: number; scroller: string; totalHeight: number; screens: number }>;
+};
+
+const DEFAULT_SHOT_WIDTHS = [375, 1280];
+const DEFAULT_MAX_SCREENS = 12;
+const SHOT_LOAD_WAIT_MS = 4000;
+
+// A phone is taller than it is wide; desktop screens are shorter.
+export function shotHeight(width: number): number {
+  if (width < 768) return 812;
+  if (width < 1024) return 1024;
+  return 800;
+}
+
+export async function runShots(
+  url: string,
+  opts: {
+    widths?: number[];
+    outDir?: string;
+    webgl?: boolean;
+    maxScreens?: number;
+    chromePath?: string;
+    timeoutMs?: number;
+    loadWaitMs?: number;
+  } = {},
+): Promise<ShotsReport> {
+  const widths = opts.widths && opts.widths.length ? opts.widths : DEFAULT_SHOT_WIDTHS;
+  const outDir = resolve(process.cwd(), opts.outDir ?? join(".jal", "shots"));
+  const maxScreens = Math.max(1, Math.min(WALK_MAX_STEPS, Math.floor(opts.maxScreens ?? DEFAULT_MAX_SCREENS)));
+  const loadWaitMs = opts.loadWaitMs ?? SHOT_LOAD_WAIT_MS;
+  const empty: ShotsReport = { status: "SKIPPED", out_dir: outDir, scroller: "", totalHeight: 0, files: [], perWidth: [] };
+
+  const chromePath = resolveChromePath(opts.chromePath);
+  if (!chromePath) return { ...empty, reason: "no Chrome found" };
+
+  let tmpDir: string | undefined;
+  let handle: ChromeHandle | undefined;
+  let client: CdpClient | undefined;
+  let pageId: string | undefined;
+
+  try {
+    return await withTimeout(opts.timeoutMs ?? 180000, async () => {
+      await mkdir(outDir, { recursive: true });
+      const dir = await mkdtemp(join(tmpdir(), "jal-shots-"));
+      tmpDir = dir;
+      handle = await launchChrome(chromePath, dir, { webgl: opts.webgl ?? true });
+      const page = await createPageTarget(handle.port);
+      pageId = page.id;
+      client = await CdpClient.connect(page.webSocketDebuggerUrl);
+      await client.send("Page.enable");
+      await client.send("Runtime.enable");
+
+      const report: ShotsReport = { status: "OK", out_dir: outDir, scroller: "", totalHeight: 0, files: [], perWidth: [] };
+      for (const width of widths) {
+        // Drop this width's shots from an earlier run so stale screens never mislead.
+        for (const name of await readdir(outDir)) {
+          if (new RegExp(`^${width}-\\d+\\.jpg$`).test(name)) await unlink(join(outDir, name)).catch(() => {});
+        }
+        const height = shotHeight(width);
+        const c = client!;
+        await c.send("Emulation.setDeviceMetricsOverride", { width, height, deviceScaleFactor: 1, mobile: width < 768 });
+        const loaded = c.waitForEvent("Page.loadEventFired", 25000);
+        await c.send("Page.navigate", { url });
+        await loaded;
+        await new Promise((r) => setTimeout(r, loadWaitMs)); // 3D scenes and canvases need a moment to draw
+        let count = 0;
+        const walk = await walkScroller(c, {
+          probe: false,
+          maxSteps: maxScreens,
+          onStep: async (step) => {
+            const shot = await c.send<{ data: string }>("Page.captureScreenshot", { format: "jpeg", quality: 75 });
+            const index = step.index + 1;
+            const path = join(outDir, `${width}-${String(index).padStart(2, "0")}.jpg`);
+            await writeFile(path, Buffer.from(shot.data, "base64"));
+            report.files.push({ width, index, scrollY: step.scrollY, path });
+            count++;
+          },
+        });
+        report.perWidth.push({ width, height, scroller: walk.scroller, totalHeight: walk.totalHeight, screens: count });
+        if (!report.scroller) {
+          report.scroller = walk.scroller;
+          report.totalHeight = walk.totalHeight;
+        }
+      }
+      return report;
+    });
+  } catch (err) {
+    return { ...empty, reason: err instanceof Error ? err.message : String(err) };
+  } finally {
+    client?.close();
+    if (handle && pageId) await closePageTarget(handle.port, pageId);
+    try {
+      handle?.proc.kill();
+    } catch {
+      // ignore
+    }
+    if (tmpDir) await rm(tmpDir, { recursive: true, force: true }).catch(() => {});
   }
 }

@@ -134,9 +134,9 @@ describe("docs site content", () => {
     expect(html).toContain(`${real} decisions in total`);
   });
 
-  test("the UI check lists exactly 20 rules", () => {
-    expect(UI_RULES).toHaveLength(20);
-    expect(new Set(UI_RULES.map((r) => r.rule)).size).toBe(20);
+  test("the UI check lists exactly 22 rules", () => {
+    expect(UI_RULES).toHaveLength(22);
+    expect(new Set(UI_RULES.map((r) => r.rule)).size).toBe(22);
     for (const rule of UI_RULES) expect(html).toContain(rule.rule);
   });
 

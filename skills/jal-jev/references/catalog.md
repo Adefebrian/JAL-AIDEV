@@ -16,7 +16,7 @@ Index:
 | Orchestration | `orch.route`, `orch.playbooks`, `orch.parallel`, `orch.model`, `orch.escalate`, `orch.loop_exit` |
 | UI/UX | `ui.experience`, `ui.direction_screen`, `ui.density`, `ui.region_gate`, `ui.designmd_screen`, `ui.final_taste`, `ui.heuristics`, `ui.finish_disposition`, `ui.component_recipe`, `ui.text_reveal_granularity`, `ui.number_motion`, `ui.geo_visual` |
 | Motion | `motion.intensity`, `motion.choreography`, `motion.pin`, `motion.demo_medium` |
-| Immersive | `imm.gate`, `imm.recipe`, `imm.tech`, `imm.tier`, `imm.taste` |
+| Immersive | `imm.concept`, `imm.gate`, `imm.recipe`, `imm.tech`, `imm.tier`, `imm.taste` |
 | Backend | `be.placement`, `be.api_quality`, `be.migration_risk`, `be.new_tech` |
 | Security | `sec.severity`, `sec.false_positive`, `sec.ship_block`, `sec.input_screen` |
 | QA | `qa.check_depth`, `qa.failure_class`, `qa.test_selection`, `qa.coverage`, `qa.release_go` |
@@ -533,26 +533,28 @@ Index:
 
 ### `ui.finish_disposition`
 
-**Purpose:** the finish verdict from a fresh-context reviewer.
+**Purpose:** the finish verdict from the fresh-eyes critic gate. The builder can never answer it alone and can never self-approve the finish.
 
-**Caller:** a new reviewer subagent with no access to the build conversation, after `ui_audit` PASS, `ui.final_taste` (or `imm.taste`) of 2 or more, and `ui.heuristics`.
+**Caller:** the fresh-context critic (jal-reviewer in critic mode, or a newly spawned jal-ux; never the agent that built the page), dispatched by jal-lead or the session running `/jal-ui`, after `ui_audit` PASS, the builder's `ui.final_taste` (or `imm.taste`) of 2 or more, the `ui_shots` captures, the critic rubric (`jal-design-system` `references/craft.md` section 12), and `ui.heuristics`. Mandatory for `/jal-ui` in every mode and for any public page.
 
 **Precheck (decides without JEV):**
-- Captures at 375 and 1280 exist.
-- Obviously invalid captures go straight to recapture, without asking.
+- `ui_shots` captures at 375 and 1280 exist for every screen, taken through the real scroller.
+- Obviously invalid captures (blank, cropped, stuck mid-reveal) go straight to recapture, without asking.
+- `evidence.critic` is present, was produced by an agent other than the builder, and its `images_read` list matches every `ui_shots` image. Otherwise the call is not made: run the critic first. A disposition answered by the builder is void.
+- Critic `total` under 15 of 21, or any rubric score of 0: the disposition is `fix`, not asked. The fix batch is the critic's per-screen fixes; when those fixes replace the first screen or the signature moment, the batch re-derives those regions as a rebuild.
 
-**State fields:** `proposal.contract` (thesis, own world, story, first viewport, form plus seed key), `proposal.matrix` (element, status as match, adaptation, missing, contradicted, or added, and a note; the TYPE, ACCENT, and GROUND rows are mandatory), `proposal.material_fixes` (at most 8), `evidence` (the `ui_audit` summary, the heuristics band, and whether this is round 1 or 2).
+**State fields:** `proposal.contract` (thesis, own world, story, first viewport, form plus seed key, and on immersive or `modern_immersive` pages the concept paragraph and its signature moment), `proposal.matrix` (element, status as match, adaptation, missing, contradicted, or added, and a note; the TYPE, ACCENT, and GROUND rows are mandatory), `proposal.material_fixes` (at most 8), `evidence.critic` (critic agent, round, the seven rubric scores `first_screen`, `signature`, `hierarchy`, `composition`, `craft`, `coherence`, `template_smell` each 0 to 3 with one line of evidence naming the image, `total` of 21, the template-smell hits, `fixes_by_screen`, `images_read`), `evidence` (the `ui_audit` summary, the heuristics band, and the round number, 1 to 3).
 
 **Questions:**
 ```json
 {
   "disposition": {
     "type": "choice",
-    "instructions": "Pick the finish disposition for the build in state.proposal, judged by a fresh-context reviewer against its own direction contract (state.proposal.contract) and the fidelity matrix (state.proposal.matrix), never against the effort visible in the build. JAL law is already proven by ui_audit in state.evidence and is not re-judged.",
+    "instructions": "Pick the finish disposition for the build in state.proposal, judged by a fresh-context critic against its own direction contract (state.proposal.contract), the fidelity matrix (state.proposal.matrix), and the critic rubric in state.evidence.critic, never against the effort visible in the build. Weigh the rubric heavily: first_screen and signature carry the most weight, and a template_smell of 1 or less means the page reads as a generic AI landing. JAL law is already proven by ui_audit in state.evidence and is not re-judged.",
     "criteria": {
-      "ship": "No contradicted or missing rows in the matrix and no material fixes; the first viewport keeps the contract's promise and passes the memory test.",
-      "fix": "The concept holds, but there are specific material fixes (up to eight) that one batch can close without replacing whole regions.",
-      "rebuild": "The concept failed in the build: the first viewport or the focal element contradicts the contract, or contradiction is the norm rather than the exception, so patches would only launder a rejected page.",
+      "ship": "The critic rubric passes (no 0, total 15 or more of 21) with first_screen and signature both 2 or more; no contradicted or missing rows in the matrix and no material fixes; the first viewport keeps the contract's promise and passes the memory test.",
+      "fix": "The concept holds, but the critic names specific material fixes (up to eight) that one batch can close without replacing whole regions, or a rubric score of 1 that such fixes can lift.",
+      "rebuild": "The concept failed in the build: the first viewport or the signature moment contradicts the contract or is not visibly working, contradiction is the norm rather than the exception, or the critic's fixes would replace most screens, so patches would only launder a rejected page.",
       "recapture": "The evidence cannot support a verdict: a capture is blank, cropped, not taken from the top, taken mid-animation, at the wrong width, or a required state is missing."
     }
   }
@@ -560,11 +562,12 @@ Index:
 ```
 
 **Thresholds and actions:**
-- `ship`: report the verdict at its real scope.
-- `fix`: apply all fixes in one batch, recapture the same widths, and ask again, marking each fix resolved, partial, or unresolved.
-- `rebuild`: re-derive the named regions from the contract, then run a full review.
+- `ship`: report the verdict at its real scope, with the critic's scores.
+- `fix`: apply all fixes in one batch, recapture the same widths with `ui_shots`, and send a new fresh critic the same inputs plus the previous fix list, marking each fix resolved, partial, or unresolved.
+- `rebuild`: re-derive the named regions from the contract, then run a full critic review.
 - `recapture`: redo the evidence. It does not count as a round.
-- At most two fix or rebuild rounds. Anything still open after round 2 goes to Brian as a table.
+- At most three fix or rebuild rounds. Anything still open after round 3 is reported honestly to Brian as a table with the last critic scores; it is never reported as shipped.
+- The critic's scores for every round go into the user report.
 - Low confidence:
   - If `recapture` is the primary answer, or the runner-up with probability 0.3 or more, recapture first.
   - Otherwise take the stricter of the primary and the runner-up. From strictest to least strict: rebuild, fix, ship.
@@ -581,8 +584,9 @@ Index:
 - Recipes above the section's `motion.intensity` tier are removed from the candidates (the tier table in `jal-motion` `references/components.md` section 7).
 - noyzzi hover effects and sections are candidates on `modern_motion`, `modern_immersive`, and `immersive` pages (never inside a daily-use app screen), with the noyzzi exemption applied to that section. 3D and WebGL recipes are candidates only where the section passed `imm.gate`.
 - Recipes on the DROP list are never candidates.
+- Ambition floor on `modern_immersive` and `immersive` pages (marketing sections): the candidates come from at least 4 different source families (for example `three.*` and `sh.*`, `gsap.*`, `nz.*`, `mu.*`, `an.*`, `ok.*`, `md.*`, `px.*`, `cr.*`, `frame.*`, `rf.*` and `hm.*` craft, `bang.*`, `core.*`), never only the three safest. A shortlist that fails this is rebuilt before asking.
 
-**State fields:** `evidence.section` (job, message, action, container), `evidence.experience` (the page's `ui.experience` level) and `evidence.surface` (`product_ui` for app screens, `marketing` for persuasive pages, `immersive` for sections that passed `imm.gate`), `evidence.tier` (from `motion.intensity`), `evidence.direction` (the direction contract), `proposal.candidates` (3 to 6 recipe IDs, each with source and one line: for example `core.table`, `mu.R02` text motion, `mu.R13` sliding indicator, `an.R21` FLIP list, `nz.fx.halftone-print`, `bang.staged_reveal`, `md.nav_bar` (Material navigation bar), `dmd.<kit>.<part>` (a screened designmd kit)). Also `evidence.history`: the `design_history` summary for this section kind (top stacks by mean taste, stacks to avoid), which JEV weighs but which never overrides the current brief.
+**State fields:** `evidence.section` (job, message, action, container), `evidence.experience` (the page's `ui.experience` level) and `evidence.surface` (`product_ui` for app screens, `marketing` for persuasive pages, `immersive` for sections that passed `imm.gate`), `evidence.tier` (from `motion.intensity`), `evidence.direction` (the direction contract), `proposal.candidates` (3 to 6 recipe IDs, or 4 to 8 from at least 4 source families on `modern_immersive` and `immersive` marketing sections, each with source and one line: for example `core.table`, `mu.R02` text motion, `mu.R13` sliding indicator, `an.R21` FLIP list, `nz.fx.halftone-print`, `bang.staged_reveal`, `md.nav_bar` (Material navigation bar), `dmd.<kit>.<part>` (a screened designmd kit)). Also `evidence.history`: the `design_history` summary for this section kind (top stacks by mean taste, stacks to avoid), which JEV weighs but which never overrides the current brief.
 
 **Questions:**
 ```json
@@ -830,6 +834,49 @@ The agent fills `criteria` with the real candidate IDs and lines. Keys must matc
 
 ## Immersive
 
+### `imm.concept`
+
+**Purpose:** screen the page concept before any build: the product's core idea turned into one signature moment. For a smart desk lamp, the scene is actually lit by the lamp, the light temperature and the pool of light change with scroll or drag, and the page ground itself warms and cools between lawful light tones.
+
+**Caller:** jal-immersive at workflow step 1, after the direction contract and before section concepts; jal-ux at the same point on `modern_immersive` pages. One batched call over 2 to 3 concept candidates with key prefixes (`c1_*`, `c2_*`, `c3_*`).
+
+**Precheck (decides without JEV):**
+- Each candidate is one paragraph that names one signature moment: what the visitor sees, where it sits, what drives it (scroll, drag, pointer, time), and which product truth it proves. A candidate with no signature moment is rewritten, not asked. The signature moment is required, never optional.
+- A moment that needs a law break outside a canvas or a noyzzi section (glow, gradient, or shadow on page chrome, a dark default page, overlap) is rewritten, not asked. Inside a canvas, natural lighting and shading are lawful; bloom and halos are not.
+- A moment that needs an unapproved dependency goes to `be.new_tech` first.
+
+**State fields:** `product`, `task` (the brief), `proposal.candidates` (for each: `key`, the concept paragraph, the signature moment, the section it lives in, the recipe families it needs, its poster), `evidence.direction` (the direction contract), `evidence.devices` (target tiers), `constraints.budget` (the tier budget from `performance.md`).
+
+**Questions** (repeat the `c1_*` set as `c2_*` and `c3_*` in one call):
+```json
+{
+  "c1_core_tie": {
+    "type": "score",
+    "instructions": "Score how tightly the signature moment of candidate c1 in state.proposal.candidates is tied to the core of state.product: what the product actually does for its user, not how it looks or what category it is in.",
+    "criteria": [
+      "0 Generic: the moment could sit on any product page; swap the name and nothing changes.",
+      "1 Themed: it borrows the product's look or category mood but does not show what the product does.",
+      "2 Demonstrates: the visitor sees the product doing its job.",
+      "3 Proves: the visitor experiences the product's core benefit directly, for example the page is lit by the lamp it sells."
+    ]
+  },
+  "c1_first_screen": {
+    "type": "noul",
+    "instructions": "Yes means the signature moment of candidate c1 is visible and working in the first viewport at both 375 and 1280, at rest and without scrolling or interaction; scroll or drag may deepen it but the first screen already shows it. No means it only appears further down or only after input."
+  },
+  "c1_feasible": {
+    "type": "noul",
+    "instructions": "Yes means candidate c1 can be built within state.constraints.budget on the devices in state.evidence.devices with approved tech only, and its poster still shows the idea when WebGL, motion, or power is unavailable. No means it needs more budget, an unapproved dependency, or it collapses to nothing on its poster."
+  }
+}
+```
+
+**Thresholds and actions:**
+- A candidate passes when `core_tie` is 2 or more, `first_screen` is 0.6 or more, and `feasible` is 0.5 or more.
+- Build the passing candidate with the highest `core_tie`; on a tie, the higher `first_screen`. Write it into the direction contract as the concept paragraph and its signature moment.
+- No candidate passes: write new candidates once (new concepts, never the same ones reframed) and re-screen. Still none: build the best `core_tie` candidate, and log `fallback: weak concept` in the build report and the direction contract, so the critic sees it.
+- Low confidence on `core_tie`: take the lower of the top two levels.
+
 ### `imm.gate`
 
 **Purpose:** decide whether a section earns immersion at all, and for a noyzzi 3D element, whether the object carries meaning and where it sits.
@@ -890,7 +937,7 @@ The agent fills `criteria` with the real candidate IDs and lines. Keys must matc
 
 **Precheck (decides without JEV):**
 - Candidates come only from the pool and pass the hard filter: approved tech only, within the cost ceiling, a mobile fallback when mobile is a target, mechanically feasible. Reusing an adjacent section's recipe is allowed only when JEV judges it serves the story.
-- The shortlist has 2 to 6 candidates, including at least one JAL-native and one C0 or C1 control, and at most three noyzzi pieces.
+- The shortlist has 4 to 8 candidates from at least 4 different source families in the pool (three.js skills `three.*` and `sh.*`, GSAP official `gsap.*`, noyzzi `nz.*`, magicui `mu.*`, animata `an.*`, OriginKit `ok.*`, Material `md.*`, nixie-fx and Rapier `px.*`, clean-room `cr.*`, the frame core `frame.*`, impeccable and hallmark craft `rf.*` and `hm.*`), never only the three safest. It includes at least one JAL-native candidate, one C0 or C1 control, and, in the section that carries the page's signature moment (`imm.concept`), at least one candidate that delivers it, with at most three noyzzi pieces. A shortlist that fails this is rebuilt before asking.
 - Each proposed layer must pass the mechanical combination rules before it is asked about: summed cost within the tier budget, one scroll owner, one pointer effect per element, a shared surface or the noyzzi boundary, and canvases within the tier's canvas count (usually one per viewport, for GPU cost). Not asked when only one candidate exists.
 
 **State fields:** `product`, `proposal.section` (kind, job, message, beats, surface of neighbouring sections), `proposal.candidates` (for each: pool ID, source, surface, cost tier, mobile fallback, law note, what it shows), `evidence.direction` (the direction contract), `evidence.page_recipes` (recipes already chosen for other sections), `constraints.cost_ceiling`. Also `evidence.history`: the `design_history` summary for this section kind (top stacks by mean taste, stacks to avoid), which JEV weighs but which never overrides the current brief.
@@ -1054,6 +1101,8 @@ The agent fills `criteria` with the real candidate IDs and lines. Keys must matc
 **Precheck (decides without JEV):**
 - `ui_audit` PASS at 320, 375, 414, 768, 1280 including `reduced-motion`. Any FAIL means fix and re-audit. Not asked.
 - Poster present; reduced-motion capture shows stills; background pixels equal the DOM white outside noyzzi sections; no bloom, glow, neon, or purple in JAL-authored canvases. Any failure means fix first.
+- The 3D quality floor (`jal-immersive` SKILL section 3, ambition floor) holds: real modeled forms (lathe, extrude, bevel, subdivision, or a proper GLTF), PBR materials with environment lighting, contact shadows or baked AO, color management and tone mapping set, and lighting that tells the product story. A raw unbeveled primitive as the hero object is a fail. Any failure means fix first.
+- The signature moment from `imm.concept` is visibly working in the captures. If it is missing, fix first.
 
 **State fields:** `evidence.captures` (described poster, beats, near and far, reduced-motion, mobile), `evidence.metrics` (bundle size of the scene chunk, p95 frame time per tier, draw calls), `evidence.contract` (the direction contract and the section concept), `evidence.decisions` (the section's `imm.*` and `motion.*` results).
 
@@ -1090,7 +1139,7 @@ The agent fills `criteria` with the real candidate IDs and lines. Keys must matc
 **Thresholds and actions:**
 - `keep` under 0.5: replace the scene with its poster and DOM content. This is a veto.
 - `taste` under 2 or `motion_calm` under 2: revise (reduce beats first, then materials and camera), re-capture, re-ask. At most two rounds, then report.
-- `taste` and `motion_calm` 2 or above and `keep` passing: hand to the fresh-context reviewer for `ui.finish_disposition`.
+- `taste` and `motion_calm` 2 or above and `keep` passing: hand the build back to jal-lead for the fresh-eyes critic gate (`ui_shots`, the critic rubric, then `ui.finish_disposition`). The builder never answers `ui.finish_disposition` itself.
 - Low confidence on `keep`: replace with the poster.
 
 ---

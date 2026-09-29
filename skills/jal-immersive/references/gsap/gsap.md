@@ -15,6 +15,14 @@ GSAP is fully approved in JAL-AIDEV, with every plugin (all free since 2024) and
 
 JAL's own choreography layer (tiers, patterns, the single clock for Lenis, ScrollTrigger, and R3F, and camera paths) is `../scroll-choreography.md`. Read both.
 
+**Know the scroller.** Immersive and marketing pages use AppShell `scroll="document"` (the default), so ScrollTrigger and Lenis use `window`. On a contained shell (`scroll="contained"`, where `main.shell-main` scrolls and the document never does), set `ScrollTrigger.defaults({ scroller })` once before any trigger (and give Lenis `wrapper: scroller`), or every reveal stays hidden. Get the element with `getScroller()` from `@__APP_NAME__/ui` and pass `scrollerRoot(scroller)` as the IntersectionObserver `root`. `ui_audit`'s stuck-reveal rule catches this.
+
+```ts
+import { getScroller } from "@__APP_NAME__/ui";
+const scroller = getScroller(); // window on a document shell, main.shell-main on a contained one
+if (scroller !== window) ScrollTrigger.defaults({ scroller });
+```
+
 ## The JAL layer (wins where the official skills differ)
 
 1. **Stack.**
