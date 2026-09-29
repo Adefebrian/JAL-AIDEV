@@ -10,16 +10,21 @@
 // its children, never the header or the bar.
 //
 // Chrome archetypes (skills/jal-design-system/references/chrome.md):
-//   header  "rail"      full-width bar on the kit grid; starts in the page
-//                       tone and condenses on scroll (surface plus hairline)
-//           "island"    inset floating bar, destinations in a segmented
-//                       tonal track with one sliding thumb
-//           "masthead"  two tiers: a display wordmark row over a centred
-//                       nav row, morphing into one compact bar on scroll
-//   bar     "bar"       full-width edge bar, Material navigation-bar anatomy
-//           "dock"      floating inset dock with a sliding tonal lozenge,
-//                       compacts on scroll down, restores on scroll up
-//           "split"     floating dock plus one detached primary action
+//   header  "island"    one floating object: an inset bar below 640px, a
+//                       centred island that hugs its content from 640px,
+//                       holding the wordmark, a segmented track with one
+//                       sliding thumb, and the primary action
+//           "rail"      edge to edge on the kit margin, transparent at the
+//                       top; after 24px it steps down to a 56px surface bar
+//                       with a hairline (optional hideOnScroll)
+//           "masthead"  a centred nameplate over a destinations row, folding
+//                       into one compact bar on scroll
+//   bar     "dock"      floating inset dock, one sliding pill behind the
+//                       active icon; compacts on scroll down, restores on up
+//           "bar"       full-width edge bar, Material 3 navigation bar
+//                       anatomy (64 by 32 pill behind the icon, label below)
+//           "split"     the dock with a filled primary action segment at
+//                       its end (3 or 4 destinations plus the action)
 // Unset, each follows the page direction (data-direction D1 to D13 on or
 // above the shell, ui.css); pass `archetype` to override. The DOM is the same
 // for every archetype, so a direction default never needs JS and never shifts
@@ -48,7 +53,7 @@
 //                  data-scrolled, data-dir, data-compact, data-hidden on the
 //                  shell. Transitions live under .shell-motion, which is set
 //                  only when prefers-reduced-motion is not reduce.
-//   indicator      the sliding thumb or lozenge reads the active item's box
+//   indicator      the sliding thumb or pill reads the active item's box
 //                  into --shell-ind-x and --shell-ind-w on its track.
 //   scrollspy      when destinations are in-page anchors, an
 //                  IntersectionObserver rooted on the scroller marks the
@@ -336,7 +341,7 @@ export function AppShell({
     if (!isDev()) return;
     if (n > max) {
       console.warn(
-        `AppShell: ${n} destinations. The bottom bar holds 3 to ${max}, so destinations ${max} and up moved to More. Cut the list to ${max}.`,
+        `AppShell: ${n} destinations. The bottom bar law is 3 to ${max}, so the mobile bar rejects the rest: destinations ${max} and up moved to More (the header shows More too). Cut the list to ${max}.`,
       );
     } else if (n < 3) {
       console.warn(`AppShell: ${n} destinations. The bottom bar needs 3 to ${max}.`);
@@ -356,6 +361,18 @@ export function AppShell({
     <p className="shell-title" aria-label={brand ? title : undefined}>
       {brandInner}
     </p>
+  );
+  // The masthead's compact mark on the condensed bar (CSS shows it only
+  // there). The nameplate above stays the one named brand, so the mark is
+  // hidden from assistive tech and out of the tab order.
+  const markEl = brandHref ? (
+    <a className="shell-mark" href={brandHref} aria-hidden="true" tabIndex={-1}>
+      {brandInner}
+    </a>
+  ) : (
+    <span className="shell-mark" aria-hidden="true">
+      {brandInner}
+    </span>
   );
 
   const moreButton = (where: "bar" | "split", active: boolean) => (
@@ -388,6 +405,7 @@ export function AppShell({
       data-labels={archetype?.labels}
       data-hide={hideOnScroll ? "" : undefined}
       data-has-action={hasAction ? "" : undefined}
+      data-icons={anyIcon ? "" : undefined}
     >
       <a className="shell-skip" href={`#${mainId}`}>
         Skip to content
@@ -395,43 +413,46 @@ export function AppShell({
       <header className="shell-header">
         <div className="shell-bar">
           {brandEl}
+          {markEl}
           {/* One Primary nav: the bottom bar below 640px, the header nav from 640px. */}
           <nav className="shell-nav" aria-label="Primary">
-            <div className="shell-nav-track" ref={track}>
-              <span className="shell-ind" aria-hidden="true" />
-              {destinations.slice(0, shown).map((d, i) => (
-                <a
-                  key={d.id}
-                  href={d.href}
-                  className="shell-nav-item"
-                  aria-current={current_(d) ? "page" : undefined}
-                  data-active={current_(d) ? "" : undefined}
-                  data-split-overflow={hasAction && i >= splitShown ? "" : undefined}
-                  aria-label={name(d)}
-                >
-                  {d.icon ? (
-                    <span className="shell-nav-icon">
-                      {d.icon}
+            <div className="shell-dock">
+              <div className="shell-nav-track" ref={track}>
+                <span className="shell-ind" aria-hidden="true" />
+                {destinations.slice(0, shown).map((d, i) => (
+                  <a
+                    key={d.id}
+                    href={d.href}
+                    className="shell-nav-item"
+                    aria-current={current_(d) ? "page" : undefined}
+                    data-active={current_(d) ? "" : undefined}
+                    data-split-overflow={hasAction && i >= splitShown ? "" : undefined}
+                    aria-label={name(d)}
+                  >
+                    {d.icon ? (
+                      <span className="shell-nav-icon">
+                        {d.icon}
+                        <Badge value={d.badge} />
+                      </span>
+                    ) : null}
+                    <span className="shell-nav-label">
+                      <span className="shell-nav-text" data-label={d.label}>
+                        {d.label}
+                      </span>
                       <Badge value={d.badge} />
                     </span>
-                  ) : null}
-                  <span className="shell-nav-label">
-                    <span className="shell-nav-text" data-label={d.label}>
-                      {d.label}
-                    </span>
-                    <Badge value={d.badge} />
-                  </span>
+                  </a>
+                ))}
+                {moreBar ? moreButton("bar", ci >= max - 1) : null}
+                {moreSplit ? moreButton("split", ci >= splitShown) : null}
+              </div>
+              {primaryAction ? (
+                <a className="shell-nav-action" href={primaryAction.href} aria-label={primaryAction.label}>
+                  {primaryAction.icon ? <span className="shell-nav-action-icon">{primaryAction.icon}</span> : null}
+                  <span>{primaryAction.label}</span>
                 </a>
-              ))}
-              {moreBar ? moreButton("bar", ci >= max - 1) : null}
-              {moreSplit ? moreButton("split", ci >= splitShown) : null}
+              ) : null}
             </div>
-            {primaryAction ? (
-              <a className="shell-nav-action" href={primaryAction.href}>
-                {primaryAction.icon ? <span className="shell-nav-action-icon">{primaryAction.icon}</span> : null}
-                <span>{primaryAction.label}</span>
-              </a>
-            ) : null}
           </nav>
           <div className="shell-actions">
             {actions}

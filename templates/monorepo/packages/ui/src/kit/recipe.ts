@@ -56,6 +56,12 @@ export function toLedgerEntry(e: RecipeEntry): LedgerEntry {
 
 const key = (e: LedgerEntry) => (e.variant ? `${e.composition}.${e.variant}` : e.composition);
 
+/** A hand-written custom section carries no structural variant of its own:
+ *  Section writes data-variant="default" when none is given, so an unnamed
+ *  custom and custom.default are one thing, and both are exempt from the
+ *  repeat rules. A custom section with a named variant is counted. */
+const unnamedCustom = (e: LedgerEntry) => e.composition === "custom" && (!e.variant || e.variant === "default");
+
 /** Rules 7 to 9: variety at the composition plus variant level. */
 export function validateVarietyLedger(entries: RecipeEntry[], kind: PageKind = "marketing"): string[] {
   const list = entries.map(toLedgerEntry);
@@ -63,12 +69,12 @@ export function validateVarietyLedger(entries: RecipeEntry[], kind: PageKind = "
   for (let i = 1; i < list.length; i++) {
     const a = list[i - 1];
     const b = list[i];
-    if (b.composition === "custom" && !b.variant) continue;
+    if (unnamedCustom(b)) continue;
     if (key(a) === key(b)) errors.push(`sections ${i} and ${i + 1} are both ${key(b)}; neighbors must change structure`);
   }
   const uses = new Map<string, number>();
   for (const e of list) {
-    if (e.composition === "custom" && !e.variant) continue;
+    if (unnamedCustom(e)) continue;
     uses.set(key(e), (uses.get(key(e)) ?? 0) + 1);
   }
   for (const [k, n] of uses) if (n > 2) errors.push(`${k} appears ${n} times; a composition and variant at most twice`);

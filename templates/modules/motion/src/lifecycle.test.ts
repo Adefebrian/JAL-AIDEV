@@ -460,6 +460,47 @@ describe("count-up on the ticker", () => {
     expect(node.nodeValue).toBe("612");
   });
 
+  test("a new value mid-count (the figure re-rendered) stops the count and is never overwritten", () => {
+    const { el, node } = figure("612");
+    const { e, tweens } = engine();
+    const stop = countTo(el, parse, format, e, 0.6)!;
+    tweens[0].state.v = 200;
+    tweens[0].vars.onUpdate();
+    expect(node.nodeValue).toBe("200");
+    node.nodeValue = "640"; // React writes the new value into the same text node
+    tweens[0].state.v = 300;
+    tweens[0].vars.onUpdate();
+    expect(tweens[0].killed).toBe(true);
+    expect(node.nodeValue).toBe("640");
+    expect(el.style.inlineSize).toBe("");
+    stop(); // unmount or reduced motion afterwards
+    tweens[0].vars.onComplete();
+    expect(node.nodeValue).toBe("640");
+  });
+
+  test("a new value written just before the stop is kept too", () => {
+    const { el, node } = figure("612");
+    const { e } = engine();
+    const stop = countTo(el, parse, format, e, 0.6)!;
+    node.nodeValue = "700";
+    stop();
+    expect(node.nodeValue).toBe("700");
+    expect(el.style.inlineSize).toBe("");
+  });
+
+  test("a replaced text node (a keyed re-render) is left alone", () => {
+    const { el, node } = figure("612");
+    const { e, tweens } = engine();
+    const stop = countTo(el, parse, format, e, 0.6)!;
+    const fresh = { nodeType: 3, nodeValue: "9" };
+    (el as unknown as { firstChild: unknown }).firstChild = fresh;
+    tweens[0].vars.onUpdate();
+    stop();
+    expect(fresh.nodeValue).toBe("9");
+    expect(node.nodeValue).toBe("0");
+    expect(tweens[0].killed).toBe(true);
+  });
+
   test("a word, a range, or zero stays still", () => {
     const { e, tweens } = engine();
     expect(countTo(figure("12 to 18").el, parse, format, e, 0.6)).toBeNull();

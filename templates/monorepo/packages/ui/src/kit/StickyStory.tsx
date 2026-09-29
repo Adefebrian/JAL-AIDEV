@@ -1,6 +1,8 @@
-// StickyStory: a scroll story. At 1024 and up the whole story pins: the
-// steps (columns 1 to 5) distribute along the stage's height beside a
-// sticky media stage (7 to 12), so the text column is never empty. The
+// StickyStory: a scroll story. At 1024 and up the whole story pins, the
+// viewport less the header: the steps (columns 1 to 5), each sized to its
+// content and a group gap apart, center as one dense list beside a sticky
+// media stage (7 to 12), so the text column never spreads a title per
+// screen. The
 // active step reads in ink, the others stay on screen muted (never hidden),
 // and the stage shows the active step's media. Scroll length comes from a
 // hidden track of markers, one per step, sized so every step gets the same
@@ -10,7 +12,8 @@
 //
 // Variants: stage-end (media on 7 to 12, the default) and stage-start
 // (media on 1 to 6, steps on 8 to 12), so two stories on a product never
-// rhyme.
+// rhyme. Prefer stage-end for 3 steps or fewer: the text reads first and
+// the short list stays dense at the start of the row.
 //
 // useStickyStory drives it with an IntersectionObserver rooted on the real
 // scroller (getScroller from AppShell, after mount), so it works on a
@@ -18,8 +21,12 @@
 // frames swap with no travel and no fade (CSS), and without
 // IntersectionObserver the first step stays active. Step media renders
 // twice (stage and in flow, one shown per width), so it must not carry
-// element ids. The motion module's useStoryScrub upgrades the swap to a
-// scrubbed crossfade when GSAP is on the page.
+// element ids. Every frame fills the same stage cell (stretched, one grid
+// area), so the active frame fully covers the others during a crossfade,
+// and an inactive frame is aria-hidden and inert: never read, focused, or
+// counted as stuck content. The motion module (scrubStories in KitMotion, under
+// templates/modules/motion) upgrades the swap to a scrubbed crossfade when
+// GSAP is on the page.
 import { useCallback, useEffect, useId, useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { getScroller, scrollerRoot } from "../AppShell";
 import { Section, SectionHead, type SectionFrame } from "./Page";
@@ -112,7 +119,14 @@ export function StickyStory({ variant = "stage-end", title, lead, steps, id, ton
           <div className="kit-story-stage">
             <div className="kit-story-frames">
               {steps.map((s, i) => (
-                <div key={i} className="kit-story-frame" data-index={i} data-active={i === active ? "" : undefined}>
+                <div
+                  key={i}
+                  className="kit-story-frame"
+                  data-index={i}
+                  data-active={i === active ? "" : undefined}
+                  aria-hidden={i === active ? undefined : "true"}
+                  inert={i !== active}
+                >
                   {s.media}
                 </div>
               ))}

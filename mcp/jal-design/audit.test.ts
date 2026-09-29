@@ -744,14 +744,19 @@ describe("shotUrl", () => {
 });
 
 describe("form-row-mismatch axis", () => {
-  test("a stacked form is not a row; a side-by-side row with unequal heights still fails", async () => {
+  test("a stacked form is not a row; a side-by-side row with unequal heights and a labelled field beside its button both fail", async () => {
     const { runAudit } = await import("./audit");
     const server = Bun.serve({ port: 0, fetch: () => new Response(Bun.file(`${import.meta.dir}/fixtures/form-stack.html`)) });
     try {
       const r = await runAudit(`http://localhost:${server.port}/`, { widths: [1280] });
       const hits = r.violations.filter((v) => v.rule === "form-row-mismatch");
-      expect(hits.length).toBe(1);
-      expect(hits[0].selector).toContain("form.row");
+      expect(hits.length).toBe(2);
+      expect(hits.some((h) => h.selector.includes("form.row"))).toBe(true);
+      expect(hits.some((h) => h.selector.includes("form.stack"))).toBe(false);
+      // Label above the input, both 44px: the tops differ by the label's
+      // height and the halves overlap by less than half, still one row.
+      const labelled = hits.find((h) => h.selector.includes("form.labelled"));
+      expect(labelled?.detail).toContain("heights=[44.0,44.0]");
     } finally {
       server.stop(true);
     }
@@ -759,13 +764,38 @@ describe("form-row-mismatch axis", () => {
 });
 
 describe("bento and mid-animation", () => {
-  test("a spanned bento has no gap-consistency hit and a running animation is not overflow-parent", async () => {
+  test("a spanned bento has no gap-consistency hit; a finite entrance is exempt, an infinite animation is measured untransformed", async () => {
     const { runAudit } = await import("./audit");
     const server = Bun.serve({ port: 0, fetch: () => new Response(Bun.file(`${import.meta.dir}/fixtures/bento-anim.html`)) });
     try {
       const r = await runAudit(`http://localhost:${server.port}/`, { widths: [1280] });
       expect(r.violations.filter((v) => v.rule === "gap-consistency")).toHaveLength(0);
-      expect(r.violations.filter((v) => v.rule === "overflow-parent" && v.selector.includes("rise"))).toHaveLength(0);
+      const over = r.violations.filter((v) => v.rule === "overflow-parent");
+      // A finite 400px entrance and an infinite bob whose resting box fits both pass.
+      expect(over.filter((v) => v.selector.includes("rise") || v.selector.includes("bob"))).toHaveLength(0);
+      // An infinite marquee track wider than an unclipped box fails; the same
+      // track inside its clipped window passes.
+      expect(over.map((v) => v.selector)).toContain("#loose-track");
+      expect(over.some((v) => v.selector.includes("framed-track"))).toBe(false);
+      expect(over.find((v) => v.selector === "#loose-track")?.detail).toContain("untransformed");
+    } finally {
+      server.stop(true);
+    }
+  }, 60000);
+});
+
+describe("grid gap-consistency and proximity without the equal-size early return", () => {
+  test("a tile's margin in a 4-up grid is flagged; proximity reads a grid whose items differ in height", async () => {
+    const { runAudit } = await import("./audit");
+    const server = Bun.serve({ port: 0, fetch: () => new Response(Bun.file(`${import.meta.dir}/fixtures/grid-margin.html`)) });
+    try {
+      const r = await runAudit(`http://localhost:${server.port}/`, { widths: [1280] });
+      const gaps = r.violations.filter((v) => v.rule === "gap-consistency");
+      expect(gaps.map((v) => v.selector).sort()).toEqual(["#margin-grid", "#shifted"]);
+      expect(gaps.find((v) => v.selector === "#margin-grid")?.detail).toContain("[40, 16, 16]");
+      expect(gaps.find((v) => v.selector === "#shifted")?.detail).toContain("margin-left 24px");
+      // The shifted tile also sits 40px from its neighbor, past its 16px padding.
+      expect(r.violations.filter((v) => v.rule === "proximity").map((v) => v.selector).sort()).toEqual(["#loose-grid", "#margin-grid"]);
     } finally {
       server.stop(true);
     }

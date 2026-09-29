@@ -17,7 +17,9 @@
 //   - a target added after arming is never pending, so it can never stick;
 //   - a target already on screen when the page arms is left alone, so the
 //     first viewport paints finished (the LCP element never waits for a
-//     script) and only what scrolls in later makes an entrance.
+//     script) and only what scrolls in later makes an entrance;
+//   - once the scroller reaches its end, every target still pending is
+//     revealed, so nothing near the page end can stay hidden.
 //
 // Levels (Page motion prop, set per section by JEV motion.intensity):
 //   none    state layers only (tier 0)
@@ -70,7 +72,10 @@ export function armMotion(root: HTMLElement, level: MotionLevel): () => void {
   const counts = new Set<() => void>();
   const scroller = getScroller(all[0]);
   const targets = all.filter((el) => el.dataset.motion === "count" || !onScreen(el, scroller));
+  const pending = new Set<HTMLElement>();
   const reveal = (el: HTMLElement) => {
+    if (!pending.delete(el)) return;
+    io.unobserve(el);
     el.dataset.motionState = "in";
     if (el.dataset.motion === "count") {
       const stop = countUp(el);
@@ -80,20 +85,47 @@ export function armMotion(root: HTMLElement, level: MotionLevel): () => void {
   const io = new IntersectionObserver(
     (entries) => {
       for (const entry of entries) {
-        if (!entry.isIntersecting) continue;
-        io.unobserve(entry.target);
-        reveal(entry.target as HTMLElement);
+        if (entry.isIntersecting) reveal(entry.target as HTMLElement);
       }
     },
     { root: scrollerRoot(scroller), rootMargin: "0px 0px -8% 0px", threshold: 0 },
   );
   for (const el of targets) {
     el.dataset.motionState = "pending";
+    pending.add(el);
     io.observe(el);
   }
+  // The observer's bottom margin trims 8% off the viewport, so a target that
+  // sits in that band when the page cannot scroll any further (a closing band
+  // with no footer below it) would never intersect. Two checks close that:
+  // a pending target already inside the viewport now is revealed now, and
+  // once the scroller reaches its end every pending target is revealed.
+  for (const el of targets) if (onScreen(el, scroller)) reveal(el);
+  const metrics = (): { top: number; height: number; full: number } => {
+    const box = scroller instanceof Element ? scroller : (document.scrollingElement ?? document.documentElement);
+    return { top: box.scrollTop, height: box.clientHeight, full: box.scrollHeight };
+  };
+  const raf = typeof requestAnimationFrame === "function" ? requestAnimationFrame : (cb: FrameRequestCallback) => setTimeout(() => cb(Date.now()), 16) as unknown as number;
+  const caf = typeof cancelAnimationFrame === "function" ? cancelAnimationFrame : (id: number) => clearTimeout(id);
+  let frame = 0;
+  const atEnd = () => {
+    frame = 0;
+    const m = metrics();
+    if (m.top + m.height < m.full - 1) return;
+    for (const el of [...pending]) reveal(el);
+    if (pending.size === 0) scroller.removeEventListener("scroll", onScroll);
+  };
+  const onScroll = () => {
+    if (!frame) frame = raf(atEnd);
+  };
+  if (pending.size > 0) scroller.addEventListener("scroll", onScroll, { passive: true });
   const media = typeof matchMedia === "function" ? matchMedia(REDUCE) : null;
   const finish = () => {
     io.disconnect();
+    scroller.removeEventListener("scroll", onScroll);
+    if (frame) caf(frame);
+    frame = 0;
+    pending.clear();
     for (const stop of counts) stop();
     counts.clear();
     for (const el of targets) delete el.dataset.motionState;
@@ -184,7 +216,10 @@ function tokenMs(name: string, fallback: number): number {
 
 /** Count el's text node from zero to its value. Returns a stop function that
  *  writes the final value and releases the width lock, or null when the
- *  figure is not a plain number. */
+ *  figure is not a plain number. When anything else writes the figure while
+ *  it counts (React rendering a new value prop), the count cancels at once:
+ *  the lock is released and the new text is left as written, never replaced
+ *  by the old value, by the next frame or by stop. */
 export function countUp(el: HTMLElement, opts: { duration?: number } = {}): (() => void) | null {
   const node = el.firstChild;
   if (!node || node.nodeType !== 3 || el.childNodes.length !== 1) return null;
@@ -199,22 +234,34 @@ export function countUp(el: HTMLElement, opts: { duration?: number } = {}): (() 
   let frame = 0;
   let start = -1;
   let done = false;
-  const stop = () => {
-    if (done) return;
+  let written = "";
+  const write = (text: string) => {
+    written = text;
+    node.nodeValue = text;
+  };
+  // True once the figure holds something this count did not write.
+  const overwritten = () => el.firstChild !== node || el.childNodes.length !== 1 || node.nodeValue !== written;
+  const release = () => {
     done = true;
     caf(frame);
-    node.nodeValue = final;
     el.style.inlineSize = "";
+  };
+  const stop = () => {
+    if (done) return;
+    const keep = overwritten();
+    release();
+    if (!keep) node.nodeValue = final;
   };
   const tick = (now: number) => {
     if (done) return;
+    if (overwritten()) return release();
     if (start < 0) start = now;
     const t = duration > 0 ? Math.min(1, (now - start) / duration) : 1;
-    node.nodeValue = t >= 1 ? final : formatLike(parsed, parsed.value * standardCurve(t));
+    write(t >= 1 ? final : formatLike(parsed, parsed.value * standardCurve(t)));
     if (t < 1) frame = raf(tick);
     else stop();
   };
-  node.nodeValue = formatLike(parsed, 0);
+  write(formatLike(parsed, 0));
   frame = raf(tick);
   return stop;
 }

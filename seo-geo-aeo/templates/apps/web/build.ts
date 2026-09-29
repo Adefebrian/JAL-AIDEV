@@ -14,7 +14,7 @@
 // All paths are resolved against import.meta.dir, never process.cwd(): this
 // script is also imported on demand by src/smoke.test.ts and
 // src/server.test.ts when dist/ is missing (see the scaffold notes kept below).
-import { cp, rm } from "node:fs/promises";
+import { copyFile, cp, mkdir, readdir, rm } from "node:fs/promises";
 import { existsSync } from "node:fs";
 import { join } from "node:path";
 
@@ -75,10 +75,7 @@ async function runBuild() {
     shell.replace('href="/index.css"', 'href="/admin/index.css"').replace('src="/index.js"', 'src="/admin/index.js"'),
   );
 
-  await cp(join(repoRoot, "packages", "ui", "src", "fonts"), join(outdir, "fonts"), {
-    recursive: true,
-    filter: (src) => !/\.(css|txt|ts)$/.test(src),
-  });
+  await copyFonts();
 
   const publicDir = join(here, "public");
   if (existsSync(publicDir)) await cp(publicDir, outdir, { recursive: true });
@@ -87,6 +84,17 @@ async function runBuild() {
   await writeSeoArtifacts(outdir, repoRoot);
 
   console.log("web build ok");
+}
+
+// The vendored faces (packages/ui/src/fonts), woff2 only: fonts.css, the
+// licence text, and anything else in that folder (a .DS_Store) stay out.
+async function copyFonts() {
+  const fontsDir = join(repoRoot, "packages", "ui", "src", "fonts");
+  const out = join(outdir, "fonts");
+  await mkdir(out, { recursive: true });
+  for (const file of await readdir(fontsDir)) {
+    if (file.endsWith(".woff2")) await copyFile(join(fontsDir, file), join(out, file));
+  }
 }
 
 // Tailwind is opt-in: when bun-plugin-tailwind is installed, CSS that

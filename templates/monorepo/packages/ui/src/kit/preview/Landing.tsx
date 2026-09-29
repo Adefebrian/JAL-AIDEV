@@ -5,7 +5,7 @@
 //
 // Ledger (composition.variant, in ledgers.ts, validated in kit.test.tsx):
 //   masthead.split, logo-row.row, split.inset, stat-row.lead,
-//   sticky-story.stage-start, bento.lead-right, feature-grid.rows,
+//   sticky-story.stage-end, bento.lead-right, feature-grid.rows,
 //   quote.results, spec-table.grouped, pricing.cells-compare, faq.open,
 //   cta-band.form, footer.inline
 import { AppShell } from "../../AppShell";
@@ -107,7 +107,7 @@ export function Landing({ direction }: { direction: DirectionId }) {
 
         <StickyStory
           id="story"
-          variant="stage-start"
+          variant="stage-end"
           title="From a number to a decision."
           lead="Hawa does three things, in the order you need them."
           steps={[

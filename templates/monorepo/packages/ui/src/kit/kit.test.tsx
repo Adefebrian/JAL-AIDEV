@@ -177,6 +177,12 @@ describe.skipIf(staticRenderer === null)("kit markup", () => {
     expect(html).toContain('<th scope="row">PM2.5</th>');
     expect(html).toContain('role="img" aria-label="Included"');
     expect(html).toContain("Not included");
+    // One plan column at a time below 768: the recommended plan shows first.
+    expect(html).toContain('class="jal-segmented kit-compare-switch" role="group" aria-label="Plan to compare"');
+    expect(count(html, /aria-pressed="true"/g)).toBe(1);
+    expect(html).toMatch(/aria-pressed="true"[^>]*>One<\/button>/);
+    expect(count(html, /data-off=""/g)).toBe(2);
+    expect(html).toMatch(/<table class="kit-compare-table" id="[^"]+" aria-labelledby="[^"]+">/);
     expect(() => render(<PricingTable title="x" plans={plans} compare={{ caption: "c", rows: [{ label: "a", values: [true] }] }} />)).toThrow(/compare row 1/);
   });
 
@@ -362,6 +368,27 @@ describe.skipIf(clientRenderer === null)("StickyStory in a DOM", () => {
       expect(active.length).toBe(1);
       expect(active[0].getAttribute("data-index")).toBe("1");
       expect(container.querySelectorAll(".kit-story-frame[data-active]").length).toBe(1);
+    } finally {
+      cleanup();
+    }
+  });
+
+  test("the pricing plan switch shows one plan column at a time", async () => {
+    const plans = [
+      { name: "One", price: "1", summary: "s", features: ["a"], action: <a href="#">Buy</a> },
+      { name: "Kit", price: "2", summary: "s", features: ["a"], action: <a href="#">Buy</a>, recommended: true },
+    ];
+    const { container, cleanup } = await mount(
+      <PricingTable title="Pricing" plans={plans} compare={{ caption: "Compare", rows: [{ label: "PM2.5", values: [false, true] }] }} />,
+    );
+    try {
+      const shown = () => [...container.querySelectorAll(".kit-compare-table thead th:not([data-off])")].map((th) => th.textContent);
+      expect(shown()).toEqual(["Feature", "Kit"]);
+      const one = [...container.querySelectorAll<HTMLButtonElement>(".kit-compare-switch button")].find((b) => b.textContent === "One")!;
+      await act(async () => one.click());
+      expect(shown()).toEqual(["Feature", "One"]);
+      expect(one.getAttribute("aria-pressed")).toBe("true");
+      expect(container.querySelectorAll(".kit-compare-table tbody td:not([data-off])").length).toBe(1);
     } finally {
       cleanup();
     }

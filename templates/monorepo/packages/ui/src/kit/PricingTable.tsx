@@ -6,8 +6,11 @@
 // cell (the others sit on layer-1), never by a colored edge or a badge;
 // assistive tech hears it as visually hidden text in the plan heading.
 // An optional comparison follows as a real table with row and column
-// headers; included and not included are words, not color.
-import { useId, type ReactNode } from "react";
+// headers; included and not included are words, not color. From 768 the
+// table shows every plan column. Below 768 it shows one plan at a time
+// (Feature and that plan, so nothing scrolls or clips at 375), switched by
+// a segmented control above the table; the recommended plan shows first.
+import { useId, useState, type ReactNode } from "react";
 import { CheckGlyph } from "./glyphs";
 import { Figure, Section, SectionHead, staggerStyle, type SectionFrame } from "./Page";
 
@@ -54,6 +57,9 @@ function CompareCell({ value, check }: { value: ReactNode | boolean; check: Reac
 
 export function PricingTable({ title, lead, plans, compare, check, id, tone, attached }: PricingTableProps) {
   const headingId = useId();
+  const compareId = useId();
+  const recommended = plans.findIndex((p) => p.recommended);
+  const [shown, setShown] = useState(recommended < 0 ? 0 : recommended);
   if (plans.length < 2 || plans.length > 4) throw new Error(`PricingTable: ${plans.length} plans; use 2 to 4`);
   if (compare) {
     compare.rows.forEach((r, i) => {
@@ -94,32 +100,49 @@ export function PricingTable({ title, lead, plans, compare, check, id, tone, att
         ))}
       </ul>
       {compare ? (
-        <div className="kit-compare scroll-x" data-motion="rise">
-          <table className="kit-compare-table">
-            <caption className="kit-title">{compare.caption}</caption>
-            <thead>
-              <tr>
-                <th scope="col">Feature</th>
-                {plans.map((p, i) => (
-                  <th key={i} scope="col">
-                    {p.name}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {compare.rows.map((r, ri) => (
-                <tr key={ri}>
-                  <th scope="row">{r.label}</th>
-                  {r.values.map((v, vi) => (
-                    <td key={vi}>
-                      <CompareCell value={v} check={glyph} />
-                    </td>
+        <div className="kit-compare" data-motion="rise">
+          <h3 className="kit-title" id={`${compareId}-title`}>
+            {compare.caption}
+          </h3>
+          <div className="jal-segmented kit-compare-switch" role="group" aria-label="Plan to compare">
+            {plans.map((p, i) => (
+              <button
+                key={i}
+                type="button"
+                aria-pressed={i === shown}
+                aria-controls={`${compareId}-table`}
+                onClick={() => setShown(i)}
+              >
+                {p.name}
+              </button>
+            ))}
+          </div>
+          <div className="scroll-x">
+            <table className="kit-compare-table" id={`${compareId}-table`} aria-labelledby={`${compareId}-title`}>
+              <thead>
+                <tr>
+                  <th scope="col">Feature</th>
+                  {plans.map((p, i) => (
+                    <th key={i} scope="col" data-off={i === shown ? undefined : ""}>
+                      {p.name}
+                    </th>
                   ))}
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {compare.rows.map((r, ri) => (
+                  <tr key={ri}>
+                    <th scope="row">{r.label}</th>
+                    {r.values.map((v, vi) => (
+                      <td key={vi} data-off={vi === shown ? undefined : ""}>
+                        <CompareCell value={v} check={glyph} />
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       ) : null}
     </Section>

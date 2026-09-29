@@ -1352,6 +1352,18 @@ html:has(.kit-page) > body {
   border-top: 1px solid var(--color-border);
 }
 
+/* A stat tile stretched by a taller row sibling keeps its figure at the top
+   and sets its caption on the bottom inset, never leaving an empty band. */
+.kit-bento-tile[data-kind="stat"] {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: auto 1fr;
+}
+
+.kit-bento-tile[data-kind="stat"] > .kit-body {
+  align-self: end;
+}
+
 .kit-bento-stat {
   margin: 0;
   font-size: var(--kit-heading-sm-size);
@@ -1721,9 +1733,35 @@ html:has(.kit-page) > body {
   border-radius: var(--kit-radius-control);
 }
 
+/* The comparison: its title, the plan switch (below 768 only), then the
+   table. Below 768 the table shows Feature and one plan column, the one
+   the switch picked, so it fits 320px with no scroll and no clipped word;
+   from 768 the switch goes and every plan column shows. */
 .kit-compare {
   grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  row-gap: var(--kit-gap-related);
   min-width: 0;
+}
+
+.kit-compare > .kit-title {
+  margin: 0;
+}
+
+/* Segments meet on one shared border without the -1px overlap, so no
+   two buttons ever cover each other. */
+.kit-compare .kit-compare-switch > button {
+  padding-inline: var(--space-8px);
+}
+
+.kit-compare .kit-compare-switch > button + button {
+  margin-inline-start: 0;
+  border-inline-start-width: 0;
+}
+
+.kit-compare-table [data-off] {
+  display: none;
 }
 
 /* Text for assistive tech only (the recommended plan's announcement).
@@ -1739,19 +1777,11 @@ html:has(.kit-page) > body {
   border: 0;
 }
 
-/* The table keeps a readable floor so .scroll-x scrolls it at 320px
-   instead of crushing columns until words split mid-word. */
 .kit-compare-table {
   inline-size: 100%;
-  min-inline-size: 36rem;
   border-collapse: separate;
   border-spacing: 0;
   table-layout: fixed;
-}
-
-.kit-compare-table caption {
-  text-align: start;
-  padding-block-end: var(--kit-gap-inside);
 }
 
 .kit-compare-table th,
@@ -1777,6 +1807,21 @@ html:has(.kit-page) > body {
 .kit-compare-table tbody th {
   font-weight: var(--weight-regular);
   color: var(--color-ink-muted);
+}
+
+/* From 768 every plan column shows, and the table keeps a readable floor
+   so .scroll-x scrolls it on a narrow tablet instead of crushing columns
+   until words split mid-word. */
+@media (min-width: 768px) {
+  .kit-compare .kit-compare-switch {
+    display: none;
+  }
+  .kit-compare-table {
+    min-inline-size: 36rem;
+  }
+  .kit-compare-table [data-off] {
+    display: table-cell;
+  }
 }
 
 @media (min-width: 1024px) {
@@ -1911,10 +1956,13 @@ html:has(.kit-page) > body {
  * StickyStory: at 1024 and up the story pins. A hidden track of markers
  * gives the scroll length (one step of --kit-story-step each, the first
  * one offset so step 1 is active the moment the pin sticks, and a tail so
- * the last step gets the same pinned scroll); the pin holds every step,
- * distributed along the stage height, beside the stage. The active step
- * reads in ink, the others stay on screen in ink-subtle. Below 1024 there
- * is no pin: steps and their media stack in flow.
+ * the last step gets the same pinned scroll); the pin, the viewport less
+ * the header, holds every step beside the stage. The steps are sized to
+ * their content, a group gap apart, and the block centers beside the
+ * media, so the text column reads as one dense list, never a title per
+ * screen. The active step reads in ink, the others stay on screen in
+ * ink-subtle. Below 1024 there is no pin: steps and their media stack in
+ * flow.
  * ------------------------------------------------------------------- */
 .kit-story {
   grid-column: 1 / -1;
@@ -1995,12 +2043,9 @@ html:has(.kit-page) > body {
   .kit-story-steps {
     grid-column: 1 / span 5;
     grid-row: 1;
-    grid-template-rows: repeat(var(--kit-story-count, 3), minmax(0, 1fr));
-    row-gap: var(--kit-gap-related);
-    block-size: 100%;
-  }
-  .kit-story-step {
-    align-content: center;
+    align-self: center;
+    align-content: start;
+    row-gap: var(--kit-gap-group);
   }
   .kit-story-step > .kit-title,
   .kit-story-step > .kit-body {
@@ -2035,9 +2080,15 @@ html:has(.kit-page) > body {
     inline-size: min(100%, var(--kit-story-h));
     min-width: 0;
   }
+  /* Every frame fills the one stage cell, so each has the same box and the
+     active frame covers the others exactly; its media centers inside. An
+     inactive frame is also aria-hidden and inert (StickyStory.tsx). */
   .kit-story-frame {
     grid-area: 1 / 1;
-    align-self: center;
+    align-self: stretch;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    align-content: center;
     min-width: 0;
     opacity: 0;
     visibility: hidden;
@@ -2052,7 +2103,7 @@ html:has(.kit-page) > body {
       opacity var(--dur-300) var(--ease-standard),
       visibility 0s linear 0s;
   }
-  /* The motion module scrubs the frames itself (useStoryScrub): every frame
+  /* The motion module scrubs the frames itself (scrubStories in KitMotion): every frame
      stays laid out and GSAP owns opacity and visibility. */
   .kit-story[data-scrub] .kit-story-frame {
     transition: none;
@@ -2095,10 +2146,14 @@ html:has(.kit-page) > body {
   grid-column: full-start / full-end;
 }
 
-/* The frame's surface runs to the edge; a live view's content and the
-   caption stay on the grid, so nothing reads cut off. --kit-bleed-edge is
-   the distance from the content line to the viewport edge; a view pads by
-   it less the kit inset its own content already carries. */
+/* The frame's surface runs to the edge. --kit-bleed-edge is the distance
+   from the content line to the viewport edge. Below 1024 the frame bleeds
+   both sides and a view pads by that edge less the kit inset its own
+   content already carries, so its rows line up with the text. From 1024
+   the frame bleeds one side only and its content fills the frame to that
+   edge, square with no pad beyond the view's own inset: a wide screen
+   never leaves a band of empty frame. The caption is text, so it stays on
+   the grid by its inline size, never by padding. */
 .kit-section[data-kit-composition="split"][data-variant="bleed"] {
   container-type: inline-size;
 }
@@ -2121,7 +2176,8 @@ html:has(.kit-page) > body {
 }
 
 .kit-split[data-variant="bleed"] .kit-media > figcaption {
-  padding-inline: var(--kit-bleed-edge);
+  justify-self: center;
+  inline-size: calc(100% - 2 * var(--kit-bleed-edge));
 }
 
 @media (min-width: 1024px) {
@@ -2135,17 +2191,17 @@ html:has(.kit-page) > body {
     border-start-end-radius: var(--kit-radius-media);
     border-end-end-radius: var(--kit-radius-media);
   }
-  .kit-split[data-variant="bleed"][data-media-side="end"] .kit-media-view {
-    padding-inline: 0 var(--kit-bleed-view);
+  .kit-split[data-variant="bleed"] .kit-media-view {
+    padding-inline: 0;
+  }
+  .kit-split[data-variant="bleed"] .kit-media > figcaption {
+    inline-size: calc(100% - var(--kit-bleed-edge));
   }
   .kit-split[data-variant="bleed"][data-media-side="end"] .kit-media > figcaption {
-    padding-inline: 0 var(--kit-bleed-edge);
-  }
-  .kit-split[data-variant="bleed"][data-media-side="start"] .kit-media-view {
-    padding-inline: var(--kit-bleed-view) 0;
+    justify-self: start;
   }
   .kit-split[data-variant="bleed"][data-media-side="start"] .kit-media > figcaption {
-    padding-inline: var(--kit-bleed-edge) 0;
+    justify-self: end;
   }
   /* Line numbers count the edge track: content columns are lines 2 to 14. */
   .kit-split[data-variant="bleed"][data-media-side="end"][data-ratio="5/7"] .kit-split-text { grid-column: 2 / span 5; }

@@ -639,11 +639,13 @@ button[data-state="success"],
 
    Archetypes are knob bundles: each one sets the same --shell-* heights and
    private --_hd-* (header) and --_nb-* (bottom bar) values, and the rules
-   below read only those. A bundle applies on a direction element
-   ([data-direction] D1 to D13, on or above the shell), on the shell itself
-   when the archetype prop is set (data-header, data-bar, data-labels, which
-   win), and on html through :has() so the html scroll-padding rule sees the
-   same heights. Bundles read existing tokens only.
+   below read only those. A knob that must change at 640px either folds the
+   switch into a calc with --shell-bp or comes as a pair (--_hd-x and
+   --_hd-x-md). A bundle applies on a direction element ([data-direction]
+   D1 to D13, on or above the shell), on the shell itself when the archetype
+   prop is set (data-header, data-bar, data-labels, which win), and on html
+   through :has() so the html scroll-padding rule sees the same heights.
+   Bundles read existing tokens only.
    Direction defaults (chrome.md section 3):
      header  island    none, D1, D2, D4, D8, D9, D12
              rail      D3, D5, D6, D10, D13
@@ -652,16 +654,20 @@ button[data-state="success"],
              bar       D3, D6, D7, D13
              split     D2, D9, D10
      labels  active    D4, D11 (all elsewhere)
+   Radius: chrome rounds concentrically. A floating container takes
+   min(16, card + 4) (the island) or min(20, card + 8) (the dock), never past
+   a third of its height, and everything nested inside it subtracts its
+   inset, so the island, its track, its thumb, and its action share one
+   centre of curvature.
    Motion: every transition sits under .shell-motion, which AppShell sets
    only when prefers-reduced-motion is not reduce, one frame after the first
    paint. Durations and the curve are the jal-motion tokens; a state that
    appears runs the entrance duration, a state that leaves runs the exit. */
 
-/* 1. Heights and the breakpoint switch. --shell-bp is 0 below 640px and 1
-   from 640px, so one calc holds both sizes of a bundle. The heights live on
-   :root (and on html through the bundles), not only on .shell: custom
-   properties inherit downward only, and the html scroll-padding rule reads
-   them. */
+/* 1. The breakpoint switch. --shell-bp is 0 below 640px and 1 from 640px,
+   so one calc holds both sizes of a bundle. Bundles also land on :root and
+   on html (custom properties inherit downward only, and the html
+   scroll-padding rule reads the heights). */
 :root {
   --shell-bp: 0;
 }
@@ -677,143 +683,197 @@ button[data-state="success"],
 html:has(:is([data-direction="D1"], [data-direction="D2"], [data-direction="D4"], [data-direction="D8"], [data-direction="D9"], [data-direction="D12"]) .shell:not([data-header]):not([data-scroll="contained"])),
 .shell[data-header="island"],
 html:has(.shell[data-header="island"]:not([data-scroll="contained"])) {
-  /* An inset bar: 8px from the top, 56 tall below 640px; 12px and 60 from 640px. */
-  --shell-header-h: calc(64px + var(--shell-bp) * 8px);
-  --shell-bar-h: calc(56px + var(--shell-bp) * 4px);
+  /* One floating object, 56 tall. Below 640px a full-width inset bar 8px
+     from the top and sides (the band ends at its bottom edge); from 640px it
+     hugs its content and centres, with 12px of band above and below it, so
+     content scrolling past never meets its edge. */
+  --shell-header-h: calc(64px + var(--shell-bp) * 16px);
+  --shell-bar-h: 56px;
   /* A literal, not var(--shell-header-h): contained mode sets
      --shell-header-h from --_hd-hc on the shell, and a reference back
      would be a cycle. */
-  --_hd-hc: calc(64px + var(--shell-bp) * 8px);
-  --_hd-bar-box: var(--shell-bar-h);
+  --_hd-hc: calc(64px + var(--shell-bp) * 16px);
   --_hd-inset-t: calc(8px + var(--shell-bp) * 4px);
-  /* Inner padding; the island's outer edge sits this far outside the kit
-     margin, so the wordmark still lands on the content edge. */
-  --_hd-pad: calc(8px + var(--shell-bp) * 8px);
-  --_hd-pad-end: calc(4px + var(--shell-bp) * 4px);
-  /* The island floats on a page-tone band, so scrolling content never
-     shows in the inset around it. */
-  --_hd-rest: var(--color-page);
+  /* Below 640px the inset bar sits on a page-tone band that ends at its
+     bottom edge, so content never shows in the 8px around it. From 640px
+     the island floats free: a full-width band would cut a page-tone strip
+     across every tonal section scrolling under it. */
+  --_hd-band: color-mix(in srgb, var(--color-page) calc((1 - var(--shell-bp)) * 100%), transparent);
+  --_hd-band-s: 1;
   --_hd-rest-line: transparent;
   --_hd-cond: 0;
+  --_hd-box-h: var(--shell-bar-h);
   --_hd-bar-bg: var(--color-surface);
+  --_hd-bar-bw: 1px;
   --_hd-bar-line: var(--color-border);
   --_hd-bar-line-on: var(--color-border-strong);
-  /* Chrome caps at 16: a bar never turns into a pill (radius at most a
-     third of its height). */
-  --_hd-bar-r: min(var(--kit-radius-card, var(--radius-12)), var(--radius-16));
-  --_hd-grid-md: "brand nav actions" / minmax(max-content, 1fr) auto minmax(max-content, 1fr);
-  --_hd-grid-lg: var(--_hd-grid-md);
+  --_hd-r: min(var(--radius-16), var(--kit-radius-card, var(--radius-12)) + var(--space-4px));
+  --_hd-pad: var(--space-6px);
+  --_hd-inner-r: max(var(--radius-4) / 2, var(--_hd-r) - var(--_hd-pad));
+  --_hd-bar-w: calc(100% - 2 * var(--space-8px));
+  --_hd-bar-w-md: fit-content;
+  --_hd-gap: var(--space-6px);
+  --_hd-grid-md: "brand nav actions" / auto auto auto;
   --_hd-grid-cmd: var(--_hd-grid-md);
-  --_hd-grid-clg: var(--_hd-grid-md);
+  --_hd-title-pad: var(--space-2px);
+  --_hd-title-pad-md: var(--space-12px) var(--space-8px);
   --_hd-title-font: var(--kit-font-sans, var(--font-sans));
   --_hd-title-size: var(--text-1);
   --_hd-title-line: var(--line-1);
   --_hd-title-weight: var(--weight-semibold);
-  --_hd-title-track: var(--tracking-heading, -0.02em);
+  --_hd-title-track: var(--tracking-title, -0.01em);
+  --_hd-title-justify-md: start;
+  --_hd-title-origin-md: 0 50%;
   --_hd-title-cond: none;
+  --_hd-title-fade: 0;
   --_hd-row2-cond: none;
+  --_hd-mark-md: none;
+  --_hd-title-contained: block;
+  --_hd-cta-r: var(--_hd-inner-r);
+  --_hd-cta-inset: 0px;
   --_hd-nav-justify: center;
-  --_hd-nav-pull: 0px;
+  /* The segmented track: layer-1 at the inner radius, one surface thumb
+     with a hairline 4px inside it. */
+  --_hd-track-bg: var(--color-layer-1);
+  --_hd-track-r: var(--_hd-inner-r);
   --_hd-item-pad: var(--space-16px);
-  /* The segmented track: layer-1, with one surface thumb and a hairline. */
-  --_hd-track: var(--color-layer-1);
-  --_hd-pill-on: 0;
-  --_hd-ind-on: 1;
+  --_hd-ind-y: var(--space-4px);
+  --_hd-ind-x: var(--space-4px);
+  --_hd-ind-r: max(var(--radius-4) / 2, var(--_hd-inner-r) - var(--space-4px));
   --_hd-ind-bg: var(--color-surface);
   --_hd-ind-line: var(--color-border);
+  --_hd-sheet-l: 0px;
+  --_hd-sheet-mi: auto;
 }
 
 :is([data-direction="D3"], [data-direction="D5"], [data-direction="D6"], [data-direction="D10"], [data-direction="D13"]),
 html:has(:is([data-direction="D3"], [data-direction="D5"], [data-direction="D6"], [data-direction="D10"], [data-direction="D13"]) .shell:not([data-header]):not([data-scroll="contained"])),
 .shell[data-header="rail"],
 html:has(.shell[data-header="rail"]:not([data-scroll="contained"])) {
-  /* 64 at rest, 56 condensed below 640px; 72 and 56 from 640px. The
-     condensed bar keeps 6px around a 44px action. */
+  /* Edge to edge on the kit margin: the wordmark on the start edge, the
+     destinations and the action grouped on the end edge. 64 tall below
+     640px and 72 from 640px in the page tone, stepping down to a 56px
+     surface bar with a hairline once scrolled. */
   --shell-header-h: calc(64px + var(--shell-bp) * 8px);
   --shell-bar-h: 56px;
   --_hd-hc: var(--shell-bar-h);
-  /* The bar fills the header at rest; condensed, its contents rise to the
-     centre of the 56px band. */
-  --_hd-bar-box: var(--shell-header-h);
   --_hd-inset-t: 0px;
-  --_hd-pad: 0px;
-  --_hd-pad-end: 0px;
-  --_hd-rest: var(--color-page);
+  /* Transparent at the top, so a tonal first section runs up behind it. */
+  --_hd-band: transparent;
+  --_hd-band-s: 0;
   --_hd-rest-line: transparent;
   --_hd-cond: 1;
+  --_hd-box-h: var(--shell-header-h);
   --_hd-bar-bg: transparent;
+  --_hd-bar-bw: 0px;
   --_hd-bar-line: transparent;
   --_hd-bar-line-on: transparent;
-  --_hd-bar-r: 0px;
-  /* From 1024px the rail sits on the kit's 12-column grid: the wordmark on
-     columns 1 to 3, the destinations from column 4, the action on 10 to 12. */
-  --_hd-grid-md: "brand nav actions" / auto minmax(0, 1fr) auto;
-  /* Twelve tracks spelled out: the areas form of grid-template takes no repeat(). */
-  --_hd-grid-lg: "brand brand brand nav nav nav nav nav nav actions actions actions" / minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr)
-    minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr);
+  --_hd-r: 0px;
+  --_hd-pad: 0px;
+  --_hd-inner-r: min(var(--kit-radius-control, var(--radius-8)), var(--radius-16));
+  --_hd-bar-w: min(100% - 2 * var(--kit-margin, var(--space-16px)), var(--kit-max, 1280px));
+  --_hd-bar-w-md: var(--_hd-bar-w);
+  --_hd-gap: var(--space-16px);
+  --_hd-grid-md: "brand nav actions" / minmax(max-content, 1fr) auto auto;
   --_hd-grid-cmd: var(--_hd-grid-md);
-  --_hd-grid-clg: var(--_hd-grid-lg);
+  --_hd-title-pad: 0px;
+  --_hd-title-pad-md: 0px;
+  /* The wordmark rests at --text-2 and settles to the --text-1 size (19 of
+     23) as the row rises to the centre of the 56px band. */
   --_hd-title-font: var(--kit-font-sans, var(--font-sans));
-  --_hd-title-size: var(--text-1);
-  --_hd-title-line: var(--line-1);
+  --_hd-title-size: var(--text-2);
+  --_hd-title-line: var(--line-2);
   --_hd-title-weight: var(--weight-semibold);
-  --_hd-title-track: var(--tracking-heading, -0.02em);
-  --_hd-title-cond: translateY(calc((var(--shell-bar-h) - var(--shell-header-h)) / 2));
+  --_hd-title-track: var(--tracking-title, -0.01em);
+  --_hd-title-justify-md: start;
+  --_hd-title-origin-md: 0 50%;
+  --_hd-title-cond: translateY(calc((var(--shell-bar-h) - var(--shell-header-h)) / 2)) scale(0.826);
+  --_hd-title-fade: 0;
   --_hd-row2-cond: translateY(calc((var(--shell-bar-h) - var(--shell-header-h)) / 2));
-  --_hd-nav-justify: start;
-  /* The first destination's text lands on the column line, its pill outside. */
-  --_hd-nav-pull: var(--space-12px);
+  --_hd-mark-md: none;
+  --_hd-title-contained: block;
+  --_hd-cta-r: var(--kit-radius-control, var(--radius-8));
+  /* A 44px target that draws a 36px fill: header actions sit a step
+     quieter than the page's own buttons. */
+  --_hd-cta-inset: var(--space-4px);
+  --_hd-nav-justify: end;
+  /* Text destinations; the one sliding indicator is a 32px layer-2 pill. */
+  --_hd-track-bg: transparent;
+  --_hd-track-r: 0px;
   --_hd-item-pad: var(--space-12px);
-  --_hd-track: transparent;
-  --_hd-pill-on: 1;
-  --_hd-ind-on: 0;
-  --_hd-ind-bg: transparent;
+  --_hd-ind-y: var(--space-6px);
+  --_hd-ind-x: 0px;
+  --_hd-ind-r: var(--_hd-inner-r);
+  --_hd-ind-bg: var(--color-layer-2);
   --_hd-ind-line: transparent;
+  --_hd-sheet-l: auto;
+  --_hd-sheet-mi: 0px;
 }
 
 :is([data-direction="D7"], [data-direction="D11"]),
 html:has(:is([data-direction="D7"], [data-direction="D11"]) .shell:not([data-header]):not([data-scroll="contained"])),
 .shell[data-header="masthead"],
 html:has(.shell[data-header="masthead"]:not([data-scroll="contained"])) {
-  /* Two tiers from 640px: a 72px wordmark row over a 56px nav row (128),
-     condensing to one 56px bar. Below 640px one 64px row condensing to 56. */
+  /* A nameplate. From 640px two tiers, 128 tall: the wordmark centred at
+     --text-6 in the direction's display face over a 56px row (the compact
+     mark, the destinations centred, the action), one hairline under both.
+     Scrolled, the nameplate fades, the row rises 72px into one 56px surface
+     bar, and the compact mark takes the start edge. Below 640px one 64px row
+     with the wordmark at --text-2, condensing to 56 at --text-1. */
   --shell-header-h: calc(64px + var(--shell-bp) * 64px);
   --shell-bar-h: 56px;
   --_hd-hc: var(--shell-bar-h);
-  --_hd-bar-box: var(--shell-header-h);
   --_hd-inset-t: 0px;
-  --_hd-pad: 0px;
-  --_hd-pad-end: 0px;
-  --_hd-rest: var(--color-page);
+  /* Transparent at the top, so a tonal first section runs up behind it. */
+  --_hd-band: transparent;
+  --_hd-band-s: 0;
   --_hd-rest-line: var(--color-border);
   --_hd-cond: 1;
+  --_hd-box-h: var(--shell-header-h);
   --_hd-bar-bg: transparent;
+  --_hd-bar-bw: 0px;
   --_hd-bar-line: transparent;
   --_hd-bar-line-on: transparent;
-  --_hd-bar-r: 0px;
-  --_hd-grid-md: "brand brand brand" 72px "lead nav actions" 56px / minmax(max-content, 1fr) auto minmax(max-content, 1fr);
-  --_hd-grid-lg: var(--_hd-grid-md);
-  --_hd-grid-cmd: "brand nav actions" / minmax(max-content, 1fr) auto minmax(max-content, 1fr);
-  --_hd-grid-clg: var(--_hd-grid-cmd);
-  /* The wordmark takes the direction's display role. */
+  --_hd-r: 0px;
+  --_hd-pad: 0px;
+  --_hd-inner-r: min(var(--kit-radius-control, var(--radius-8)), var(--radius-16));
+  --_hd-bar-w: min(100% - 2 * var(--kit-margin, var(--space-16px)), var(--kit-max, 1280px));
+  --_hd-bar-w-md: var(--_hd-bar-w);
+  --_hd-gap: var(--space-16px);
+  --_hd-grid-md: "brand brand brand" 72px "mark nav actions" 56px / minmax(max-content, 1fr) auto minmax(max-content, 1fr);
+  --_hd-grid-cmd: "mark nav actions" / minmax(max-content, 1fr) auto minmax(max-content, 1fr);
+  --_hd-title-pad: 0px;
+  --_hd-title-pad-md: 0px;
   --_hd-title-font: var(--kit-font-display, var(--font-sans));
-  --_hd-title-size: calc(var(--text-2) + var(--shell-bp) * (var(--text-5) - var(--text-2)));
-  --_hd-title-line: calc(var(--line-2) + var(--shell-bp) * (var(--line-5) - var(--line-2)));
+  --_hd-title-size: calc(var(--text-2) + var(--shell-bp) * (var(--text-6) - var(--text-2)));
+  --_hd-title-line: calc(var(--line-2) + var(--shell-bp) * (var(--line-6) - var(--line-2)));
   --_hd-title-weight: var(--kit-display-weight, var(--weight-medium));
   --_hd-title-track: var(--tracking-display, -0.03em);
-  /* Condensed, the wordmark scales to the --text-1 size (19/23 and 19/40)
-     and rises to the centre of the 56px band (4px, or 8px from its 72px
-     row); the nav row rises 72px into the same band. */
-  --_hd-title-cond: translateY(calc(-4px - var(--shell-bp) * 4px)) scale(calc(0.826 - var(--shell-bp) * 0.351));
+  --_hd-title-justify-md: center;
+  --_hd-title-origin-md: 50% 50%;
+  /* Below 640px the wordmark scales to the --text-1 size (19 of 23) and
+     rises 4px to the centre of the 56px band; from 640px it lifts 8px and
+     fades while the mark fades in. */
+  --_hd-title-cond: translateY(calc(-4px - var(--shell-bp) * 4px)) scale(calc(0.826 + var(--shell-bp) * 0.134));
+  --_hd-title-fade: var(--shell-bp);
   --_hd-row2-cond: translateY(calc(-4px - var(--shell-bp) * 68px));
+  --_hd-mark-md: block;
+  --_hd-title-contained: none;
+  --_hd-cta-r: var(--kit-radius-control, var(--radius-8));
+  /* A 44px target that draws a 36px fill: header actions sit a step
+     quieter than the page's own buttons. */
+  --_hd-cta-inset: var(--space-4px);
   --_hd-nav-justify: center;
-  --_hd-nav-pull: 0px;
+  --_hd-track-bg: transparent;
+  --_hd-track-r: 0px;
   --_hd-item-pad: var(--space-12px);
-  --_hd-track: transparent;
-  --_hd-pill-on: 0;
-  --_hd-ind-on: 1;
+  --_hd-ind-y: var(--space-6px);
+  --_hd-ind-x: 0px;
+  --_hd-ind-r: var(--_hd-inner-r);
   --_hd-ind-bg: var(--color-layer-2);
   --_hd-ind-line: transparent;
+  --_hd-sheet-l: auto;
+  --_hd-sheet-mi: 0px;
 }
 
 /* 3. Bottom bar bundles. dock is the default (:root, D1). */
@@ -822,17 +882,24 @@ html:has(.shell[data-header="masthead"]:not([data-scroll="contained"])) {
 html:has(:is([data-direction="D1"], [data-direction="D4"], [data-direction="D5"], [data-direction="D8"], [data-direction="D11"], [data-direction="D12"]) .shell:not([data-bar])),
 .shell[data-bar="dock"],
 html:has(.shell[data-bar="dock"]) {
-  /* A 64px dock 12px above the bottom edge (and the safe area). */
+  /* A 64px dock floating 12px above the bottom edge (and the safe area)
+     and 12px from the sides; the shell reserves 76. */
   --shell-nav-h: 76px;
-  --_nb-float: 1;
-  --_nb-edge: 0;
+  --_nb-inset: var(--space-12px);
   /* The dock floats on a page-tone tray, so scrolling content never shows
-     in the margin around it. */
-  --_nb-bg: var(--color-page);
-  --_nb-track-bg: var(--color-surface);
+     in the inset around it. */
+  --_nb-tray: var(--color-page);
+  --_nb-edge: 0px;
+  --_nb-bg: var(--color-surface);
+  --_nb-line: 1px;
+  --_nb-r: min(var(--space-20px), var(--kit-radius-card, var(--radius-12)) + var(--space-8px));
+  --_nb-pill-w: 56px;
   --_nb-ind-on: 1;
   --_nb-pill-on: 0;
-  --_nb-compact: scale(0.95);
+  /* Scrolling down, the labels fade, the icons settle to the centre, and
+     the dock draws in to 0.94; scrolling up restores it. */
+  --_nb-compact: scale(0.94);
+  --_nb-compact-lbl: 1;
   --_nb-action: none;
   --_nb-cta: inline-flex;
   --_nb-split-over: flex;
@@ -843,15 +910,20 @@ html:has(.shell[data-bar="dock"]) {
 html:has(:is([data-direction="D3"], [data-direction="D6"], [data-direction="D7"], [data-direction="D13"]) .shell:not([data-bar])),
 .shell[data-bar="bar"],
 html:has(.shell[data-bar="bar"]) {
-  /* A 64px row plus its 1px top hairline. */
+  /* The Material 3 navigation bar on the bottom edge: a 64px surface row
+     under one 1px hairline, a 64 by 32 pill behind the icon. */
   --shell-nav-h: 65px;
-  --_nb-float: 0;
-  --_nb-edge: 1;
-  --_nb-bg: var(--color-surface);
-  --_nb-track-bg: transparent;
+  --_nb-inset: 0px;
+  --_nb-tray: var(--color-surface);
+  --_nb-edge: 1px;
+  --_nb-bg: transparent;
+  --_nb-line: 0px;
+  --_nb-r: 0px;
+  --_nb-pill-w: 64px;
   --_nb-ind-on: 0;
   --_nb-pill-on: 1;
   --_nb-compact: none;
+  --_nb-compact-lbl: 0;
   --_nb-action: none;
   --_nb-cta: inline-flex;
   --_nb-split-over: flex;
@@ -862,14 +934,22 @@ html:has(.shell[data-bar="bar"]) {
 html:has(:is([data-direction="D2"], [data-direction="D9"], [data-direction="D10"]) .shell:not([data-bar])),
 .shell[data-bar="split"],
 html:has(.shell[data-bar="split"]) {
+  /* The dock with its last segment loaded: 3 or 4 destinations, then the
+     primary action as a filled segment 6px inside the dock's end. */
   --shell-nav-h: 76px;
-  --_nb-float: 1;
-  --_nb-edge: 0;
-  --_nb-bg: var(--color-page);
-  --_nb-track-bg: var(--color-surface);
+  --_nb-inset: var(--space-12px);
+  /* The dock floats on a page-tone tray, so scrolling content never shows
+     in the inset around it. */
+  --_nb-tray: var(--color-page);
+  --_nb-edge: 0px;
+  --_nb-bg: var(--color-surface);
+  --_nb-line: 1px;
+  --_nb-r: min(var(--space-20px), var(--kit-radius-card, var(--radius-12)) + var(--space-8px));
+  --_nb-pill-w: 56px;
   --_nb-ind-on: 1;
   --_nb-pill-on: 0;
-  --_nb-compact: scale(0.95);
+  --_nb-compact: scale(0.94);
+  --_nb-compact-lbl: 1;
   /* The primary action moves from the mobile header into the bar. */
   --_nb-action: flex;
   --_nb-cta: none;
@@ -918,7 +998,7 @@ html:has(.shell:not([data-scroll="contained"])) {
 /* Skip link: off screen until focused, then a surface chip at the top left. */
 .shell-skip {
   position: fixed;
-  top: var(--space-8px);
+  top: calc(env(safe-area-inset-top) + var(--space-8px));
   left: var(--space-8px);
   z-index: 4;
   display: inline-flex;
@@ -933,7 +1013,7 @@ html:has(.shell:not([data-scroll="contained"])) {
   line-height: var(--line-0);
   font-weight: var(--weight-medium);
   text-decoration: none;
-  transform: translateY(calc(-100% - var(--space-16px)));
+  transform: translateY(calc(-100% - var(--space-16px) - env(safe-area-inset-top)));
 }
 .shell-skip:focus-visible {
   transform: none;
@@ -948,12 +1028,13 @@ html:has(.shell:not([data-scroll="contained"])) {
   box-sizing: border-box;
   height: calc(var(--shell-header-h) + env(safe-area-inset-top));
   padding-top: calc(env(safe-area-inset-top) + var(--_hd-inset-t));
-  /* The band the condensed bar leaves free passes pointer input through. */
+  /* The band a condensed or floating bar leaves free passes input through. */
   pointer-events: none;
 }
-/* Two tonal layers, never a shadow: the rest layer in the page tone (with
-   the masthead's one hairline), and the condensed layer, a surface bar with
-   a 1px hairline that fades in after the first 24px scrolled. */
+/* Two tonal layers, never a shadow: the rest layer (the mobile island's
+   page-tone band, or the masthead's one hairline; transparent otherwise),
+   and the condensed layer, a surface bar with a 1px hairline that fades in
+   after the first 24px scrolled. */
 .shell-header::before,
 .shell-header::after {
   content: "";
@@ -965,7 +1046,7 @@ html:has(.shell:not([data-scroll="contained"])) {
 }
 .shell-header::before {
   height: 100%;
-  background: var(--_hd-rest);
+  background: var(--_hd-band);
   border-bottom: 1px solid var(--_hd-rest-line);
 }
 .shell-header::after {
@@ -975,7 +1056,7 @@ html:has(.shell:not([data-scroll="contained"])) {
   opacity: 0;
 }
 .shell[data-scrolled] > .shell-header::before {
-  opacity: calc(1 - var(--_hd-cond));
+  opacity: var(--_hd-band-s);
 }
 .shell[data-scrolled] > .shell-header::after {
   opacity: var(--_hd-cond);
@@ -986,13 +1067,14 @@ html:has(.shell:not([data-scroll="contained"])) {
   display: grid;
   grid-template: "brand actions" / minmax(0, 1fr) auto;
   align-items: center;
-  column-gap: var(--kit-gutter, var(--space-16px));
-  inline-size: min(100% - 2 * (var(--kit-margin, var(--space-16px)) - var(--_hd-pad)), var(--kit-max, 1280px) + 2 * var(--_hd-pad));
-  height: var(--_hd-bar-box);
+  column-gap: var(--_hd-gap);
+  inline-size: var(--_hd-bar-w);
+  max-inline-size: calc(100% - 2 * var(--space-8px));
+  height: var(--_hd-box-h);
   margin-inline: auto;
-  padding-inline: var(--_hd-pad) var(--_hd-pad-end);
-  border: 1px solid var(--_hd-bar-line);
-  border-radius: var(--_hd-bar-r);
+  padding-inline: var(--_hd-pad);
+  border: var(--_hd-bar-bw) solid var(--_hd-bar-line);
+  border-radius: var(--_hd-r);
   background: var(--_hd-bar-bg);
   pointer-events: auto;
 }
@@ -1006,6 +1088,7 @@ html:has(.shell:not([data-scroll="contained"])) {
   max-width: 100%;
   margin: 0;
   min-width: 0;
+  padding-inline: var(--_hd-title-pad);
   overflow: hidden;
   font-family: var(--_hd-title-font);
   font-size: var(--_hd-title-size);
@@ -1019,12 +1102,37 @@ html:has(.shell:not([data-scroll="contained"])) {
   transform-origin: 0 50%;
 }
 .shell[data-scrolled] .shell-title {
+  opacity: calc(1 - var(--_hd-title-fade));
   transform: var(--_hd-title-cond);
 }
-.shell-title > svg {
+.shell-title > svg,
+.shell-mark > svg {
   display: block;
   height: 1em;
   width: auto;
+}
+/* The masthead's compact mark: the wordmark at the --text-1 size on the
+   condensed bar's start edge, shown once the nameplate has faded. */
+.shell-mark {
+  display: none;
+  grid-area: mark;
+  justify-self: start;
+  min-width: 0;
+  overflow: hidden;
+  font-family: var(--_hd-title-font);
+  font-size: var(--text-1);
+  line-height: var(--line-1);
+  font-weight: var(--weight-semibold);
+  letter-spacing: var(--tracking-title, -0.01em);
+  color: var(--color-ink);
+  text-decoration: none;
+  white-space: nowrap;
+  opacity: 0;
+  visibility: hidden;
+}
+.shell[data-scrolled] .shell-mark {
+  opacity: 1;
+  visibility: visible;
 }
 .shell-actions {
   grid-area: actions;
@@ -1040,14 +1148,24 @@ html:has(.shell:not([data-scroll="contained"])) {
   transform: var(--_hd-row2-cond);
 }
 /* Below 640px the split bar carries the primary action instead. */
-.shell-cta {
+.shell .shell-cta {
+  position: relative;
   display: var(--_nb-cta, inline-flex);
-  border-radius: var(--kit-radius-control, var(--radius-8));
+  height: calc(var(--control-h) - 2 * var(--_hd-cta-inset));
+  border-radius: var(--_hd-cta-r);
+  font-size: calc(var(--text-0) - var(--_hd-cta-inset) / 2);
+  padding-inline: calc(var(--space-16px) - var(--_hd-cta-inset));
+}
+/* The quieter header action still takes a 44px tap. */
+.shell .shell-cta::after {
+  content: "";
+  position: absolute;
+  inset: calc(-1 * var(--_hd-cta-inset)) 0;
 }
 
 /* 6. The Primary nav. Below 640px: the bottom bar. The nav box always
-   touches the bottom edge; a floating dock sits inside it on a page-tone
-   tray, inset by the box's own padding. */
+   touches the bottom edge and spans it; the dock floats inside it, inset
+   by the box's own padding. Taps in the inset reach the page. */
 .shell-nav {
   position: fixed;
   inset-inline: 0;
@@ -1055,27 +1173,30 @@ html:has(.shell:not([data-scroll="contained"])) {
   z-index: 3;
   box-sizing: border-box;
   display: flex;
-  gap: var(--space-8px);
-  padding: 0 calc(var(--_nb-float) * var(--space-12px)) calc(var(--_nb-float) * var(--space-12px) + env(safe-area-inset-bottom));
-  border-top: calc(var(--_nb-edge) * 1px) solid var(--color-border);
-  background: var(--_nb-bg);
-  /* Taps in the tray reach nothing; the track and the action take them. */
+  padding: 0 var(--_nb-inset) calc(var(--_nb-inset) + env(safe-area-inset-bottom));
+  border-top: var(--_nb-edge) solid var(--color-border);
+  background: var(--_nb-tray);
   pointer-events: none;
+}
+.shell-dock {
+  flex: 1 1 auto;
+  display: flex;
+  min-width: 0;
+  box-sizing: border-box;
+  height: 64px;
+  border: var(--_nb-line) solid var(--color-border);
+  border-radius: var(--_nb-r);
+  background: var(--_nb-bg);
+  transform-origin: 50% 100%;
+  pointer-events: auto;
 }
 .shell-nav-track {
   position: relative;
   flex: 1 1 auto;
   min-width: 0;
-  box-sizing: border-box;
-  height: 64px;
   display: grid;
   grid-auto-flow: column;
   grid-auto-columns: minmax(0, 1fr);
-  border: calc(var(--_nb-float) * 1px) solid var(--color-border);
-  border-radius: calc(var(--_nb-float) * min(var(--kit-radius-card, var(--radius-12)), var(--radius-16)));
-  background: var(--_nb-track-bg);
-  transform-origin: 50% 100%;
-  pointer-events: auto;
 }
 .shell-nav .shell-nav-item {
   position: relative;
@@ -1084,7 +1205,7 @@ html:has(.shell:not([data-scroll="contained"])) {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: var(--space-4px);
+  gap: var(--space-2px);
   min-width: 0;
   height: auto;
   max-width: none;
@@ -1094,7 +1215,7 @@ html:has(.shell:not([data-scroll="contained"])) {
   background: none;
   color: var(--color-ink-muted);
   font: inherit;
-  /* 11px on a 320px phone, 13px from 360px (section 8). */
+  /* 11px on a 320px phone, 13px from 360px (section 8), one 16px line. */
   font-size: var(--text-n2);
   line-height: var(--line-n2);
   font-weight: var(--weight-medium);
@@ -1105,7 +1226,7 @@ html:has(.shell:not([data-scroll="contained"])) {
 }
 .shell-nav .shell-nav-item:focus-visible {
   outline-offset: -2px;
-  border-radius: max(var(--radius-4) / 2, calc(var(--_nb-float) * min(var(--kit-radius-card, var(--radius-12)), var(--radius-16))) - var(--space-4px));
+  border-radius: max(var(--radius-4), var(--_nb-r) - var(--space-4px));
 }
 .shell-nav .shell-nav-item[data-active] {
   color: var(--color-ink);
@@ -1123,8 +1244,10 @@ html:has(.shell:not([data-scroll="contained"])) {
   border-color: transparent;
   transform: none;
 }
-/* The pill target: the 64x32 indicator behind the icon (Material navigation
-   bar anatomy), or behind the label on a label-only destination. */
+/* The pill: the 32px tall target behind the icon (Material navigation bar
+   anatomy), or behind the label on a label-only destination. On the bar it
+   is the active indicator; on the dock and split it carries only the hover
+   and press state layers, because one sliding pill marks the active item. */
 .shell-nav .shell-nav-icon,
 .shell-nav .shell-nav-item:not(:has(.shell-nav-icon)) .shell-nav-label {
   position: relative;
@@ -1136,11 +1259,16 @@ html:has(.shell:not([data-scroll="contained"])) {
   flex: none;
   align-items: center;
   justify-content: center;
-  width: min(64px, 100%);
+  width: min(var(--_nb-pill-w), 100%);
   height: 32px;
 }
+.shell-nav .shell-nav-icon > svg,
+.shell-nav .shell-nav-icon > .icon {
+  width: 24px;
+  height: 24px;
+}
 .shell-nav .shell-nav-item:not(:has(.shell-nav-icon)) .shell-nav-label {
-  padding: var(--space-6px) var(--space-12px);
+  padding: var(--space-8px) var(--space-12px);
 }
 .shell-nav .shell-nav-icon::before,
 .shell-nav .shell-nav-item:not(:has(.shell-nav-icon)) .shell-nav-label::before {
@@ -1157,12 +1285,18 @@ html:has(.shell:not([data-scroll="contained"])) {
   opacity: var(--_nb-pill-on);
   transform: none;
 }
+/* Before the sliding pill is measured (server render, no script), the
+   active item wears its own pill, so the current page always shows. */
+.shell-nav-track:not([data-ind]) .shell-nav-item[data-active] :is(.shell-nav-icon, .shell-nav-label)::before {
+  opacity: 1;
+  transform: none;
+}
 /* One line, always: a label that does not fit ends in an ellipsis. */
 .shell-nav-label {
   display: inline-flex;
   align-items: center;
   gap: var(--space-4px);
-  max-width: 100%;
+  max-width: calc(100% - var(--space-8px));
   min-width: 0;
 }
 .shell-nav-text {
@@ -1177,11 +1311,12 @@ html:has(.shell:not([data-scroll="contained"])) {
   opacity: calc(1 - var(--_nb-lbl));
 }
 .shell-nav .shell-nav-item:not([data-active]) .shell-nav-icon {
-  transform: translateY(calc(var(--_nb-lbl) * 12px));
+  transform: translateY(calc(var(--_nb-lbl) * 9px));
 }
-/* Press: the icon (or label) scales to 0.96 and the state layer darkens. */
-.shell-nav .shell-nav-item:active .shell-nav-icon,
-.shell-nav .shell-nav-item:not(:has(.shell-nav-icon)):active .shell-nav-label {
+/* Press: the icon (or label) scales to 0.96 and the state layer darkens to
+   the pressed step. */
+.shell-nav .shell-nav-item:active .shell-nav-icon > *,
+.shell-nav .shell-nav-item:not(:has(.shell-nav-icon)):active .shell-nav-text {
   scale: 0.96;
 }
 .shell-nav .shell-nav-item:active :is(.shell-nav-icon, .shell-nav-label)::before {
@@ -1193,28 +1328,39 @@ html:has(.shell:not([data-scroll="contained"])) {
   background: color-mix(in oklab, var(--color-ink) 12%, var(--color-layer-2));
 }
 
-/* The one indicator: the dock's lozenge here, the island's thumb and the
-   masthead's pill from 640px. AppShell writes the active item's box into
-   --shell-ind-x and --shell-ind-w; it shows once measured (data-ind). */
+/* The one sliding indicator. AppShell writes the active item's box into
+   --shell-ind-x and --shell-ind-w on its track, and it shows once measured
+   (data-ind). Below 640px: a pill behind the active icon on the dock and
+   split (the label box on a label-only dock); from 640px: the island's
+   thumb and the rail and masthead pill (section 8). */
 .shell-ind {
   position: absolute;
-  top: var(--space-4px);
-  bottom: var(--space-4px);
+  top: calc(50% - 25px);
   left: 0;
   box-sizing: border-box;
-  width: calc(var(--shell-ind-w, 0px) - 2 * var(--space-4px));
-  transform: translateX(calc(var(--shell-ind-x, 0px) + var(--space-4px)));
-  border-radius: max(var(--radius-4) / 2, min(var(--kit-radius-card, var(--radius-12)), var(--radius-16)) - var(--space-4px));
+  width: var(--_nb-pill-w);
+  height: 32px;
+  transform: translateX(calc(var(--shell-ind-x, 0px) + (var(--shell-ind-w, 0px) - var(--_nb-pill-w)) / 2));
+  border-radius: var(--radius-pill);
   background: var(--color-layer-2);
   opacity: 0;
   pointer-events: none;
+}
+.shell:not([data-icons]) .shell-nav-track > .shell-ind {
+  top: var(--space-8px);
+  bottom: var(--space-8px);
+  height: auto;
+  width: calc(var(--shell-ind-w, 0px) - 2 * var(--space-6px));
+  transform: translateX(calc(var(--shell-ind-x, 0px) + var(--space-6px)));
+  border-radius: max(var(--radius-4), var(--_nb-r) - var(--space-8px));
 }
 .shell-nav-track[data-ind] > .shell-ind {
   opacity: var(--_nb-ind-on);
 }
 
-/* Badges: flat ink, a dot or a count up to 9+, inside the pill beside the
-   icon, or after the label on a label-only destination and in the header. */
+/* Badges: flat ink, a dot or a count up to 9+, at the pill's top end beside
+   the icon, or after the label on a label-only destination and in the
+   header. */
 .shell-badge {
   display: inline-flex;
   flex: none;
@@ -1241,7 +1387,8 @@ html:has(.shell:not([data-scroll="contained"])) {
 .shell-nav-icon > .shell-badge {
   position: absolute;
   top: var(--space-2px);
-  left: calc(50% + 10px);
+  /* Past the 24px icon's end edge, inside the pill. */
+  left: calc(50% + var(--space-12px));
 }
 .shell-nav-icon > .shell-badge[data-kind="dot"] {
   top: var(--space-4px);
@@ -1250,7 +1397,8 @@ html:has(.shell:not([data-scroll="contained"])) {
   display: none;
 }
 
-/* The split bar's primary segment, detached from the dock. */
+/* The split bar's primary segment: the dock's last segment, filled, 6px
+   inside its end at the dock's radius minus that inset. */
 .shell-nav-action {
   display: var(--_nb-action);
   flex: none;
@@ -1258,18 +1406,17 @@ html:has(.shell:not([data-scroll="contained"])) {
   justify-content: center;
   gap: var(--space-8px);
   box-sizing: border-box;
-  height: 64px;
   min-width: 64px;
+  margin: var(--space-6px);
   padding: 0 var(--space-16px);
   border: 1px solid var(--color-primary);
-  border-radius: min(var(--kit-radius-card, var(--radius-12)), var(--radius-16));
+  border-radius: max(var(--radius-4), var(--_nb-r) - var(--space-6px) - 1px);
   background: var(--color-primary);
   color: var(--color-primary-contrast);
   font-size: var(--text-0);
   line-height: var(--line-0);
   font-weight: var(--weight-semibold);
   text-decoration: none;
-  pointer-events: auto;
   -webkit-tap-highlight-color: transparent;
 }
 .shell-nav-action:active {
@@ -1280,6 +1427,19 @@ html:has(.shell:not([data-scroll="contained"])) {
 }
 .shell-nav-action-icon {
   display: inline-flex;
+}
+/* Four destinations beside the action: the action shows its icon only
+   (its aria-label keeps the name), so no destination label truncates. */
+.shell-dock:has(> .shell-nav-track > :nth-child(5)) .shell-nav-action:has(.shell-nav-action-icon) {
+  min-width: 56px;
+  padding: 0;
+}
+.shell-dock:has(> .shell-nav-track > :nth-child(5)) .shell-nav-action:has(.shell-nav-action-icon) > span:last-child {
+  display: none;
+}
+.shell-nav-action-icon > svg {
+  width: 20px;
+  height: 20px;
 }
 .shell[data-has-action] .shell-nav :is([data-split-overflow], [data-more="bar"]) {
   display: var(--_nb-split-over);
@@ -1311,10 +1471,10 @@ html:has(.shell:not([data-scroll="contained"])) {
   width: auto;
   max-height: 60dvh;
   margin: 0;
-  padding: var(--space-8px);
+  padding: var(--space-6px);
   overflow: auto;
   border: 1px solid var(--color-border-strong);
-  border-radius: var(--kit-radius-card, var(--radius-12));
+  border-radius: min(var(--space-20px), var(--kit-radius-card, var(--radius-12)) + var(--space-8px));
   background: var(--color-surface);
   color: var(--color-ink);
 }
@@ -1328,15 +1488,22 @@ html:has(.shell:not([data-scroll="contained"])) {
   gap: var(--space-12px);
   min-height: var(--control-h);
   padding: 0 var(--space-12px);
-  border-radius: max(var(--radius-4) / 2, var(--kit-radius-card, var(--radius-12)) - var(--space-8px));
+  border-radius: max(var(--radius-4), min(var(--space-20px), var(--kit-radius-card, var(--radius-12)) + var(--space-8px)) - var(--space-6px));
   color: var(--color-ink-muted);
   font-size: var(--text-0);
   line-height: var(--line-0);
   font-weight: var(--weight-medium);
   text-decoration: none;
 }
+.shell-sheet-item:focus-visible {
+  outline-offset: -2px;
+}
 .shell-sheet .shell-nav-icon {
   display: inline-flex;
+  width: 20px;
+  height: 20px;
+}
+.shell-sheet .shell-nav-icon > svg {
   width: 20px;
   height: 20px;
 }
@@ -1377,8 +1544,16 @@ html:has(.shell:not([data-scroll="contained"])) {
 /* 7. contained: the viewport-sized grid with an inner scroller. The header
    keeps its condensed geometry and only changes tone on scroll; the bottom
    bar stays fixed and the shell reserves its height. */
+/* The condense knobs are reset here, on the shell, and not as transforms:
+   a bundle computes them on the direction element against the document
+   header height, and a scrolled rule would otherwise move the row out of
+   the 56px bar (the masthead's 72px rise would lift the nav off screen).
+   This rule sits after every bundle, so it wins over data-header too. */
 .shell[data-scroll="contained"] {
   --shell-header-h: var(--_hd-hc);
+  --_hd-title-cond: none;
+  --_hd-row2-cond: none;
+  --_hd-title-fade: 0;
   height: 100dvh;
   min-height: 0;
   grid-template-rows: auto minmax(0, 1fr);
@@ -1396,22 +1571,17 @@ html:has(.shell:not([data-scroll="contained"])) {
   overscroll-behavior: contain;
 }
 .shell[data-scroll="contained"] .shell-bar {
-  height: var(--shell-bar-h);
+  height: min(var(--_hd-box-h), var(--shell-bar-h));
 }
 .shell[data-scroll="contained"] .shell-title {
   font-size: var(--text-1);
   line-height: var(--line-1);
-  transform: none;
-}
-.shell[data-scroll="contained"] :is(.shell-nav, .shell-actions) {
-  transform: none;
 }
 
 /* 8. Sizes. */
 @media (min-width: 360px) {
   .shell-nav .shell-nav-item {
     font-size: var(--text-n1);
-    line-height: var(--line-n1);
   }
   .shell-nav-action {
     padding: 0 var(--space-20px);
@@ -1429,11 +1599,28 @@ html:has(.shell:not([data-scroll="contained"])) {
   }
   .shell-bar {
     grid-template: var(--_hd-grid-md);
+    inline-size: var(--_hd-bar-w-md);
+    max-inline-size: calc(100% - 2 * var(--kit-margin, var(--space-16px)));
   }
   .shell[data-scroll="contained"] .shell-bar {
     grid-template: var(--_hd-grid-cmd);
   }
-  .shell-cta {
+  .shell-title {
+    justify-self: var(--_hd-title-justify-md);
+    padding-inline: var(--_hd-title-pad-md);
+    transform-origin: var(--_hd-title-origin-md);
+  }
+  .shell-mark {
+    display: var(--_hd-mark-md);
+  }
+  .shell[data-scroll="contained"] .shell-title {
+    display: var(--_hd-title-contained);
+  }
+  .shell[data-scroll="contained"] .shell-mark {
+    opacity: 1;
+    visibility: visible;
+  }
+  .shell .shell-cta {
     display: inline-flex;
   }
   .shell-nav {
@@ -1442,38 +1629,42 @@ html:has(.shell:not([data-scroll="contained"])) {
     justify-self: var(--_hd-nav-justify);
     display: flex;
     min-width: 0;
-    margin-inline-start: calc(-1 * var(--_hd-nav-pull));
     padding: 0;
     border: 0;
     background: none;
     pointer-events: auto;
   }
-  .shell[data-scrolled] .shell-nav {
+  .shell[data-scrolled] .shell-nav,
+  .shell[data-scrolled] .shell-mark {
     transform: var(--_hd-row2-cond);
   }
-  /* The track is the island's segmented control (a rounded rectangle even
-     where controls are pills: a container rounds at most a third of its
-     height, so it caps at 12 and the thumb nests 4px inside); on the rail
-     and masthead it is a plain row. */
-  .shell-nav-track {
-    --_track-r: min(var(--kit-radius-control, var(--radius-8)), var(--radius-12));
+  .shell-dock {
     flex: none;
-    display: flex;
-    align-items: center;
     height: auto;
     border: 0;
-    border-radius: var(--_track-r);
-    background: var(--_hd-track);
+    border-radius: 0;
+    background: none;
     transform: none;
+  }
+  /* The track: the island's segmented control, or a plain row on the rail
+     and masthead. */
+  .shell-nav-track {
+    display: flex;
+    align-items: center;
+    flex: none;
+    border-radius: var(--_hd-track-r);
+    background: var(--_hd-track-bg);
   }
   .shell-nav .shell-nav-item {
     flex-direction: row;
     gap: var(--space-6px);
     min-height: var(--control-h);
     padding: 0 var(--_hd-item-pad);
-    border-radius: var(--_track-r);
     font-size: var(--text-n1);
     line-height: var(--line-n1);
+  }
+  .shell-nav .shell-nav-item:focus-visible {
+    border-radius: var(--_hd-track-r);
   }
   .shell-nav .shell-nav-icon {
     display: none;
@@ -1483,6 +1674,9 @@ html:has(.shell:not([data-scroll="contained"])) {
   }
   .shell-nav .shell-nav-item:not(:has(.shell-nav-icon)) .shell-nav-label::before {
     content: none;
+  }
+  .shell-nav-label {
+    max-width: none;
   }
   .shell-nav .shell-nav-item:has(.shell-nav-icon) .shell-nav-label > .shell-badge,
   .shell-nav-label > .shell-more-glyph {
@@ -1499,18 +1693,26 @@ html:has(.shell:not([data-scroll="contained"])) {
   .shell-nav-action {
     display: none;
   }
-  /* The rail's small tonal pill, and the hover state layer on every header. */
+  /* The per-item layer: the hover and press state layer, and the active
+     fill before the indicator is measured. */
   .shell-nav .shell-nav-item::before {
     content: "";
     position: absolute;
-    inset: var(--space-6px) 0;
+    inset: var(--_hd-ind-y) var(--_hd-ind-x);
     z-index: -1;
-    border-radius: inherit;
-    background: var(--color-layer-2);
+    border-radius: var(--_hd-ind-r);
+    background: var(--_hd-ind-bg);
     opacity: 0;
   }
-  .shell-nav .shell-nav-item[data-active]::before {
-    opacity: var(--_hd-pill-on);
+  .shell-nav-track:not([data-ind]) .shell-nav-item[data-active]::before {
+    opacity: 1;
+  }
+  .shell-nav .shell-nav-item:active::before {
+    opacity: 1;
+    background: var(--state-pressed);
+  }
+  .shell-nav .shell-nav-item:active .shell-nav-text {
+    scale: 0.96;
   }
   /* Active weight is 600; the text reserves that width, so nothing shifts. */
   .shell-nav-text {
@@ -1528,20 +1730,39 @@ html:has(.shell:not([data-scroll="contained"])) {
     user-select: none;
     pointer-events: none;
   }
-  .shell-ind {
+  .shell-ind,
+  .shell:not([data-icons]) .shell-nav-track > .shell-ind {
+    top: var(--_hd-ind-y);
+    bottom: var(--_hd-ind-y);
+    height: auto;
+    width: calc(var(--shell-ind-w, 0px) - 2 * var(--_hd-ind-x));
+    transform: translateX(calc(var(--shell-ind-x, 0px) + var(--_hd-ind-x)));
     border: 1px solid var(--_hd-ind-line);
-    border-radius: max(var(--radius-4) / 2, var(--_track-r) - var(--space-4px));
+    border-radius: var(--_hd-ind-r);
     background: var(--_hd-ind-bg);
   }
   .shell-nav-track[data-ind] > .shell-ind {
-    opacity: var(--_hd-ind-on);
+    opacity: 1;
   }
   .shell-sheet {
-    inset: calc(var(--shell-header-h) + env(safe-area-inset-top) + var(--space-8px)) max(var(--kit-margin, var(--space-16px)), (100vw - var(--kit-max, 1280px)) / 2) auto auto;
+    inset: calc(var(--shell-header-h) + env(safe-area-inset-top) + var(--space-8px)) max(var(--kit-margin, var(--space-16px)), (100vw - var(--kit-max, 1280px)) / 2) auto var(--_hd-sheet-l);
     width: 240px;
+    margin-inline: var(--_hd-sheet-mi);
   }
   .shell-sheet [data-split-only] {
     display: none;
+  }
+  /* Where anchor positioning exists, the sheet hangs 12px under More, its
+     end edge on More's end edge; elsewhere it keeps the placement above. */
+  @supports (anchor-name: --shell-more) {
+    .shell-nav .shell-more {
+      anchor-name: --shell-more;
+    }
+    .shell-sheet {
+      position-anchor: --shell-more;
+      inset: calc(anchor(bottom) + var(--space-12px)) anchor(right) auto auto;
+      margin: 0;
+    }
   }
   /* Hide on scroll down, reveal on scroll up (hideOnScroll, document mode). */
   .shell:not([data-scroll="contained"])[data-hide][data-hidden] > .shell-header:not(:focus-within) {
@@ -1553,16 +1774,10 @@ html:has(.shell:not([data-scroll="contained"])) {
     opacity: 1;
     background: var(--state-hover);
   }
-}
-@media (min-width: 1024px) {
-  .shell-bar {
-    grid-template: var(--_hd-grid-lg);
-  }
-  .shell[data-scroll="contained"] .shell-bar {
-    grid-template: var(--_hd-grid-clg);
+  .shell-nav-track[data-ind] .shell-nav-item[data-active]:hover::before {
+    opacity: 0;
   }
 }
-
 /* 9. Motion, only under .shell-motion (never set under reduced motion). */
 .shell-motion > .shell-header {
   transition: transform var(--dur-200) var(--ease-standard);
@@ -1585,10 +1800,21 @@ html:has(.shell:not([data-scroll="contained"])) {
   transition-duration: var(--dur-200);
 }
 .shell-motion :is(.shell-title, .shell-actions) {
-  transition: transform var(--dur-300-exit) var(--ease-standard);
+  transition:
+    transform var(--dur-300-exit) var(--ease-standard),
+    opacity var(--dur-200-exit) var(--ease-standard);
 }
 .shell-motion[data-scrolled] :is(.shell-title, .shell-actions) {
-  transition-duration: var(--dur-300);
+  transition-duration: var(--dur-300), var(--dur-200);
+}
+.shell-motion .shell-mark {
+  transition:
+    transform var(--dur-300-exit) var(--ease-standard),
+    opacity var(--dur-150-exit) var(--ease-standard),
+    visibility var(--dur-150-exit) var(--ease-standard);
+}
+.shell-motion[data-scrolled] .shell-mark {
+  transition-duration: var(--dur-300), var(--dur-200), var(--dur-200);
 }
 .shell-motion .shell-ind {
   transition:
@@ -1599,26 +1825,23 @@ html:has(.shell:not([data-scroll="contained"])) {
 .shell-motion .shell-nav .shell-nav-item {
   transition: color var(--dur-100) var(--ease-standard);
 }
-.shell-motion .shell-nav-track {
+.shell-motion .shell-dock {
   transition: transform var(--dur-200) var(--ease-standard);
 }
-.shell-motion[data-compact] .shell-nav-track {
-  transform: var(--_nb-compact);
-  transition-duration: var(--dur-200-exit);
-}
 .shell-motion .shell-nav .shell-nav-icon {
-  transition:
-    transform var(--dur-200) var(--ease-standard),
-    scale var(--dur-100) var(--ease-standard);
+  transition: transform var(--dur-200) var(--ease-standard);
+}
+.shell-motion .shell-nav .shell-nav-icon > *,
+.shell-motion .shell-nav .shell-nav-text {
+  transition: scale var(--dur-100) var(--ease-standard);
 }
 .shell-motion .shell-nav .shell-nav-label {
   transition:
     opacity var(--dur-150-exit) var(--ease-standard),
-    visibility var(--dur-150-exit) var(--ease-standard),
-    scale var(--dur-100) var(--ease-standard);
+    visibility var(--dur-150-exit) var(--ease-standard);
 }
 .shell-motion .shell-nav [data-active] .shell-nav-label {
-  transition-duration: var(--dur-150), var(--dur-150), var(--dur-100);
+  transition-duration: var(--dur-150), var(--dur-150);
 }
 .shell-motion .shell-nav :is(.shell-nav-icon, .shell-nav-label)::before {
   transition:
@@ -1654,6 +1877,39 @@ html:has(.shell:not([data-scroll="contained"])) {
   .shell-motion .shell-sheet:popover-open {
     opacity: 0;
     translate: 0 var(--space-4px);
+  }
+}
+/* Compaction (dock and split, below 640px): the labels fade, the icons and
+   the sliding pill settle 9px to the dock's centre, and the dock draws in.
+   data-compact is never written under reduced motion, and these rules sit
+   under .shell-motion as well. */
+@media (max-width: 639.98px) {
+  .shell-motion[data-compact] .shell-dock {
+    transform: var(--_nb-compact);
+    transition-duration: var(--dur-200-exit);
+  }
+  .shell.shell-motion[data-compact] .shell-nav .shell-nav-item .shell-nav-label {
+    opacity: calc(1 - var(--_nb-compact-lbl));
+  }
+  .shell-motion[data-compact] .shell-nav .shell-nav-icon,
+  .shell-motion[data-compact] .shell-nav-track > .shell-ind {
+    translate: 0 calc(var(--_nb-compact-lbl) * 9px);
+  }
+  /* An inactive icon under active-only labels is centred already. */
+  .shell-motion[data-compact] .shell-nav .shell-nav-item:not([data-active]) .shell-nav-icon {
+    translate: 0 calc(max(0, var(--_nb-compact-lbl) - var(--_nb-lbl)) * 9px);
+  }
+  .shell-motion .shell-nav-track > .shell-ind {
+    transition:
+      transform var(--dur-200) var(--ease-standard),
+      width var(--dur-200) var(--ease-standard),
+      opacity var(--dur-150) var(--ease-standard),
+      translate var(--dur-200) var(--ease-standard);
+  }
+  .shell-motion .shell-nav .shell-nav-icon {
+    transition:
+      transform var(--dur-200) var(--ease-standard),
+      translate var(--dur-200) var(--ease-standard);
   }
 }
 @media (min-width: 640px) {

@@ -4,8 +4,12 @@
 .row{display:flex;gap:12px;max-width:600px;margin-top:24px}
 input,button{font:inherit;padding:0 12px;border:1px solid #c9c9c9;border-radius:8px;background:#fff}
 .stack input{height:48px}.stack button{height:44px}
-.row input{height:48px}.row button{height:44px}</style></head>
+.row input{height:48px}.row button{height:44px}
+.labelled{display:flex;gap:12px;align-items:flex-start;max-width:600px;margin-top:24px}
+.field{display:flex;flex-direction:column;gap:4px;flex:1}.field label{font-size:14px;line-height:18px}
+.labelled input,.labelled button{height:44px;box-sizing:border-box}</style></head>
 <body><main><h1>Form rows</h1>
 <form class="stack"><input aria-label="Email" placeholder="Email"><button>Reserve</button></form>
 <form class="row"><input aria-label="Email" placeholder="Email"><button>Reserve</button></form>
+<form class="labelled"><div class="field"><label for="le">Email</label><input id="le" placeholder="you@example.com"></div><button>Reserve</button></form>
 </main></body></html>

@@ -190,6 +190,14 @@ describe("variety ledger", () => {
     expect(validatePageRecipe(["custom.hero", "custom.hero", "bento.grid"], "product").some((e) => /custom\.hero/.test(e))).toBe(true);
   });
 
+  test("hand-written sections read back as custom.default and stay exempt from the repeat rules", () => {
+    const ledger = ["masthead.left", "custom.default", "custom.default", "custom.default", "bento.grid", "footer.inline"] as const;
+    expect(validatePageRecipe([...ledger])).toEqual([]);
+    expect(validateVarietyLedger([...ledger])).toEqual([]);
+    expect(validatePageRecipe(["custom", { composition: "custom", variant: "default" }, "bento.grid"], "product")).toEqual([]);
+    expect(validatePageRecipe(["custom.hero", "custom.hero", "bento.grid"], "product").some((e) => /custom\.hero/.test(e))).toBe(true);
+  });
+
   test("both preview pages keep the law and the ledger", () => {
     for (const ledger of [LANDING_LEDGER, MOTION_LEDGER]) {
       expect(ledger.length).toBeGreaterThanOrEqual(9);

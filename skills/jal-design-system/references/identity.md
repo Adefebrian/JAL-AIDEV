@@ -237,7 +237,7 @@ Only when no kit composition carries the section's job, and only on the kit grid
 
 `packages/ui/src/kit/preview/` renders two pages from the kit only (a sample desk air monitor, sample content, every media slot a live data view):
 
-- **Page A** `/landing` (D1 by default): the tidy product landing on the kit's own motion. Ledger: masthead.split, logo-row.row, split.inset, stat-row.lead, sticky-story.stage-start, bento.lead-right, feature-grid.rows, quote.results, spec-table.grouped, pricing.cells-compare, faq.open, cta-band.form, footer.inline.
+- **Page A** `/landing` (D1 by default): the tidy product landing on the kit's own motion. Ledger: masthead.split, logo-row.row, split.inset, stat-row.lead, sticky-story.stage-end, bento.lead-right, feature-grid.rows, quote.results, spec-table.grouped, pricing.cells-compare, faq.open, cta-band.form, footer.inline.
 - **Page B** `/motion` (D3 by default): the same system in another direction with the motion module on (Lenis on the GSAP clock, `KitMotion tier={3}`). Ledger: masthead.left, split.bleed, stat-row.chart, feature-grid.lead, sticky-story.stage-end, spec-table.rail, quote.pull, feature-grid.detail, bento.lead-left, faq.split, cta-band.band, footer.statement.
 
 ```bash

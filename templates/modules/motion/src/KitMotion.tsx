@@ -218,18 +218,45 @@ export function stickyBroken(el: HTMLElement, scroller: Element | Window): boole
 }
 
 /** Tier 3: SpecTable rail rows arrive in order as the rail enters; the rail
- *  stays pinned by CSS sticky, or by a GSAP pin when sticky is broken. */
-function rails(root: HTMLElement) {
+ *  stays pinned by CSS sticky, or by a GSAP pin when sticky is broken.
+ *  Pending is opacity only (never visibility, so assistive tech still reads
+ *  the rows), and a rail already on screen at setup paints finished. */
+function rails(root: HTMLElement, undo: Undo) {
   for (const rail of Array.from(root.querySelectorAll<HTMLElement>(".kit-spec-sticky"))) {
     const rows = Array.from(rail.querySelectorAll<HTMLElement>(".kit-spec-row, .kit-spec-railgroup > .kit-title"));
-    gsap.from(rows, {
-      autoAlpha: 0,
-      y: tokPx("--space-8px", 8),
-      duration: tokSeconds("--dur-400", 400),
-      ease: "jal-standard",
-      stagger: (i: number) => Math.min(i, 6) * staggerEach(),
-      scrollTrigger: { trigger: rail, start: START_RAIL, once: true },
-    });
+    const scroller = getScroller(rail);
+    const pending = rows.filter((row) => !onScreen(row, scroller));
+    if (pending.length > 0) {
+      gsap.set(pending, { opacity: 0 });
+      const live = new Set<gsap.core.Tween>();
+      ScrollTrigger.create({
+        trigger: rail,
+        start: START_RAIL,
+        once: true,
+        onEnter: () => {
+          const t = gsap.fromTo(
+            pending,
+            { opacity: 0, y: tokPx("--space-8px", 8) },
+            {
+              opacity: 1,
+              y: 0,
+              duration: tokSeconds("--dur-400", 400),
+              ease: "jal-standard",
+              stagger: (i: number) => Math.min(i, 6) * staggerEach(),
+              overwrite: true,
+              clearProps: "transform",
+              onComplete: () => void live.delete(t),
+            },
+          );
+          live.add(t);
+        },
+      });
+      undo.push(() => {
+        for (const t of live) t.kill();
+        live.clear();
+        gsap.set(pending, { clearProps: "opacity,transform" });
+      });
+    }
     const set = rail.closest<HTMLElement>(".kit-spec-railset");
     if (set && stickyBroken(rail, getScroller(rail))) {
       // The rail shares one grid row with the taller prose, so its pin ends
@@ -274,7 +301,7 @@ export function KitMotion({ tier = 2 }: KitMotionProps) {
         if (cinematic) {
           scrubStories(root, undo);
           drift(root);
-          rails(root);
+          rails(root, undo);
         }
         return () => {
           for (const f of undo.reverse()) f();

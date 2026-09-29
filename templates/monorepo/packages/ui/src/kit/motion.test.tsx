@@ -3,7 +3,7 @@ import { act, useLayoutEffect, type ReactElement } from "react";
 import { AppShell } from "../AppShell";
 import { clientRenderer } from "../frames/test-render";
 import { armMotion, countUp, formatLike, motionTargets, parseCountable, standardCurve } from "./motion";
-import { Page, SectionHead } from "./Page";
+import { Figure, Page, SectionHead } from "./Page";
 import { StatRow } from "./StatRow";
 import { FeatureGrid } from "./FeatureGrid";
 
@@ -239,6 +239,46 @@ describe.skipIf(clientRenderer === null)("kit motion in a DOM", () => {
     }
   });
 
+  test("a target in the observer's trimmed bottom band is revealed on mount or at the end of scroll", async () => {
+    stubObserver();
+    stubReduced(false);
+    const root = document.createElement("div");
+    root.innerHTML = '<span data-motion="count" id="fig">612</span><div data-motion="rise" id="last"></div>';
+    document.body.appendChild(root);
+    const rect = (top: number) => () => ({ top, bottom: top + 40, left: 0, right: 300, width: 300, height: 40, x: 0, y: top, toJSON() {} }) as DOMRect;
+    const fig = root.querySelector<HTMLElement>("#fig")!;
+    const last = root.querySelector<HTMLElement>("#last")!;
+    // The figure sits inside the viewport's bottom 8%, where the observer's
+    // rootMargin never reports it; the last band sits below the fold.
+    fig.getBoundingClientRect = rect(window.innerHeight - 45);
+    last.getBoundingClientRect = rect(window.innerHeight + 20);
+    const se = (document.scrollingElement ?? document.documentElement) as HTMLElement;
+    const metrics = { scrollTop: 0, clientHeight: window.innerHeight, scrollHeight: window.innerHeight + 60 };
+    const saved = Object.keys(metrics).map((k) => [k, Object.getOwnPropertyDescriptor(se, k)] as const);
+    for (const [k, v] of Object.entries(metrics)) Object.defineProperty(se, k, { configurable: true, get: () => (metrics as Record<string, number>)[k] });
+    const cleanup = armMotion(root, "quiet");
+    try {
+      expect(fig.dataset.motionState).toBe("in");
+      expect(last.dataset.motionState).toBe("pending");
+      // No intersection is ever reported; the page scrolls part way, then to its end.
+      metrics.scrollTop = 20;
+      window.dispatchEvent(new Event("scroll"));
+      await new Promise((r) => setTimeout(r, 40));
+      expect(last.dataset.motionState).toBe("pending");
+      metrics.scrollTop = 60;
+      window.dispatchEvent(new Event("scroll"));
+      await new Promise((r) => setTimeout(r, 40));
+      expect(last.dataset.motionState).toBe("in");
+    } finally {
+      cleanup();
+      for (const [k, d] of saved) {
+        if (d) Object.defineProperty(se, k, d);
+        else delete (se as unknown as Record<string, unknown>)[k];
+      }
+      root.remove();
+    }
+  });
+
   test("a contained shell roots the observer on its scroller, after mount", async () => {
     stubObserver();
     stubReduced(false);
@@ -265,5 +305,58 @@ describe.skipIf(clientRenderer === null)("kit motion in a DOM", () => {
     cleanup();
     expect(targets.every((t) => t.dataset.motionState === undefined)).toBe(true);
     expect(container.isConnected).toBe(false);
+  });
+});
+
+describe.skipIf(clientRenderer === null)("count-up when the value changes mid-count", () => {
+  const box = () => ({ width: 64, height: 24, top: 0, left: 0, right: 64, bottom: 24, x: 0, y: 0, toJSON() {} }) as DOMRect;
+
+  test("a new value prop cancels the count: neither the next frame nor stop writes the old value back", async () => {
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    const root = clientRenderer!.createRoot(container);
+    (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
+    await act(async () => root.render(<Figure value="612" count />));
+    const el = container.querySelector<HTMLElement>(".kit-num")!;
+    el.getBoundingClientRect = box;
+    const stop = countUp(el, { duration: 400 });
+    expect(stop).not.toBeNull();
+    await new Promise((r) => setTimeout(r, 40));
+    expect(el.textContent).not.toBe("612");
+    await act(async () => root.render(<Figure value="900" count />));
+    expect(el.textContent).toBe("900");
+    await new Promise((r) => setTimeout(r, 60));
+    expect(el.textContent).toBe("900");
+    expect(el.style.inlineSize).toBe("");
+    stop!();
+    expect(el.textContent).toBe("900");
+    act(() => root.unmount());
+    container.remove();
+  });
+
+  test("stop right after an outside write keeps the new text", () => {
+    const el = document.createElement("span");
+    el.textContent = "1.490.000";
+    el.getBoundingClientRect = box;
+    document.body.appendChild(el);
+    const stop = countUp(el, { duration: 400 })!;
+    el.firstChild!.nodeValue = "2.000.000";
+    stop();
+    expect(el.textContent).toBe("2.000.000");
+    expect(el.style.inlineSize).toBe("");
+    el.textContent = "3";
+    el.remove();
+  });
+
+  test("an unchanged value still lands on its final text when stopped early", () => {
+    const el = document.createElement("span");
+    el.textContent = "612";
+    el.getBoundingClientRect = box;
+    document.body.appendChild(el);
+    const stop = countUp(el, { duration: 400 })!;
+    expect(el.textContent).toBe("0");
+    stop();
+    expect(el.textContent).toBe("612");
+    el.remove();
   });
 });

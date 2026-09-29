@@ -8,7 +8,7 @@ export const LANDING_LEDGER: RecipeEntry[] = [
   "logo-row.row",
   "split.inset",
   "stat-row.lead",
-  "sticky-story.stage-start",
+  "sticky-story.stage-end",
   "bento.lead-right",
   "feature-grid.rows",
   "quote.results",

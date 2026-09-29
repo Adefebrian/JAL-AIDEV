@@ -248,9 +248,11 @@ describe("kit.css layout regressions", () => {
     expect(r!.body).not.toContain("--shell-header-h");
   });
 
-  test("the compare table keeps a readable floor and never splits words", () => {
-    const table = allRules.find((x) => x.selector === ".kit-compare-table");
-    expect(table?.body).toMatch(/min-inline-size\s*:\s*36rem/);
+  test("the compare table keeps a readable floor from 768 and shows one plan below it", () => {
+    const base = allRules.find((x) => x.selector === ".kit-compare-table");
+    expect(base?.body).not.toMatch(/min-inline-size/);
+    expect(css).toMatch(/@media \(min-width: 768px\)\s*\{[^@]*\.kit-compare-table\s*\{\s*min-inline-size\s*:\s*36rem/);
+    expect(allRules.find((x) => x.selector === ".kit-compare-table [data-off]")?.body).toMatch(/display\s*:\s*none/);
     for (const r of allRules.filter((x) => x.selector.includes(".kit-compare-table"))) {
       expect(r.body).not.toMatch(/overflow-wrap\s*:\s*anywhere|word-break\s*:\s*break-all/);
     }

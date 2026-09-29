@@ -170,7 +170,18 @@ export function createWebApp(opts: WebAppOptions): Hono {
     return route ? html(c, route, 200) : next();
   });
 
+  // The vendored fonts (dist/fonts, copied by build.ts) never change under a
+  // name, so they cache for a year; everything else keeps the default.
+  app.use("/fonts/*", async (c, next) => {
+    await next();
+    if (c.res.status === 200 && c.res.headers.get("content-type")?.startsWith("font/")) {
+      c.header("Cache-Control", "public, max-age=31536000, immutable");
+    }
+  });
+
   if (opts.distDir) app.use("/*", serveStatic({ root: opts.distDir }));
+  // A missing font is a 404, never a page shell.
+  app.get("/fonts/*", (c) => c.notFound());
 
   // A real 404 with noindex, in the language of the path (SEO-03).
   app.notFound((c) => html(c, notFoundRoute(c.req.path), 404));

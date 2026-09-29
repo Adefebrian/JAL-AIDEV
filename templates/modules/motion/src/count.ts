@@ -3,7 +3,9 @@
 // kit's parser and formatter are passed in (the module never re-implements
 // them): a plain number counts ("612", "1.490.000", "2.9"), a range or a word
 // stays still. The box width is locked to the final value first, so the unit
-// beside it never moves, and the digits are tabular in kit.css.
+// beside it never moves, and the digits are tabular in kit.css. When the
+// figure's owner writes a new value mid-count (a re-render), the count
+// stops and keeps the new value; it never writes the old one back.
 
 export interface CountableLike {
   value: number;
@@ -34,19 +36,28 @@ export function countTo<C extends CountableLike>(
   // Declared before the tween so a zero-duration tween completing at once
   // finds it.
   let tween: { kill(): void } | null = null;
+  // The text this count last wrote. Anything else in the node means the
+  // owner (React re-rendering the figure with a new value) wrote it, or
+  // replaced the node: the count steps aside and never writes the old
+  // value back over the new one.
+  let written = format(parsed, 0);
+  const takenOver = () => el.firstChild !== node || node.nodeValue !== written;
   const finish = () => {
     if (finished) return;
     finished = true;
     tween?.kill();
-    node.nodeValue = final;
+    if (!takenOver()) node.nodeValue = final;
     el.style.inlineSize = prior;
   };
-  node.nodeValue = format(parsed, 0);
+  node.nodeValue = written;
   tween = engine.tween(state, {
     v: parsed.value,
     duration,
     onUpdate: () => {
-      if (!finished) node.nodeValue = format(parsed, state.v);
+      if (finished) return;
+      if (takenOver()) return finish();
+      written = format(parsed, state.v);
+      node.nodeValue = written;
     },
     onComplete: finish,
   });

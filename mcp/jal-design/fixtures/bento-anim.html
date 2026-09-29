@@ -4,8 +4,15 @@
 .tile{background:#fff;border:1px solid #e3e3e3;border-radius:12px;padding:16px}
 .big{grid-row:span 2;grid-column:span 2}
 .box{width:300px;padding:16px;border:1px solid #e3e3e3;margin-top:24px}
-.rise{animation:rise 60s linear infinite}@keyframes rise{from{transform:translateX(0)}to{transform:translateX(400px)}}
+.window{overflow:hidden}
+.rise{animation:slide 60s linear 1 both}
+.bob{animation:slide 60s linear infinite}
+.track{width:600px;margin:0;white-space:nowrap;animation:slide 60s linear infinite}
+@keyframes slide{from{transform:translateX(0)}to{transform:translateX(400px)}}
 </style></head><body><main><h1>Bento</h1>
 <div class="bento"><div class="tile big">Big</div><div class="tile">A</div><div class="tile">B</div><div class="tile">C</div><div class="tile">D</div><div class="tile">E</div></div>
 <div class="box"><p class="rise">Moving in</p></div>
+<div class="box"><p class="bob">Bobbing, resting box inside</p></div>
+<div class="box" id="open-marquee"><p class="track" id="loose-track">An infinite marquee track wider than its unclipped box</p></div>
+<div class="box window"><p class="track" id="framed-track">An infinite marquee track inside its clipped window</p></div>
 </main></body></html>

@@ -553,18 +553,23 @@ const AUDIT_SCRIPT = `
       var key = cssPath(el);
       if (seen[key]) return;
       seen[key] = true;
-      // A row is a set of controls that sit side by side. A flex column, a
-      // one-column grid, or a stacked mobile form has no row, so only
-      // controls whose boxes share a band of the vertical axis are compared.
+      // A row is a set of controls that sit side by side: their horizontal
+      // ranges do not overlap and their vertical ranges overlap at all (a
+      // labelled field beside its button shares only part of its band, and
+      // that misalignment is the case this rule exists for). A flex column,
+      // a one-column grid, or a stacked mobile form has no row: a control
+      // fully below another, or stacked over the same columns, starts a new
+      // row.
       var rects = controls.map(function (c) { return c.getBoundingClientRect(); });
       var rows = [];
       rects.forEach(function (r) {
         var row = rows.find(function (g) {
-          var o = Math.min(g.bottom, r.bottom) - Math.max(g.top, r.top);
-          return o > 0.5 * Math.min(g.bottom - g.top, r.height);
+          var beside = g.rects.every(function (q) { return Math.min(q.right, r.right) - Math.max(q.left, r.left) <= 0.5; });
+          var shares = g.rects.some(function (q) { return Math.min(q.bottom, r.bottom) - Math.max(q.top, r.top) > 0; });
+          return beside && shares;
         });
-        if (row) { row.rects.push(r); row.top = Math.min(row.top, r.top); row.bottom = Math.max(row.bottom, r.bottom); }
-        else rows.push({ top: r.top, bottom: r.bottom, rects: [r] });
+        if (row) row.rects.push(r);
+        else rows.push({ rects: [r] });
       });
       rows.forEach(function (row) {
         if (row.rects.length < 2) return;
@@ -720,6 +725,23 @@ const AUDIT_SCRIPT = `
 
   // overflow-parent: a child whose border box extends past its parent's content box
   (function checkOverflowParent() {
+    // child's border box, untransformed, relative to parent's border box,
+    // from the offset* layout metrics. Null when they are not comparable.
+    function untransformedBox(parent, child, pcs) {
+      if (!(child instanceof HTMLElement) || !(parent instanceof HTMLElement)) return null;
+      var left, top;
+      if (child.offsetParent === parent) {
+        // offsetLeft is measured from the parent's padding edge.
+        left = child.offsetLeft + (parseFloat(pcs.borderLeftWidth) || 0);
+        top = child.offsetTop + (parseFloat(pcs.borderTopWidth) || 0);
+      } else if (child.offsetParent && child.offsetParent === parent.offsetParent) {
+        left = child.offsetLeft - parent.offsetLeft;
+        top = child.offsetTop - parent.offsetTop;
+      } else {
+        return null;
+      }
+      return { left: left, right: left + child.offsetWidth, top: top, bottom: top + child.offsetHeight };
+    }
     Array.prototype.forEach.call(document.querySelectorAll("*"), function (parent) {
       if (isOverlayExcluded(parent)) return;
       var pcs = getComputedStyle(parent);
@@ -744,9 +766,29 @@ const AUDIT_SCRIPT = `
         if (isOverlayExcluded(child)) return;
         var ccs = getComputedStyle(child);
         if (ccs.position === "fixed") return;
-        // An element mid-entrance (a running animation or transition) is not
-        // at its resting box yet; measure it once it settles.
-        if (child.getAnimations && child.getAnimations().some(function (an) { return an.playState === "running"; })) return;
+        // An element mid-entrance (a finite running animation or transition)
+        // is not at its resting box yet; measure it once it settles. An
+        // infinite animation (a marquee, a bob, a pulse) never settles, so it
+        // is measured by its untransformed layout box instead: offsetLeft and
+        // offsetWidth ignore transforms, set against the parent's content box.
+        var running = child.getAnimations ? child.getAnimations().filter(function (an) { return an.playState === "running"; }) : [];
+        if (running.some(function (an) { return !an.effect || an.effect.getComputedTiming().endTime !== Infinity; })) return;
+        if (running.length) {
+          var box = untransformedBox(parent, child, pcs);
+          if (!box) return;
+          // A clipped window on that axis (overflow hidden or clip) is the
+          // marquee's own frame: the track is meant to run past it.
+          var clipX = pcs.overflowX === "hidden" || pcs.overflowX === "clip";
+          var clipY = pcs.overflowY === "hidden" || pcs.overflowY === "clip";
+          if (!skipX && !clipX && (box.left < blw + plp - 1 || box.right > parent.offsetWidth - brw - prp + 1)) {
+            pushV("overflow-parent", cssPath(child), "animated child untransformed x[" + box.left + "," + box.right + "] exceeds parent content x[" + (blw + plp).toFixed(1) + "," + (parent.offsetWidth - brw - prp).toFixed(1) + "] (parent-relative)");
+            return;
+          }
+          if (!skipY && !clipY && (box.top < btw + ptp - 1 || box.bottom > parent.offsetHeight - bbw - pbp + 1)) {
+            pushV("overflow-parent", cssPath(child), "animated child untransformed y[" + box.top + "," + box.bottom + "] exceeds parent content y[" + (btw + ptp).toFixed(1) + "," + (parent.offsetHeight - bbw - pbp).toFixed(1) + "] (parent-relative)");
+          }
+          return;
+        }
         var crect = child.getBoundingClientRect();
         if (!skipX && (crect.left < contentLeft - 0.5 || crect.right > contentRight + 0.5)) {
           pushV("overflow-parent", cssPath(child), "child x[" + crect.left.toFixed(1) + "," + crect.right.toFixed(1) + "] exceeds parent content x[" + contentLeft.toFixed(1) + "," + contentRight.toFixed(1) + "]");
@@ -1069,12 +1111,7 @@ const AUDIT_SCRIPT = `
       if (parent.closest(TIDY_SKIP) || isOverlayExcluded(parent) || !isVisible(parent)) return;
       var pd = getComputedStyle(parent).display;
       if (pd === "inline" || pd === "contents") return;
-      // A grid whose items span different tracks (a bento) keeps one gap by
-      // construction; the space between spanned tiles is not a gap to compare.
-      if (pd === "grid" || pd === "inline-grid") {
-        var sizes = Array.prototype.map.call(parent.children, function (c) { var r = c.getBoundingClientRect(); return [r.width, r.height]; });
-        if (sizes.some(function (s) { return Math.abs(s[0] - sizes[0][0]) > 1 || Math.abs(s[1] - sizes[0][1]) > 1; })) return;
-      }
+      var isGrid = pd === "grid" || pd === "inline-grid";
       var seq = Array.prototype.filter.call(parent.children, function (c) {
         return !NON_LAYOUT_TAGS[c.tagName] || c.tagName === "BUTTON" || c.tagName === "IMG" || c.tagName === "INPUT" || c.tagName === "SELECT";
       }).filter(function (c) { return getComputedStyle(c).display !== "none"; });
@@ -1087,6 +1124,40 @@ const AUDIT_SCRIPT = `
         if (pad <= 0) return; // a flush media tile or a ruled stat, not a padded card
         if (gap > pad + 0.5 && (!prox || gap - pad > prox.gap - prox.pad)) prox = { gap: gap, pad: pad, kind: sig(a) };
       }
+      // A grid spaces its items with gap alone. A margin on an item adds
+      // space the gap does not own, so any in-flow tile of the grid (an item
+      // whose kind repeats in it) with a margin other than auto is a drift,
+      // whatever its neighbors.
+      if (isGrid) {
+        var kinds = {};
+        seq.forEach(function (c) { if (c.classList.length || !GENERIC_TAGS[c.tagName]) kinds[sig(c)] = (kinds[sig(c)] || 0) + 1; });
+        seq.forEach(function (c) {
+          if (!(kinds[sig(c)] > 1) || !measurable(c)) return;
+          var ccs = getComputedStyle(c);
+          var typed = c.computedStyleMap ? c.computedStyleMap() : null;
+          var bad = [];
+          ["Top", "Right", "Bottom", "Left"].forEach(function (side) {
+            var v = parseFloat(ccs["margin" + side]) || 0;
+            if (Math.abs(v) <= 0.5) return;
+            var t = typed && typed.get("margin-" + side.toLowerCase());
+            if (t && String(t) === "auto") return;
+            bad.push("margin-" + side.toLowerCase() + " " + +v.toFixed(1) + "px");
+          });
+          if (bad.length) pushV("gap-consistency", cssPath(c), "grid item carries " + bad.join(", ") + "; a grid spaces its items with gap alone");
+        });
+      }
+      // A grid item's track span, from its computed placement: "span N" on
+      // either edge, or the distance between two numbered lines.
+      function spanOf(start, end) {
+        var m = /span (\\d+)/.exec(end) || /span (\\d+)/.exec(start);
+        if (m) return +m[1];
+        var s0 = parseInt(start, 10), e0 = parseInt(end, 10);
+        return isFinite(s0) && isFinite(e0) && e0 > s0 ? e0 - s0 : 1;
+      }
+      function spans(el) {
+        var cs = getComputedStyle(el);
+        return [spanOf(cs.gridColumnStart, cs.gridColumnEnd), spanOf(cs.gridRowStart, cs.gridRowEnd)];
+      }
       for (var i = 0; i + 1 < seq.length; i++) {
         var a = seq[i], b = seq[i + 1];
         // A kind is a tag plus classes; bare wrappers (div, section) are not one.
@@ -1096,14 +1167,22 @@ const AUDIT_SCRIPT = `
         var vov = Math.min(ra.bottom, rb.bottom) - Math.max(ra.top, rb.top);
         var hov = Math.min(ra.right, rb.right) - Math.max(ra.left, rb.left);
         var key = sig(a);
+        // In a bento, a tile spanning several tracks beside a one-track tile
+        // keeps the grid gap by construction, but its edges are not the
+        // neighbor's edges, so the pair is not a gap to compare. Its gap is
+        // still the space between two cards, so proximity reads it.
+        var sa = isGrid ? spans(a) : null, sb = isGrid ? spans(b) : null;
+        var spanned = isGrid && (sa[0] > 1 || sa[1] > 1 || sb[0] > 1 || sb[1] > 1) && (sa[0] !== sb[0] || sa[1] !== sb[1]);
         if (vov >= 0.5 * Math.min(ra.height, rb.height) && hov <= 1) {
           var gx = rb.left >= ra.right - 1 ? rb.left - ra.right : ra.left - rb.right;
-          add(key + "|x", gx);
+          if (!spanned) add(key + "|x", gx);
           note(a, b, gx);
         } else if (hov >= 0.5 * Math.min(ra.width, rb.width) && vov <= 1) {
           var gy = rb.top >= ra.bottom - 1 ? rb.top - ra.bottom : ra.top - rb.bottom;
-          add(key + "|y", gy);
+          if (!spanned) add(key + "|y", gy);
           note(a, b, gy);
+        } else if (spanned) {
+          continue;
         } else if (rb.top >= ra.bottom - 1) {
           // A wrapped row break: measure b against the nearest earlier item above it.
           var above = -Infinity;

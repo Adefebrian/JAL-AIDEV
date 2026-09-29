@@ -114,11 +114,49 @@ The short version: one continuous world, never a slideshow of crossfading `<sect
 Every JAL page gets motion from the kit first (`jal-design-system` `references/identity.md` section 7), at two costs:
 
 - **Kit default (T0 and T1, zero dependencies, `packages/ui/src/kit/motion.ts`).** Compositions carry `data-motion` (`rise`, `item`, `count`); `Page motion` arms the page after mount with one IntersectionObserver rooted on the real scroller (`getScroller`). Entrances are opacity plus a 12px rise on `--ease-standard` at `--dur-400`, played once, with `--stagger-item` capped at the sixth item; the pending state is opacity only (the box never moves), and the rise is an animation that starts at reveal. StatRow, Bento stat, and Quote results figures count up once at `--dur-600` with their width locked. No JavaScript, a failed bundle, no IntersectionObserver, and reduced motion all render the finished page.
-- **Motion module (T2 and T3, `templates/modules/motion`, opt-in).** `SmoothScroll` is Lenis on the one GSAP clock (gsap.ticker drives `lenis.raf`, `lagSmoothing(0)`, `lenis.on("scroll", ScrollTrigger.update)`), started after mount on window or a contained shell's scroller, destroyed on unmount, off under reduced motion and on touch-first devices unless the page opts in, with in-page anchors through `lenis.scrollTo` minus the header. `KitMotion tier` takes over the kit's entrances (one owner, `data-motion-engine`) and adds SplitText line reveals (tier 2), a scrubbed StickyStory, a drift on bleed image or canvas media, and the SpecTable rail rows in order (tier 3, 1024 and up). Budget: about 61 KB gzip with its dependencies, lazy per route.
+- **Motion module (`templates/modules/motion`, copied into `packages/motion`).** Two pieces. `SmoothScroll` is Lenis, the page's one smooth scroll; `KitMotion tier` is the GSAP upgrade of the kit's own motion. Pinned: `lenis` 1.3.26, `gsap` 3.15.0, `@gsap/react` 2.1.2, all peers fine on React ~19.3. Budget: Lenis, gsap core, ScrollTrigger, and SplitText are 54.3 KB gzip together (Lenis 5.5, core 28.1, ScrollTrigger 17.6, SplitText 3.0); the whole module with CustomEase and its own 5.3 KB is 63.6 KB. Load it lazily per route, so product screens never pay for it. The README holds the file map, the copy steps, the recipe map (Magic UI, Animata, and OriginKit-style recipes to kit components), and the browser proof.
 
-**Lenis is the default smooth scroll for marketing and immersive pages.** Never GSAP ScrollSmoother, never both, never a second smoother or `scrollerProxy`. Product UI keeps native scroll.
+**Lenis is the default smooth scroll for marketing and immersive pages.** Wrap their sections in `<SmoothScroll>` whatever the tier. Never GSAP ScrollSmoother, never both, never a second smoother or `scrollerProxy` (Lenis moves the native scroll position). Product UI keeps native scroll.
 
-**How JEV picks per section.** `motion.intensity` (0 to 3) sets the page's `Page motion` level (`none` for 0, `quiet` for 1, `staged` for 2) and, when any section reaches 2 or 3, the module and its `KitMotion tier`. `motion.choreography` names the pattern: `reveal` is the kit default; `stagger_sequence` is tier 2 (items and split lines); `scrub` and `pinned_sequence` are tier 3 and map to the StickyStory scrub over the kit's own pin (`motion.pin` still gates any other pin). Which composition gets which default is the table in the motion module's README.
+**The one-clock wiring** (`clock.ts`, the only place Lenis meets GSAP; `skills/jal-immersive/references/scroll-choreography.md` section 8):
+
+```ts
+const lenis = new Lenis({ wrapper, content, autoRaf: false, anchors: false, prevent });
+lenis.on("scroll", ScrollTrigger.update);                     // triggers read Lenis's scroll
+const raf = (time: number) => lenis.raf(time * 1000);         // seconds to ms
+gsap.ticker.add(raf, false, true);                            // prioritized: scroll first in each tick
+gsap.ticker.lagSmoothing(0);                                  // a long frame never stalls the scroll
+// unmount: off the scroll listener, gsap.ticker.remove(raf), lenis.destroy(), default lag smoothing back
+```
+
+- **After mount.** SmoothScroll renders a leaf before the sections, so its layout effect runs before theirs; `getScroller()` is read there, never at module top level. Nothing runs on the server: the markup is one wrapper div (`.motion-root`).
+- **Document shell** (`AppShell scroll="document"`, the marketing default): wrapper `window`, content the root element, the `lenis` classes on `html`.
+- **Contained shell** (`scroll="contained"`): wrapper `main.shell-main` from `getScroller()`, content its single child (SmoothScroll's wrapper), and `ScrollTrigger.defaults({ scroller })` set before any trigger, even when Lenis stays off. Unmount restores `window`.
+- **Touch-first** (coarse pointer and no hover) keeps native scroll unless the page passes `touch="smooth"` (then `syncTouch`), only for a pinned story that must not overshoot on touch.
+- **Anchors.** Same-page `#id` links go through `lenis.scrollTo` with the sticky header's height (`--shell-header-h`, measured) as the offset, less the `html` scroll-padding Lenis already subtracts, on `--dur-600` and the standard curve, then focus moves to the target (`tabindex="-1"` when needed, `preventScroll`). A contained shell's header sits outside the scroller, so its offset is 0.
+- **Inner scrollers** (a code block, a map, a carousel, a table's `.scroll-x`) carry `data-lenis-prevent` and keep native scrolling; open dialogs and text areas are exempt on their own. While a modal is open, call `useLenisStop(open)`.
+- **Refresh.** One batched `lenis.resize()` plus `ScrollTrigger.refresh()` per frame on `document.fonts.ready`, later font loads, a resize of the scroller, and any change in the content's height. Call `useScrollRefresh()` for a section that swaps media of the same height or mounts late.
+
+**What each KitMotion upgrade does, and the JEV answer that turns it on.** `motion.intensity` (0 to 3, per showcase section) sets `Page motion` (`none`, `quiet`, `staged`) and the page's `KitMotion tier` (the highest section wins); `motion.choreography` names the pattern.
+
+| Upgrade | Kit hook | On when | Tier |
+|---|---|---|---|
+| Entrances on `ScrollTrigger.batch`, once; StatRow, Bento, and Quote figures count up on the ticker | `data-motion="rise"`, `"count"` | intensity 1, choreography `reveal` | 1 |
+| Grid stagger at `--stagger-item`, capped at the sixth item | `data-motion="item"` (FeatureGrid, PricingTable, Bento, StatRow) | intensity 2, choreography `stagger_sequence` | 2 |
+| SplitText masked line reveal on display headlines and section headings that scroll in; the heading keeps its box and reverts to plain text when the lines land; the first viewport paints finished for LCP | `.kit-display`, `.kit-head > .kit-heading`, Split and CTABand headings | intensity 2, choreography `stagger_sequence` | 2 |
+| StickyStory frames scrubbed to scroll progress over the kit's own pin, in step with the kit's active step | `.kit-story` | intensity 3, choreography `scrub` or `pinned_sequence`, 1024 and up | 3 |
+| SpecTable rail rows in order; a GSAP pin only when an ancestor's overflow breaks CSS sticky (it restores the kit's own sticky, so no extra `motion.pin` call) | `.kit-spec-sticky` | intensity 3, choreography `pinned_sequence`, 1024 and up | 3 |
+| Scroll drift on bleed image, video, or canvas media, never on a live DOM view | Split `variant="bleed"` | intensity 3, choreography `scrub`, 1024 and up | 3 |
+
+Any other pin, horizontal track, or camera path stays gated by `motion.pin` and is page-owned, built on the module's `gsap` and `ScrollTrigger` exports inside `gsap.matchMedia`. At most one tier 3 section per page.
+
+**The reduced-motion contract** (proven in the browser with `Emulation.setEmulatedMedia`, at load and switched mid-session):
+
+- Under `prefers-reduced-motion: reduce`, Lenis is never constructed, no GSAP plugin is registered, no ticker callback is added, and no trigger is created. Scroll is native and anchors jump natively below the header (the `html` scroll-padding).
+- KitMotion creates nothing and hides nothing: every heading unsplit, every figure at its exact text, every block at full opacity.
+- Switched on mid-session, Lenis is destroyed at once, its ticker callback removed, and the motion branch reverts (tweens killed, inline styles cleared, splits reverted, counts written final). Switched off again, one fresh Lenis starts.
+- Pending states are opacity only, set by script inside the motion branch, never visibility and never a stylesheet, so assistive tech still reads them, and no-JS or a failed bundle renders the finished page. Content on screen at setup paints finished.
+- A page-owned trigger checks the same query before it is created, or it restarts the loop the contract just stopped. `ui_audit`'s `reduced-motion` and `stuck-reveal` rules check both.
 
 ## 5. Accessibility
 

@@ -1,0 +1,12 @@
+<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<style>body{margin:0;font:16px system-ui;background:#fafaf9;color:#1b1b1b}main{padding:24px;max-width:960px;margin:0 auto}
+h1,h2,p{margin:0}
+.four{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-top:24px}
+.tile{background:#fff;border:1px solid #e3e3e3;border-radius:12px;padding:16px}
+#shifted{margin-left:24px}
+.three{display:grid;grid-template-columns:repeat(3,1fr);gap:40px;align-items:start;margin-top:24px}
+.chip{background:#fff;border:1px solid #e3e3e3;border-radius:12px;padding:8px}
+</style></head><body><main><h1>Grids</h1>
+<div class="four" id="margin-grid"><div class="tile">A</div><div class="tile" id="shifted">B</div><div class="tile">C</div><div class="tile">D</div></div>
+<div class="three" id="loose-grid"><div class="chip">One</div><div class="chip">Two<br>with a second line</div><div class="chip">Three</div></div>
+</main></body></html>

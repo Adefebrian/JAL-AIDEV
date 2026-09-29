@@ -16,7 +16,7 @@
 // Inline `backticks` in any body text render as inline code (see
 // render.ts richText), so copy can name a file or a command plainly.
 
-export const PLUGIN_VERSION = "v0.5.0";
+export const PLUGIN_VERSION = "v0.5.1";
 
 export type NavItem = {
   id: string;

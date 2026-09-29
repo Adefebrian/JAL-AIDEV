@@ -52,7 +52,9 @@ describe.skipIf(staticRenderer === null)("AppShell markup", () => {
     expect(html).toMatch(/^<div class="shell"[^>]*><a class="shell-skip" href="#main">Skip to content<\/a><header class="shell-header">/);
     expect(html).toContain('<main id="main" class="shell-main">');
     expect(html.match(/<nav /g)?.length).toBe(1);
-    expect(html).toMatch(/<header class="shell-header"><div class="shell-bar"><p class="shell-title">Demo<\/p><nav class="shell-nav" aria-label="Primary">/);
+    expect(html).toMatch(
+      /<header class="shell-header"><div class="shell-bar"><p class="shell-title">Demo<\/p><span class="shell-mark" aria-hidden="true">Demo<\/span><nav class="shell-nav" aria-label="Primary"><div class="shell-dock"><div class="shell-nav-track">/,
+    );
     // Every destination is one link, and exactly one is current.
     expect(html.match(/class="shell-nav-item"/g)?.length).toBe(3);
     expect(html.match(/aria-current="page"/g)?.length).toBe(1);
@@ -70,7 +72,9 @@ describe.skipIf(staticRenderer === null)("AppShell markup", () => {
         expect(html.match(/href="\/" class="shell-nav-item" aria-current="page"/g)?.length).toBe(1);
         // The one primary action: a header button and the split segment.
         expect(html).toContain('<a class="btn shell-cta" href="#buy">Buy</a>');
-        expect(html).toContain('<a class="shell-nav-action" href="#buy">');
+        expect(html).toContain('<a class="shell-nav-action" href="#buy" aria-label="Buy">');
+        // One sliding indicator per track, hidden from assistive tech.
+        expect(html.match(/<span class="shell-ind" aria-hidden="true"><\/span>/g)?.length).toBe(1);
       });
     }
   }
@@ -150,6 +154,20 @@ describe.skipIf(staticRenderer === null)("AppShell markup", () => {
   test("a wordmark keeps the title as its accessible name, and brandHref makes it a link", () => {
     const html = render(shell("document", { brand: <svg viewBox="0 0 10 2" />, brandHref: "/" }));
     expect(html).toContain('<a class="shell-title shell-brand" href="/" aria-label="Demo"><svg');
+    // The masthead's compact mark repeats the wordmark out of the tab order
+    // and the accessibility tree, so the brand is named and reached once.
+    expect(html).toContain('<a class="shell-mark" href="/" aria-hidden="true" tabindex="-1"><svg');
+  });
+
+  test("data-icons marks a shell whose destinations carry icons", () => {
+    expect(render(shell())).not.toContain("data-icons");
+    const html = render(
+      <AppShell title="Demo" destinations={destinations.map((d) => ({ ...d, icon: <svg /> }))} current="home">
+        <p>x</p>
+      </AppShell>,
+    );
+    expect(html).toContain('data-icons=""');
+    expect(html.match(/<span class="shell-nav-icon"><svg><\/svg><\/span>/g)?.length).toBe(3);
   });
 });
 
@@ -224,6 +242,58 @@ describe("AppShell CSS", () => {
       }
       for (let i = 1; i <= 13; i++) expect(hits.get(`D${i}`)).toBe(1);
     }
+  });
+
+  test("contained mode resets the condense knobs on the shell, after every bundle", () => {
+    // A bundle computes --_hd-row2-cond on the direction element against the
+    // document header height; a contained shell must never move its row, so
+    // the knobs (not the transforms) are reset on the shell itself, in a rule
+    // that sits after every bundle and matches with the same specificity as
+    // .shell[data-header], so it wins by order.
+    const at = block.indexOf('\n.shell[data-scroll="contained"] {');
+    expect(at).toBeGreaterThan(0);
+    const rule = block.slice(at, block.indexOf("}", at));
+    expect(rule).toContain("--_hd-title-cond: none;");
+    expect(rule).toContain("--_hd-row2-cond: none;");
+    expect(rule).toContain("--_hd-title-fade: 0;");
+    expect(rule).toContain("--shell-header-h: var(--_hd-hc);");
+    for (const m of block.matchAll(/\.shell\[data-(header|bar)="\w+"\]/g)) expect(m.index!).toBeLessThan(at);
+    // The scrolled transforms read the knobs; none is hard-coded.
+    for (const m of block.matchAll(/\.shell\[data-scrolled\][^{]*\{([^}]*)\}/g)) {
+      const t = m[1].match(/transform:\s*([^;]+);/);
+      if (t) expect(t[1]).toMatch(/^var\(--_hd-/);
+    }
+  });
+
+  test("every knob the rules read is set by every bundle of its kind", () => {
+    const bundles = [...block.matchAll(/([^{}]*\.shell\[data-(header|bar)="(\w+)"\][^{]*)\{([^}]*)\}/g)];
+    const rules = block.replace(/\/\*[\s\S]*?\*\//g, "");
+    for (const [prefix, kind] of [["_hd", "header"], ["_nb", "bar"]] as const) {
+      const own = bundles.filter((b) => b[2] === kind);
+      expect(own.length).toBe(3);
+      const read = new Set([...rules.matchAll(new RegExp(`var\\(--${prefix}-([\\w-]+)`, "g"))].map((m) => m[1]));
+      for (const b of own) {
+        const set = new Set([...b[4].matchAll(new RegExp(`--${prefix}-([\\w-]+):`, "g"))].map((m) => m[1]));
+        // Labels live in their own bundle pair.
+        for (const knob of read) if (!knob.startsWith("lbl")) expect([b[3], knob, set.has(knob)]).toEqual([b[3], knob, true]);
+      }
+    }
+  });
+
+  test("chrome radius is concentric and capped, and compaction lives only below 640px under .shell-motion", () => {
+    expect(block).toContain("--_hd-r: min(var(--radius-16), var(--kit-radius-card, var(--radius-12)) + var(--space-4px));");
+    expect(block).toContain("--_hd-inner-r: max(var(--radius-4) / 2, var(--_hd-r) - var(--_hd-pad));");
+    expect(block).toMatch(/--_nb-r: min\(var\(--space-20px\), var\(--kit-radius-card, var\(--radius-12\)\) \+ var\(--space-8px\)\);/);
+    const mobile = block.indexOf("@media (max-width: 639.98px)");
+    expect(mobile).toBeGreaterThan(0);
+    const flat = block.replace(/@(media|supports|starting-style)[^{]*\{/g, "").replace(/\/\*[\s\S]*?\*\//g, "");
+    const compact = [...flat.matchAll(/([^{}]+)\{[^}]*\}/g)].filter((m) => m[1].includes("[data-compact]"));
+    expect(compact.length).toBeGreaterThan(0);
+    for (const m of compact) {
+      for (const sel of m[1].trim().split(/,\s*(?![^(]*\))/)) expect(sel.trim()).toMatch(/^(\.shell)?\.shell-motion\[data-compact\]/);
+    }
+    // Every compaction rule sits inside the below-640px block.
+    for (const m of block.matchAll(/\[data-compact\][^{]*\{/g)) expect(m.index!).toBeGreaterThan(mobile);
   });
 
   test("contained mode keeps the viewport grid with an inner scroller", () => {
@@ -432,7 +502,9 @@ describe.skipIf(clientRenderer === null)("AppShell in a DOM", () => {
     const warn = spyOn(console, "warn").mockImplementation(() => {});
     restores.push(() => warn.mockRestore());
     const many = await mount(<AppShell title="Demo" destinations={seven} current="a"><p>x</p></AppShell>);
-    expect(warn.mock.calls.some((c) => String(c[0]).includes("7 destinations") && String(c[0]).includes("More"))).toBe(true);
+    expect(
+      warn.mock.calls.some((c) => String(c[0]).includes("7 destinations") && String(c[0]).includes("rejects") && String(c[0]).includes("More")),
+    ).toBe(true);
     many.cleanup();
     warn.mockClear();
     const few = await mount(<AppShell title="Demo" destinations={destinations.slice(0, 2)} current="home"><p>x</p></AppShell>);
