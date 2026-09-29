@@ -25,6 +25,7 @@ import {
   CONSTITUTION,
   DESIGN_SYSTEM,
   DOCS,
+  SEARCH,
   FAQ,
   FOOTER,
   HERO,
@@ -94,6 +95,7 @@ const ALL_SECTIONS: { id: string; label: string }[] = [
   { id: "immersive", label: SECTION_MARKERS.immersive },
   { id: "ui-check", label: SECTION_MARKERS.uiCheck },
   { id: "docs", label: SECTION_MARKERS.docs },
+  { id: "search", label: SECTION_MARKERS.search },
   { id: "study-cases", label: SECTION_MARKERS.studyCases },
   { id: "faq", label: SECTION_MARKERS.faq },
 ];
@@ -318,6 +320,14 @@ function renderUiCheck(): string {
 </section>`;
 }
 
+function renderSearch(): string {
+  return `
+<section class="section" id="search" lang="id">
+  ${sectionHead(SEARCH.title, SEARCH.lead)}
+  ${rows(SEARCH.points)}
+</section>`;
+}
+
 function renderDocs(): string {
   return `
 <section class="section" id="docs">
@@ -417,6 +427,7 @@ export function renderPage(): string {
     renderImmersive(),
     renderUiCheck(),
     renderDocs(),
+    renderSearch(),
     renderStudyCases(),
     renderFaq(),
     "</main>",

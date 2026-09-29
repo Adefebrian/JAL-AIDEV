@@ -90,7 +90,7 @@ Non-technical sections use plain words, no jargon, and short paragraphs: what it
       - Trigger the Coolify deploy for application `r3pyjc6qczm9y7ouithk3b0m` on `https://deploy.jalgroup.id/api/v1/deploy?uuid=r3pyjc6qczm9y7ouithk3b0m&force=false`, with `Authorization: Bearer $COOLIFY_API_TOKEN` taken only from the environment variable.
       - Never read the token from any file. Never print it or log it.
       - Poll `/api/v1/deployments/<deployment_uuid>` until it is `finished` or `failed`, then fetch `https://malasbaca.jalgroup.id/` and expect a response (a login page is fine).
-      - If `COOLIFY_API_TOKEN` is not set, stop after the merge and report "deploy skipped: set COOLIFY_API_TOKEN".
+      - If `COOLIFY_API_TOKEN` is not set, ask the person running `/jal-docs` (Brian or a teammate) for it. The preferred path is setting it in the environment for the session (`export COOLIFY_API_TOKEN=...` in their terminal, or in their Claude Code env), then continuing. If they paste it in chat instead, use it only for this one deploy call: never write it to a file, a log, a commit, or the report, and never echo it. If nobody provides it, stop after the merge and report "deploy skipped: no Coolify token".
       - A failed deploy is reported with its status. It is not retried blindly.
    6. Never push directly to `main`. The only path into `main` is this run's own squash-merged PR.
 10. **Report.** Mode (create or update), sections written or updated, claims verified or removed, every JEV decision, the build result, and the PR URL.

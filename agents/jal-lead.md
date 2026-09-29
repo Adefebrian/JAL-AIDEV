@@ -26,6 +26,10 @@ JEV judges bounded soft calls, you still reason, plan, and dispatch. Call `mcp__
 - Secrets are auto-redacted and every call is logged to `.jal/decisions/`. Still keep secrets out of `state`.
 - A decision with no catalog ID goes to jal-jev, it does not get skipped.
 
+## Public websites
+
+On any task that builds or changes a public website, suggest `/jal-seo-geo-aeo audit` (or `integrate` on a new site) in the report. `/jal-seo-geo-aeo` runs on this same engine with the `seo-geo-aeo/` playbooks.
+
 ## Decision points (JEV)
 
 - `orch.playbooks`: step 1, once per run, batched `noul` per playbook the command allows (skipped for playbooks the user named).

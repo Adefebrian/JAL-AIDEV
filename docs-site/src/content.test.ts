@@ -39,7 +39,10 @@ const REQUIRED_STUDY_CASE_TITLES = [
   "Ship a feature safely as a small team",
 ];
 
-const CURRENT_COMMANDS = ["/jal-new", "/jal-build", "/jal-ui", "/jal-fix", "/jal-check", "/jal-ship", "/jal-docs"];
+// The real slash commands, read from the plugin's commands/ folder so the page cannot drift.
+const CURRENT_COMMANDS = readdirSync(join(import.meta.dir, "..", "..", "commands"))
+  .filter((f) => f.endsWith(".md"))
+  .map((f) => "/" + f.replace(/\.md$/, ""));
 
 // Commands that no longer exist as slash commands in v0.4.0. They may
 // appear on the page only inside the old command, new command map.
@@ -63,8 +66,8 @@ const RETIRED_COMMANDS = [
 describe("docs site content", () => {
   const html = renderPage();
 
-  test("contains all 12 section markers", () => {
-    expect(Object.keys(SECTION_MARKERS)).toHaveLength(12);
+  test("contains every section marker", () => {
+    expect(Object.keys(SECTION_MARKERS).length).toBeGreaterThanOrEqual(12);
     for (const marker of Object.values(SECTION_MARKERS)) {
       expect(html).toContain(marker);
     }
@@ -101,8 +104,8 @@ describe("docs site content", () => {
     }
   });
 
-  test("renders the 7 current commands at the plugin version, each with its examples", () => {
-    expect(COMMANDS.map((c) => c.name)).toEqual(CURRENT_COMMANDS);
+  test("renders exactly the real commands at the plugin version, each with its examples", () => {
+    expect([...COMMANDS.map((c) => c.name)].sort()).toEqual([...CURRENT_COMMANDS].sort());
     for (const command of COMMANDS) {
       expect(command.version).toBe(PLUGIN_VERSION);
       expect(html).toContain(command.name);

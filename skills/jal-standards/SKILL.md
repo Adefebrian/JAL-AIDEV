@@ -81,6 +81,10 @@ This is the single source of truth for how JAL projects are built. Every other s
 - Design-system integration is knowledge-only. Never add Astryx, Material Web, or Carbon runtime packages (`@astryxdesign/*`, `@material/web`, `@carbon/react`, `@carbon/styles`) or their toolchains (StyleX, Lit, Sass) without Brian's explicit yes. They are merged, as knowledge, into one JAL design system, JAL Core (see jal-design-system): Astryx is the foundation, Carbon the data and form layer. Never pick a different design system per product.
 - designmd is supplementary only: read tools only, never upload or delete. Every kit is JEV-screened and law-filtered before it may influence anything.
 
+## Search (SEO, AEO, GEO)
+
+- Public websites use `/jal-seo-geo-aeo`: audit, integrate, boost, submit, monitor. It follows the standard in `seo-geo-aeo/standard.md`. Its hard law: verified facts only, one text for people and machines, one source per fact, language as a URL, no self-serving review markup, verbatim quotes only, measured metadata, secrets in env, no SERP scraping, and outward submissions confirmed in chat (IndexNow on production boot is the standing exception).
+
 ## Backend / Security
 
 - Ship automatic security hardening on every project: secure HTTP headers, Redis-backed rate limiting, a CORS allowlist, input validation, secrets loaded from env only, and dependency auditing.

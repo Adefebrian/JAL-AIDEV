@@ -51,7 +51,7 @@ Use the full name `jal-aidev@jal-aidev-marketplace`; the short name `jal-aidev` 
 
 ## Commands
 
-Seven commands. Each one runs the whole crew on the JAL orchestration engine: it plans, splits the work across specialists that run in parallel, lets JEV make the judgment calls, checks everything, and fixes what fails before calling it done.
+Eight commands. Each one runs the whole crew on the JAL orchestration engine: it plans, splits the work across specialists that run in parallel, lets JEV make the judgment calls, checks everything, and fixes what fails before calling it done.
 
 | Command | What it is for | What it covers |
 |---------|----------------|----------------|
@@ -61,7 +61,8 @@ Seven commands. Each one runs the whole crew on the JAL orchestration engine: it
 | `/jal-fix` | Fix a bug properly | Reproduce, root cause, a failing test, the fix, and proof. Several suspects are checked in parallel |
 | `/jal-check` | One PASS or FAIL | `quick` (rules, tests, UI check), `full` (plus security hardening, boot test, ship call), and `deep` (plus a deep audit and a red team versus blue team pentest). JEV picks the depth if you do not |
 | `/jal-ship` | Get it out | `pr` (pull request), `release` (version, changelog, tag), `deploy` (deploy.jalgroup.id with a health check), and `rollback`. The full check runs first; it never deploys unless you say so |
-| `/jal-docs` | Documentation | Technical and non-technical docs written from the code, with every claim checked. It opens a PR on JAL-Group/malasbaca, then merges and deploys JAL Docs automatically when every check passes (needs `COOLIFY_API_TOKEN` in your environment for the deploy) |
+| `/jal-seo-geo-aeo` | Search: SEO, AEO, and GEO | `audit` (scores 0 to 100 with evidence), `integrate` (installs the full search layer: facts, prerender, sitemaps, llms files, structured data, IndexNow, crawler log), `boost` (raises the scores and proves the delta), `submit` (IndexNow, Bing, Yandex, always confirmed first), and `monitor` (crawlers, index coverage, performance) |
+| `/jal-docs` | Documentation | Technical and non-technical docs written from the code, with every claim checked. It opens a PR on JAL-Group/malasbaca, then merges and deploys JAL Docs automatically when every check passes (it asks you or your team for the Coolify token at deploy time) |
 
 The old commands still exist as internal playbooks inside `skills/jal-orchestration/references/`, so nothing they did is lost.
 
@@ -84,7 +85,7 @@ The old commands still exist as internal playbooks inside `skills/jal-orchestrat
 - `jal-design-system` also holds the craft floor (`references/craft.md`, from impeccable) and the visual directions with the seeded direction pick (`references/directions.md`, from impeccable and refero), so every product gets a fresh, deliberate look instead of the obvious first idea.
 - `jal-immersive`: all motion and 3D in one place: GreenSock's eight official GSAP skills (MIT) with the JAL layer, Lenis, the JAL frame core, and the immersive and 3D core. Three.js (WebGL and WebGPU/TSL), React Three Fiber and drei, shaders, particles, clean-room effects (rain, puddles, sand, grass, ocean), performance tiers, poster-first loading, GSAP and Lenis scroll choreography, the JAL frame core for live product demos, and the noyzzi catalogue. JEV picks and combines recipes per section.
 - `jal-motion`: restrained product motion plus richer showcase choreography, and 167 component motion recipes from Magic UI and Animata (plain CSS and Tailwind), always with reduced-motion support.
-- `jal-jev`: the decision catalog, 47 standard decisions (orchestration, UI, motion, immersive, backend, security, QA, review, memory, docs) with their exact questions and thresholds.
+- `jal-jev`: the decision catalog, 51 standard decisions (orchestration, UI, motion, immersive, backend, security, QA, review, memory, docs, search) with their exact questions and thresholds.
 - `jal-frontend-rules`: the CSS recipes that keep UI tidy.
 
 - `jal-orchestration`: the one engine behind every command: waves of truly parallel agents, JEV as every agent's decision helper, verification and commits by the lead, and the playbooks the old commands became.

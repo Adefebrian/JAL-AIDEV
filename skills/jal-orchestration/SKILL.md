@@ -27,11 +27,11 @@ Every agent that runs under this engine follows this contract, and the lead past
 
 | Role | Catalog IDs it uses |
 |---|---|
-| jal-lead | `sec.input_screen`, `orch.playbooks`, `orch.route`, `orch.model`, `orch.parallel`, `orch.loop_exit`, `orch.escalate`, `mem.promote`, `mem.reference_screen` |
+| jal-lead | `sec.input_screen`, `orch.playbooks`, `orch.route`, `orch.model`, `orch.parallel`, `orch.loop_exit`, `orch.escalate`, `mem.promote`, `mem.reference_screen`, `seo.next_mode`, `seo.backlog_order` |
 | jal-principal | `orch.route`, `orch.escalate`, `rev.ship`, `sec.ship_block` |
 | jal-ux | `ui.experience`, `ui.direction_screen`, `ui.density`, `ui.region_gate`, `ui.component_recipe`, `ui.designmd_screen`, `ui.final_taste`, `ui.heuristics`, `ui.finish_disposition`, `motion.*` |
 | jal-immersive | `ui.direction_screen`, `imm.gate`, `imm.recipe`, `imm.tech`, `imm.tier`, `imm.taste`, `motion.*`, `ui.heuristics`, `ui.finish_disposition` |
-| jal-frontend | `ui.region_gate`, `ui.component_recipe`, `ui.final_taste`, `ui.text_reveal_granularity`, `ui.number_motion`, `ui.geo_visual`, `motion.intensity` |
+| jal-frontend | `seo.intent_page`, `seo.copy_screen`, `ui.region_gate`, `ui.component_recipe`, `ui.final_taste`, `ui.text_reveal_granularity`, `ui.number_motion`, `ui.geo_visual`, `motion.intensity` |
 | jal-architect, jal-backend, jal-systems | `be.placement`, `be.api_quality`, `be.migration_risk`, `be.new_tech` |
 | jal-security, jal-redteam, jal-blueteam | `sec.severity`, `sec.false_positive`, `sec.ship_block`, `sec.input_screen` |
 | jal-qa | `qa.check_depth`, `qa.failure_class`, `qa.test_selection`, `qa.coverage`, `qa.release_go` |
@@ -158,6 +158,7 @@ JAL-AIDEV gets better with every run:
 | `/jal-check` | Check the project: review, tests, UI, security, and optionally a deep audit and pentest | jal-lead | `review-gate`, `audit`, `pentest` (depth by `qa.check_depth`) |
 | `/jal-ship` | Get it out: pull request, release, deploy or rollback | jal-lead with jal-devops | `review-gate` (always), `pr`, `release`, `deploy` |
 | `/jal-docs` | Write or update documentation | jal-docs | the jal-docs pipeline |
+| `/jal-seo-geo-aeo` | SEO, AEO, and GEO: audit, integrate, boost, submit, monitor | jal-lead | `seo-geo-aeo/` (standard, boost, webmaster, integrate, offsite, templates, scripts) |
 | any command | "Learn this reference: <url>", or a learning proven across builds | jal-lead with jal-researcher | `learn` |
 
 ## Hard lines no playbook or JEV call can cross

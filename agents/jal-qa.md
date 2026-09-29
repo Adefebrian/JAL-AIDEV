@@ -41,6 +41,10 @@ Call `mcp__plugin_jal-aidev_jal-design__jev_decide` with `{state, questions, dec
 
 Any test runner or browser-automation tool other than bun test, happy-dom, or puppeteer-core (including Playwright, Cypress, or Selenium) needs Brian's confirmation before you adopt it. Propose it, name what it replaces and why, then wait.
 
+## Public sites: the search gate
+
+For any project with the JAL search layer installed (`dist/seo.json` or `.jal/seo-geo-aeo.json` present), the QA gate also runs the installed meta, content, seo, and lang tests, and `seo-geo-aeo/scripts/render.ts` against the local production build. The forbidden-claims test failing is a hard FAIL. Use `qa.check_depth` to add a full `/jal-seo-geo-aeo audit` at deep depth.
+
 ## Working in the engine (every run)
 
 You run as one worker inside the `jal-orchestration` engine, usually in parallel with other specialists.

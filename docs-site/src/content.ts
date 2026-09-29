@@ -55,6 +55,7 @@ export const SECTION_MARKERS = {
   immersive: "The immersive and 3D layer",
   uiCheck: "The 20-rule UI check",
   docs: "Publishing to JAL Docs",
+  search: "SEO, AEO, dan GEO",
   studyCases: "Study cases",
   faq: "FAQ and troubleshooting",
 } as const;
@@ -405,11 +406,20 @@ export const COMMANDS: Command[] = [
       "Writes or updates a project's page in JAL Docs for developers and for non-technical readers. Every sentence must point to real code and secrets are never written. It opens a pull request, and when every check passes it merges it and deploys JAL Docs.",
     examples: ["/jal-docs JAL-Group/Sentimen_DPP", "/jal-docs ~/Documents/JAL/tally for the finance team"],
   },
+  {
+    name: "/jal-seo-geo-aeo",
+    version: PLUGIN_VERSION,
+    argumentHint: "[audit|integrate|boost|submit|monitor] [url]",
+    purpose: "Search: SEO, AEO, and GEO",
+    what:
+      "Scores a site 0 to 100 on classic search, direct answers, and AI assistants, with evidence for every item. It can install the full search layer, raise the scores and prove the change, submit URLs to IndexNow, Bing, and Yandex after your yes, and track what the crawlers did.",
+    examples: ["/jal-seo-geo-aeo audit https://padelparty.id", "/jal-seo-geo-aeo integrate", "/jal-seo-geo-aeo boost https://padelparty.id"],
+  },
 ];
 
 export const COMMANDS_INTRO = {
   lead:
-    "Seven commands, each typed inside Claude Code. Every one runs the whole crew on the same engine: it plans, splits the work across specialists that run in parallel, lets JEV make the judgment calls, checks everything, and fixes what fails before calling it done.",
+    "Eight commands, each typed inside Claude Code. Every one runs the whole crew on the same engine: it plans, splits the work across specialists that run in parallel, lets JEV make the judgment calls, checks everything, and fixes what fails before calling it done.",
   engineTitle: "How every command runs",
   engineLead:
     "The engine works in waves. Inside a wave, every independent piece of work goes out at the same time, and every file has exactly one owner, so two agents never edit the same thing.",
@@ -500,6 +510,7 @@ export const JEV_CATALOG: { area: string; count: number; covers: string }[] = [
   { area: "QA", count: 5, covers: "How deep to check, what class a failure is, which tests to run, whether coverage is enough, and whether a release may go." },
   { area: "Review", count: 2, covers: "How risky a change is, and the final ship call." },
   { area: "Docs", count: 3, covers: "The docs plan, whether a claim is proven by the code, and whether the page is ready to publish." },
+  { area: "Search", count: 4, covers: "Which mode to run next, how each search intent is answered, the order of the boost backlog, and which title, description, or FAQ answer reads best." },
   { area: "Memory and learning", count: 2, covers: "Whether a new learning goes into project memory, a plugin pull request, or nowhere; and whether a new reference is worth teaching JAL-AIDEV." },
 ];
 
@@ -661,7 +672,40 @@ export const DOCS = {
     },
     {
       title: "The deploy needs one token",
-      body: "The deploy step reads `COOLIFY_API_TOKEN` from your environment only. Without it, the docs are merged and the deploy is skipped, with a note saying so.",
+      body: "The deploy step reads `COOLIFY_API_TOKEN` from your environment, or asks you or a teammate for it at that moment. It is used for that one deploy and never saved.",
+    },
+  ],
+};
+
+// Section in Indonesian (Brian's spec asks for one page in Indonesian).
+export const SEARCH = {
+  title: SECTION_MARKERS.search,
+  lead:
+    "/jal-seo-geo-aeo membuat website mudah ditemukan di tiga jenis pencarian, dan memberi skor 0 sampai 100 untuk masing-masing, lengkap dengan bukti.",
+  points: [
+    {
+      title: "SEO",
+      body: "Ditemukan dan diranking di Google, Bing, dan Yandex: robots.txt, sitemap dengan hreflang, canonical, judul 50 sampai 60 karakter, structured data, kecepatan, dan Search Console.",
+    },
+    {
+      title: "AEO",
+      body: "Menjadi jawaban langsung di snippet, People Also Ask, asisten suara, dan AI Overviews: peta intent, satu URL per intent penting, FAQ dengan jawaban di kalimat pertama, dan markup yang sama persis dengan yang tampil.",
+    },
+    {
+      title: "GEO",
+      body: "Disebut dan dikutip oleh ChatGPT, Claude, Perplexity, Gemini, dan asisten lain: crawler AI diizinkan, llms.txt, fakta entitas yang konsisten di mana-mana, statistik terverifikasi, kutipan dari media, dan log crawler untuk melihat bot mana membaca halaman mana.",
+    },
+    {
+      title: "Lima mode",
+      body: "audit (skor dan bukti), integrate (memasang seluruh lapisan pencarian), boost (menaikkan skor dan membuktikan selisihnya), submit (IndexNow, Bing, Yandex, selalu dry run dulu dan butuh persetujuan Anda), dan monitor (apa yang benar-benar dilakukan mesin pencari).",
+    },
+    {
+      title: "Fakta tidak pernah dikarang",
+      body: "Setiap fakta berasal dari pemilik bisnis dan disimpan di satu modul dengan tanggal konfirmasi. Klaim yang ditolak menjadi tes yang memeriksa setiap halaman. Satu teks untuk manusia dan mesin: tidak ada cloaking.",
+    },
+    {
+      title: "JEV membantu keputusan",
+      body: "JEV memilih mode berikutnya, cara menjawab setiap intent, urutan backlog boost, dan judul, deskripsi, atau jawaban FAQ terbaik. Hukum keras tidak pernah diserahkan ke JEV.",
     },
   ],
 };

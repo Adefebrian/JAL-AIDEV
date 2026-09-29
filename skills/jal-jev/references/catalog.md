@@ -23,6 +23,7 @@ Index:
 | Review | `rev.risk`, `rev.ship` |
 | Memory | `mem.promote`, `mem.reference_screen` |
 | Docs | `docs.plan`, `docs.claim`, `docs.publish` |
+| Search | `seo.next_mode`, `seo.intent_page`, `seo.backlog_order`, `seo.copy_screen` |
 
 ---
 
@@ -1693,6 +1694,138 @@ The agent fills `criteria` with the real candidate IDs and lines. Keys must matc
 **Thresholds and actions:**
 - 2 or above with the mechanical gate green: push `docs/<slug>-<yyyymmdd>`, open the PR, squash-merge it, and deploy malasbaca (skill `jal-docs` step 9).
 - Under 2: fill the named gaps and ask again once. If it is still under 2, open the PR as a draft with the gaps listed, and do not merge or deploy.
+
+---
+
+## Search (SEO, AEO, GEO)
+
+These are the soft calls of `/jal-seo-geo-aeo`. The hard law in `seo-geo-aeo/standard.md` section 3 is never sent to JEV: verified facts only, one text for people and machines, one source per fact, language as a URL, no self-serving reviews, verbatim quotes only, measured metadata, secrets in env, no SERP scraping, and confirmed outward actions.
+
+### `seo.next_mode`
+
+**Purpose:** after an argument-less audit, pick the mode to run next.
+
+**Caller:** jal-lead at the end of `/jal-seo-geo-aeo` with no mode.
+
+**Precheck (decides without JEV):**
+- If the project has no search layer (no `dist/seo.json`, no discovery routes), recommend `integrate`. Not asked.
+- `submit` is never recommended as an automatic next step; it always waits for the user.
+
+**State fields:** `evidence.scores` (SEO, AEO, GEO), `evidence.fails` (counts by fix method: code, owner, human), `evidence.crawl` (key URLs unread by AI bots in 14 days), `evidence.last_run` (date and mode).
+
+**Questions:**
+```json
+{
+  "mode": {
+    "type": "choice",
+    "instructions": "Pick the most valuable next mode for this site given the audit in state.",
+    "criteria": {
+      "boost": "Code-fixable FAILs or WARNs remain, or scores sit below 90 with fixes the command can ship now.",
+      "monitor": "Scores are strong and recent changes need time; what matters now is what the engines did since the last run.",
+      "integrate": "The search layer is partial or broken at the foundation (facts, prerender, discovery), so fixing items one by one would waste effort."
+    }
+  }
+}
+```
+
+**Thresholds and actions:** recommend the choice and ask the user to confirm it. Do not run it unasked.
+
+### `seo.intent_page`
+
+**Purpose:** decide how each search intent is answered.
+
+**Caller:** the content workstream in `integrate` and `boost`, once per intent cluster in `.jal/intent-map.md`, batched.
+
+**Precheck (decides without JEV):**
+- An intent that needs a fact the owner has not confirmed is `owner_fact`: ask, never write. Not asked.
+- A list intent ("best X in city") answered by third-party pages also gets an offsite pack, whatever JEV picks.
+
+**State fields:** `proposal.intents` (cluster, prompts per language, required answer, current status, search volume or impressions if known), `evidence.pages` (the existing URLs and their FAQ entries).
+
+**Questions** (one key per cluster, batched):
+```json
+{
+  "i1": {
+    "type": "choice",
+    "instructions": "Pick how intent i1 in state.proposal.intents should be answered on the site.",
+    "criteria": {
+      "page": "A distinct, high-value question with enough verified substance for its own URL (guide, rates, contact, programme).",
+      "faq": "A specific question best answered in one or two sentences inside an existing page's FAQ.",
+      "key_fact": "A single number or fact that belongs in a page's key-facts block.",
+      "skip": "Low value, duplicate of another intent, or outside what the business offers."
+    }
+  }
+}
+```
+
+**Thresholds and actions:** build the choice. On low confidence, take `faq` over `page`, since a page can be added later.
+
+### `seo.backlog_order`
+
+**Purpose:** order the whole boost backlog, not just break ties.
+
+**Caller:** `boost` step 2, after every FAIL and WARN is scored as `impact = weight x (1 - status)` and the effort is estimated.
+
+**Precheck (decides without JEV):**
+- Hard-law violations (cloaking, placeholder facts on served pages, secrets, self-serving review markup) go first, before any ordering. Not asked.
+- Items that need owner facts or human action are split out into their packs, not ordered here.
+
+**State fields:** `proposal.items` (ID, pillar, impact, effort S, M, or L, dependencies), `evidence.scores`, `evidence.crawl`, `evidence.console` (query and page performance, if configured).
+
+**Questions** (one `score` per item, batched):
+```json
+{
+  "b1": {
+    "type": "score",
+    "instructions": "Score how urgently backlog item b1 in state.proposal.items should ship, weighing its impact, its effort, what it unblocks, and the crawl and console evidence in state.",
+    "criteria": [
+      "0 Later: low impact or blocked by another item.",
+      "1 Soon: worthwhile, but after the higher items.",
+      "2 Next: clear impact for its effort.",
+      "3 Now: high impact, low effort, or it unblocks other items."
+    ]
+  }
+}
+```
+
+**Thresholds and actions:**
+- Sort by score, then by impact.
+- Items with dependencies ship after their prerequisites.
+- Independent code items at the top ship in parallel.
+
+### `seo.copy_screen`
+
+**Purpose:** pick the best of several candidate titles, descriptions, or FAQ answers.
+
+**Caller:** the content workstream, once per page element, batched per page and language.
+
+**Precheck (decides without JEV):**
+- Every candidate must already pass the length law (titles 50 to 60 characters, naming the place; descriptions 120 to 158; nothing under 15).
+- Every candidate must use only verified facts from the shared modules.
+- Every candidate must be free of forbidden claims.
+
+  Failing candidates are fixed or dropped before asking.
+
+**State fields:** `proposal.element` (title, description, or faq_answer), `proposal.language`, `proposal.candidates` (3 to 5), `evidence.intent` (the query or question it answers), `evidence.facts` (the facts it may use).
+
+**Questions:**
+```json
+{
+  "pick": {
+    "type": "choice",
+    "instructions": "Pick the candidate in state.proposal.candidates that best answers state.evidence.intent in state.proposal.language: answer or value first, natural in that language (not translated-sounding), specific with the verified numbers, and inviting to click or cite.",
+    "criteria": {
+      "c1": "<candidate 1 text>",
+      "c2": "<candidate 2 text>",
+      "c3": "<candidate 3 text>"
+    }
+  }
+}
+```
+
+**Thresholds and actions:**
+- Use the pick.
+- On low confidence, prefer the candidate that states the answer in its first clause.
 
 ---
 
