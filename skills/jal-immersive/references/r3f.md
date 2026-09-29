@@ -4,6 +4,8 @@ Distilled from the react-three-fiber docs (MIT: `docs/API/*.mdx`, `docs/advanced
 
 ## 1. R3F or vanilla three
 
+From: pmndrs docs (react-three-fiber `scaling-performance.mdx`, MIT), ai-dev-kit, JAL-authored.
+
 `imm.tech` `stack` decides per project:
 
 - `vanilla_three`: one self-contained scene, little React state flowing in, smallest bundle, the teardown list in `three-foundations.md` section 8.
@@ -13,6 +15,8 @@ Distilled from the react-three-fiber docs (MIT: `docs/API/*.mdx`, `docs/advanced
 Tree-shaking: `<Canvas>` pulls in the full THREE catalogue. With `createRoot` plus `extend({ Mesh, BoxGeometry, MeshStandardMaterial })` you pay only for registered classes. Measure the Bun.build chunk before bothering.
 
 ## 2. The JAL Canvas
+
+From: pmndrs docs (react-three-fiber Canvas API, MIT), three.js docs (MIT), ai-dev-kit, remotion (ideas only), JAL-authored.
 
 ```tsx
 import { Canvas } from "@react-three/fiber";
@@ -44,6 +48,8 @@ Wrap `<Canvas>` in an error boundary whose fallback is also the poster: `fallbac
 Prefer one `position: fixed; inset: 0` canvas behind the page with sections driving what it shows, or drei `View` for embedded regions. Pin the DOM section, never the canvas: pinning re-parents or resizes the canvas and reallocates the drawing buffer.
 
 ## 3. The render loop and one clock
+
+From: pmndrs docs (react-three-fiber, MIT), Lenis docs, GSAP docs, ai-dev-kit, nixie-fx, JAL-authored.
 
 **How R3F ticks.** One shared rAF loop per root. Each frame: global effects (`addEffect`), then every `useFrame` subscriber in ascending priority, then render, then after-effects (`addAfterEffect`).
 
@@ -96,10 +102,12 @@ export function Clock({ activeRef }: { activeRef: React.RefObject<boolean> }) {
 
 ## 4. `useFrame` rules (no React state in the frame loop)
 
+From: pmndrs docs (react-three-fiber `pitfalls.mdx`, MIT), drei (MIT, `maath`), Threejs-Awesome-Graphics-Agent-Skills, ai-dev-kit, nixie-fx, animata, JAL-authored.
+
 1. Never `setState` inside `useFrame`, pointer-move handlers, or intervals. Mutate refs: `ref.current.position.x += ...`.
-2. Scale every motion by `delta`. Smooth with `1 - Math.exp(-lambda * delta)` (frame-rate independent); a fixed-fraction lerp changes speed with refresh rate. `maath` `easing.damp`, `damp3`, `dampQ`, `dampC` do the same; importing `maath` directly is an approval candidate (it already ships inside drei).
+2. Scale every motion by `delta`. Smooth with `1 - Math.exp(-lambda * delta)` (frame-rate independent); a fixed-fraction lerp changes speed with refresh rate. `maath` `easing.damp`, `damp3`, `dampQ`, `dampC` do the same; importing `maath` directly is an approval candidate, ask Brian (it already ships inside drei).
 3. Never allocate in the loop: no `new Vector3()`, `new Color()`, or array literals. Hoist scratch objects to module scope or `useMemo`.
-4. Read fast-changing state transiently: a module-level or `useRef` store read in the loop. A reactive selector re-renders at 60 fps. (`zustand` `subscribe` into a ref also works; direct import is an approval candidate.)
+4. Read fast-changing state transiently: a module-level or `useRef` store read in the loop. A reactive selector re-renders at 60 fps. (`zustand` `subscribe` into a ref also works; a direct import is an approval candidate, ask Brian.)
 5. Set the flag after the mutation: `needsUpdate`, `updateProjectionMatrix()` (only when fov changed), `instanceMatrix.needsUpdate`.
 6. Keep callbacks slim; bail out early when the object is off-screen (drei `useIntersect`).
 
@@ -125,6 +133,8 @@ function Follower({ pointer }: { pointer: React.RefObject<{ x: number; y: number
 **Orientation composition.** Build orientation in two steps: a base quaternion from the travel direction or a target frame (`setFromUnitVectors(localForward, direction)` or a `makeBasis` matrix), then roll or spin as a separate quaternion about that direction, multiplied once. Smooth toward a target orientation with `slerp` using the exponential factor (or drei `dampQ`); for a physical feel, convert the quaternion error to an angular velocity and damp that. Normalise quaternions that accumulate products every frame.
 
 ## 5. Instancing
+
+From: pmndrs docs (MIT), drei (MIT), three.js docs (MIT), threejs-game-skills, Threejs-Awesome-Graphics-Agent-Skills, nixie-fx.
 
 ```tsx
 const dummy = new THREE.Object3D();
@@ -155,6 +165,8 @@ function Field({ count, positions }: { count: number; positions: Float32Array })
 
 ## 6. Events
 
+From: pmndrs docs (react-three-fiber events, MIT), drei (MIT), threejs-game-skills, remotion (ideas only), JAL-authored.
+
 - R3F raycasts every object that has a pointer handler. Events bubble nearest-first through ancestors, then continue to farther objects; objects are transparent to events by default. `e.stopPropagation()` stops bubbling and blocks farther objects, so an occluder needs its own `onPointerOver` that stops propagation.
 - Pointer capture: `e.target.setPointerCapture(e.pointerId)`. Handle `pointerup`, `pointercancel`, `lostpointercapture`, blur, and visibility so a drag never sticks.
 - Canvas behind DOM: `eventSource` on the shared parent, canvas `pointer-events: none`, 3D hover still works through the DOM above it.
@@ -163,6 +175,8 @@ function Field({ count, positions }: { count: number; positions: Float32Array })
 - Scope `touch-action` to the interactive canvas region only.
 
 ## 7. drei helpers
+
+From: drei (MIT docs and source), Threejs-Awesome-Graphics-Agent-Skills (texture channel contract), ai-dev-kit, JAL-authored.
 
 Use:
 
@@ -185,11 +199,15 @@ Use:
 | `<Html>` | DOM label pinned to a 3D point | Expensive with `transform` or `occlude`; real copy belongs in the DOM section |
 | `<Text font>` | Crisp SDF text | Always set `font`; troika fetches a CDN font otherwise |
 | `shaderMaterial(uniforms, vert, frag)` | Typed ShaderMaterial class for JSX | WebGL only; TSL on WebGPU |
-| `<StatsGl>`, `r3f-perf` | Dev frame and GPU stats | Dev only; `r3f-perf` is an approval candidate |
+| `<StatsGl>`, `r3f-perf` | Dev frame and GPU stats | Dev only; `r3f-perf` is an approval candidate, ask Brian |
 
 Avoid: `<ScrollControls>` (own scroll container, fights Lenis and ScrollTrigger, damps a second time), `<Sparkles>` and `<Stars>` (glow), `<MeshDistortMaterial>` and `<MeshWobbleMaterial>` (gimmick), `<CameraShake>` (vestibular trigger), `<Sky>` and `<Cloud>` on light pages (a sky gradient is a gradient), `Environment` presets, `useDetectGPU` without self-hosted benchmarks.
 
 ## 8. drei `View`: many scenes, one canvas
+
+From: drei (MIT, `View`), ai-dev-kit, JAL-authored.
+
+This section is the build section for recipe `three.views` (layout: many 3D regions, one canvas). Budget T4, one WebGL context for the whole page (the page cap of one canvas holds; extra 3D regions come only through views). Fallback: fewer views (the tier ladder in section 11 drops the least important view first, down to one), then a poster per view. Each `View` sits in a grid cell with its own poster `<img>` (same box, `aspect-ratio` fixed so nothing shifts), the canvas region `aria-hidden`, and the section's real copy in the DOM beside it. Reduced motion: each view renders one still (`frames={1}` and no scrub) or keeps its poster. Views off screen skip work: `View` already culls by its rect, and `useIntersect` pauses per-object updates inside it.
 
 `View` cuts the viewport with `gl.scissor` and follows its tracking element, so each region scrolls, resizes, and clips with the DOM. This is how to put 3D inside a scrolling layout without many WebGL contexts (browsers cap about 16 and drop the oldest).
 
@@ -227,14 +245,19 @@ export function Page() {
 
 ## 9. Suspense and loaders
 
+From: pmndrs docs (react-three-fiber `useLoader`, MIT), drei (MIT), GSAP docs, animata (preloader task model), remotion (ideas only), JAL-authored.
+
 - `useLoader(Loader, url | url[])` suspends until loaded and caches by URL; `useLoader.preload(...)` warms the cache at module scope.
 - An error boundary catches load failures (fallback: the poster); the Suspense fallback shows while loading (fallback: nothing, the poster is already there).
 - Nest `<Suspense>` so cheap placeholders render first and details stream in.
 - Never mutate or dispose a cached asset: clone (`<Clone>`, `scene.clone()`) or `dispose={null}`.
 - Before revealing the canvas: drei `<Preload all />` (calls `gl.compile` on the whole scene) or `await gl.compileAsync(scene, camera)`, render one frame, wait two rAFs, then crossfade over the poster.
 - Readiness: `useProgress().active === false` plus `document.fonts.ready`. Call `ScrollTrigger.refresh()` in a `useEffect` of the loaded model component, because layout height may have changed.
+- **Readiness as tasks.** When a page preloader (`mu.R24`) gates the first reveal, it waits on a task list, not only images: critical image decode, `document.fonts.ready`, the first critical fetch, and the lazy three chunk plus the `useProgress` and compile step above. Each task gets an `AbortSignal` and reports `loaded` and `total`; progress is the sum of loaded over the sum of total. Phases run in order: loading, fade-ui, reveal, done (overlay removed, scroll unlocked). An image task resolves on error too (one broken image never holds the page), short-circuits cache hits (`complete` with `naturalWidth > 0`), and sets `decoding="async"` before `decode()`. At `--cap-preloader` the signal aborts whatever is pending and the poster stands in for an unfinished canvas.
 
 ## 10. WebGPU in R3F v9
+
+From: pmndrs docs (react-three-fiber v9, MIT), three.js docs (MIT), webgpu-claude-skill (own words).
 
 ```tsx
 import * as THREE from "three/webgpu";
@@ -253,14 +276,18 @@ extend(THREE as any);
 
 ## 11. Performance monitoring and adaptive quality
 
+From: drei (MIT, `PerformanceMonitor`), pmndrs docs (MIT), webgpu-claude-skill (own words), Threejs-Awesome-Graphics-Agent-Skills (progressive accumulation), threejs-game-skills, JAL-authored.
+
 - `<PerformanceMonitor onIncline onDecline onChange={({ factor }) => ...} flipflops={3} onFallback={...}>` averages fps over time inside bounds you set so quality does not ping-pong; after `flipflops` swings it calls `onFallback` and stops. Children read it through `usePerformanceMonitor`.
 - Movement regression: `state.performance.regress()` while the camera moves; `<AdaptiveDpr pixelated />` and `<AdaptiveEvents />` drop DPR and pause raycasts until the scene rests; Canvas `performance={{ min: 0.5 }}` bounds the drop.
 - Wire every optional post step behind a uniform flag (`select(aaOn, aaNode, colorNode)` in TSL) so tier demotion flips `aaOn.value` without recompiling the pipeline, avoiding a compile hitch mid-scroll.
 - The JAL ladder, in this order, never raising quality above the authored level: drop DPR to the tier floor, disable the post pass, halve particle or instance count, switch to the poster (`onFallback`).
-- Dev overlays (`r3f-perf`, `leva`) are approval candidates, loaded only through a dynamic `import()` behind `?debug`.
+- Dev overlays (`r3f-perf`, `leva`): approval candidate, ask Brian; once approved, loaded only through a dynamic `import()` behind `?debug`.
 - **Progressive accumulation for a still camera** (an expensive still hero: soft shadows, raymarched glass): accumulate into a half-float target while the camera rests. The first frame after any change sits at the pixel centre and replaces history; later frames jitter by a Halton (2, 3) sequence and blend with weight `1/(n+1)` up to about 512 samples. Reset on any camera, size, or content change; an 8-bit target loses faint detail after the first blend. Stop the loop once converged (drei `<AccumulativeShadows>` is the packaged shadow case).
 
 ## 12. Scroll-driven camera binding
+
+From: GSAP docs, three.js docs (MIT), Threejs-Awesome-Graphics-Agent-Skills (camera design frames, basis, constraints), threejs-game-skills, ai-dev-kit, remotion (ideas only: path-follow shots), JAL-authored.
 
 Choreography (pinning, scrub versus triggered, SplitText) lives in `scroll-choreography.md`. The R3F side:
 
@@ -271,6 +298,11 @@ Choreography (pinning, scrub versus triggered, SplitText) lives in `scroll-chore
 - **Beats as design frames.** Author each beat as subject, target screen occupancy (the subject's bounding sphere fills, say, 60 percent of the shorter viewport side), fov, near, far. Derive distance from the subject: `d = r / sin(fov / 2) / occupancy` for bounding radius `r`, with the horizontal fov on portrait screens. Near as large as the closest beat allows, far just past the furthest visible object (far over near under about 1000 for a product scene, so white plinths never z-fight).
 - **Degenerate look basis.** When `abs(dot(forward, up)) > 0.985` (a top-down beat), rebuild right from a fallback axis (world Z, then X) before crossing, or `lookAt` flips.
 - **Input, then constraints.** Apply orbit or pointer look first and spatial constraints second, as a separate step: clamp distance, pitch, floor clearance, and room bounds after the controls update, so each layer can be tested and disabled alone.
+- **Path-follow shots** (a fly-through, a tour along a product), prepared once at build or mount, never per frame:
+  - Sparse control points: round them with Chaikin corner cutting before building the arc-length curve. Each pass swaps every segment for points at 1/4 and 3/4 of its length: 3 passes by default, 2 for a tight corridor, 4 for a softer glide. Smoothing cannot rescue a zig-zag that crosses the subject; fix the control points.
+  - Dense or traced paths: resample to even arc-length spacing, then a few moving-average passes over several samples; optionally pull toward the start-to-end chord by about 0.45 to set how much it weaves. No Douglas-Peucker (it concentrates curvature at the kept vertices, so motion reads straight, then corner) and no Bezier fit on long wiggly lines (it overshoots).
+  - Probe: print the heading change at even intervals; the values stay small and change gradually, and a jump marks a corner.
+  - Aim at a real point a fixed look-ahead distance further along the same path, not the local tangent: the distant aim averages wiggles and turns smoothly into bends. The path is at least travel plus two look-ahead lengths long so the aim never clamps at the end. Pitch stays constant through the move.
 - Triggered beats (`toggleActions: "play none none reverse"` or `CameraControls.setLookAt(..., true)` from `onEnter`) are kinder on mobile, where scroll velocity is erratic.
 - `ScrollTrigger.config({ ignoreMobileResize: true })` and size the canvas with `100lvh` (or measure once) so the address bar does not resize it.
 - Create triggers inside `useGSAP` (or a `gsap.context` scoped to a ref) so unmount reverts them.
@@ -304,6 +336,8 @@ function CameraRig({ progress }: { progress: React.RefObject<number> }) {
 
 ## 13. Deterministic test hooks
 
+From: Threejs-Awesome-Graphics-Agent-Skills (runtime contract, inspection controls), threejs-game-skills (hook contract, wall-clock ban), nixie-fx (seeds), JAL-authored.
+
 Behind a dev or test flag:
 
 ```ts
@@ -321,3 +355,57 @@ Inspection controls behind the same flag: `debug(mode)` switching real shader br
 Visual time comes only from the elapsed value the one clock passes in, never `Date.now()` or `performance.now()` inside a uniform, tween, or procedural motion, so `seek` and paused captures reproduce. Every random source (jitter, variation, sound pitch) draws from the seeded generator.
 
 Tests run with `frameloop="never"`, Lenis disabled, and a fixed seed for every noise and particle source (no `Math.random` in visual paths).
+
+## 14. Recipe build: three.dot_globe
+
+From: JAL-authored (port of the Magic UI `globe` idea recorded as `mu.R44` in `skills/jal-motion/references/components.md`; tilt, dot lattice, and drag-to-rotate ideas only, no upstream code, `cobe` stays an approval candidate, ask Brian), three.js docs (MIT, `InstancedMesh`), pmndrs docs (react-three-fiber, MIT).
+
+The build section for `three.dot_globe` (data_viz, SKILL.md section 4.5). Budget T4 / C1. Ink dots on the white page, flat and unlit: `MeshBasicMaterial` only, no lights, no shadows, no post, normal blending. The canvas exemption is not used for shading here.
+
+**DOM first.**
+- `<figure class="globe">` sized by its container (`inline-size: 100%; aspect-ratio: 1; max-inline-size: 640px`), one grid cell holding the poster and, once armed, the canvas in the same cell (never `absolute inset-0` over other content).
+- Poster: the static SVG dotted map `mu.R38`, built at build time, `<img width height alt="">` so layout never shifts.
+- Text equivalent: a visible `<ul>` of the marked locations (city, country, what is there) plus a `<figcaption>`. The canvas is `aria-hidden="true"`; nothing is only in 3D.
+- Controls: a 44px "Pause rotation" button with `aria-pressed`, visible whenever the globe rotates. Arrow keys on the focused figure step the rotation by 15 degrees.
+
+**Dots.** Positions are baked at build time and self-hosted as a `Float32Array` (`/data/globe-dots.bin` or the `lonlat.json` the `mu.R38` Bun script already writes). Two sources:
+- Land mask: the `mu.R38` public-domain land sample (Natural Earth derived, equirectangular), converted from lon and lat to the unit sphere.
+- Abstract: a Fibonacci sphere, `y = 1 - 2(i + 0.5) / n`, ring radius `sqrt(1 - y * y)`, angle `i * PI * (3 - sqrt(5))`, for an even lattice with no poles bunching.
+- Count: about 6k to 12k on desktop tiers, half on mobile tiers, circles of 6 segments (`CircleGeometry(size, 6)`), one `InstancedMesh`, each dot oriented outward. An occluder sphere in `--color-surface` at radius 0.995 hides back dots flatly (no transparency sort, no fresnel).
+- Markers: a second `InstancedMesh` at radius 1.002, larger dots in `--color-accent` (or ink at twice the size on a monochrome page), matched one to one with the `<ul>` items.
+
+```tsx
+// JAL code; tilt and lattice ideas from the Magic UI globe (MIT)
+const dummy = new THREE.Object3D(), v = new THREE.Vector3(), out = new THREE.Vector3();
+export function lonLatToVec(lon: number, lat: number, r: number, t: THREE.Vector3) {
+  const la = THREE.MathUtils.degToRad(lat), lo = THREE.MathUtils.degToRad(lon);
+  return t.set(Math.cos(la) * Math.cos(lo), Math.sin(la), -Math.cos(la) * Math.sin(lo)).multiplyScalar(r);
+}
+function Dots({ ll, r, size, color }: { ll: Float32Array; r: number; size: number; color: string }) {
+  const ref = useRef<THREE.InstancedMesh>(null!), n = ll.length / 2;
+  useLayoutEffect(() => {
+    for (let i = 0; i < n; i++) {
+      lonLatToVec(ll[i * 2], ll[i * 2 + 1], r, v);
+      dummy.position.copy(v); dummy.lookAt(out.copy(v).multiplyScalar(2)); // +Z faces outward
+      dummy.updateMatrix(); ref.current.setMatrixAt(i, dummy.matrix);
+    }
+    ref.current.instanceMatrix.needsUpdate = true;
+  }, [ll, r, n]);
+  return (
+    <instancedMesh ref={ref} args={[undefined, undefined, n]}>
+      <circleGeometry args={[size, 6]} />
+      <meshBasicMaterial color={color} toneMapped={false} />
+    </instancedMesh>
+  );
+}
+```
+
+**Motion rule (Brian's).**
+- Auto-rotation is allowed, slow and linear: one turn per `--loop-globe` (60 s), `yaw = offset + playTime * 2 * PI / loopSeconds`, with `playTime` accumulating only while playing so pause resumes in place. It runs only while the 44px pause control is visible; pressing it stops the turn and sets `aria-pressed="true"`.
+- Drag to rotate with bounded inertia: pointer capture on the canvas cell (section 6), `touch-action: pan-y` so vertical page scroll passes through. Drag writes yaw directly; on release the yaw velocity is clamped to 3 rad/s and decays with `v *= Math.exp(-4 * dt)` until under 0.01 rad/s, then auto-rotation (if playing) continues from there. Pitch stays within the fixed 0.3 rad tilt plus or minus 0.35 rad, never a free orbit, no overshoot.
+- Pauses offscreen and in hidden tabs: an `IntersectionObserver` on the figure and `visibilitychange` both clear the running flag. The canvas uses `frameloop="demand"`; the one clock (section 3) calls `invalidate()` only while playing, in view, and visible, or while inertia is settling. At rest nothing ticks.
+- `prefers-reduced-motion: reduce`: static. No auto-rotation and no inertia, and no pause control since nothing moves. Show the poster plus the list, or (on capable tiers, when the page already loaded three) one frozen frame at the authored yaw plus the list. The rule is re-read on the media query's `change` event.
+
+**Loading and fallback.** `three` and R3F load by dynamic `import()` when the figure nears the viewport (IntersectionObserver, 200px margin) and `imm.tier` allows WebGL. DPR capped at 2 (`dpr={[1, tier.maxDpr]}`). The canvas fades in over the poster at `--dur-400` after the first compiled frame, then the poster is set `hidden`. The poster is also the fallback for no WebGL, context loss, low tiers, and the error boundary.
+
+**Parameters:** dot source (land or Fibonacci), dot count per tier, dot size, marker list, tilt, `--loop-globe`. **Debug modes** (section 13): `final`, `no-occluder` (all dots visible), `markers-only`, `frozen` (yaw 0).

@@ -6,6 +6,8 @@ Law inside a canvas (Zone B): natural light and shade are allowed. No additive g
 
 ## 1. Delivering shaders in three
 
+From: three.js docs and examples (MIT), drei (MIT), webgpu-claude-skill (TSL rules, cheat sheet, node materials, in our own words), ai-dev-kit (uniform mutation, patch assertion), threejs-game-skills (per-object variation), Threejs-Awesome-Graphics-Agent-Skills (parameter naming, coordinate ownership, field bundles), JAL-authored.
+
 | Route | When | Notes |
 |---|---|---|
 | `onBeforeCompile` on a stock material | Keep PBR lighting, patch one stage | Always set `customProgramCacheKey`, stash `material.userData.shader` to reach uniforms, reuse one material across meshes. Meshes needing different uniform values get separate instances returning the same `customProgramCacheKey` (one compiled program, own uniforms); on an `InstancedMesh` read `instanceColor` or the `instanceMatrix` translation inside the patch instead. WebGL only |
@@ -53,6 +55,8 @@ Precision: `highp` for positions and anything accumulated over time; `mediump` i
 
 ## 2. Hashes
 
+From: skeeto/hash-prospector (Unlicense), three.js TSL docs (MIT), JAL-authored.
+
 Avoid `fract(sin(dot(p, k)) * 43758.5)`: precision collapses at large inputs on mobile and shows as blocks. Use integer hashes.
 
 ```glsl
@@ -66,6 +70,8 @@ vec3  hash32(ivec2 c) { uint h = lowbias32(uint(c.x) + lowbias32(uint(c.y)));
 TSL: `hash(seed)` returns 0 to 1 (a PCG variant; the seed is converted to uint, so keep it positive), plus `rand` and `interleavedGradientNoise`.
 
 ## 3. Noise families
+
+From: JAL-authored (sketches), three.js TSL and addons (MIT), stegu/webgl-noise (MIT), Threejs-Awesome-Graphics-Agent-Skills (crack fields, object-locked frames, seam-free angles, distance-weighted detail, octave footprint fade).
 
 | Family | Character | Use |
 |---|---|---|
@@ -138,6 +144,10 @@ float stripes(float x, float freq) {
 
 ## 4. SDFs and raymarching
 
+From: IQ articles (MIT snippets), three.js addons (MIT), Threejs-Awesome-Graphics-Agent-Skills (integrator hygiene, bounded volumes), JAL-authored (budget, JAL look).
+
+Build section for `three.sdf_blob` (with `sh.sdf_raymarch` and `sh.sdf_2d`).
+
 Primitives and operators after Inigo Quilez (iquilezles.org/articles/distfunctions, code snippets MIT, copyright Inigo Quilez):
 
 ```glsl
@@ -187,6 +197,8 @@ JAL look for a blob: matte or satin surface lit by the environment, a soft conta
 
 ## 5. Domain warping
 
+From: IQ articles (MIT snippets, the "warp" article as idea), JAL-authored (sketch, law note).
+
 Evaluate noise at a position offset by noise: `f(p + k * fbm(p + k * fbm(p)))` (after IQ's "warp" article). One level gives soft marbling, two give fluid swirls. Animate only the inner term with time; it moves more calmly than scrolling the whole field.
 
 ```glsl
@@ -200,6 +212,8 @@ float warped(vec2 p, float t) {
 Law note: a full-bleed smooth colour field reads as a gradient and is banned outside noyzzi. Use warping as a material (stone, marbled paper, ink in water) on an object or a bounded surface, monochrome or within the brand's one accent at low contrast.
 
 ## 6. Fresnel and rim
+
+From: JAL-authored (Schlick, rim law, TSL sketch), three.js docs (MIT), Threejs-Awesome-Graphics-Agent-Skills (rim incidence frame, exact Fresnel, reflection through alpha, energy-preserving lobes).
 
 - Schlick: `F = F0 + (1 - F0) * pow(1 - saturate(dot(N, V)), 5)`, F0 0.02 to 0.04 for dielectrics.
 - Stylised rim: `pow(1 - dot(N, V), p)` with p from 2 to 5.
@@ -218,12 +232,18 @@ export const rim = Fn(([power = float(3)]) => normalView.dot(positionViewDirecti
 
 ## 7. Matcaps
 
+From: three.js docs (MIT), JAL-authored.
+
+Build section for `three.matcap_clay` (with `sh.matcap`).
+
 - Sample a lit-sphere texture by the view-space normal: `uv = n.xy * 0.5 + 0.5`. `MeshMatcapMaterial` in WebGL, `matcapUV` in TSL.
 - Scene lights and shadows do nothing; the material costs almost nothing. A neutral soft-grey matcap is the fastest calm "clay render" on a white page (`three.matcap_clay`).
 - Bake our own matcap (a sphere rendered in Blender under a soft studio rig). Shared matcap packs have mixed licenses.
 - Ground it with a baked contact shadow; a matcap object floating with no shadow looks pasted on.
 
 ## 8. Dithering and anti-banding
+
+From: three.js docs and TSL addons (MIT), JAL-authored.
 
 - Soft light falloff across white or pale surfaces bands visibly in 8-bit output. Cheapest fix: `material.dithering = true` on stock three materials.
 - Custom shaders: add `(hash - 0.5) / 255.0` per pixel in display space right before output. Invisible, removes banding.
@@ -237,13 +257,15 @@ col += (hash21(ivec2(gl_FragCoord.xy)) - 0.5) / 255.0;    // after tone mapping 
 
 ## 9. Colour grading
 
+From: three.js addons and TSL display nodes (MIT), pmndrs docs, webgpu-claude-skill (colour nodes, blur family, DoF, custom pipeline notes, in our own words), Threejs-Awesome-Graphics-Agent-Skills (signal chain order, exposure metering, generated LUT, aerial perspective), JAL-authored (law limits).
+
 - **Chain order, one owner per stage, each with a disable switch:** scene in linear HDR (float or half-float targets), approved screen-space lighting work if any, distance haze, exposure, tone map, optional 3D LUT in display space, AA (FXAA needs display-space input), dither, output. Keep values unclamped until the tone map; clamping earlier turns highlights grey and breaks later exposure changes.
 - Grade in linear space before tone mapping: exposure and white balance.
-- Apply a 3D LUT in display space after tone mapping: `lut3D` (TSL), the `LUT` effect in pmndrs postprocessing (approval candidate), or `LUTPass` in three addons. A 32-cube LUT is enough.
+- Apply a 3D LUT in display space after tone mapping: `lut3D` (TSL), the `LUT` effect in pmndrs postprocessing (approval candidate, ask Brian), or `LUTPass` in three addons. A 32-cube LUT is enough.
 - Keep contrast, saturation, and hue shifts small. The LUT's job is brand consistency, not a look. Colour nodes (`saturation(c, s)` with 1 neutral, `vibrance`, `hue`, `grayscale`, `posterize`, the `sepia` addon) allow only small static trims on JAL scenes (saturation 0.9 to 1.1, vibrance near 0) inside the same fused pass as the LUT; animated hue shifts, posterize, and sepia are filter looks for noyzzi or a JEV taste pass.
 - AA nodes: `fxaa` and `smaa` from `three/addons/tsl/display/FXAANode.js` and `SMAANode.js` expect display-space input (after `renderOutput`); `traa` (`TRAANode.js`) needs a velocity target and a jittered camera, pays off only with slow camera motion, and replaces rather than stacks with FXAA or SMAA.
 - Blur family (inside lawful recipes only, never a full-screen soften, each counted against the post budget): `gaussianBlur(node, sigma)` as the quality default at a fractional resolution; `boxBlur` for cheap mobile; `hashBlur` single-pass noisy frost; `bilateralBlur` edge-preserving.
-- Depth of field (`three.post_light` only, T3 only): `dof(colorNode, scenePass.getViewZNode(), focusDistance, focalLength, bokehScale)` with focus at the subject in world units and bokeh scale about 1, so it reads as a lens; never over text or UI planes.
+- Depth of field (`three.post_light` only, T3 only, assembled in section 19): `dof(colorNode, scenePass.getViewZNode(), focusDistance, focalLength, bokehScale)` with focus at the subject in world units and bokeh scale about 1, so it reads as a lens; never over text or UI planes.
 - WebGPU `RenderPipeline`: set `outputColorTransform = false` and call `renderOutput(scenePass)` wherever the chain needs display-space input; FXAA and LUTs need sRGB input.
 - Exposure metering (only if a scene has a real exposure problem): render luminance into a 64 by 36 byte target encoded as `L / (L + 1)`, read it back asynchronously (never a second readback while one is pending, scheduled by time, about every 200 ms, not by frame count), decode with `e / max(1e-4, 1 - e)`. Average in log space with weight 1 for `L > 0.002` and 0.15 below, and in a JAL canvas also weight by alpha so transparent page pixels do not drag exposure up. Target `clamp(0.18 / avg * 2^EV, 0.45, 1.85)`, reached with `current += (target - current) * (1 - exp(-dt * speed))`, speed 3.2 brightening and 1.1 darkening; a failed readback holds the last value. Exactly one stage owns exposure (`renderer.toneMappingExposure` or the adapted multiplier, never both), and exposure never compensates for wrong light ratios, which are fixed in the lights. Tone-map exactly once, convert to sRGB exactly once.
 - **A brand LUT generated in code:** a 32-cubed RGBA `Data3DTexture` (linear filter, clamp to edge, no mipmaps, unsigned byte) built by pushing each lattice colour through a small recipe: black and white point, a gentle S-curve blended at about 0.44, contrast about 0.5 pivot, shadow, midtone, and highlight tints weighted by `1 - smoothstep(0.12, 0.54, luma)`, `max(0, 1 - abs(luma - 0.5) * 2)`, and `smoothstep(0.48, 0.92, luma)`, per-channel gamma, saturation, vibrance, clamp 0 to 1. Sample with `uv = saturate(c) * (31 / 32) + 0.5 / 32` so lattice centres line up; blend `mix(c, graded, intensity)`. Neutral stays neutral on the page white.
@@ -252,7 +274,9 @@ col += (hash21(ivec2(gl_FragCoord.xy)) - 0.5) / 255.0;    // after tone mapping 
 
 ## 10. Image hover: cover UV and eased pointer
 
-The JAL-native image hover (`three.img_hover`): each DOM image gets a WebGL plane at its exact box, sampled with cover-fit UVs, distorted by an eased pointer.
+From: JAL-authored (JAL-native replacement for the noyzzi hover effects), three.js docs (MIT).
+
+Build section for `three.img_hover` (with `sh.cover_uv_hover`). Each DOM image gets a WebGL plane at its exact box, sampled with cover-fit UVs, distorted by an eased pointer.
 
 **Cover UV** (object-fit: cover in the shader):
 
@@ -313,9 +337,11 @@ function step(dt: number) {                               // called from the one
 - Keep the `<img>` in the DOM (alt text, layout, the reduced-motion and no-WebGL state). Once the plane has rendered its first frame, set the image to `opacity: 0`; restore it on context loss.
 - Planes: one fixed canvas behind the content (`position: fixed; inset: 0`, stacked below page content, `pointer-events: none`) with an orthographic camera in CSS pixels, or drei `View` per image. Cache each image rect on resize and derive its y from the Lenis scroll offset each tick, instead of calling `getBoundingClientRect` per frame.
 - Touch devices and reduced motion: no plane distortion at all; the plain image, and at most a static grade.
-- No RGB split or chromatic fringe: that is noyzzi's `glitch-shift` or `prism-hover` territory, inside its section only.
+- No RGB split or chromatic fringe: that is `nz.fx.glitch-shift` or `nz.fx.prism-hover` territory, inside its section only.
 
 ## 11. Full-screen quad setup
+
+From: three.js docs and examples (MIT), drei (MIT), webgpu-claude-skill (custom pass as a `Fn`, in our own words), Threejs-Awesome-Graphics-Agent-Skills (pass hygiene, finite data textures), nixie-fx (procedural tile textures, baked imperfection), remotion (effect contract, ideas only), JAL-authored.
 
 A single oversized triangle is cheaper than a quad (no diagonal seam, no overdraw on the split).
 
@@ -342,6 +368,7 @@ renderer.setRenderTarget(target); renderer.render(pass, passCam); renderer.setRe
 - Render-target formats: `HalfFloatType` for state and HDR data (portable to mobile), `NearestFilter` for simulation state, `LinearFilter` plus mipmaps for blur sources. Dispose every target on unmount.
 - **Pass hygiene.** A custom full-screen or offscreen pass saves and restores renderer state (target, viewport, `autoClear`), disposes its targets and materials, and is removed from the pipeline when disabled rather than run at zero strength. Texel size is a `vec2` of `1/width, 1/height`, never one scalar. Shaders that use `gl_FragCoord` get the drawing-buffer size (`renderer.getDrawingBufferSize`); a state target's aspect comes from its own size, not a lower-resolution helper.
 - **Finite data textures.** A bounded field later sampled with clamp-to-edge (a contact mask, a stamp field, a caustic receiver) zeroes its outer two texels and crops with a two-texel guard, or the clamp smears any edge value into streaks.
+- **Per-frame effect contract** (a reusable 2D or WebGL effect driven by a frame composition or a seekable timeline, `frames.md`): `setup(canvas)` creates the context, programs, and textures once; `apply({ source, params })` draws from the current frame's resolved parameters only, never from accumulated state, so any frame renders identically when seeked; `cleanup()` frees every GPU object. Key a cache on every resolved parameter and skip the draw when it is unchanged; validate parameters up front and throw on out-of-range values. Use the 2D context unless shader math or GPU speed is truly needed. After 2D drawing reset `filter`, `globalAlpha`, the transform, and `globalCompositeOperation`; for WebGL uploads keep premultiplied alpha consistent and set `flipY` for DOM-sourced images. Zone B law holds.
 
 **Procedural tile textures.** For a repeating pattern (hex mesh, perforation, weave), draw one seamless tile on a 2D canvas at startup (a pointy-top hex of side s has a tile period of `sqrt(3) * s` by `3 * s`), wrap it in a `CanvasTexture` with `RepeatWrapping` on both axes and anisotropy per `three-foundations.md` 7.4, cache it at module scope, and apply it as the alpha map of one swept surface instead of modelling cells: one draw call at any cell density.
 
@@ -349,25 +376,33 @@ renderer.setRenderTarget(target); renderer.render(pass, passCam); renderer.setRe
 
 ## 12. Specular anti-aliasing and derivative bump
 
+From: Threejs-Awesome-Graphics-Agent-Skills (ideas, in our own words), three.js docs (MIT).
+
 - **Specular AA.** Glossy procedural surfaces sparkle when the normal changes faster than a pixel. Take the per-pixel normal variance as the larger squared length of `dFdx(N)` and `dFdy(N)`, and widen roughness to `min(1, sqrt(r * r + k * variance))`, `k` about 1 to start. It trades sparkle for a slightly broader highlight exactly where detail is unresolved. Compare with stock `MeshStandardMaterial` first: three already filters normal maps on some paths.
 - **Derivative bump.** When a height field exists only in the fragment stage, build the bump normal from screen derivatives of the view position and of the height, which keeps the stock lighting path and replaces only the normal input. Guard the determinant with a small epsilon and scale bump strength down with distance, so it never implies relief the silhouette lacks.
 
 ## 13. Refractive bodies beyond `MeshPhysicalMaterial`
+
+From: Threejs-Awesome-Graphics-Agent-Skills (ideas, in our own words), three.js docs (MIT, `MeshPhysicalMaterial` attenuation), JAL-authored (cost).
 
 The default for hero glass stays `MeshPhysicalMaterial` transmission. When a hero object needs a believable thick interior (sculpted glass, resin, ice):
 
 - **Two-pass image-space thickness.** Each frame, before the camera pass and with the same camera, render only the glass subject into a half-float RGBA target (nearest filtering, no mips, depth on) storing world normal and camera distance, double-sided with depth inverted so the farthest surface wins. The glass shader seeds the interior segment with the view-ray thickness, then refines the exit point three times by projecting the estimate into that buffer. Clamp the segment between a minimum wall (about 0.08 at unit scale, so open sheets still tint) and three times the bounding diagonal.
 - **Tint as absorption.** The author picks the colour a chosen thickness should show; extinction per channel is `sigma = -ln(max(tint, 1e-4)) / depth` and transmission is `exp(-sigma * pathLength)`, so thin edges and thick cores agree. Decode the tint from sRGB exactly once: a three `Color` from a hex literal is already linear, and a second conversion roughly doubles extinction silently. For `MeshPhysicalMaterial` the same idea is `attenuationColor` plus `attenuationDistance`.
 - **Dispersion,** if used at all, stays subtle so it never reads as RGB split: derive a Cauchy fit from the glass pair `n_d` and Abbe `V_d` on the CPU, trace about 8 wavelengths between 415 and 695 nm, weight by colour-matching curves, and divide by the weight sum (under 6 samples splits into visible copies).
-- A closed faceted gem is exact with a BVH hit against the mesh, where the image-space path is blind; direct `three-mesh-bvh` import is an approval candidate.
+- A closed faceted gem is exact with a BVH hit against the mesh, where the image-space path is blind; direct `three-mesh-bvh` import is an approval candidate, ask Brian.
 - Ship three debug views (view-ray thickness, stored back normal, entry Fresnel) and three checks: one wavelength reproduces the environment with no cast; zero absorption never exceeds the brightest environment value; a single segment shows refraction with no inner structure.
 - Cost C3, hero object only: the subject is rasterised twice.
 
 ## 14. Surface accumulation masks
 
+From: Threejs-Awesome-Graphics-Agent-Skills (ideas, in our own words).
+
 For moss, dust, or snow: one mask drives coverage and raised thickness, and the same mask blends albedo, AO, roughness, and normal, so colour and height never disagree. On a ground plane the mask is in world XZ. On a model, compute coverage in model-locked coordinates (it must not swim when the object moves), gate it by the world-normal up component above about 0.35, and convert the desired world thickness through the mesh scale before displacing along the normal. When textures carry the identity and procedural fields only place it, say so in the recipe; a texture-backed look is not "procedural".
 
 ## 15. Spherical bodies (planets, globes, spherical products)
+
+From: Threejs-Awesome-Graphics-Agent-Skills (field and LOD rules, ideas only), webgpu-claude-skill (terminator shading and layered shells, in our own words), JAL-authored (canvas law).
 
 - At build, store the normalised pre-displacement direction as its own attribute and sample every field from it, so noise does not stretch on displaced slopes.
 - Domain-warp on a sphere by removing the radial part of the warp vector and renormalising onto the shell.
@@ -378,9 +413,9 @@ For moss, dust, or snow: one mask drives coverage and raised thickness, and the 
 - Accept a body only if it holds unlit, as flat albedo, under grazing light, from far and close, across three seeds.
 - JAL canvas: no atmosphere glow shell, no dark space field. The body sits on the page white with natural terminator shading.
 
-**Dissolve** (C1). A reveal or exit compares a stable hash of quantised local position (`hash(positionLocal.mul(density))`, or smoother noise) with a threshold from scroll progress and discards below it (`Discard()` in TSL). The edge band just above the threshold (`smoothstep(t, t + 0.1, noise)`) darkens or tints toward ink or shifts roughness, never brightens (an emissive edge is glow). Reveal and removal read differently (a reveal rising from the base blends `position.y` into the threshold). `discard` disables early depth rejection, so the patched material is used only while the object transitions and swaps back to the stock material at 0 and 1. Reduced motion: a crossfade of 150 ms or less.
-
 ## 16. Mesh-to-mesh sweep handover
+
+From: Threejs-Awesome-Graphics-Agent-Skills (sweep handover, ideas only), webgpu-claude-skill and threejs-game-skills (dissolve, in our own words), JAL-authored (lawful edge, reduced motion).
 
 Swapping one product model for another inside a canvas (idea only; the source repository carries no license):
 
@@ -388,13 +423,19 @@ Swapping one product model for another inside a canvas (idea only; the source re
 - Progress is a linear ramp (about 1.5 s) inside a longer dwell (an eased moving line visibly decelerates); derive the current index from absolute elapsed time so a dropped frame cannot desync.
 - The edge is a thin darker band, never an additive glow. Preallocate every mesh so the handover allocates nothing. Reduced motion: a 150 ms crossfade.
 
+**Dissolve** (C1, the single-mesh sibling of the sweep). A reveal or exit compares a stable hash of quantised local position (`hash(positionLocal.mul(density))`, or smoother noise) with a threshold from scroll progress and discards below it (`Discard()` in TSL). The edge band just above the threshold (`smoothstep(t, t + 0.1, noise)`) darkens or tints toward ink or shifts roughness, never brightens (an emissive edge is glow). Reveal and removal read differently (a reveal rising from the base blends `position.y` into the threshold). `discard` disables early depth rejection, so the patched material is used only while the object transitions and swaps back to the stock material at 0 and 1. Reduced motion: a crossfade of 150 ms or less.
+
 ## 17. Parallax occlusion mapping and projected detail
+
+From: Threejs-Awesome-Graphics-Agent-Skills (POM and projection, ideas only), webgpu-claude-skill (`triplanarTexture`), JAL-authored (tiers mapped to T1 to T3).
 
 - **POM** (C2, hero surfaces only). Red channel is height (white is the peak); march depth `1 - h` in tangent space. Layers `mix(maxLayers, minLayers, saturate(abs(viewDir.z)))`; UV step `viewDir.xy / max(abs(viewDir.z), minViewZ) * scale / layers`. Starting tiers: low 8 to 32 layers, medium 16 to 96, high 32 to 160; T2 uses low, T1 drops POM for a normal map. Interpolate between the last two layers for the hit, and compute the march once for colour, roughness, and coverage (in TSL the normal graph compiles separately and needs its own call). Capture front, grazing, and along-axis views at every tier before shipping.
 - Bounded tiles test coverage on the marched UV and clamp height fetches to the tile so grazing rays never hit a neighbour; feather only the coverage edge (alpha to coverage). On convex hosts add curvature sag to the ray depth (a cylinder tiled `n` times around uses curvature `[2pi / n, 0]`) and inflate the shell by the maximum relief so the floor stays on the real surface. Self-shadowing marches a second ray from the hit toward the light (about 20 steps, bias 0.03) and applies to direct light only; cast-shadow carving must be built in the shadow pass.
 - **Planar and triplanar projection** paints graphics or detail across several parts without UV unwraps: project from world planes, weight by the world normal raised to about 4, and normalise the weights so a 45 degree shoulder commits to one plane instead of printing twice. A kill mask stops downward-facing surfaces low in the frame from smearing; limit the projection to a world band so unrelated objects stay clean.
 
 ## 18. Shader self-check
+
+From: ai-dev-kit (silent compile failures, branch coherence), Threejs-Awesome-Graphics-Agent-Skills (deformed normals, one height function, explicit LOD, zero-vector guard, material failure list), three.js docs (MIT, `renderer.debug`), JAL-authored.
 
 - [ ] A black, missing, or wrong mesh after a shader edit: read the console for `THREE.WebGLProgram` and `THREE.WebGLShader` errors first. Keep `renderer.debug.checkShaderErrors` on in dev and test; in production turn it off (it costs a sync stall) and set `renderer.debug.onShaderError` to log once and swap to the poster. Under TSL and WebGPU a compile error is a rejected `compileAsync` promise: await it and catch.
 - [ ] No per-pixel divergent `if` on mobile (a condition built from noise, UV, or a texture value): GPUs shade pixels in groups and a split group pays for both sides. Use `mix(a, b, step(edge, x))`, `smoothstep` blends, or `select()` in TSL. Branching on a uniform or constant is fine.
@@ -409,3 +450,19 @@ Swapping one product model for another inside a canvas (idea only; the source re
 - [ ] Texture fetches inside loops, data-dependent branches, or after `discard` use an explicit level (`textureLod`, `.level()` in TSL): implicit derivatives are undefined there. Shadow-style comparison samples are taken unconditionally and weighted afterwards.
 - [ ] Vectors that can reach zero (a cross product at alignment, a centre-to-point direction) are length-checked before `normalize`, falling back to the last finite value or a fixed axis: one `NaN` blanks the frame.
 - [ ] Materials: no normal detail survives below one pixel; triplanar blends show no seam; roughness varies with the same causes as colour; a custom lighting term is checked against the stock material for energy; no post pass exists to calm a sparkling highlight (the fix belongs in the material, section 12).
+
+## 19. Recipe build: three.post_light
+
+From: three.js addons and TSL display nodes (MIT), pmndrs docs, webgpu-claude-skill (DoF and pipeline notes, in our own words), JAL-authored (stage rule, budget, law).
+
+Build section for `three.post_light`: a modifier on any WebGL or WebGPU host (`three.studio_object`, `three.matcap_clay`, `three.sdf_blob`, and so on). It takes no role and its cost adds to the host's. The pieces live in sections 8 and 9; this section is the assembly.
+
+- **When.** Default none. Only the `imm.tech` post stage (`SKILL.md` workflow step 10) adds it, after the first captures show a named problem: banding across pale falloff, stair-stepped silhouettes or thin lines, an off-brand colour cast, or a subject that needs separation from a busy foreground. Log each pass next to the problem it fixes; a pass with no logged problem is removed.
+- **The lawful stack, nothing else.** AA (`fxaa` or `smaa`; `traa` only under slow camera motion, replacing the other two), a 3D LUT grade (the section 9 brand LUT with small static trims), dither (section 8), and subtle DoF (section 9). Never bloom, glow, a vignette stronger than a few percent, chromatic aberration, film grain as a look, or screen-space AO without a separate JEV cost check (`three-foundations.md` section 2).
+- **Order** (one owner per stage, each with a disable switch, section 9 chain): scene in linear HDR, DoF on the HDR scene (it needs the view Z), tone map and `renderOutput`, LUT, AA on display-space input, dither last, output.
+- **Cost.** Each full-resolution pass costs about 0.3 to 1.5 ms on T3 (estimate; measure it with `performance.md` section 6.4, since fill scales with DPR squared, `performance.md` section 5). `performance.md` section 1 allows T3 at most one pass beyond output: the LUT and dither fuse into the output pass and do not count, so AA or DoF takes the one slot, never both. When the host needs DoF, get edges from the renderer's multisampling instead (`antialias: true` on WebGL; a multisampled scene pass on WebGPU **[verify]**). SMAA is three internal passes but one slot.
+- **Mobile.** None on T2 and T1, and the reduction ladder drops post first (`performance.md` section 4). `material.dithering = true` is a material flag, not a pass, and stays on every tier.
+- **Libraries.** Three addons only, which ship with three: WebGPU `three/addons/tsl/display/` nodes (`fxaa`, `smaa`, `traa`, `lut3D`, `dof`, plus `bayerDither` from `tsl/math/Bayer.js`) in one `RenderPipeline`; WebGL `EffectComposer` with `RenderPass`, `ShaderPass(FXAAShader)` or `SMAAPass`, `LUTPass`, `BokehPass`, and `OutputPass` last. In R3F, render the composer from a `useFrame` with a positive priority, which takes over the default render. `postprocessing` and `@react-three/postprocessing` are approval candidates, ask Brian.
+- **DoF limits.** T3 only; focus distance on the subject in world units, bokeh scale about 1, so it reads as a lens, not a blur filter. Text and UI stay DOM and are never behind a blurred plane. No animated focus pulls under reduced motion.
+- **Transparent canvas.** The post targets carry alpha, so the page white still shows through; the `performance.md` section 6.5 background-equals-page-white assertion must pass with the stack on, and a dark fringe at silhouettes means an alpha or premultiply mismatch in a pass.
+- **Verify.** Captures at 375 and 1280 with each pass toggled off and on (`performance.md` section 6.2), p95 frame time with and without the stack (section 6.4), and the poster captured with the same grade so poster and live scene match.

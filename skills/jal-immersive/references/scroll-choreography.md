@@ -10,6 +10,8 @@ Stack: `bun add gsap @gsap/react lenis`. Every GSAP plugin is free (since the 20
 
 ## 1. GSAP core
 
+From: gsap-skills (`gsap-core`, `gsap-timeline`, `gsap-plugins`, `gsap-utils`), GSAP docs, JAL-authored (tokens, the one curve, plugin and ease law).
+
 ### 1.1 Setup, once per app
 
 Register at module top level, never inside a component that re-renders:
@@ -103,7 +105,6 @@ Plugin filter (all free, all installable, law decides use):
 - **Control.** Store every tween or timeline you control in a ref. Build interactive timelines once with `paused: true` and drive them with `play()`, `reverse()`, `restart()`, `progress(p)`, `time(t)`; never create a tween per event. `kill()` stops an animation and a timeline's children (context revert does it on unmount). Timeline-level `repeat`, `yoyo`, `onComplete` apply to the whole sequence and fall under the loop rule in section 1.4.
 - **Position parameter grammar.** A number is an absolute time in seconds; `"+=0.2"` and `"-=0.2"` offset from the timeline end; `"label"` and `"label+=0.2"` place relative to a label; `"<"` is the start of the most recently added child, `">"` its end (the default), and `"<0.1"` or `">-0.1"` offset from those. Rundowns use absolute numbers or labels; `"<"` pairs an outgoing and an incoming beat.
 - **Chapter jumps.** `tl.play("proof")` jumps to a label and plays. `tl.tweenFromTo("intro", "proof", { duration: dur.show1, ease: "jal-standard" })` pauses the timeline and returns a tween moving the playhead between labels, the tool for chapter buttons in a demo. Pass the ease: the returned tween is linear by default. Under reduced motion set `progress()` straight to the label.
-- `overwrite: "auto"` for interruptible hover or toggle motion.
 - `gsap.quickTo(el, "x", { duration: dur.fast, ease: "jal-standard" })` for pointer followers: one tween reused, not one per event.
 
 ### 1.6 SVG plugins and dial transforms
@@ -121,6 +122,8 @@ Plugin filter (all free, all installable, law decides use):
 
 ## 2. ScrollTrigger
 
+From: gsap-skills (`gsap-scrolltrigger`), animata (nested scroller detection), GSAP docs, JAL-authored (pin law, dev-only gate).
+
 ### 2.1 Anatomy
 
 - Defaults when unset: `start` `"top bottom"` (`"top top"` when pinned), `end` `"bottom top"`, `toggleActions` `"play none none none"`. Write start and end explicitly anyway so a reviewer can read the range. A bare number is an absolute scroll offset in px; `"max"` is the maximum scroll (a footer trigger). `"+=N"` and `"+=N%"` measure from start, percentages of the scroller height.
@@ -128,9 +131,9 @@ Plugin filter (all free, all installable, law decides use):
 - Functions for `start` and `end` are called again on every refresh regardless of other options. `invalidateOnRefresh: true` is a separate switch that flushes the linked tween's recorded values, so function-based tween values (`x: () => ...`) are re-measured. A responsive horizontal track or a content-sized range needs both.
 - `clamp()` (3.12 and up): `start: "clamp(top bottom)"`, `end: "clamp(bottom top)"` so a trigger already on screen at load starts at progress 0 instead of partly played, and one near the page bottom can still reach 1. Use it on every scrubbed trigger in the first and last viewport; not on pinned ranges sized with `"+="`.
 - `endTrigger: ".proof-end"` measures `end` against a different element than `trigger` (a caption that ends when a later block reaches the top), both in the same component scope so they revert together.
-- A trigger inside a scrollable panel (dialog, docs pane, anything with `data-lenis-prevent`) needs `scroller: panelEl`, or it measures the page and never fires; refresh it when the panel changes. If Lenis ever runs on a wrapper instead of the window, set `ScrollTrigger.defaults({ scroller: wrapper })` once.
+- A trigger inside a scrollable panel (dialog, docs pane, anything with `data-lenis-prevent`) needs `scroller: panelEl`, or it measures the page and never fires; refresh it when the panel changes. When the component cannot know its container, take the nearest ancestor whose computed `overflow-y` is `auto` or `scroll` (window if none), and use that same element as any IntersectionObserver `root` and scroll listener target. If Lenis ever runs on a wrapper instead of the window, set `ScrollTrigger.defaults({ scroller: wrapper })` once.
 - `toggleActions` slots map in order to onEnter, onLeave, onEnterBack, onLeaveBack; each takes play, pause, resume, reset, restart, complete, reverse, or none. Content reveals keep `"play none none none"`. Pausing loops and Players offscreen is `"play pause resume pause"`. Never reverse or reset content on leave: it hides text the reader already passed.
-- **Callbacks** receive the instance (`progress` 0 to 1, `direction` 1 down and -1 up, `isActive`). `onToggle` fires when `isActive` flips: start and stop render-on-demand for a canvas (the dirty flag in section 8) or set `aria-current`. `onRefresh` fires after positions are recalculated, the one place to cache layout reads so `onUpdate` never reads layout. `onScrubComplete` fires when a numeric scrub finishes catching up, the moment to clear the settling flag in section 9.
+- **Callbacks** receive the instance (`progress` 0 to 1, `direction` 1 down and -1 up, `isActive`, `getVelocity()` in px per second). `onEnter`, `onLeave`, `onEnterBack`, `onLeaveBack` fire on the four crossings, in the toggleActions slot order. `onToggle` fires when `isActive` flips: start and stop render-on-demand for a canvas (the dirty flag in section 8) or set `aria-current`. `onRefresh` fires after positions are recalculated, the one place to cache layout reads so `onUpdate` never reads layout. `onScrubComplete` fires when a numeric scrub finishes catching up, the moment to clear the settling flag in section 9.
 - Two modes, never both on one trigger:
   - `toggleActions: "play none none none"`: discrete, played once on enter;
   - `scrub`: progress follows scroll. `scrub: true` is locked to scroll; `scrub: 0.6` adds 0.6s catch-up.
@@ -176,6 +179,10 @@ Plugin filter (all free, all installable, law decides use):
 
 ## 3. SplitText
 
+From: gsap-skills (`gsap-plugins` SplitText), remotion (ideas only: measure text after fonts load), GSAP docs, JAL-authored (units, token staggers, accessibility law).
+
+Build home of `gsap.splittext_reveal`.
+
 ```ts
 SplitText.create(heading, {
   type: "lines",          // split only what you animate: lines, words, or chars
@@ -198,6 +205,10 @@ SplitText.create(heading, {
 - Languages without spaces (Chinese, Japanese, Thai): insert break markers with `prepareText(text, el)` from `Intl.Segmenter` (granularity `"word"`) and split on them with `wordDelimiter`. A custom `wordDelimiter` RegExp keeps hashtags or product codes whole.
 
 ## 4. Flip
+
+From: gsap-skills (`gsap-plugins` Flip, Draggable, InertiaPlugin, Observer, MotionPathPlugin), GSAP docs, JAL-authored (no-overshoot and content-only rules).
+
+Build home of `gsap.flip_transition` (4.1 to 4.3 cover Draggable, Inertia, Observer, and MotionPath).
 
 Record, mutate, animate:
 
@@ -223,6 +234,8 @@ Framer Motion drag stays the default for React-state carousels (R32). Use `Dragg
 
 ## 5. matchMedia and reduced motion
 
+From: gsap-skills (`gsap-core` matchMedia), GSAP docs, JAL-authored (reduced-motion collapse law).
+
 One `gsap.matchMedia()` per section, conditions form, so one code path branches cleanly:
 
 ```ts
@@ -246,6 +259,8 @@ mm.add(
 - GSAP objects made in an `mm.add` handler revert on their own; listeners, observers, Lenis options, and R3F dirty flags do not. Return a cleanup function from the handler: it runs whenever the query stops matching (resize across the breakpoint, reduced motion switched on) as well as on `mm.revert()`.
 
 ## 6. React integration
+
+From: gsap-skills (`gsap-react`), GSAP docs (`@gsap/react`), JAL-authored.
 
 ```tsx
 export function Proof() {
@@ -279,6 +294,10 @@ export function Proof() {
 - Target the element (`boxRef.current`), never the ref object: GSAP would animate the plain object and nothing moves, with no error. A null `current` inside `useGSAP` means the ref sits on a conditionally rendered node.
 
 ## 7. Choreography patterns
+
+From: JAL-authored (patterns, tiers, pin law), gsap-skills (`gsap-scrolltrigger` horizontal and pinned examples, corrected), GSAP docs.
+
+Build home of `gsap.reveal`, `gsap.stagger_sequence`, `gsap.scrub`, `gsap.pinned_sequence`, and `gsap.horizontal_track` (the pattern names below are these IDs without the prefix). The live DOM demo (`gsap.live_dom_demo`) and poster steps (`frame.poster_steps`) are built in `frames.md` sections 8 and 9.
 
 Pick by what the content is, never by taste. JEV `motion.choreography` makes the call (section 11).
 
@@ -323,6 +342,8 @@ In a pinned sequence, the outgoing step fades as the incoming one arrives, so tw
 
 ## 8. Lenis and the single frame loop
 
+From: Lenis docs, gsap-skills (`gsap-scrolltrigger` scroller wiring, ScrollToPlugin), pmndrs docs (R3F `frameloop` and `advance`), animata (frame-rate-independent follow), JAL-authored (one clock).
+
 One rAF for the whole page, owned by `gsap.ticker`. Lenis, ScrollTrigger, and the R3F canvas all hang off it.
 
 ```ts
@@ -365,6 +386,10 @@ Lenis details:
 
 ## 9. Scroll-driven camera paths for R3F
 
+Build section for `three.scroll_camera`.
+
+From: ai-dev-kit (`threejs-scene` scroll camera rules), Threejs-Awesome-Graphics-Agent-Skills (camera skill: pose snap, rigid anchoring, docking corridor and terminal lock; ideas in own words), webgpu-claude-skill (scene pass transition, own words), remotion (ideas only: arc-length speed), three.js docs (MIT), JAL-authored.
+
 One ScrollTrigger per 3D section maps scroll to a normalized progress in a ref. The render step samples an authored path and writes the camera once.
 
 ```ts
@@ -405,6 +430,8 @@ function applyCamera(camera: PerspectiveCamera, dt: number) {
 
 ## 10. Motion intensity tiers
 
+From: JAL-authored.
+
 Set per section by JEV `motion.intensity`. At most one tier 3 section per page. Product UI (app screens, forms, tables, settings) is capped at tier 1 and uses the product durations (`--dur-200`, 4px travel). Legal, pricing tables, docs, and forms are tier 0.
 
 | Tier | Name | Allows | Never |
@@ -417,6 +444,8 @@ Set per section by JEV `motion.intensity`. At most one tier 3 section per page. 
 Every tier: reduced motion collapses to the static final state, `ui_audit` passes at every width, and the page reads fully with motion off.
 
 ## 11. How JEV feeds in
+
+From: JAL-authored.
 
 Question shapes and IDs live in `skills/jal-jev/references/catalog.md`. The agent asks, then builds exactly what the answers say.
 
@@ -434,6 +463,8 @@ Log each answer (question, answer, confidence, what was built) in the build repo
 
 ## 12. Performance rules
 
+From: gsap-skills (`gsap-performance`), ai-dev-kit (performance standards), animata (batch reads before writes), JAL-authored (transform-only law, budgets).
+
 - Only `transform` and `autoAlpha` tween. Never `width`, `height`, `top`, `left`, `margin`, `filter`, `boxShadow`, `backgroundColor`, or a gradient. A section color change on scroll is a crossfade of two solid layers.
 - `will-change: transform` right before a tween and cleared after (`onComplete`), never blanket in CSS. GSAP's default `force3D: "auto"` already promotes a layer only while tweening; never set `force3D: true` globally or in `gsap.defaults`.
 - A numeric custom property can carry one scrubbed value to many CSS-only children (`gsap.to(el, { "--p": 1 })`, read through `calc()` in `transform` or `opacity`). Set it on the smallest subtree (every change restyles descendants). Never sweep colours, hues, or gradient stops with it.
@@ -446,6 +477,8 @@ Log each answer (question, answer, confidence, what was built) in the build repo
 - Test on a low-end phone profile. A tier 3 section that drops frames there downgrades to tier 2 on mobile.
 
 ## 13. Common mistakes checklist
+
+From: gsap-skills (common mistakes across `gsap-core`, `gsap-scrolltrigger`, `gsap-react`), JAL-authored.
 
 Before returning motion work, grep and check:
 

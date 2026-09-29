@@ -4,7 +4,7 @@ When a section's subject is generated rather than loaded (a product configurator
 
 ## 1. Plan, then emit
 
-From: Threejs-Awesome-Graphics-Agent-Skills (`threejs-procedural-architecture`, `threejs-procedural-geometry`).
+From: Threejs-Awesome-Graphics-Agent-Skills (`threejs-procedural-architecture`, `threejs-procedural-geometry` contract and submarine assembly); JAL-authored (`bun test` contract check).
 
 - Two stages. A seeded generator produces a serialisable **plan** (parts, dimensions, placements, diagnostics); a **compiler** turns the plan into geometry. Randomness only chooses among valid options and never patches invalid geometry. Assertions fail the build on a missing builder or duplicate ownership.
 - Build the strong layers first (dimensions, mass, edge graph, placements) and ornament last: ornament cannot repair a weak mass.
@@ -44,7 +44,7 @@ From: Threejs-Awesome-Graphics-Agent-Skills (`threejs-procedural-geometry` quali
 - **Apertures.** Openings are built into one closed shell (matched outer and inner rings, or a plate with holes); the cut, its frame, and its glazing come from one outline so they cannot drift. A dark plane on a solid is not an opening.
 - **Shells.** Any edge a viewer can see has real thickness (paired front and back surfaces, or a solidify step), never a single sheet.
 - **Joins.** Every contact is one of four declared states: one continuous mesh; an intentional structural penetration with a named allowance; a proud part offset at least 0.0008 m; or a reveal of 0.0015 to 0.006 m (at least 0.004 m to read from 2 m). Flush but unrelated coplanar faces are never allowed: on a white plinth they z-fight visibly.
-- **Booleans.** Prefer direct topology (rings, walls with holes, plates with holes). `three-bvh-csg` (MIT) is an approval candidate, needs Brian's yes, and belongs in a build-time generation step. After any boolean: weld, repair winding, rerun the topology audit.
+- **Booleans.** Prefer direct topology (rings, walls with holes, plates with holes); reach for a boolean only when that cannot express the cut. `three-bvh-csg` (MIT) is an approval candidate, ask Brian, and belongs in a build-time generation step. After any boolean: weld, repair winding, rerun the topology audit.
 
 ## 5. Normals and winding
 
@@ -56,7 +56,7 @@ From: Threejs-Awesome-Graphics-Agent-Skills (`threejs-procedural-geometry` quali
 
 ## 6. Mesh writer by material slot
 
-From: Threejs-Awesome-Graphics-Agent-Skills (`threejs-procedural-architecture` grammar and mesh compiler).
+From: Threejs-Awesome-Graphics-Agent-Skills (`threejs-procedural-architecture` grammar and mesh compiler, `threejs-procedural-geometry` mesh writers); three.js `BufferGeometryUtils` (MIT).
 
 Modules author geometry once in a local frame; one placement transform owns orientation and winding per side, so modules never know where they sit. Emit into a writer that keeps positions, normals, UVs, and indices per material slot and produces one indexed `BufferGeometry` per non-empty slot, which bounds draw calls by material role (glass, stone, metal) instead of by part. `BufferGeometryUtils.mergeGeometries` where it fits; `Uint32` indices above 65,535 vertices.
 
@@ -70,7 +70,7 @@ From: Threejs-Awesome-Graphics-Agent-Skills (`threejs-procedural-architecture`).
 
 ## 8. Audits and evidence
 
-From: Threejs-Awesome-Graphics-Agent-Skills (`threejs-procedural-geometry` quality gates and its MIT geometry-quality kit, ideas only).
+From: Threejs-Awesome-Graphics-Agent-Skills (`threejs-procedural-geometry` quality gates, `assets/geometry-quality-kit/` (MIT)); JAL-authored (`bun test` wiring, ADR rule, `performance.md` capture set).
 
 - **Topology audit** per part in `bun test`, before emission: no non-finite positions or bad indices; no zero-area faces; no unused vertices or pairs closer than 0.00002 m; no boundary edges on closed parts and no edge shared by more than two faces; the expected edge-connected component count; positive signed volume per closed component; unit normals that agree with winding. Open surfaces declare the exception. Traverse with `object.isMesh`, not `instanceof` (two bundled copies of three break `instanceof`). Prove the checker by planting known defects in a self-test: a 0.5 mm coplanar offset, a clean 10 mm gap, a 60 mm penetration, an exact butt joint.
 - **Z-fight audit.** Coplanar overlap per triangle pair: normals within 0.0025 rad, plane distance within 0.0015 m, clipped overlap area at least 2 cm2. Bucket triangles by quantised plane and inflate bounding boxes by the plane tolerance, or a 0.5 mm offset slips through. Same-facing overlaps are z-fights; opposed ones are back-to-back contacts.
@@ -82,12 +82,12 @@ From: Threejs-Awesome-Graphics-Agent-Skills (`threejs-procedural-geometry` quali
 
 ## 9. LOD and budgets
 
-From: Threejs-Awesome-Graphics-Agent-Skills (`threejs-procedural-geometry`); JAL budgets.
+From: Threejs-Awesome-Graphics-Agent-Skills (`threejs-procedural-geometry` quality gates, LOD); drei (MIT) `<Detailed>`; JAL-authored (T3 triangle cap).
 
 Derive LODs from the generator: fewer profile samples that keep crown and groove extrema, fewer radial segments by part size, ornament replaced by a normal map once its silhouette contribution is small, the same UV density and material slots at every level. Generic decimation erases the narrow features that create material response. TAG's close-inspection models run 300k to 900k triangles, above the JAL T3 cap of 300k, so a JAL build ships generator LODs through drei `<Detailed>` with hysteresis.
 
 ## 10. Scene graph moves
 
-From: Threejs-Awesome-Graphics-Agent-Skills (`threejs-procedural-animation`); three.js `Object3D.attach` (MIT).
+From: Threejs-Awesome-Graphics-Agent-Skills (`threejs-procedural-animation` docking systems); three.js docs (MIT) `Object3D.attach`.
 
 To move an animated object to a new parent (detach a part from an assembly, drop a product onto a plinth group), use `newParent.attach(object)`, which keeps world position, rotation, and scale; `add()` reinterprets the local transform and the part jumps. Capture any velocity in world space at the same moment.

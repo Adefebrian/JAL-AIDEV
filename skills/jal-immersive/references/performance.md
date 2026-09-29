@@ -4,6 +4,8 @@ Numbers come from the MIT game skill pack (render budgets, canvas inspector), th
 
 ## 1. The budget table (worst active view, per section)
 
+From: threejs-game-skills (render budgets, canvas inspector), Threejs-Awesome-Graphics-Agent-Skills (`production-image-pipeline` pixel budgets), ai-dev-kit (`perf-audit` load flags), JAL-authored (section budgets, particle starting values, clean-room effect caps).
+
 | Metric | T3 desktop full | T2 mobile full | T1 mobile reduced | T0 static |
 |---|---|---|---|---|
 | Draw calls (`info.render.calls`) | 100 or fewer | 50 or fewer | 30 or fewer | poster |
@@ -24,6 +26,8 @@ Other load budgets: flag any JS chunk over about 150KB gzip and any image over a
 
 ## 2. DPR and the pixel budget
 
+From: Threejs-Awesome-Graphics-Agent-Skills (pixel-budget DPR, depth-aware upsampling), threejs-game-skills (DPR caps), three.js docs (MIT), JAL-authored (DPR law, small views).
+
 - **Law:** DPR never exceeds 2, on any tier, any section, noyzzi included.
 - **Budget formula:** `dpr = clamp(sqrt(budgetPx / cssPx), 1, maxDpr)` with the device DPR as a further ceiling. Budgets: 1,650,000 px desktop (max 1.5), 1,000,000 px mobile (max 1.25), min DPR 1. Implementation: `dprFor()` in `three-foundations.md` section 2; R3F takes it as `dpr={[1, cap]}`.
 - **Small views** **[JAL]**: a drei `View` or embedded canvas under about 0.4 MP of CSS pixels may use up to DPR 2 on T3, because the formula already keeps fill under budget. Crisp product thumbnails matter more than a full-bleed hero's last half pixel.
@@ -31,6 +35,8 @@ Other load budgets: flag any JS chunk over about 150KB gzip and any image over a
 - Never lower DPR to hide a real defect: fix the cause (draw calls, overdraw, a per-frame allocation), then tier. Any quality cut must name what it preserves and what it loses.
 
 ## 3. Device tiers used by `imm.tier`
+
+From: JAL-authored (tiers, `imm.tier`), drei (MIT) `PerformanceMonitor`, threejs-game-skills (composer cost on low tiers).
 
 Planning assigns a tier from signals before load; the binding `imm.tier` call uses measured numbers; at runtime `PerformanceMonitor` may demote one tier, never promote.
 
@@ -47,6 +53,8 @@ Planning assigns a tier from signals before load; the binding `imm.tier` call us
 
 ## 4. The reduction ladder (mobile and low-power fallbacks)
 
+From: threejs-game-skills (cut order, optimisations by payoff), Threejs-Awesome-Graphics-Agent-Skills (merge by material slot), JAL-authored (ladder order, poster step).
+
 Apply in order and stop as soon as the budget holds. Record for each step what the scene keeps.
 
 1. Drop DPR to the tier floor.
@@ -61,7 +69,9 @@ Optimisations by payoff when profiling: instancing, sharing geometry and materia
 
 ## 5. Cost references
 
-**Post-processing.** Composer targets are full-resolution, usually HDR, so every pass costs fill that scales with DPR squared. One RGBA16F target at 1.65 MP is about 13 MB (1.65M px times 8 bytes); every pass reads and writes at least one. SMAA is three passes (edges, weights, blend). On WebGL with pmndrs `EffectComposer` (approval candidate) consecutive effects merge into one pass, with at most one convolution effect (such as DoF) per pass; recommended renderer settings there are `antialias: false`, `stencil: false`, `depth: false`. The WebGPU `RenderPipeline` fuses node chains; `scenePass.setMRT(mrt({ output, normal: normalView, depth }))` renders several targets in one scene pass (read with `scenePass.getTextureNode("normal")`), declaring only targets a pass reads; MRT attachments default to RGBA16F, drop 8-bit data (packed normals, metal and rough) to `UnsignedByteType` to halve bandwidth. Default JAL stack: none.
+From: threejs-game-skills (composer cost, frame timing), webgpu-claude-skill (MRT, watchdog; own words), Threejs-Awesome-Graphics-Agent-Skills (render-target ownership, material costs), nixie-fx (delta clamping), pmndrs docs (`EffectComposer`), remotion (fixed plates; ideas only), JAL-authored (clean-room effect targets).
+
+**Post-processing.** Composer targets are full-resolution, usually HDR, so every pass costs fill that scales with DPR squared. One RGBA16F target at 1.65 MP is about 13 MB (1.65M px times 8 bytes); every pass reads and writes at least one. SMAA is three passes (edges, weights, blend). On WebGL with pmndrs `EffectComposer` (approval candidate, ask Brian) consecutive effects merge into one pass, with at most one convolution effect (such as DoF) per pass; recommended renderer settings there are `antialias: false`, `stencil: false`, `depth: false`. The WebGPU `RenderPipeline` fuses node chains; `scenePass.setMRT(mrt({ output, normal: normalView, depth }))` renders several targets in one scene pass (read with `scenePass.getTextureNode("normal")`), declaring only targets a pass reads; MRT attachments default to RGBA16F, drop 8-bit data (packed normals, metal and rough) to `UnsignedByteType` to halve bandwidth. Default JAL stack: none.
 
 **Render-target ownership table.** Before adding any second pass, write one row per signal: signal, producer, consumers, colour space and format, resolution, history (yes or no). Each signal has exactly one producer (no depth prepass when the scene pass already owns depth); every target is resized from the same DPR and CSS size in one function; every pass has a named input, output, owner, and disable path. Confirm the render loop actually calls the pass graph: a composer built but never rendered is a common dead path.
 
@@ -79,7 +89,11 @@ Optimisations by payoff when profiling: instancing, sharing geometry and materia
 
 **Frame timing rules.** Clamp the loop delta to 0.05 s; a physics accumulator clamps to 0.1 s at a fixed 1/60. Never infer GPU time from CPU frame time; warm up and separate shader compile from steady state. The GPU watchdog fires around 10 s of shader work.
 
+**Fixed plates.** A heavy layer that only pans or zooms (a rendered map, a large illustration, a baked scene backdrop) renders once, static, at the largest zoom any beat needs, and moves per frame by CSS or mesh transform only. Scale stays at 1 or below (upscaling blurs); each plate side stays at 4096 px or less unless `MAX_TEXTURE_SIZE` and `MAX_RENDERBUFFER_SIZE` on the target tier allow more (3840 by 2160 covers a 1920 by 1080 view). Centre the plate on the midpoint of the move's extent; a shot that does not fit one plate splits into two shots.
+
 ## 6. Verification method
+
+From: threejs-game-skills (capture harness, interaction sweep, capture manifest, baselines, bottleneck classes), Threejs-Awesome-Graphics-Agent-Skills (capture set, geometry review, topology gate, luminance views, report additions), webgpu-claude-skill (device loss, crash limits, limit debugging; own words), ai-dev-kit (error listeners, clipped screenshots, dependency weight, run artifacts), remotion (settle loop; ideas only), nixie-fx (stress effect), animata (CPU throttling), three.js docs (MIT), JAL-authored (Bun plus puppeteer-core over CDP, pixel assertions, `ui_audit`).
 
 Run with `bun test` and puppeteer-core against system Chrome (JAL bans Playwright). WebGL suites run on one worker: parallel contexts contend for the GPU.
 
@@ -95,7 +109,8 @@ Run with `bun test` and puppeteer-core against system Chrome (JAL bans Playwrigh
 
 ### 6.2 Deterministic captures
 
-- Test mode: `frameloop="never"`, Lenis disabled, a fixed seed for all noise and particles, `window.__immersive = { ready, seek(p), info }` (`r3f.md` section 13).
+- Test mode: `frameloop="never"`, Lenis disabled, a fixed seed for all noise and particles, `window.__immersive = { ready, seek(p), info }` plus the inspection controls, `setState`, pause, frame counter, and capture order under one 10 s deadline in `r3f.md` section 13. Missing or no-op hooks fail the run.
+- **Settle loop:** for scenes that stream or refine (LOD, tiles, progressive textures) `ready` is not one event: advance until the loaded flag stays true for about 8 consecutive ticks, capped at about 600 ticks, and fail the capture at the cap instead of shooting a half-refined frame.
 - Sequence: `await ready` (assets loaded, `useProgress().active === false`, `document.fonts.ready`), `seek(p)`, `advance()` twice, `page.screenshot()` (captures the composited frame, so `preserveDrawingBuffer` is not needed).
 - GPU readback (`renderer.readRenderTargetPixelsAsync`, `renderer.getArrayBufferAsync(storageAttribute)` **[verify]**) stalls the pipeline: test hooks only, for example reading a few particle positions after `seek(p)` to assert determinism across runs with one seed.
 - Never take an element screenshot of a live canvas: it waits for the element to settle, which an animating canvas never does. Freeze first (`frameloop="never"`, `seek(p)`, two advances), then `page.screenshot({ clip: await (await page.$(sel)).boundingBox() })`, and throw when `boundingBox()` is null (the element is not visible).
@@ -145,7 +160,7 @@ const r = await page.evaluate(() => {
 - **Background equals page white:** screenshot the canvas box, sample pixels outside the subject, compare against the computed `--color-page` value exactly (tolerance 1 per channel). This catches the tone-mapping trap (`#F0F0F0` or `#E2E2E2` instead of the page token) and dark premultiply halos. Decode in the page itself: pass the screenshot as base64, draw it to an offscreen 2D canvas, read `getImageData`. No image library needed.
 - **Luminance check:** a false-colour debug mode (bands under 0.05, 0.18, 1.0, and over 1.0 in linear HDR before tone mapping) plus a clipped-pixel mask after it. On a white-first page it confirms only surfaces meant to read pure white reach the tone-map knee, and highlights come from specular lobes, not blown albedo.
 - **No bloom leak:** no pixel brighter than its surroundings in a radial falloff around highlights.
-- **Non-blank:** sample a 160 by 90 grid; more than 256 non-transparent pixels and (variance over 8 or more than 3 colour buckets). Advisory, measured on the subject's bounding box only (a white page legitimately reads as flat overall): colour entropy under about 3.0 bits or a dominant colour share over about 0.6 reads as sparse; edge density (neighbour luminance delta over 12) under about 0.04 reads as primitive; p95 minus p5 luminance contrast under about 60 reads as fog or darkness compression.
+- **Non-blank:** sample a 160 by 90 grid; more than 256 non-transparent pixels and (variance over 8 or more than 3 colour buckets). Advisory, measured on the subject's bounding box only (a white page legitimately reads as flat overall): colour entropy under about 3.0 bits or a dominant colour share over about 0.6 reads as sparse; edge density (neighbour luminance delta over 12) under about 0.04 reads as primitive; p95 minus p5 luminance contrast under about 60 reads as fog or darkness compression. A low advisory value gets one line of explanation in the report; never add props, noise, or particles to lift it.
 
 ### 6.6 Resilience and leak tests
 
@@ -159,6 +174,7 @@ const r = await page.evaluate(() => {
 
 - Run at 320, 375, 414, 768, 1280: 19 rules plus `reduced-motion` (with reduce emulated: no infinite CSS or WAAPI animation running, no continuous rAF loop above 10 calls per second).
 - `[data-jal-exempt~="noyzzi"]` subtrees skip the visual rules (light background, gradient, shadow, stripe, purple, eyebrow, overlap) but keep min height, overflow, clipped text, and reduced motion.
+- Text-fit fixtures use the longest likely values (longest product name, price with currency, the longest supported locale), not the design's sample copy.
 - SKIPPED is not PASS.
 
 ### 6.8 The perf report
@@ -175,17 +191,21 @@ Payload check for every chunk over budget: run `Bun.build` with `metafile: true`
 
 ### 6.9 Interaction sweep
 
-Sections whose message is interaction (`toy`, configurators, drag-to-rotate) get a puppeteer-core sweep under `bun test` that drives real input (`page.mouse` drags, keyboard arrows, touch through CDP `Input.dispatchTouchEvent`) and samples `__immersive.info` after each step. Record frames advanced, whether the subject moved or its state changed, the step of the first change, stuck windows (frames advance and input is held but nothing changes), and errors. Assert a live loop, real change from input, at most two stuck windows, and zero errors; attach the JSON. Hooks may set up later states, but the sweep still exercises real input. In the input code, wrap `setPointerCapture` in try/catch (synthetic pointers may not be capturable) and release hold-style controls on `pointerleave` as well as `pointerup` and `pointercancel`.
+Sections whose message is interaction (`toy`, configurators, drag-to-rotate) get a puppeteer-core sweep under `bun test` that drives real input (`page.mouse` drags, keyboard arrows, touch through CDP `Input.dispatchTouchEvent`) and samples `__immersive.info` after each step. Record frames advanced, whether the subject moved or its state changed, the step of the first change, stuck windows (frames advance and input is held but nothing changes), and errors. Assert a live loop, real change from input, at most two stuck windows, and zero errors; attach the JSON. Hooks may set up later states, but the sweep still exercises real input; a screenshot never proves interaction. In the input code, wrap `setPointerCapture` in try/catch (synthetic pointers may not be capturable) and release hold-style controls on `pointerleave` as well as `pointerup` and `pointercancel`.
 
 ### 6.10 Capture manifest
 
 Before a verification pass, write `artifacts/captures.json` with a fresh run ID for every code or asset change: distinct (width, beat or state) pairs, each with a report path, plus required files (poster, motion frames, optimised GLB). The capture script writes each JSON and PNG to its declared path stamped with the run ID; a failing capture stays listed and fails the pass. A Bun checker reads only declared files and verifies matching run ID, width, and state; a non-blank result and zero errors; minimum sizes (PNG and JPEG 1 KB, WebP 512 B, GLB 1 KB, video 1 KB, JSON non-empty); a non-empty `dist/` whenever a production build is claimed. It proves coverage, not quality, and closes two traps: reports relabelled from an older run, and a capture of the wrong app on the port (check the build ID).
 
+Harness hygiene: take the base URL from the app's own `Bun.serve` port or dev script, probe it with `fetch`, reuse an answering server locally and boot a fresh one in CI (`Bun.spawn(["bun", "run", "dev"])`, poll every 250 ms up to 60 s). Run outputs (captures, reports, motion frames) live under one gitignored `artifacts/` folder; only deliberate baselines (section 6.11) are committed. Captures never retry: a capture that passes on a second try is a flaky finding. Unit-test the capture helper under `bun test` against a fake page object: hooks run in the documented order, a missing or mismatched acknowledgement is rejected, a hook that never resolves hits the deadline, and the freeze precedes any settle or font wait. Delete one-off diagnostic scripts once they have answered their question.
+
 ### 6.11 Screenshot baselines
 
-Add baselines when a signature section or poster is worth protecting and can be made deterministic (seeded, frozen); defer them for exploratory builds and particle- or noise-dominated frames, and say which way you went. Protect two to five states: hero beat at 1280 and 375, the poster, the reduced-motion still, one key interaction state. Compare in the page by drawing baseline and current PNGs to a 2D canvas and counting pixels that differ beyond a small per-channel tolerance (no image library; `pixelmatch` would be an approval candidate). Allow about 0.5 percent for DOM-only regions and about 1.5 percent for WebGL regions, never enough to hide a missing asset. Baselines update only through an explicit flag; masks cover only regions not under test.
+Add baselines when a signature section or poster is worth protecting and can be made deterministic (seeded, frozen); defer them for exploratory builds and particle- or noise-dominated frames, and say which way you went. Protect two to five states: hero beat at 1280 and 375, the poster, the reduced-motion still, one key interaction state. Compare in the page by drawing baseline and current PNGs to a 2D canvas and counting pixels that differ beyond a small per-channel tolerance (no image library; `pixelmatch` is an approval candidate, ask Brian). Allow about 0.5 percent for DOM-only regions and about 1.5 percent for WebGL regions, never enough to hide a missing asset. Baselines update only through an explicit flag; masks cover only regions not under test.
 
 ## 7. Page shell and media budgets
+
+From: ai-dev-kit (`perf-audit`, PERF-01 to PERF-05, PERF-10, PERF-15, QA-GATE-03), JAL-authored (poster as LCP, SplitText font timing, no-JS first paint).
 
 The canvas is only part of the page. The shell around it follows these, measured in the same puppeteer-core run:
 

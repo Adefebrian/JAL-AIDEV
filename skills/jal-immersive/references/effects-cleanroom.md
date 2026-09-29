@@ -28,6 +28,8 @@ How to run the sketches:
 
 ## 0. License ledger (verified 2026-09-29)
 
+From: Threejs-Awesome-Graphics-Agent-Skills `source_materials/README.md` (reviewed revisions) and `THIRD_PARTY_LICENSES.md` files, upstream license checks against the GitHub API, three.js docs and examples (MIT), skeeto/hash-prospector (Unlicense), JAL-authored helpers and runtime rules.
+
 ### 0.1 Items that must not be copied (verified)
 
 | TAG item | Upstream | License found | Notes |
@@ -46,7 +48,7 @@ How to run the sketches:
 
 Permissive TAG assets, usable with their notice if a project needs them: the LUT atmosphere data (MIT, Copyright 2025 Su) and the financial-tower stone textures (MIT, Copyright 2026 @alightinastorm).
 
-TAG's own `.codex/AGENTS.md` tells its author to treat unlicensed sources as MIT, so TAG's top-level MIT file never proves that a single example is MIT. Check each source upstream. Record the reviewed commit next to each ledger row (TAG's `source_materials/README.md` names one per source) so a later license check compares the same revision.
+TAG's own `.codex/AGENTS.md` tells its author to treat unlicensed sources as MIT, so TAG's top-level MIT file never proves that a single example is MIT. Check each source upstream. A later license check compares the same revision, so the reviewed commits (from TAG's `source_materials/README.md`, first 12 characters) are: demo-2023-rain-puddle `257066b63d08`, Sandboard `489cb01e81b1`, Pearl-Sea-Park `4fbf1f3df59a` (ocean intake; `888fc57b8175` for its geometry audits), FFTOCEAN `0fe3a908a861`, poseidon `caddf773c7e2`, frozen `15a98a510495`, holographic-shader-visualizer `34810a6e09d0`, r3f-procedural-grass `e441d2bd4eac` (its `r3f-gist` submodule pinned separately), SnowSystemThreeJS `c7a3bfbd10c9`, ez-tree `48dc19351513`, three-geospatial `b012ad06d858`, N8python/diamonds `69b30cc55861`, inkwell-webgpu-flowers `88fdb50d74fa`, VegetationGeneratorThreeJS `f6c26004c076`. TAG records no revision for rocksdanister/rain (GitHub reports `NOASSERTION`; the CC BY-NC-SA finding above stands). Re-check the license when a source moves past its recorded commit.
 
 ### 0.2 Found while researching (also do not copy)
 
@@ -72,9 +74,9 @@ TAG's own `.codex/AGENTS.md` tells its author to treat unlicensed sources as MIT
 | three.js `GPUComputationRenderer`, `DecalGeometry`, `Water.js` (jbouny, MIT) | MIT | `examples/jsm/misc/`, `examples/jsm/geometries/`, `examples/jsm/objects/` |
 | pmndrs/drei (`MeshReflectorMaterial`, `useFBO`, `Instances`) | MIT | https://github.com/pmndrs/drei |
 | pmndrs/react-three-fiber | MIT | https://github.com/pmndrs/react-three-fiber |
-| pmndrs/maath (damping, easing, random) | MIT (`package.json`) | https://github.com/pmndrs/maath |
-| pmndrs/postprocessing | Zlib (permissive) | https://github.com/pmndrs/postprocessing |
-| gkjohnson/three-mesh-bvh (fast raycasts for footprints, pointer trails) | MIT | https://github.com/gkjohnson/three-mesh-bvh |
+| pmndrs/maath (damping, easing, random) | MIT (`package.json`); direct import is an approval candidate, ask Brian (`THREE.MathUtils.damp` covers these recipes) | https://github.com/pmndrs/maath |
+| pmndrs/postprocessing | Zlib (permissive); not used here (tone mapping is the only post), approval candidate, ask Brian | https://github.com/pmndrs/postprocessing |
+| gkjohnson/three-mesh-bvh (fast raycasts for footprints, pointer trails) | MIT; direct import is an approval candidate, ask Brian | https://github.com/gkjohnson/three-mesh-bvh |
 | simondevyoutube/Quick_Grass (structure only, not `noise.glsl`) | MIT | https://github.com/simondevyoutube/Quick_Grass |
 | momentchan/r3f-procedural-grass (top-level repo only, no submodule) | MIT | https://github.com/momentchan/r3f-procedural-grass |
 | achrefelouafi/SnowSystemThreeJS (snow accumulation, capping) | MIT | https://github.com/achrefelouafi/SnowSystemThreeJS |
@@ -86,6 +88,8 @@ TAG's own `.codex/AGENTS.md` tells its author to treat unlicensed sources as MIT
 | dgreenheck/ez-tree (growth tables, leaf cards) | MIT | https://github.com/dgreenheck/ez-tree |
 | takram-design-engineering/three-geospatial (atmosphere and cloud reference) | MIT | https://github.com/takram-design-engineering/three-geospatial |
 | N8python/diamonds (BVH gem refraction reference) | MIT | https://github.com/N8python/diamonds |
+| siliconjungle/inkwell-webgpu-flowers (flower field, far-LOD identity) and its painted atlases | MIT (GitHub API; atlas notice "James and Inkwell contributors") | https://github.com/siliconjungle/inkwell-webgpu-flowers |
+| achrefelouafi/VegetationGeneratorThreeJS (surface ivy, petiole-hinge wind) | MIT (GitHub API) | https://github.com/achrefelouafi/VegetationGeneratorThreeJS |
 | AmbientCG textures, Poly Haven HDRIs | CC0 | self-host under `/vendor`, never hotlink |
 
 CC-BY assets (many Sketchfab scans) need visible attribution: dev only unless the client accepts the credit line.
@@ -139,6 +143,8 @@ rm.addEventListener('change', (e) => { reduced = e.matches; onMotionPrefChange(r
 ---
 
 ## 1. Rain drops refracting on a window
+
+From: Threejs-Awesome-Graphics-Agent-Skills `threejs-temporal-surfaces` description and reference text (MIT text; the CC BY-NC-SA example was not opened, ideas only), three.js docs and examples (MIT), webgl2fundamentals (BSD-3), skeeto/hash-prospector (Unlicense), optics (Snell, Fresnel), JAL-authored code and budgets.
 
 ### Visual goal
 You look through a pane of glass at a daylight scene. The glass is lightly fogged, so the background is softly blurred. Water drops of many sizes sit on the glass. Each drop is a tiny convex lens that shows a sharp, inverted, shrunken view of the scene behind it. Drops have a thin darker rim and a small soft highlight. Now and then a large drop gets heavy, stutters, and slides down. It leaves a clear trail through the fog and a line of tiny drops behind it. Fog slowly grows back.
@@ -320,6 +326,8 @@ three.js MIT (`refract`, `textureLevel`, `viewportSharedTexture` pattern from `w
 
 ## 2. Wet ground: puddles, ripple rings, reflections, rain
 
+From: Threejs-Awesome-Graphics-Agent-Skills `threejs-precipitation-surfaces` and `threejs-procedural-materials` reference text (MIT text; the GPL puddle example was not opened, ideas only), three.js docs and examples (MIT), drei (MIT), IQ articles (MIT snippets), Lagarde (ideas only), JAL-authored code and budgets.
+
 ### Visual goal
 Daylight after rain, or light rain. Asphalt or stone gets darker and glossier as it gets wet. Low spots fill into mirror-like puddles that reflect the sky and buildings. Rain drops make expanding ring ripples, but only inside standing water. Faint rain streaks fall and tiny splash rings appear on surfaces facing up. Keep it neutral: grey asphalt, a pale sky reflection, no neon night-city look.
 
@@ -499,6 +507,8 @@ three.js MIT (`webgpu_compute_water`, `webgl_gpgpu_water`, `webgpu_compute_parti
 
 ## 3. Deformable sand or snow (footprints, trails)
 
+From: Threejs-Awesome-Graphics-Agent-Skills `threejs-procedural-materials` description and reference text (MIT text; the GPL Sandboard example was not opened, ideas only), three.js docs and examples (MIT), Musgrave, Kolb, Mace 1989 (math), JAL-authored code and budgets.
+
 ### Visual goal
 A bright beach or fresh snow in daylight. As a character walks, or the user drags a pointer or object, the surface shows crisp footprints or a groove. A small raised berm forms around each print. Sand slumps a little (steep walls relax to the angle of repose). Snow can slowly refill under falling snow. Inside a print the surface is a touch darker (compressed or damp sand, shaded snow).
 
@@ -527,7 +537,7 @@ Rendering:
   - Snow: albedo `#f3f5f7`, roughness 0.75. A soft cool shade in prints: `albedo *= mix(1, 0.88, smoothstep(0, 0.05, −h))`. This is a neutral grey-blue, not purple.
   - Optional fine glints: a per-texel hash times a narrow specular lobe. Keep them tiny and do not bloom them.
 - Any grain glint is filtered by pixel footprint (fade to its mean at grazing distance) or it aliases while the camera moves. Displacement, airborne grains, bed shading, and shadow all advance from the same fixed-step clock and the same height state.
-- Picking stamp positions: raycast the ground with three-mesh-bvh (MIT) for pointer trails, spacing stamps 0.5 × radius apart along the drag path. For characters, stamp when the foot bone's height is under a threshold and its speed is under 0.2 m/s.
+- Picking stamp positions: raycast the ground for pointer trails (three's `Raycaster` against the ground plane or patch; three-mesh-bvh is an approval candidate, ask Brian, only for dense meshes), spacing stamps 0.5 × radius apart along the drag path. For characters, stamp when the foot bone's height is under a threshold and its speed is under 0.2 m/s.
 
 ### GLSL sketch (WebGL2, two fullscreen passes with `GPUComputationRenderer` or plain RT ping-pong)
 
@@ -671,11 +681,13 @@ Lowest tier, with no simulation: footprint decals. Use `DecalGeometry` (three MI
 Deformation is driven by the user, so pointer or drag trails still work. Turn off anything ambient: no auto-walking characters, no refill animation, no falling snow. Show a pre-baked trail (stamp a fixed path once at load, then stop the compute). Nothing moves unless the user does it.
 
 ### Sources
-three.js MIT (`webgpu_compute_texture_pingpong` StorageTexture pattern, `GPUComputationRenderer`, `webgpu_compute_particles_rain` top-down ortho RT, `DecalGeometry`). three-mesh-bvh MIT. SnowSystemThreeJS MIT (accumulation and capping, if also needed). The thermal erosion math is from Musgrave, Kolb and Mace (1989). The deformable-snow approach (a height-offset texture around the player) matches the GDC 2014 Arkham Origins talk, used for concept only. The effect description came from TAG's `threejs-procedural-materials/SKILL.md` (one paragraph). No GPL Sandboard code was opened.
+three.js MIT (`webgpu_compute_texture_pingpong` StorageTexture pattern, `GPUComputationRenderer`, `webgpu_compute_particles_rain` top-down ortho RT, `DecalGeometry`). three-mesh-bvh MIT (approval candidate). SnowSystemThreeJS MIT (accumulation and capping, if also needed). The thermal erosion math is from Musgrave, Kolb and Mace (1989). The deformable-snow approach (a height-offset texture around the player) matches the GDC 2014 Arkham Origins talk, used for concept only. The effect description came from TAG's `threejs-procedural-materials/SKILL.md` (one paragraph). No GPL Sandboard code was opened.
 
 ---
 
 ## 4. Dense stylized grass with wind
+
+From: Threejs-Awesome-Graphics-Agent-Skills `threejs-procedural-vegetation` description and reference text (MIT text), threejs-game-skills (stock-material sway patch), simondevyoutube/Quick_Grass (MIT, structure only), momentchan/r3f-procedural-grass (MIT, top level), three.js docs and examples (MIT), GPU Gems ch. 7 (ideas only), JAL-authored code and budgets.
 
 ### Visual goal
 A field of individual blades, dense near the camera and thinning to a painted ground colour in the distance. Blades vary in height, lean and tint. Wind moves through as visible gusts, broad waves travelling across the field, plus a small tip flutter. Blades bend away from the player or pointer. Use natural daylight greens (dark base, lighter warm tip), soft backlit translucency at grazing sun angles, done in shading, and root darkening for depth.
@@ -790,7 +802,7 @@ export function grassMaterial({ GRID = 192, PATCH = 16 }) {
 // Rule for all sketches: never call smoothstep with edge0 > edge1 (undefined in GLSL and WGSL); use smoothstep(a, b, x).oneMinus().
 ```
 
-R3F: wrap the same material in a component and set `count` via `<mesh count={GRID*GRID}>`. Update `uTime` in `useFrame` with maath `damp` for wind-strength changes. Do not use drei `<Instances>` here, because per-instance React objects are too heavy at 50k+.
+R3F: wrap the same material in a component and set `count` via `<mesh count={GRID*GRID}>`. Update `uTime` in `useFrame` with `THREE.MathUtils.damp` for wind-strength changes. Do not use drei `<Instances>` here, because per-instance React objects are too heavy at 50k+.
 
 ### Parameters
 
@@ -827,6 +839,8 @@ three.js MIT (TSL `hash`, `mx_noise_float`, `mesh.count` instancing as in `webgp
 
 ## 5. Above/below-water ocean with Snell's window (flagged ocean items)
 
+From: Threejs-Awesome-Graphics-Agent-Skills `threejs-spectral-ocean` and `threejs-procedural-materials` reference text (MIT text; Pearl-Sea-Park, FFTOCEAN, and poseidon have no license and were not opened, ideas only), three.js docs and examples (MIT), Tessendorf and Gerstner (math), optics (Snell, Fresnel, Beer-Lambert), JAL-authored code and budgets.
+
 ### Visual goal
 A calm, bright daylight sea. From above: rolling waves, sun glints, clear shallow water tinted by depth over a sandy floor. From below: a bright circular "Snell's window" overhead showing the sky, surrounded by a mirror-like total-internal-reflection zone, with light fading to a soft blue-green haze with distance. No dark abyss by default. Keep it shallow and sunlit.
 
@@ -842,6 +856,7 @@ A calm, bright daylight sea. From above: rolling waves, sun glints, clear shallo
    - Inside the window: `T = refract(I, N, η)` samples the sky, weighted by `1 − F`. Use the exact dielectric Fresnel, because Schlick is wrong near the critical angle: `rs = (η cosθᵢ − cosθₜ)/(η cosθᵢ + cosθₜ)`, `rp = (cosθᵢ − η cosθₜ)/(cosθᵢ + η cosθₜ)`, `F = (rs² + rp²)/2`.
    - Outside the window, reflect: sample a flat underwater colour or a low-res reflection.
    - Anti-alias the window edge with `fwidth` on `sin²θₜ`.
+   - The same exact form serves any interior path (thick glass, ice, a water volume traced in a loop): TIR falls out of the same `sin²θₜ ≥ 1` test instead of a separate branch, and whatever throughput remains after the last bounce is added once as an environment sample, so the loop cap never darkens the interior.
 4. **Medium** (Beer-Lambert): `transmittance = exp(−σ · distance)`. Use `σ ≈ (0.40, 0.06, 0.03) m⁻¹` for clear coastal water. `color = surface · T + fogColor · (1 − T)`, with fog colour a pale sea green-blue `#8fc7c9`, not deep navy.
 5. **Caustics** (optional): the three.js `webgpu_caustics` / `webgpu_volume_caustics` examples (MIT) are the base. A cheap version projects a scrolling Worley pattern (`mx_worley_noise_float`) from the sun onto the floor, times depth fade. The physical cheap method refracts a regular ray grid through the surface and measures how each cell's area shrinks or grows on the floor: the area ratio is the light gain, which conserves flux. Fade caustics toward their own mean (not zero) by pixel footprint and depth, because they act like albedo and fading to zero changes floor brightness with camera height.
 6. **One wave module.** Evaluate all wave bands in one function that returns both the analytic normal and a crest metric from the same slopes and phases, attenuate the smallest bands by their screen footprint, and let any foam tint read that crest value (a separate scrolling foam texture drifts out of phase). The wave list lives in one shared module read by the vertex shader, the fragment normal, and a CPU function, so floating objects and camera clearance use the same height in the same frame.
@@ -891,11 +906,16 @@ export const undersideColor = (skyCube, sigma = vec3(0.40, 0.06, 0.03), fog = co
 // Use as colorNode on a MeshBasicNodeMaterial rendered with side: BackSide when the camera y < water level.
 ```
 
-### Parameters and budget
+### Parameters
 - Gerstner set: 6 waves, λ from 1.5 to 24 m, steepness sum ≤ 0.8. Grid 256² desktop (130k triangles, inside budget), 128² mobile.
-- The underside shader is about 20 ALU ops plus 1 cube fetch. Refraction adds 1 viewport copy (shared texture) on desktop.
-- Target at most 2.5 ms desktop, 3 ms mobile.
-- Mobile: 3 waves, no viewport refraction (depth tint only), no caustics, env reflection only.
+- IOR 1.333 (critical angle 48.6°), F0 0.02, `σ ≈ (0.40, 0.06, 0.03) m⁻¹`, fog `#8fc7c9`, refraction offset `n.xz · 0.03`.
+
+### Performance budget
+- The underside shader is about 20 ALU ops plus 1 cube fetch. Refraction adds 1 viewport copy (shared texture) on desktop. Draw calls: +1 to 2.
+- Target at most 2.5 ms desktop (C2 to C3), 3 ms mobile (C3). The FFT hero sea (step 9) is C3 on desktop only and is measured separately.
+
+### Mobile fallback
+3 Gerstner waves on the 128² grid, no viewport refraction (depth tint only, from the Beer-Lambert thickness), no caustics, env (PMREM) reflection only. No FFT cascades, whitecap history, or forward projection of above-water structures. The underside keeps its Snell window (one cube fetch). Budget at most 3 ms at 1.0 MP. Under the lowest tier, show a still WebP poster made from the effect (an above-water frame), with no canvas.
 
 ### prefers-reduced-motion
 Freeze wave time and show a still, slightly rippled surface. Caustics are off. Camera transitions between above and below water become a 150 ms crossfade (JAL law), not a dive.
@@ -906,6 +926,8 @@ three.js MIT (`webgpu_ocean`, `webgpu_backdrop_water`, `webgpu_caustics`, `Water
 ---
 
 ## 6. Budget roll-up against the JAL immersive table
+
+From: JAL-authored (targets from sections 1 to 10 against `performance.md`).
 
 | Effect | Desktop GPU target | Mobile target | Extra draws | Extra RT memory | Post passes |
 | --- | --- | --- | --- | --- | --- |
@@ -918,9 +940,12 @@ three.js MIT (`webgpu_ocean`, `webgpu_backdrop_water`, `webgpu_caustics`, `Water
 | Touch frost | about 1 ms | about 1.5 ms | +2 | two half-float targets at display size, blur at 0.4 DPR | 0 |
 | Snowfall and cover | about 0.8 ms | about 1 ms | +1 | none | 0 |
 
-Don't stack more than two of these in one viewport on mobile. Measure on a real GPU (not headless SwiftShader) and check the renderer string before quoting any number. The numbers above are targets, not measurements.
+Layering inside a section follows the JEV-judged protocol in `skills/jal-design-system/references/recipe-index.md` section 4 (no fixed layer count; JEV keeps each layer at 0.6 or above), bounded by the frame budget. The page-level mechanical cap still holds and is never asked: at most two `cr.*` effects in one mobile viewport (recipe-index section 4.1 step 3, `SKILL.md` section 1), which the summed mobile targets above would force anyway. Measure on a real GPU (not headless SwiftShader) and check the renderer string before quoting any number. The numbers above are targets, not measurements.
 
 ## 7. JAL conformance checklist for these effects
+
+From: JAL-authored (JAL law and the Zone B canvas exemption).
+
 - Light daylight or studio scene. `scene.background` is the page surface token, or `alpha: true`.
 - No bloom, glow, additive particles, neon or purple. Highlights come from specular lobes plus tone mapping (Neutral or ACES, exposure about 1.0, checked against white).
 - Rain streaks use alpha blending in light grey. Splashes are thin rings, not sparkles.
@@ -932,7 +957,7 @@ Don't stack more than two of these in one viewport on mobile. Measure on a real 
 
 ## 8. Procedural vegetation beyond grass (`cr.procedural_tree`)
 
-From: Threejs-Awesome-Graphics-Agent-Skills `threejs-procedural-vegetation` (MIT reference text), with growth-table ideas from dgreenheck/ez-tree (MIT) and the MIT flower-field reference. All wording and code here are JAL's.
+From: Threejs-Awesome-Graphics-Agent-Skills `threejs-procedural-vegetation` (MIT reference text), with growth-table ideas from dgreenheck/ez-tree (MIT), flower-field ideas from siliconjungle/inkwell-webgpu-flowers (MIT), and surface-ivy ideas from achrefelouafi/VegetationGeneratorThreeJS (MIT), all in section 0.3. All wording is JAL-authored.
 
 ### Visual goal
 One hero tree, a flower bed, or ivy on a wall, in daylight on the page white, with calm wind.
@@ -946,6 +971,7 @@ One hero tree, a flower bed, or ivy on a wall, in daylight on the page white, wi
 - **Ivy:** grow a spline, reproject each step onto the host surface, creep in the tangent plane, and build tube rings with parallel-transport frames to avoid twisting.
 
 ### Parameters and budget
+- Starting values: 3 to 4 branch levels, taper about 0.7 per level, leaf alpha test 0.5, a fixed seed per shipped tree.
 - A medium tree is about 6.6k branch vertices and 22k leaf vertices: one hero tree fits T3 and T2; background trees are instanced cards.
 - Cost C2 (one hero tree plus cards). Generated geometry passes the topology gate (`performance.md` section 6.2) for a fixed seed.
 
@@ -960,7 +986,7 @@ Judge the tree against its ground, depth haze to the page white, and scale cues,
 
 ## 9. Touch frost reveal (`cr.touch_frost`)
 
-From: Threejs-Awesome-Graphics-Agent-Skills `threejs-temporal-surfaces` description (MIT text); the upstream example (takuma-hmng8/frozen) has no license and was not copied. Mechanism written for JAL.
+From: Threejs-Awesome-Graphics-Agent-Skills `threejs-temporal-surfaces` description (MIT text); the upstream example (takuma-hmng8/frozen) has no license and was not opened (ideas only). Mechanism JAL-authored.
 
 ### Visual goal
 A fogged pane over a light scene that clears where the pointer touches and slowly frosts back.
@@ -972,6 +998,8 @@ A fogged pane over a light scene that clears where the pointer touches and slowl
 - On resize, clear the history and regenerate the static targets.
 
 ### Parameters and budget
+Starting values (JAL-authored, tune by eye): brush radius about 6% of the short viewport side, frost regrowth time constant about 4 s, response channel settling about twice as fast as the visible mask, edge fade over the outer 5% of the viewport, refraction offset under 1% of the viewport.
+
 Cost C2: two half-float targets at display size plus one blur at 0.4 DPR; about 1 ms desktop, 1.5 ms mobile (targets, not measurements).
 
 ### Mobile fallback
@@ -985,14 +1013,14 @@ Neutral cool grey tint, never purple; no sparkle on the frost; the canvas sits i
 
 ## 10. Snowfall and snow cover (`cr.snowfall`)
 
-From: Threejs-Awesome-Graphics-Agent-Skills `threejs-precipitation-surfaces` (MIT reference text) and achrefelouafi/SnowSystemThreeJS (MIT, section 0.3). Written for JAL.
+From: Threejs-Awesome-Graphics-Agent-Skills `threejs-precipitation-surfaces` (MIT reference text) and achrefelouafi/SnowSystemThreeJS (MIT, section 0.3), three.js docs (MIT). Mechanism JAL-authored.
 
 ### Visual goal
 Light snow falling in daylight, settling on the ground and on the tops of objects, on a white-first page.
 
 ### Algorithm
 - **Snowfall** is one instanced volume centred on the camera. Each instance stores a normalised spawn point and a seed; the vertex shader moves it by wind and fall speed and wraps with `mod(base + displacement - origin, volume) + origin`, so there is no emitter edge and no CPU update. It reads the weather state object (section 0.4).
-- Starting values: flake radius about 0.07, fall speed about 3.2 with per-flake variation 0.6 to 1.3, sway about 0.5. Flakes are pale grey with normal alpha blending so they read against light surfaces.
+- Starting values: flake radius about 0.07, fall speed about 3.2 with per-flake variation 0.6 to 1.3, sway about 0.5, opacity about 0.9 (the same volume runs rain at about 5 units per second with streaks instead of flakes). Flakes are pale grey with normal alpha blending so they read against light surfaces.
 - **Ground cover** uses one height function (a world-space mask from thresholded FBM with a soft edge, times a drift band, times a boundary fade) that both displaces vertices and feeds finite-difference normals (step about 0.08). Albedo shifts to a cool neutral white, roughness about 0.82.
 - **Snow on objects:** coverage in the object's own space (pass a world-to-model matrix) so snow stays put when the object moves, times `smoothstep(0.35, 1, worldNormal.y)` so vertical faces stay clear. Displace along the normal by thickness (about 0.06 m at coverage 0.7, edge 0.15), converting world thickness to local units by the length of the transformed normal (`shaders.md` section 14).
 

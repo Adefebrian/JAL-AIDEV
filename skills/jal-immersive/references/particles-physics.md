@@ -1,13 +1,15 @@
 # Particles, physics, and game-loop patterns for interactive sites
 
-Distilled from the three.js examples and source (MIT: `webgpu_compute_particles`, `webgpu_tsl_compute_attractors_particles`, `GPUComputationRenderer`), the WebGPU skill (dgreenheck, MIT), the game skill pack (majidmanzarpour, MIT), nixie-fx (Avetis Zakharyan, MIT), and react-three-rapier (MIT) with Rapier (Apache-2.0). Maxime Heckel's particle and render-target articles are ideas only (CC BY-NC). All code is new JAL code: check it on a real GPU.
+Distilled from the three.js examples and source (MIT: `webgpu_compute_particles`, `webgpu_tsl_compute_attractors_particles`, `GPUComputationRenderer`), webgpu-claude-skill (dgreenheck; no LICENSE file, so own words only), threejs-game-skills (majidmanzarpour, MIT), Threejs-Awesome-Graphics-Agent-Skills (MIT top level; GPL or unlicensed examples as ideas only), animata (MIT), nixie-fx (Avetis Zakharyan, MIT), and react-three-rapier (MIT) with Rapier (Apache-2.0). Maxime Heckel's particle and render-target articles are ideas only (CC BY-NC). All code is new JAL code: check it on a real GPU.
 
 ## 1. Pick the lowest tier that reads
+
+From: three.js docs or examples (MIT: `webgpu_compute_particles`, `GPUComputationRenderer`), threejs-game-skills (`threejs-gameplay-systems` loop and tiers), webgpu-claude-skill (tier limits, own words), animata (`background/boids-ecosystem` flocking rules; the component itself is not used), JAL-authored (taste rules, budgets, canvas 2D law).
 
 | Tier | Technique | Count that holds | CPU per frame | Pool ID |
 |---|---|---|---|---|
 | 1 | CSS or SVG with Framer Motion or WAAPI | up to about 50 | layout-free transforms | `mu.*` recipes |
-| 2 | 2D canvas, one rAF, typed arrays, batched `fillRect` | a few thousand dots or lines, no depth | the simulation | `imm.tech` `canvas_2d` |
+| 2 | 2D canvas, one rAF, typed arrays, batched `fillRect` | a few thousand dots or lines, no depth | the simulation | `px.canvas2d_field` (`imm.tech` `canvas_2d`, section 1.1) |
 | 3 | `THREE.Points`, static BufferGeometry, animated in the vertex shader | up to about 100k | none | `three.points_field` |
 | 4 | Instanced quads or meshes, billboarded in the vertex shader | tens of thousands | none, or batched matrix writes | `three.instanced_field` |
 | 5 | GPGPU, FBO ping-pong (WebGL2), state in float textures | 65k (256 squared) to 262k (512 squared) | none | `three.gpgpu_particles` |
@@ -32,9 +34,19 @@ Tier 6 always ships tier 3 or 5 as the fallback for browsers without WebGPU, the
 | T1 reduced | 10k | 128 squared (16k) | fallback only |
 | T0 static | poster | poster | poster |
 
+### 1.1 Canvas 2D field (tier 2)
+
+Build section for `px.canvas2d_field` (tier 2): one `<canvas>`, one frame callback on the `gsap.ticker` clock, state in typed arrays, one batched draw per frame (`fillRect` per dot or one `Path2D` per stroke set).
+
+- **Sizing.** A `ResizeObserver` on the wrapper sets `canvas.width` and `height` to CSS size times the DPR cap for the device tier, then `ctx.setTransform(dpr, 0, 0, dpr, 0, 0)`; simulate in CSS pixels, move in pixels per second from the clamped `dt`. Spawn from the seeded RNG (section 6). Pause offscreen and on a hidden tab.
+- **Canvas 2D law.** Drawing follows the canvas exemption: lighting and shading only (tonal falloff, a soft shade that darkens with depth or density). Never bloom, glow, neon, `globalCompositeOperation = "lighter"` or any additive compositing, `shadowBlur` halos, a painted dark background, or purple, violet, or indigo outside a `data-jal-exempt="noyzzi"` section. Clear fully each frame: a translucent clear leaves trail smear that reads as motion blur. Ink or tonal colours only. The canvas element's own CSS (size, position, border, radius, overlaid controls) stays Zone A page law.
+- **Flocking (boids)**, only where a flock carries meaning (many users converging on one point; an ambient flock stays banned). Per agent, over neighbours inside a perception radius (about 36 px): alignment toward their mean velocity (weight about 0.04), cohesion toward their centre (about 0.0006), separation from any neighbour closer than about 18 px (about 0.06). Optional attractor points with linear falloff (radius about 220 px, strength about 0.05), the pointer repel with falloff (`px.pointer_repel`), a speed clamp, and edge wrap. Bucket agents into a uniform spatial hash with cells the size of the perception radius so the search is linear, not quadratic. Above about 2,000 agents move to tier 5. Reduced motion renders one settled frame with no loop.
+
 ## 2. Vertex-animated points (tier 3)
 
-Positions and per-point randoms live in attributes; the vertex shader moves them by time. The CPU does nothing per frame except one uniform.
+From: three.js docs or examples (MIT: `Points`, `ShaderMaterial`), Threejs-Awesome-Graphics-Agent-Skills (point-field realism: constant ink, heavy-tailed distribution), JAL-authored (ink taste, reduced motion).
+
+Build section for `three.points_field` (tier 3). Positions and per-point randoms live in attributes; the vertex shader moves them by time. The CPU does nothing per frame except one uniform.
 
 ```ts
 const COUNT = 60_000;
@@ -82,7 +94,9 @@ const points = new THREE.Points(geo, mat);
 
 ## 3. Instanced quads (tier 4)
 
-Use when particles need rotation, non-square shapes, or lighting. One `InstancedBufferGeometry` quad plus per-instance attributes (offset, scale, phase); billboard in the vertex shader:
+From: three.js docs or examples (MIT: `InstancedBufferGeometry`), Threejs-Awesome-Graphics-Agent-Skills (per-instance material state, effect lifetime, dense-swap pooling), JAL-authored.
+
+Build section for `three.instanced_field` (tier 4). Use when particles need rotation, non-square shapes, or lighting. One `InstancedBufferGeometry` quad plus per-instance attributes (offset, scale, phase); billboard in the vertex shader:
 
 ```glsl
 // vertex: camera-facing quad of size aScale at aOffset
@@ -99,6 +113,10 @@ Pool, never allocate per burst: event-driven effects reuse one geometry and one 
 - **Dense-swap removal.** Removing an instance from a packed pool moves the last live instance into the hole: copy its matrix, every custom attribute slice, and the entity-to-index mapping, then decrement `count`. Changing `count` alone attaches stale attribute data to the moved instance.
 
 ## 4. GPGPU with FBO ping-pong (tier 5, WebGL2)
+
+From: three.js docs or examples (MIT: `GPUComputationRenderer`), drei (MIT: `useFBO`), Threejs-Awesome-Graphics-Agent-Skills (stable-fluids lessons), JAL-authored (sim shader and R3F skeleton).
+
+Build section for `three.gpgpu_particles` (tier 5).
 
 - Positions (and velocities if needed) live in float textures of N by N texels: 256 squared is 65,536 particles, 512 squared is 262,144.
 - A simulation pass renders a full-screen triangle (`shaders.md` section 11) that reads the previous state texture and writes the next; swap two render targets every frame.
@@ -156,6 +174,10 @@ function Sim({ simMat, pointsMat }: { simMat: THREE.ShaderMaterial; pointsMat: T
 
 ## 5. WebGPU compute (tier 6)
 
+From: three.js docs or examples (MIT: `webgpu_compute_particles`, `webgpu_tsl_compute_attractors_particles`), webgpu-claude-skill (compute buffers, built-ins, emitters, own words), Threejs-Awesome-Graphics-Agent-Skills (GPU culling and indirect draws), JAL-authored.
+
+Build section for `three.compute_particles` (tier 6); it always ships tier 3 or 5 as the fallback.
+
 ```js
 import * as THREE from "three/webgpu";
 import { Fn, instancedArray, instanceIndex, uniform, vec3, float, hash, mx_noise_vec3, deltaTime } from "three/tsl";
@@ -208,7 +230,9 @@ const sprites = new THREE.Sprite(mat); sprites.count = COUNT;
 
 ## 6. Game-loop patterns reused for interactive sites
 
-From the MIT game skill pack, adapted to JAL law (no shake, no overshoot, no `easeOutBack`):
+From: threejs-game-skills (`threejs-gameplay-systems`, `threejs-audio-generator`, `threejs-debug-profiler`), Threejs-Awesome-Graphics-Agent-Skills (fixed-step hardening, sleep when settled, bounded spring, animation state, stratified jitter), nixie-fx (diagnostics HUD cadence), JAL-authored (one clock, law adaptations).
+
+Build section for `px.fixed_step_toy` (items 2 and 5). Game patterns adapted to JAL law (no shake, no overshoot, no `easeOutBack`):
 
 1. **One loop.** One owner of rAF (on a JAL page: the `gsap.ticker` clock in `r3f.md` section 3). Delta in seconds, clamped to 0.05. `update(dt, elapsed)` then `render()`. Idempotent `start` and `stop`.
 2. **Fixed-step accumulator** only where a simulation needs it:
@@ -226,7 +250,7 @@ function frame(dt: number) {
    **Sleep when settled:** track mass-weighted RMS velocity; after about 0.5 s below a small threshold with no input, clear velocities, stop stepping, and let the render loop sleep. Any grab, reset, or nudge wakes it (idle scenes never tick).
 3. **Frame-rate-independent follow:** `factor = 1 - Math.exp(-dt / lag)` or `1 - Math.exp(-lambda * dt)`.
 4. **Update order:** input intents, fixed simulation, state, effects and camera and UI, render. The input layer emits intents; it never mutates the simulation directly.
-5. **Seeded RNG** for anything visual that tests must reproduce; no `Math.random` in visual paths. When placement must look authored (burst directions, instance fields, points around an object), stratify the domain (angular slots, grid cells, stratified slots along a length, permuted independently per axis) and jitter inside each stratum: no clumps or holes, at no cost.
+5. **Seeded RNG** for anything visual that tests must reproduce; no `Math.random`, `Date.now()`, or `performance.now()` in visual paths (time is the one clock's accumulated elapsed, `r3f.md` section 13). When placement must look authored (burst directions, instance fields, points around an object), stratify the domain (angular slots, grid cells, stratified slots along a length, permuted independently per axis) and jitter inside each stratum: no clumps or holes, at no cost.
    **Bounded spring.** Exponential smoothing (`1 - exp(-lambda * dt)`) for perceptual values and pointer follow; a second-order spring only when inertia is the message (a drag release, a weighted camera push). Integrate semi-implicitly: `damping = 2 * zeta * sqrt(k)`, `a = drive - k * x - damping * v`, `v += a * dt`, `x += v * dt`, with `zeta` at least 1 (no overshoot), a stiffer return than hold (held 6, return 34), `dt` clamped, and `v` zeroed when `x` hits a clamp while still pushing into it.
    **Animation state.** One explicit state object per animated subject: elapsed seconds, phase name, position, velocity, base orientation, spin angle, event flags; scratch vectors at module scope. Replay and unmount reset every field, so a second play equals the first. Phases are named ranges in seconds, not one 0 to 1 value.
 
@@ -239,11 +263,15 @@ export function mulberry32(seed: number) {
 
 6. **Test hooks and diagnostics** behind a dev flag (`window.__immersive`), a debug panel only behind `?debug`. HUD values (FPS, particle counts, support status) are plain DOM text refreshed every 250 to 500 ms from inside the existing frame callback, never through React state or an extra render; measure FPS over a window and restart the window after any gap over 250 ms.
 7. **Tiny tween manager** with cubic easing for canvas-side motion; WAAPI for DOM overlay feedback. No bounce, no overshoot, no screen shake, no hit-stop, no FOV punch, no white flash.
-8. **Audio** (rare on JAL sites): off by default behind an explicit 44px toggle; the `AudioContext` is created and resumed inside that gesture. Route everything through `GainNode` groups (master, ui, ambience) so one mute reaches all. Beds loop through an `AudioBufferSourceNode` with `loop = true`; music sets `loopStart` and `loopEnd` on beat boundaries or crossfades two gains (a seam click is a bug). Sources stop and disconnect on unmount, pause on `visibilitychange`, never stack on resume, and are never triggered per frame. Repeated sounds get a cooldown or a small variant pool plus about 6 percent `playbackRate` variation from the seeded RNG; a short oscillator tick (triangle wave, gain ramped exponentially from 0.0001) needs no file. Lengths: UI 0.15 to 0.8 s, effects 0.5 to 2.5 s, ambience loops 8 to 30 s, music loops 30 to 90 s. Check for stacked loops, seam clicks, a bed masking UI sounds, blocked autoplay, mute reaching only some groups, silently swallowed decode errors, and the iOS Safari unlock path on a device.
+8. **Audio** (rare on JAL sites): off by default behind an explicit 44px toggle; the `AudioContext` is created and resumed inside that gesture. Route everything through `GainNode` groups (master, ui, ambience) so one mute reaches all. Beds loop through an `AudioBufferSourceNode` with `loop = true`; music sets `loopStart` and `loopEnd` on beat boundaries or crossfades two gains (a seam click is a bug). Sources stop and disconnect on unmount, pause on `visibilitychange`, never stack on resume, and are never triggered per frame. Repeated sounds get a cooldown or a small variant pool plus about 6 percent `playbackRate` variation from the seeded RNG; a short oscillator tick (triangle wave, gain ramped exponentially from 0.0001) needs no file. Duck the ambience group a few dB under the strongest moment, then restore it. Lengths: UI 0.15 to 0.8 s, effects 0.5 to 2.5 s, ambience loops 8 to 30 s, music loops 30 to 90 s. Check for stacked loops, seam clicks, a bed masking UI sounds, blocked autoplay, mute reaching only some groups, silently swallowed decode errors, and the iOS Safari unlock path on a device.
 9. **Input response visible within about 100 ms.**
 10. **Feedback order** for toys and interactive sections: response to input within 100 ms; the subject's own motion shaped by damping or the cubic ease, never overshoot; contact feedback in lawful terms (a tonal darken, a small settle, a DOM confirmation of 150 ms or less); the camera stays still; sound, if present, on the same frame. The strongest event gets the most layers. Never delay the next input behind an animation finishing, and feedback never hides what the visitor acts on next.
 
 ## 7. Interaction patterns
+
+From: threejs-game-skills (`threejs-gameplay-systems` input and camera), Threejs-Awesome-Graphics-Agent-Skills (pointer ownership, shed-particle velocity, ambient inflow), drei (MIT: `meshBounds`, `<Bvh>`, `<PresentationControls>`), JAL-authored (touch and keyboard law).
+
+Build section for `px.pointer_repel` (with section 1), `px.orbit_bounded`, and `px.pointer_look`.
 
 - **Raycast proxies, not detail meshes:** one sphere or box proxy with `intersectObject(proxy, false)`, planes solved analytically from the ray, drags through `ray.intersectPlane(dragPlane)`. drei `meshBounds` or `<Bvh>` in R3F.
 - **Product orbit constraints** (a bounded hero): damping 0.06, no pan, distance 4.6 to 10, polar angle 0.72 to 1.55 rad. drei `<PresentationControls>` is the calmer default on marketing pages.
@@ -256,7 +284,9 @@ export function mulberry32(seed: number) {
 
 ## 8. nixie-fx (approved, picked by JEV)
 
-**What:** an MIT runtime plus CLI for particle effects authored in the hosted NixieFX editor. One deterministic, renderer-agnostic CPU simulation drives a Three.js adapter (`nixie-fx/three`, canonical) and a PixiJS v8 adapter. Package `nixie-fx` 0.1.16, ESM, `sideEffects: false`, separate entrypoints so importing core never loads a renderer.
+From: nixie-fx (`nixie-fx-authoring`, `nixie-fx-runtime` skills, package README and exports), JAL-authored (ownership, law, restrained starting values, build gate).
+
+Build section for `px.nixie_fx`. **What:** an MIT runtime plus CLI for particle effects authored in the hosted NixieFX editor. One deterministic, renderer-agnostic CPU simulation drives a Three.js adapter (`nixie-fx/three`, canonical) and a PixiJS v8 adapter. Package `nixie-fx` 0.1.16, ESM, `sideEffects: false`, separate entrypoints so importing core never loads a renderer.
 
 **Status:** approved by Brian. Usable whenever JEV (`imm.tech`, `imm.recipe`) picks it and the rules below hold. Mechanical notes JEV weighs in `imm.tech`: peer `three >=0.184.0 <0.186.0` at 0.1.16, so either pin three to that range for the app (0.185.x today) or skip nixie-fx when the page needs a newer three; its CLI declares Node 20 or later, so run it with `bunx nixie-fx` and verify once per project; the flagship example look (near-black `0x14100c` clear, orange glow, additive embers, neon spill light, CSS gradients) is unlawful outside noyzzi sections, though the engine is neutral.
 
@@ -289,7 +319,7 @@ export function mulberry32(seed: number) {
 - **Layout.** `manifest.json`, `effects/*.json`, and each declared asset at its asset-root-relative path (no fixed folder names). A blocked export may write diagnostics instead of a bundle, so the build checks the manifest, not the folder.
 - **Diagnostics levels.** `error` is malformed or unsafe data (fix it); `blocker` means the target cannot represent the effect (fix it or change profile on purpose); `warning` or `partial` may export but is reviewed at the named path and checked visually. Never delete a diagnostic to go green.
 - **After export:** exit code 0; `validation.valid` with no blockers; the intended effect ID and `three3d` support present; every declared asset exists; the diff touches only intended files; the bundle loads through `loadVfxExportBundle` (plain JSON parsing proves nothing).
-- **Load sequence.** Fetch `manifest.json`, parse with `parseVfxExportManifest`, fetch every `manifest.effects[].path` in parallel, then `loadVfxExportBundle({ manifest: raw, effectsByPath }, { requiredBackend: "three3d", requiredEffectIds: [...] })`, which checks identities, hashes, validation, and support. Pass `assetPaths` with `requireEveryAsset: true` only when the host can list deployed files (from the Bun build output).
+- **Load sequence.** Fetch `manifest.json`, parse with `parseVfxExportManifest`, fetch every `manifest.effects[].path` in parallel, then `loadVfxExportBundle({ manifest: raw, effectsByPath }, { requiredBackend: "three3d", requiredEffectIds: [...] })`, which checks identities, hashes, validation, and support. Each manifest entry carries its own `validation`; the top-level `validation` is their union, so gate on the entry of the effect being shipped. Pass `assetPaths` with `requireEveryAsset: true` only when the host can list deployed files (from the Bun build output).
 - **Support reports.** `manifest.effects[i].support.backends.three3d`: `blocked` never ships; `partial` logs its `warnings[].message` in dev diagnostics and the perf report and is checked by eye on a real GPU; `notes` never change the status.
 
 ### 8.3 Runtime surface
@@ -316,13 +346,15 @@ export function mulberry32(seed: number) {
 
 ## 9. Rapier physics (approved, picked by JEV)
 
-`@react-three/rapier` 2.2.0 (MIT) with `@dimforge/rapier3d-compat` 0.19.2 (Apache-2.0; the npm compat line is at 0.21.0, and rapier.js is archived and merged into `dimforge/rapier` under `typescript/`).
+From: react-three-rapier source and docs (MIT, `Physics.tsx`, `FrameStepper.tsx`), Rapier docs (Apache-2.0), threejs-game-skills (`threejs-gameplay-systems` engine ladder, physics gotchas and failure modes), webgpu-claude-skill (calm physics kernel, own words), JAL-authored (one-clock wiring, CSP, bundle rules).
+
+Build section for `px.rapier_toy`. `@react-three/rapier` 2.2.0 (MIT) with `@dimforge/rapier3d-compat` 0.19.2 (Apache-2.0; the npm compat line is at 0.21.0, and rapier.js is archived and merged into `dimforge/rapier` under `typescript/`).
 
 - **Status:** approved by Brian: `@react-three/rapier`, or `@dimforge/rapier3d-compat` in vanilla scenes, usable whenever JEV picks it. The WASM is served through Bun.build's `file` loader (a hashed `.wasm` under `/assets`, `application/wasm`) or inlined by the compat build, and the page carries the 3D CSP additions in `three-foundations.md` section 7.3 (`'wasm-unsafe-eval'`, `worker-src 'self' blob:`).
 - **Use only when interaction is the message:** tossable product parts, a playful drop-in hero. Scroll stories never need physics: a timeline is deterministic and testable.
-- **Engine ladder:** custom collision (below) for simple toys; Rapier (approved) for real rigid bodies; `cannon-es` (MIT, plain JS, no WASM chunk) is an approval candidate for small scenes where a WASM download is unacceptable; Jolt only for advanced needs; Ammo only when a project already uses it; Matter is 2D only.
+- **Engine ladder:** custom collision (below) for simple toys; Rapier (approved) for real rigid bodies; `cannon-es` (MIT, plain JS, no WASM chunk) for small scenes where a WASM download is unacceptable is an approval candidate, ask Brian; Jolt only for advanced needs; Ammo only when a project already uses it; Matter is 2D only.
 - **Wiring:** `<Physics>` wraps bodies; `<RigidBody colliders="hull" | "cuboid" | "ball" | false>` generates colliders from child meshes or you declare them; `<InstancedRigidBodies>` gives one body per instance; `debug` draws colliders.
-- **Timestep:** fixed 1/60 by default (`timeStep`), or `"vary"`. Fixed is more stable; interpolation smooths rendering between steps. `updateLoop="independent"` runs physics in its own rAF and calls `invalidate()` only while bodies are awake, pairing with `frameloop="demand"`. On a JAL page with the one-clock ticker, prefer the fixed step driven from the frame loop so there is still exactly one rAF owner **[verify]**.
+- **Timestep:** fixed 1/60 by default (`timeStep`), or `"vary"`. Fixed is more stable; interpolation smooths rendering between steps. **One clock (verified against the react-three-rapier 2.2.0 source):** the default `updateLoop="follow"` steps the world inside a `useFrame` callback (ordered by `updatePriority`), so under the JAL `frameloop="never"` canvas it steps on each `advance()` the `gsap.ticker` issues (`r3f.md` section 3) and there is exactly one rAF owner. Keep the default. `updateLoop="independent"` starts its own rAF and is never used on a JAL page. The stepper clamps the frame delta to 0.5 s and runs a fixed-step accumulator with `interpolate` on by default, but has no per-frame step cap beyond that clamp (up to 30 steps at 1/60), so set `paused` when the section leaves view or the tab hides instead of letting a backlog build.
 - **Performance:** primitive colliders (cuboid, ball, capsule) over `hull` or `trimesh`; let bodies sleep; tens of dynamic bodies on mobile.
 - **Bundle:** the compat build inlines the WASM as base64 (no static file, no MIME setup) at the cost of a large JS chunk; the npm package unpacks to about 15 MB across builds. Load it only through a dynamic `import()` on first interaction, and measure the chunk in the build script.
 - **Reduced motion:** `paused`, and show the settled state.

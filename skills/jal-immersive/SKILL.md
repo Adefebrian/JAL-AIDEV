@@ -28,6 +28,8 @@ References (this skill):
 
 ## 1. When immersion earns its place
 
+From: JAL-authored (Brian's immersive rulings, `jal-motion` scope law).
+
 Immersion is earned when at least one of these is true of the section's one message:
 
 1. **Form carries it.** Shape, material, scale, or assembly is the point, and a still loses it (a product object, an architecture model, a mechanism).
@@ -47,11 +49,13 @@ Page-level budget, before any section is gated: one WebGL canvas per page (more 
 
 ## 2. Law profile: three zones, one set of mechanical rules
 
+From: JAL-authored (JAL law, Brian's canvas and noyzzi rulings, the Bun-only stack); noyzzi (flags); nixie-fx (peer range); Threejs-Awesome-Graphics-Agent-Skills and threejs-game-skills (the glow, bloom, and additive recipes the Zone B bans answer); three.js docs (tone mapping).
+
 ### Zone A: the page and UI (full JAL law)
 
 Everything outside a canvas and outside a noyzzi section: white, off-white, or light beige page (`--color-page`), no CSS gradients of any kind, no blurred shadows (spread-only focus ring is the one exception), no glow, no neon, no emoji, no em-dash, no eyebrow labels, no purple, violet, or indigo, no side stripes or accent bars, no decorative lines or marker dots, no overlap, nothing outside its box, one 44px control height, the mobile app-shell below 640px, one accent at about 3% of the surface. This includes the canvas element's own CSS: no gradient or shadow on it, no dark fill behind it.
 
-### Zone B: inside a 3D canvas (natural lighting exemption)
+### Zone B: inside a JAL canvas, 3D or 2D (natural lighting exemption)
 
 Allowed inside a JAL-authored canvas: physically plausible light and shade. PBR shading, soft shadows and contact shadows, specular highlights, refraction and reflection, tonal falloff across a surface, depth haze matched to the page white, texture and material detail, natural daylight or studio colour.
 
@@ -65,6 +69,8 @@ Still banned inside the canvas, unless the piece comes from noyzzi:
 
 The page white must show through: transparent canvas (`alpha: true`, `scene.background = null`) over the DOM page, never a WebGL-painted background. Tone mapping maps 1.0 white to `#F0F0F0` (Neutral) or `#E2E2E2` (ACES), so anything that must read as pure white gets `toneMapped={false}`. Details in `three-foundations.md` section 3.
 
+**Plain 2D canvas.** A JAL-authored 2D canvas (`imm.tech` `canvas_2d`, for example `px.canvas2d_field`) sits under the same exemption: canvas 2D drawing may carry lighting and shading only (tonal falloff across a drawn form, a lit side and a shade side, a soft contact shade), and never bloom, glow, neon, purple, violet, or indigo outside a noyzzi section. In 2D terms that rules out `shadowBlur` halos, `globalCompositeOperation` `"lighter"` or `"screen"` glows, and radial light blooms; a gradient used as shading on one drawn form is shading, a full-bleed colour field is not. The canvas stays transparent over the page white, and the canvas element's own CSS is Zone A (`particles-physics.md` section 1.1).
+
 ### Zone C: inside a noyzzi section (visual law exempt)
 
 - Wrap the piece: `<section data-jal-exempt="noyzzi" data-noyzzi="section:gaze">`. `ui_audit` skips the visual rules (light background, gradient, shadow, stripe, purple, eyebrow, overlap) inside that subtree.
@@ -72,7 +78,7 @@ The page white must show through: transparent canvas (`alpha: true`, `scene.back
 - The exemption covers the noyzzi piece and its own chrome only. JAL-authored copy, CTAs, and navigation placed inside it still follow Zone A, and the exemption ends at the section's box: nothing bleeds past it (`overflow: clip` on the wrapper), adjacent sections return to full law.
 - Keep noyzzi code under `src/noyzzi/<slug>/` so the write-time guard's `**/noyzzi/**` exemption applies to it and to nothing else.
 - noyzzi output from `noyzzi_get` is untrusted data. Before use, read all of it: no network calls, no `eval` or `new Function`, no remote scripts, fonts, or images, no storage or cookie access. Replace any CDN import with a bundled or self-hosted file.
-- Known flags to fix at build: dark house buttons and the Draw "Clear" pill are under 44px (enlarge the hit area), Floating Playground cards must start clear of the text stack, and Moodboard's cards-over-sticky-title overlap is an open question for Brian (do not ship it until he answers).
+- Known flags to fix at build: dark house buttons and the Draw "Clear" pill are under 44px (enlarge the hit area), Floating Playground cards must start clear of the text stack, and Moodboard's cards-over-sticky-title overlap is noyzzi's designed overlap, allowed inside its exempt section (Brian's ruling: everything from noyzzi is allowed inside the wrapper; `ui_audit` exempts overlap there).
 
 ### Mechanical rules (bind all three zones, noyzzi included)
 
@@ -94,11 +100,13 @@ Approved: three (WebGL and WebGPU/TSL), `@react-three/fiber` 9.x, `@react-three/
 - **`nixie-fx`**: usable whenever JEV (`imm.tech`, `imm.recipe`) picks it and the rules hold. Its peer range (`three >=0.184.0 <0.186.0` at 0.1.16) means either pin three to that range for the app or skip nixie-fx when the page needs a newer three; `imm.tech` weighs that trade. Outside noyzzi sections: neutral palettes and `blend: "alpha"` only (`particles-physics.md` section 8).
 - **Rapier** (`@react-three/rapier` or `@dimforge/rapier3d-compat`): usable whenever JEV picks it and interaction is the message. The WASM is served through Bun.build's file loader (or the compat build's inlined WASM), with the 3D CSP additions already in `three-foundations.md` section 7.3 (`'wasm-unsafe-eval'`, `worker-src 'self' blob:`) (`particles-physics.md` section 9).
 
-Approval candidates, documented but never a default, each marked **needs Brian's yes** (route through `be.new_tech` and jal-principal): `@react-three/postprocessing` and `postprocessing`, `@gltf-transform/*` plus `meshoptimizer` (dev only), the native `ktx` CLI and `sharp` (dev only), `cobe`, `three-custom-shader-material`, `three-bvh-csg`, `r3f-perf` and `leva` (dev only), direct imports of drei's transitive deps (`maath`, `zustand`, `three-mesh-bvh`, `camera-controls`), `detect-gpu`, `@theatre/core`, Rive and dotLottie runtimes, PixiJS. Never: Remotion, `@theatre/studio` (AGPL), LYGIA, The Book of Shaders code, Shadertoy code, OGL, curtains.js, `framer-motion-3d`.
+Approval candidates, documented but never a default until Brian says yes (**ask Brian**: he approves quickly; route through `be.new_tech` and jal-principal and record the ADR): `@react-three/postprocessing` and `postprocessing`, `@gltf-transform/*` plus `meshoptimizer` (dev only), the native `ktx` CLI and `sharp` (dev only), `cobe`, `three-custom-shader-material`, `three-bvh-csg`, `r3f-perf` and `leva` (dev only), `cannon-es`, direct imports of drei's transitive deps (`maath`, `zustand`, `three-mesh-bvh`, `camera-controls`), `detect-gpu`, `@theatre/core`, Rive and dotLottie runtimes, PixiJS. Never: Remotion, `@theatre/studio` (AGPL), LYGIA, The Book of Shaders code, Shadertoy code, OGL, curtains.js, `framer-motion-3d`.
 
 Note for every R3F project: R3F 9 needs React `>=19 <19.4`. The JAL template ships React 18.3, so an R3F section means bumping `react` and `react-dom` to 19.x below 19.4 in that app (record it in the ADR).
 
 ## 3. The 11-step workflow
+
+From: JAL-authored (JEV workflow); threejs-game-skills (`game-director` scope from the request, continuity file, representative scene first, greybox); Threejs-Awesome-Graphics-Agent-Skills (per-scene visual contract).
 
 Every soft call below goes through `jev_decide` with the catalog question. Run each entry's precheck first; never ask JEV what the law or a precheck already decides. Log every decision (ID, answer, confidence, action) in the build report; stamp `UNVERIFIED BY JEV` on any outage fallback.
 
@@ -128,6 +136,8 @@ Every soft call below goes through `jev_decide` with the catalog question. Run e
 11. **`imm.taste`, then `ui.finish_disposition`.** `imm.taste` scores the built section, confirms the scene is worth its cost over the poster (`keep`), and scores motion calm. Then a fresh-context reviewer gives `ui.finish_disposition` (ship, fix, rebuild, recapture). At most two fix rounds; after that, report what remains.
 
 ## 4. The combined recipe pool
+
+From: noyzzi (4.1 to 4.3); JAL-authored clean-room rebuilds (4.4); three.js and drei docs (MIT), Threejs-Awesome-Graphics-Agent-Skills, webgpu-claude-skill, threejs-game-skills (4.5); Magic UI and animata (MIT) through `jal-motion` (4.6); gsap-skills (4.7); remotion ideas only, JAL-native core (4.8); ai-dev-kit (cost tiers).
 
 Each recipe carries: an ID, its section kind, source and license, surface, cost tier, mobile fallback, and law note, plus, when it is built, the invariant that keeps it from degrading and the debug view that proves it. Every fallback names which mechanism it keeps. The pool is the only place candidates come from.
 
@@ -173,7 +183,7 @@ Hero types from the taxonomy: paper field, scroll scene, 3D object, kinetic type
 | `nz.section.magnetic-scatter` | hero (kinetic type) | light dusty pink | C1 | static set type | noyzzi: none |
 | `nz.section.flaming-hot` | hero (dark field) | dark | C2 | poster | noyzzi: dark, neon, glow |
 | `nz.section.cosmic-dust` | hero, particles (dark field) | dark | C2 | poster | noyzzi: dark, neon |
-| `nz.section.moodboard` | gallery | white | C1 | image grid | noyzzi: shadow, gradient (hover sheen); overlap needs Brian's ruling |
+| `nz.section.moodboard` | gallery | white | C1 | image grid | noyzzi: shadow, gradient (hover sheen), designed overlap (allowed inside the exempt box) |
 | `nz.section.helix-portfolio` | hero, gallery (3D object) | light paper | C2 | vertical list of work | noyzzi: none |
 | `nz.section.gaze` | hero (paper field) | light paper | C1 | poster | noyzzi: none |
 | `nz.section.loom` | hero (paper field) | light paper | C1 | poster | noyzzi: none |
@@ -249,6 +259,8 @@ Elements with `none` can sit on the page white with a transparent canvas and sti
 | `cr.touch_frost` | toy, hero | fogged pane over a light scene | C2 (about 1 ms) / C2 (1.5 ms) | blur without refraction | canvas: neutral cool grey, never purple |
 | `cr.snowfall` | environment | light snow and cover in daylight | C1 to C2 (0.8 ms) / C2 (1 ms) | half the flakes, shading-only cover | canvas: no sparkle, neutral grey-blue shade |
 
+Build sections, one per recipe, in `effects-cleanroom.md`: `cr.window_rain` section 1, `cr.wet_ground` 2, `cr.deform_sand_snow` 3, `cr.wind_grass` 4, `cr.ocean_snell` 5 (with its own mobile fallback subsection), `cr.procedural_tree` 8, `cr.touch_frost` 9, `cr.snowfall` 10. The license ledger for all of them is section 0.
+
 ### 4.5 Three.js patterns (JAL-native)
 
 | ID | Kind | Surface | Cost | Mobile fallback | Law note |
@@ -265,8 +277,29 @@ Elements with `none` can sit on the page white with a transparent canvas and sti
 | `three.dot_globe` | data_viz | ink dots on white | C1 | static SVG dotted map (R38) | canvas: flat and unlit; a slow auto-rotation (one turn per `--loop-globe`, linear) is allowed only with a visible 44px pause control, drag rotates; static poster under reduced motion (recipe R44) |
 | `three.mesh_sweep` | object_showcase | product models on page white | C1 (one extra discard test) | 150 ms crossfade | canvas: thin darker sweep band, never an additive edge (`shaders.md` section 16) |
 | `three.post_light` | modifier (any WebGL section) | light scenes | adds 0.3 to 1.5 ms per full-res pass | none on mobile | canvas: AA, LUT, dither, subtle DoF only |
+| `three.views` | layout (many 3D regions, one canvas) | page white | host scene cost, one context | fewer views; poster per view | canvas |
 
-`three.dot_globe` is the lawful home of the magicui globe now that three is approved; `cobe` stays an approval candidate.
+**Build section per recipe** (each is the one place the recipe is built; it links out for shared pieces):
+
+| Recipe | Built in |
+|---|---|
+| `three.studio_object` | `three-foundations.md` section 13 |
+| `three.scroll_camera` | `scroll-choreography.md` section 9 (R3F binding in `r3f.md` section 12) |
+| `three.points_field` | `particles-physics.md` section 2 |
+| `three.instanced_field` | `particles-physics.md` section 3 (instancing in `r3f.md` section 5) |
+| `three.gpgpu_particles` | `particles-physics.md` section 4 |
+| `three.compute_particles` | `particles-physics.md` section 5 |
+| `three.img_hover` | `shaders.md` section 10 |
+| `three.matcap_clay` | `shaders.md` section 7 |
+| `three.sdf_blob` | `shaders.md` section 4 |
+| `three.dot_globe` | `r3f.md` section 14 |
+| `three.mesh_sweep` | `shaders.md` section 16 |
+| `three.post_light` | `shaders.md` section 19 |
+| `three.views` | `r3f.md` section 8 |
+| `px.canvas2d_field` | `particles-physics.md` section 1.1 |
+| `px.nixie_fx`, `px.rapier_toy` | `particles-physics.md` sections 8 and 9 |
+
+`three.dot_globe` is the lawful home of the magicui globe now that three is approved; `cobe` stays an approval candidate (ask Brian).
 
 ### 4.6 magicui and animata recipes (C0, surface light, law full)
 
@@ -280,7 +313,11 @@ Recipes live in `skills/jal-motion/references/components.md` (W-comp). Pool IDs 
 
 `frame.demo`: a frame-driven composition (`Sequence`, `Series`, `interpolate`, `spring`) played live in the page by `Player` with play, pause, and scrub, reduced-motion aware. Kind `demo`, C0 to C1, surface light, law full. It replaces any pre-rendered video idea; Remotion is never installed.
 
+The other two demo mediums, picked by JEV `motion.demo_medium`, have their build sections in the same file: `gsap.live_dom_demo` (`live_dom`: the real JAL Core components acting out a scripted GSAP timeline, 2 G, 3 Q when scrubbed, visible 44px pause control, final-state poster under reduce) in `frames.md` section 8, and `frame.poster_steps` (`poster_steps`: a few static authored screens with step captions, 1 E, crossfade 150ms or less, stacked static screens under reduce) in `frames.md` section 9.
+
 ## 5. Assembling `imm.recipe` candidates per section
+
+From: JAL-authored (the layering protocol in `skills/jal-design-system/references/recipe-index.md` section 4); Threejs-Awesome-Graphics-Agent-Skills (keep the mechanism that gives a reference its character); ai-dev-kit.
 
 1. **Kind.** Take the section kind from the concept (step 2). A section may carry two kinds (hero plus text_motion).
 2. **Pull.** Every pool entry tagged with that kind.
@@ -299,6 +336,8 @@ Example: a `hero` for a ceramics studio might ship `nz.section.gaze`, `nz.sectio
 
 ## 6. Poster-first loading
 
+From: JAL-authored; ai-dev-kit (LCP, preload, and lazy-media rules); webgpu-claude-skill (adapter and capability checks); remotion (poster frame idea only); nixie-fx, animata, Threejs-Awesome-Graphics-Agent-Skills (readiness and failure states).
+
 1. **The poster.** An `<img>` (WebP, at most 200KB, explicit `width` and `height`, `fetchpriority="high"` above the fold, `decoding="async"` below) rendered from the scene itself at the design camera beat and the same lighting, so the swap is seamless. Generate it in a Bun script: puppeteer-core loads the page with `?poster`, calls `window.__immersive.seek(0)`, advances two frames, screenshots the canvas box.
 2. **Capability and preference checks** before any `import()`:
    - `prefers-reduced-motion: reduce` keeps the poster. A user-driven scene (drag to rotate) may be offered behind an explicit 44px "View in 3D" button, and then runs with no ambient motion.
@@ -313,6 +352,8 @@ Example: a `hero` for a ceramics studio might ship `nz.section.gaze`, `nz.sectio
 The canvas is `aria-hidden="true"` when decorative. An interactive canvas gets `tabIndex=0`, an `aria-label` naming the interaction, keyboard equivalents (arrows rotate or step beats), and a visible focus ring on its wrapper. Essential information never lives only in 3D text.
 
 ## 7. Verification
+
+From: JAL-authored; threejs-game-skills (section scorecard, built-output verification, stripped test hooks); Threejs-Awesome-Graphics-Agent-Skills (visual contract, causal tuning order, rejection criteria); ai-dev-kit (perf audit).
 
 Full method, commands, and thresholds in `performance.md` section 6. The minimum per build:
 
@@ -329,6 +370,8 @@ Full method, commands, and thresholds in `performance.md` section 6. The minimum
 
 ## 8. Pre-return gate
 
+From: JAL-authored; Threejs-Awesome-Graphics-Agent-Skills (acceptance gate: seed, perceptual parameters, debug views, no-post baseline); animata.
+
 Do not return until every line is true, or the report names the line and why:
 
 - [ ] Every immersive section has a concept, an `imm.gate` pass, an `imm.recipe` pick, `imm.tech`, and `imm.tier`, all logged with confidence.
@@ -341,10 +384,12 @@ Do not return until every line is true, or the report names the line and why:
 - [ ] Every scene system ships with a fixed seed for all procedural inputs, parameters grouped by what the eye reads (form, material, motion, atmosphere), a debug view for every field that controls the look, and a no-post baseline capture that already reads as finished. Each rung of a quality ladder names the mechanism it changes (fewer march steps, lower field resolution, a cheaper fallback), never a blind DPR cut.
 - [ ] Core Web Vitals hold in the lab run: LCP under 2.5 s with the poster as the LCP element, CLS under 0.1, INP under 200 ms (`performance.md` section 7).
 - [ ] `ui_audit` PASS at all five widths; screenshots at 375 and 1280 were looked at; frame-time numbers are from a real GPU or explicitly marked as not measured.
-- [ ] Any approval candidate used has Brian's yes on record and an ADR; none became a default. nixie-fx and Rapier (approved) were picked by JEV, with the three pin trade recorded for nixie-fx.
+- [ ] Any approval candidate used was cleared with Brian (ask Brian) and has an ADR; none became a default. Approved packages (nixie-fx, Rapier, OriginKit patterns, every GSAP plugin, `@gsap/react`) entered only where JEV picked them, with the three range trade recorded for nixie-fx and the WASM loader plus CSP additions recorded for Rapier.
 - [ ] `imm.taste` at or above threshold with `keep` passing; `ui.finish_disposition` is `ship`; no more than two fix rounds were spent.
 - [ ] No em-dash, emoji, or eyebrow label in any file, copy, or comment written.
 
 ## JEV questions
+
+From: JAL-authored (`jal-jev` catalog).
 
 The exact question JSON, prechecks, state fields, and thresholds for `imm.gate`, `imm.recipe`, `imm.tech`, `imm.tier`, and `imm.taste` live in `jal-jev` `references/catalog.md` (section Immersive), next to `motion.intensity`, `motion.choreography`, `motion.pin`, `motion.demo_medium`, `ui.direction_screen`, `ui.heuristics`, and `ui.finish_disposition`. The catalog is the single source; do not copy questions into this file.
