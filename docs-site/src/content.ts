@@ -98,6 +98,11 @@ export const OVERVIEW = {
       body:
         "A write-time guard blocks banned patterns as files are saved. Tests, a review gate, and a 20-rule UI check in a real browser decide when a change is actually finished.",
     },
+    {
+      title: "It learns",
+      body:
+        "Every UI build records what it combined and how it scored, and the next build reads that history. Say \"learn this reference\" in any command to teach it something new. Learnings proven across projects come back as a pull request you review. The anti-slop rules never change through learning.",
+    },
   ],
   whyTitle: "Why this matters",
   why:
@@ -539,7 +544,7 @@ export const DESIGN_SYSTEM = {
 export const IMMERSIVE = {
   title: SECTION_MARKERS.immersive,
   lead:
-    "For landing pages and showcases that need more than a still image, /jal-ui switches to immersive mode and hands the work to jal-immersive: Three.js, React Three Fiber, shaders, particles, GSAP and Lenis scroll stories, and the noyzzi catalogue. Immersion is a tool for understanding, never decoration.",
+    "/jal-ui covers the whole range, and JEV places each brief on it: a calm modern site, a modern site with motion accents (Lenis smooth scroll, GSAP or Framer Motion reveals), a modern site with a few immersive sections, or a fully immersive site. Sections can sit at different levels on one page. jal-immersive holds all motion and 3D in one place: GreenSock's official GSAP skills, Lenis, the JAL frame core, Three.js, React Three Fiber, shaders, particles, physics, and the noyzzi catalogue. Immersion is a tool for understanding, never decoration.",
   earnedTitle: "When 3D earns its place",
   earned: [
     "The shape, material, or assembly of a thing is the message, and a still image loses it.",
@@ -580,12 +585,12 @@ export const IMMERSIVE = {
       body: "When a visitor asks for reduced motion, nothing keeps moving on its own. The UI check measures this; it is not a promise.",
     },
     {
-      title: "One canvas per page",
-      body: "At most one WebGL canvas and one cinematic section per page, and every scene has a text version in the page for readers and search.",
+      title: "A GPU budget, not a fixed count",
+      body: "Each device tier has a budget for canvases, draw calls, and pixels. JEV adds effects only while the page stays inside it, and every scene has a text version in the page for readers and search.",
     },
     {
       title: "JEV picks the recipe",
-      body: "For each section JEV chooses from the whole pool, or a combination: noyzzi pieces, shader effects and particles, Magic UI and Animata motion, GSAP scroll stories, and live product demos.",
+      body: "For each section JEV chooses from the whole pool and keeps layering while each layer fits: noyzzi pieces, OriginKit components, shader effects and particles, Magic UI and Animata motion, GSAP scroll stories, and live product demos. There is no fixed limit, only the rules and the budget.",
     },
   ],
 };
@@ -678,7 +683,7 @@ export const STUDY_CASES: StudyCase[] = [
     steps: [
       { command: "/jal-new acme-dashboard", note: "Scaffold the Bun monorepo from the JAL template, install, prove the build and tests pass, and make the first commit." },
       { command: "/jal-build billing: plans, invoices, and a Stripe webhook, with a screen", note: "JEV picks the playbooks (feature, module, migrate, and the UI pipeline). Backend and frontend work runs in parallel, each in its own files." },
-      { command: "/jal-ui polish the billing dashboard for the first customer demo", note: "JEV confirms product UI and sets table density. jal-ux builds phone first on JAL Core and loops until the UI check passes." },
+      { command: "/jal-ui polish the billing dashboard for the first customer demo", note: "JEV places the brief at modern and sets table density. jal-ux builds phone first on JAL Core and loops until the UI check passes." },
       { command: "/jal-check", note: "One PASS or FAIL: rules scan, tests, UI check, security hardening, a boot test, and the ship call." },
     ],
   },
