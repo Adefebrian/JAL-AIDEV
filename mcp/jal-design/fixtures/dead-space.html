@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dead space</title>
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; background: #ffffff; color: #1f2933; font: 16px/24px sans-serif; }
+  h1, h2, p, ol { margin: 0; }
+  p + p { margin-top: 16px; }
+  section { padding: 48px 24px; }
+  .cols { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; }
+  .tall { display: block; width: 100%; height: 1600px; }
+  .kit-masthead .kit-grid { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 24px; min-height: 900px; align-content: center; }
+  .kit-masthead .text { grid-column: 1 / span 5; }
+  .kit-story { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; }
+  .kit-story-steps { list-style: none; padding: 0; }
+  .kit-story-step { min-height: 900px; }
+  .kit-story-stage { position: sticky; top: 0; height: 800px; }
+  .kit-media-frame { height: 1400px; border: 1px solid #e5e7eb; }
+</style>
+</head>
+<body>
+<main>
+  <!-- Pass: a Masthead's negative space beside its text. -->
+  <section class="kit-masthead" data-kit-composition="masthead"><div class="kit-grid"><div class="text"><h1>Masthead</h1><p>Wide negative space by design.</p></div></div></section>
+
+  <!-- Fail: a short text column beside a 1600px media column. -->
+  <section id="split-sec"><div class="cols">
+    <div id="text-col"><h2>Short text</h2><p>Two lines of copy, then nothing.</p></div>
+    <div id="media-col"><svg class="tall" viewBox="0 0 10 10" preserveAspectRatio="none"><rect width="10" height="10" fill="#d4d4d8"/></svg></div>
+  </div></section>
+
+  <!-- Fail: a grid track no item occupies. -->
+  <section><div id="tracks" style="display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 2fr); gap: 24px">
+    <div class="card"><p>Halo reads the light in the room and shifts its warmth and brightness to match the hour, so a long evening of work stays calm on the eyes.</p><p>Halo reads the light in the room and shifts its warmth and brightness to match the hour, so a long evening of work stays calm on the eyes.</p><p>Halo reads the light in the room and shifts its warmth and brightness to match the hour, so a long evening of work stays calm on the eyes.</p><p>Halo reads the light in the room and shifts its warmth and brightness to match the hour, so a long evening of work stays calm on the eyes.</p><p>Halo reads the light in the room and shifts its warmth and brightness to match the hour, so a long evening of work stays calm on the eyes.</p><p>Halo reads the light in the room and shifts its warmth and brightness to match the hour, so a long evening of work stays calm on the eyes.</p><p>Halo reads the light in the room and shifts its warmth and brightness to match the hour, so a long evening of work stays calm on the eyes.</p><p>Halo reads the light in the room and shifts its warmth and brightness to match the hour, so a long evening of work stays calm on the eyes.</p><p>Halo reads the light in the room and shifts its warmth and brightness to match the hour, so a long evening of work stays calm on the eyes.</p><p>Halo reads the light in the room and shifts its warmth and brightness to match the hour, so a long evening of work stays calm on the eyes.</p><p>Halo reads the light in the room and shifts its warmth and brightness to match the hour, so a long evening of work stays calm on the eyes.</p><p>Halo reads the light in the room and shifts its warmth and brightness to match the hour, so a long evening of work stays calm on the eyes.</p><p>Halo reads the light in the room and shifts its warmth and brightness to match the hour, so a long evening of work stays calm on the eyes.</p><p>Halo reads the light in the room and shifts its warmth and brightness to match the hour, so a long evening of work stays calm on the eyes.</p></div>
+    <div class="card"><p>Halo reads the light in the room and shifts its warmth and brightness to match the hour, so a long evening of work stays calm on the eyes.</p><p>Halo reads the light in the room and shifts its warmth and brightness to match the hour, so a long evening of work stays calm on the eyes.</p><p>Halo reads the light in the room and shifts its warmth and brightness to match the hour, so a long evening of work stays calm on the eyes.</p><p>Halo reads the light in the room and shifts its warmth and brightness to match the hour, so a long evening of work stays calm on the eyes.</p><p>Halo reads the light in the room and shifts its warmth and brightness to match the hour, so a long evening of work stays calm on the eyes.</p><p>Halo reads the light in the room and shifts its warmth and brightness to match the hour, so a long evening of work stays calm on the eyes.</p><p>Halo reads the light in the room and shifts its warmth and brightness to match the hour, so a long evening of work stays calm on the eyes.</p><p>Halo reads the light in the room and shifts its warmth and brightness to match the hour, so a long evening of work stays calm on the eyes.</p><p>Halo reads the light in the room and shifts its warmth and brightness to match the hour, so a long evening of work stays calm on the eyes.</p><p>Halo reads the light in the room and shifts its warmth and brightness to match the hour, so a long evening of work stays calm on the eyes.</p><p>Halo reads the light in the room and shifts its warmth and brightness to match the hour, so a long evening of work stays calm on the eyes.</p><p>Halo reads the light in the room and shifts its warmth and brightness to match the hour, so a long evening of work stays calm on the eyes.</p><p>Halo reads the light in the room and shifts its warmth and brightness to match the hour, so a long evening of work stays calm on the eyes.</p><p>Halo reads the light in the room and shifts its warmth and brightness to match the hour, so a long evening of work stays calm on the eyes.</p></div>
+  </div></section>
+
+  <!-- Pass: StickyStory steps between their texts, next to a sticky stage. -->
+  <section data-kit-composition="sticky-story"><div class="kit-story">
+    <ol class="kit-story-steps">
+      <li class="kit-story-step"><h2>Step one</h2><p>The first step.</p></li>
+      <li class="kit-story-step"><h2>Step two</h2><p>The second step.</p></li>
+      <li class="kit-story-step"><h2>Step three</h2><p>The third step.</p></li>
+    </ol>
+    <div class="kit-story-stage"><svg class="tall" style="height: 800px" viewBox="0 0 10 10" preserveAspectRatio="none"><rect width="10" height="10" fill="#d4d4d8"/></svg></div>
+  </div></section>
+
+  <!-- Pass: a MediaFrame's own negative space beside long copy. -->
+  <section><div class="cols">
+    <div><p>Halo reads the light in the room and shifts its warmth and brightness to match the hour, so a long evening of work stays calm on the eyes.</p><p>Halo reads the light in the room and shifts its warmth and brightness to match the hour, so a long evening of work stays calm on the eyes.</p><p>Halo reads the light in the room and shifts its warmth and brightness to match the hour, so a long evening of work stays calm on the eyes.</p><p>Halo reads the light in the room and shifts its warmth and brightness to match the hour, so a long evening of work stays calm on the eyes.</p><p>Halo reads the light in the room and shifts its warmth and brightness to match the hour, so a long evening of work stays calm on the eyes.</p><p>Halo reads the light in the room and shifts its warmth and brightness to match the hour, so a long evening of work stays calm on the eyes.</p><p>Halo reads the light in the room and shifts its warmth and brightness to match the hour, so a long evening of work stays calm on the eyes.</p><p>Halo reads the light in the room and shifts its warmth and brightness to match the hour, so a long evening of work stays calm on the eyes.</p><p>Halo reads the light in the room and shifts its warmth and brightness to match the hour, so a long evening of work stays calm on the eyes.</p><p>Halo reads the light in the room and shifts its warmth and brightness to match the hour, so a long evening of work stays calm on the eyes.</p><p>Halo reads the light in the room and shifts its warmth and brightness to match the hour, so a long evening of work stays calm on the eyes.</p><p>Halo reads the light in the room and shifts its warmth and brightness to match the hour, so a long evening of work stays calm on the eyes.</p><p>Halo reads the light in the room and shifts its warmth and brightness to match the hour, so a long evening of work stays calm on the eyes.</p><p>Halo reads the light in the room and shifts its warmth and brightness to match the hour, so a long evening of work stays calm on the eyes.</p></div>
+    <figure class="kit-media" style="margin: 0"><div class="kit-media-frame"><svg style="display: block; width: 100%; height: 200px" viewBox="0 0 10 10" preserveAspectRatio="none"><rect width="10" height="10" fill="#d4d4d8"/></svg></div></figure>
+  </div></section>
+</main>
+</body>
+</html>

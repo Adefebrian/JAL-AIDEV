@@ -172,7 +172,7 @@ const r = await page.evaluate(() => {
 
 ### 6.7 `ui_audit`
 
-- Run at 320, 375, 414, 768, 1280: 22 rules, including `reduced-motion` (with reduce emulated: no infinite CSS or WAAPI animation running, no continuous rAF loop above 10 calls per second) and the scroll-walk rules `stuck-reveal` and `blank-viewport`.
+- Run at 320, 375, 414, 768, 1280: 33 rules, including `reduced-motion` (with reduce emulated: no infinite CSS or WAAPI animation running, no continuous rAF loop above 10 calls per second) and the scroll-walk rules `stuck-reveal`, `blank-viewport`, and `dead-space` (a canvas or `aria-hidden` layer is skipped by the tidiness rules; a MediaFrame, a Masthead's negative space, and StickyStory steps are not dead space).
 - `[data-jal-exempt~="noyzzi"]` subtrees skip the visual rules (light background, gradient, shadow, stripe, purple, eyebrow, overlap) but keep min height, overflow, clipped text, and reduced motion.
 - Text-fit fixtures use the longest likely values (longest product name, price with currency, the longest supported locale), not the design's sample copy.
 - SKIPPED is not PASS.

@@ -53,7 +53,7 @@ export const SECTION_MARKERS = {
   jev: "JEV, the judge",
   designSystem: "One design system: JAL Core",
   immersive: "The immersive and 3D layer",
-  uiCheck: "The 22-rule UI check",
+  uiCheck: "The 33-rule UI check",
   docs: "Publishing to JAL Docs",
   search: "SEO, AEO, dan GEO",
   studyCases: "Study cases",
@@ -75,7 +75,7 @@ export const HERO = {
     { value: "17", label: "specialist agents" },
     { value: "8", label: "commands" },
     { value: "53", label: "JEV decisions" },
-    { value: "22", label: "UI check rules" },
+    { value: "33", label: "UI check rules" },
   ],
 };
 
@@ -97,7 +97,7 @@ export const OVERVIEW = {
     {
       title: "Proven, not promised",
       body:
-        "A write-time guard blocks banned patterns as files are saved. Tests, a review gate, and a 22-rule UI check in a real browser decide when a change is actually finished.",
+        "A write-time guard blocks banned patterns as files are saved. Tests, a review gate, and a 33-rule UI check in a real browser decide when a change is actually finished.",
     },
     {
       title: "It learns",
@@ -359,7 +359,7 @@ export const COMMANDS: Command[] = [
     argumentHint: "<what to build, or which screen or site to redesign>",
     purpose: "Anything visual",
     what:
-      "New screens, redesigns, landing pages, and immersive or 3D websites. JEV first decides whether the brief is product UI, a marketing page, or immersive. A redesign lists what is wrong before changing anything. Every section gets a purpose, one message, and one action, then it is built phone first on JAL Core and proven with the 22-rule UI check.",
+      "New screens, redesigns, landing pages, and immersive or 3D websites. JEV first decides whether the brief is product UI, a marketing page, or immersive. A redesign lists what is wrong before changing anything. Every section gets a purpose, one message, and one action, then it is built phone first on JAL Core and proven with the 33-rule UI check.",
     examples: [
       "/jal-ui a settings screen for team members and roles",
       "/jal-ui redesign the pricing page",
@@ -649,6 +649,17 @@ export const UI_RULES: { rule: string; catches: string }[] = [
   { rule: "reduced-motion", catches: "Something keeps animating after a visitor asks for reduced motion." },
   { rule: "stuck-reveal", catches: "Content is still invisible after it scrolls into view, usually a scroll reveal listening to the wrong scroller." },
   { rule: "blank-viewport", catches: "A whole screen of the page is empty while scrolling through it." },
+  { rule: "spacing-scale", catches: "A gap, padding, or margin on a layout block that is not on the spacing scale." },
+  { rule: "gap-consistency", catches: "Items of one kind sitting at uneven gaps, like hand-placed margins or drifting card spacing." },
+  { rule: "section-rhythm", catches: "A section whose top and bottom space breaks the page's one vertical rhythm." },
+  { rule: "composition-repeat", catches: "The same section layout twice in a row, or more than twice on a page." },
+  { rule: "dead-space", catches: "A big empty area beside a column with content, such as a short text column next to tall media." },
+  { rule: "proximity", catches: "Cards spaced further apart than the padding inside them, so they stop reading as a group." },
+  { rule: "radius-scale", catches: "A card or panel rounded so much it turns into a pill." },
+  { rule: "band-padding", catches: "A colored band whose content hugs one edge or has more room below than above." },
+  { rule: "gap-seam", catches: "A thin stray strip of page background between two sections next to a colored band." },
+  { rule: "display-measure", catches: "A big headline that wraps to too many lines or is too large for its column." },
+  { rule: "hero-card", catches: "The main page heading boxed inside a rounded card instead of set on the page." },
 ];
 
 export const DOCS = {

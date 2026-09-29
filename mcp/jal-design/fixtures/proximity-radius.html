@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Proximity and radius</title>
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; background: #ffffff; color: #1f2933; font: 16px/24px sans-serif; }
+  main { padding: 16px; }
+  ul { list-style: none; margin: 0 0 32px; padding: 0; }
+  p { margin: 0; }
+  /* Fail both: one-line cards 64px apart with 16px padding and a pill radius. */
+  #loose { display: flex; flex-direction: column; gap: 64px; }
+  .feature { padding: 16px; border: 1px solid #e4e4e7; border-radius: 28px; }
+  /* Pass both: the gap under the padding, a card radius. */
+  #tight { display: flex; flex-direction: column; gap: 12px; }
+  .tile { padding: 16px; border: 1px solid #e4e4e7; border-radius: 12px; }
+  .pill { display: inline-flex; align-items: center; height: 44px; padding: 0 20px; border: 1px solid #1f2933; border-radius: 9999px; background: #ffffff; }
+  .chip { display: inline-flex; padding: 2px 8px; border-radius: 9999px; background: #f4f4f5; }
+  .avatar { width: 40px; height: 40px; border-radius: 50%; background: #e4e4e7; }
+  .frame { height: 300px; border-radius: 120px; background: #e4e4e7; overflow: hidden; }
+  .frame svg { display: block; width: 100%; height: 100%; }
+</style>
+</head>
+<body>
+<main>
+  <ul id="loose">
+    <li class="feature">Reads the room</li><li class="feature">Follows the hour</li><li class="feature">Stays quiet</li><li class="feature">Runs all day</li>
+  </ul>
+  <ul id="tight">
+    <li class="tile">Reads the room</li><li class="tile">Follows the hour</li><li class="tile">Stays quiet</li>
+  </ul>
+  <p><button class="pill" type="button">Buy</button> <span class="chip">New</span></p>
+  <div class="avatar"></div>
+  <div class="frame"><svg viewBox="0 0 10 10" preserveAspectRatio="none"><rect width="10" height="10" fill="#d4d4d8"/></svg></div>
+</main>
+</body>
+</html>

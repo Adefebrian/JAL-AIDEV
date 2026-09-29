@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Hero card</title>
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; background: #f4f4f5; color: #1f2933; font: 16px/24px sans-serif; }
+  h1, p { margin: 0; }
+  .hero { position: relative; padding: 64px 16px; }
+  .panel { max-width: 480px; padding: 24px; display: grid; gap: 16px; }
+  .panel.hero-card { background: #ffffff; border: 1px solid #e4e4e7; border-radius: 16px; }
+  .backdrop { position: absolute; inset: 0; display: none; }
+  .backdrop svg { display: block; width: 100%; height: 100%; }
+  .with-media .backdrop { display: block; }
+  .with-media .panel { position: relative; }
+</style>
+<script>
+  // ?flat sets the hero on the page; ?overlay puts the panel over a photo (the Masthead overlay).
+  document.addEventListener("DOMContentLoaded", function () {
+    if (/[?&]flat/.test(location.search)) document.querySelector(".panel").classList.remove("hero-card");
+    if (/[?&]overlay/.test(location.search)) document.querySelector(".hero").classList.add("with-media");
+  });
+</script>
+</head>
+<body>
+<main>
+  <section class="hero">
+    <div class="backdrop" aria-hidden="true"><svg viewBox="0 0 10 10" preserveAspectRatio="none"><rect width="10" height="10" fill="#a1a1aa"/></svg></div>
+    <div id="card" class="panel hero-card"><h1>A lamp that reads the room</h1><p>Warmth and brightness follow the hour.</p></div>
+  </section>
+  <section style="padding: 64px 16px"><h2>Next</h2><p>The rest of the page.</p></section>
+</main>
+</body>
+</html>

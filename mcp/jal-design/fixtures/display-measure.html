@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Display measure</title>
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; background: #ffffff; color: #1f2933; font: 16px/24px sans-serif; }
+  main { padding: 16px; }
+  h1, p { margin: 0 0 32px; }
+  /* Fail: a huge headline in a narrow measure ("Every room, / one plain / sentence."). */
+  #long { font-size: 96px; line-height: 100px; max-width: 640px; }
+  /* Pass: display text on one line. */
+  .display { font-size: 48px; line-height: 56px; }
+  /* Fail at 375 only: 60px words in a 343px measure. */
+  #wide-display { font-size: 60px; line-height: 64px; }
+  /* Pass: a one-word wordmark is the layout. */
+  .kit-wordmark { font-size: 18vw; line-height: 1; overflow-wrap: anywhere; }
+  @media (min-width: 1024px) { #wide-display { font-size: 60px; } }
+</style>
+</head>
+<body>
+<main>
+  <h1 id="long">Every room, one plain sentence.</h1>
+  <p id="ok-display" class="display">Plain lamp</p>
+  <p id="wide-display">Plain lamp here</p>
+  <p id="ok-wordmark" class="kit-wordmark">HALO</p>
+</main>
+</body>
+</html>

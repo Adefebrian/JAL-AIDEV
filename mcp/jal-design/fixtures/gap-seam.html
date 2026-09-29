@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Gap seam</title>
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; background: #ffffff; color: #1f2933; font: 16px/24px sans-serif; }
+  h2, p { margin: 0; }
+  section { padding: 64px 16px; }
+  .layer { background: #f4f4f5; }
+  .ink { background: #e4e4e7; }
+</style>
+</head>
+<body>
+<main>
+  <section id="a"><h2>Base</h2><p>A plain band.</p></section>
+  <!-- Fail: a stray 12px strip of page white above a tone CTA band. -->
+  <section id="cta" class="layer" style="margin-top: 12px"><h2>CTA band</h2><p>Tone band.</p></section>
+  <!-- Pass: two tones edge to edge. -->
+  <section id="b" class="ink"><h2>Another tone</h2><p>Meets the band above.</p></section>
+  <!-- Pass: a full 40px apart is spacing, not a seam. -->
+  <section id="c" style="margin-top: 40px"><h2>Base</h2><p>Deliberately apart.</p></section>
+  <!-- Pass: a small gap between two plain bands shows nothing. -->
+  <section id="d" style="margin-top: 12px"><h2>Base</h2><p>No tone on either side.</p></section>
+</main>
+</body>
+</html>

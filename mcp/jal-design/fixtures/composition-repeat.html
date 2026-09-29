@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Composition repeat</title>
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; background: #ffffff; color: #1f2933; font: 16px/24px sans-serif; }
+  h1, h2, p { margin: 0; }
+  section { padding: 32px 16px; }
+</style>
+</head>
+<body>
+<main>
+  <section id="hero" data-kit-composition="masthead" data-variant="left"><h1>Masthead</h1></section>
+  <section id="split-1" data-kit-composition="split" data-variant="media-end"><h2>Split one</h2></section>
+  <section id="adjacent" data-kit-composition="split" data-variant="media-end"><h2>Same split again, adjacent</h2></section>
+  <section id="feat-1" data-kit-composition="feature-grid"><h2>Features one</h2></section>
+  <section id="split-3" data-kit-composition="split" data-variant="media-start"><h2>Split, another variant</h2></section>
+  <section id="stats" data-kit-composition="stat-row"><h2>Stats</h2></section>
+  <section id="feat-2" data-kit-composition="feature-grid"><h2>Features two</h2></section>
+  <section id="bento" data-kit-composition="bento"><h2>Bento</h2></section>
+  <section id="third" data-kit-composition="feature-grid"><h2>Features three</h2></section>
+  <section id="cta" data-kit-composition="cta-band"><h2>CTA</h2></section>
+</main>
+</body>
+</html>

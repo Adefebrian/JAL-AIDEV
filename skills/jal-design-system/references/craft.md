@@ -116,7 +116,7 @@ Each item is refused as a category default. JAL treats all of them as bans; the 
 
 ## 4. Detector thresholds ported (JAL-fit)
 
-Mechanical ones are candidates for `ui_audit` (owner: lead); the rest are review checks.
+Mechanical ones are candidates for `ui_audit` (owner: lead); the rest are review checks. `ui_audit` runs 33 rules today; tidiness is mechanical there: `spacing-scale`, `gap-consistency`, `proximity`, `radius-scale`, `section-rhythm`, `band-padding`, `gap-seam`, `composition-repeat` (the anti-repetition law on the rendered page, from `data-kit-composition` and `data-variant`), `display-measure`, `hero-card`, and `dead-space`.
 
 | Rule | Threshold | JAL status |
 |---|---|---|
@@ -157,7 +157,7 @@ Mechanical ones are candidates for `ui_audit` (owner: lead); the rest are review
 ## 5. Typography
 
 - Decide roles before sizes: the fewest roles and families that make hierarchy obvious. Size, weight, space, and ink carry hierarchy together; never size alone.
-- Operate and Read: one well-tuned sans (the JAL system stack is right), the fixed JAL scale. Persuade and Experience: a display face may carry the voice, but only with a written reason in the direction contract, and adding a webfont is a dependency decision that goes to Brian.
+- Operate and Read: one well-tuned sans (Geist, the vendored default, is right), the fixed JAL scale. Persuade and Experience: a display face from the `typography.md` pool may carry the voice, with a written reason in the direction contract and the `ui.type_pairing` call; only a face outside the pool is a dependency decision that goes to Brian.
 - Pick a face like an object from the subject's world. A subject association ("books want serif", "tech wants mono") is never the reason. The overused list above signals you stopped looking.
 - Paragraph rhythm: paragraph spacing or first-line indent, never both.
 - Light text on a dark theme (explicit dark mode only): add a little leading, `--tracking-title` on body-size text if it looks crowded, and one weight step up where the face needs it.
@@ -390,7 +390,7 @@ Output: the rubric table with evidence and total, PASS or FAIL, the template-sme
 | 13 | Glass and backdrop blur as a specific effect; system materials | No blur | Opaque surfaces and a flat scrim. |
 | 14 | Hamburger or bottom nav on mobile | Mobile app-shell | Pinned header plus bottom tab bar of 3 to 5 below 640px; no hamburger as primary nav. |
 | 15 | Display up to 6rem, fluid display on Persuade | 48px display in product UI | Product UI tops at `--text-6`. Marketing and immersive heroes get the fixed `--text-display-1..3` steps (57, 69, 83), no fluid clamp. Adopt the -0.04em floor, balanced headings, and the display-sentence ban. |
-| 16 | Inter and Helvetica on the overused list; Persuade wants a face with a view | System or Inter-like default; a webfont is a dependency | Operate and Read keep the default. Persuade and Experience may propose a self-hosted face with a written reason; Brian approves the dependency. Never from the overused list without a reason. |
+| 16 | Inter and Helvetica on the overused list; Persuade wants a face with a view | Geist default, a curated OFL pool (`typography.md`) | Operate and Read keep the default. Persuade and Experience may take a pool face with a written reason (`ui.type_pairing`); only a face outside the pool needs Brian. Never from the overused list without a reason. |
 | 17 | Cream plus terracotta is the saturated AI look | `jal-ui-taste` used to suggest terracotta | Terracotta is dropped as a default suggestion. The default is no accent (ink); a hue comes from product meaning. |
 | 18 | `npx impeccable`, a downloaded Rust binary, image generation, a browser extension, telemetry, a remote roll API | Bun only; no Node tooling; no remote calls | Install and run nothing. Knowledge lives in JAL skills, mechanical checks in `ui_audit`, the seeded draw is a Bun one-liner (`directions.md`). |
 | 19 | Examples in Tailwind classes | Tailwind only through the approved `bun-plugin-tailwind` wiring to JAL tokens | Translate every value to JAL tokens (`--space-*`, `--control-h`, `--text-*`). |
@@ -427,11 +427,11 @@ Winner key: **LAW** (JAL law decides), **I** (impeccable wins), **H>I** (hallmar
 | 18 | Durations 120, 220, 420; stagger up to 500ms; theme duration multipliers | I | JAL `--dur-*` tokens; stagger total 300ms at most; intensity through `motion.intensity`. |
 | 19 | Ratio 1.25, fluid display clamps up to 12vw, display leading 0.85 to 0.95 | LAW | 1.2 scale from 16; fixed display steps 57, 69, 83; `--line-display-*` about 1.1. |
 | 20 | Weight contrast of 300 units or more (200 against 800) | LAW | Weights 400, 500, 600 only; contrast from size step plus ink step. |
-| 21 | Pairing mandatory; a single-font page is slop; Geist, Fraunces, Instrument Serif recommended | I | System stack for Operate and Read; a display face on Persuade or Experience only with a written reason and Brian's yes; the section 4 overused list stands. |
+| 21 | Pairing mandatory; a single-font page is slop; Geist, Fraunces, Instrument Serif recommended | I | Geist plus Geist Mono is a lawful pairing for every mode; a pool display face on Persuade or Experience with a written reason and the `ui.type_pairing` call; a face outside the pool needs Brian's yes; the section 4 overused list stands. |
 | 22 | Editorial default: warm paper, italic serif display, hairlines, mono labels | I | That is the spent reflex (section 14, looks a and c); D7 stays gated. |
 | 23 | Tinted greys; dark-mode body weight drops 50 units | LAW | Fixed neutrals; dark mode raises weight one step where needed (section 5); adopt only `hm.dark_hue_lock`. |
 | 24 | CSS-art and hand-built SVG illustration tiers, rotations, marching-ants flow lines | I, LAW | Real illustration or none (section 3); SVG only for functional diagrams as structural content, static edges. |
-| 25 | Remote imagery kit, stock placeholder services, icon and font CDNs | LAW | Self-hosted assets, honest local placeholders (`hm.placeholder_honesty`, `hm.remote_assets`); koboyo then reicon; a webfont is Brian's dependency call. |
+| 25 | Remote imagery kit, stock placeholder services, icon and font CDNs | LAW | Self-hosted assets, honest local placeholders (`hm.placeholder_honesty`, `hm.remote_assets`); koboyo then reicon; fonts are self-hosted files (Geist vendored, pool faces fetched into the project), and only a face outside the pool is Brian's call. |
 | 26 | Icon canon of Lucide, Phosphor, Heroicons | LAW | koboyo, then reicon, through the shared `Icon`; keep only the one-voice lesson (`hm.icon_voice`). |
 | 27 | Lottie, Rive, generated stills, ffmpeg pipelines | I (row 25) | No image-generation pipeline, no unapproved runtime; code-led only. |
 | 28 | Its own log folder, preflight cache, CSS stamps, design file, DTCG and shadcn exports | I | `docs/design/direction.md`, the build report, `tokens.css` with its Tailwind `@theme`. |

@@ -61,7 +61,16 @@ const ALL_RULES = [
   "mobile-app-shell",
   "reduced-motion",
 ];
-// Scroll-walk rules, proven by their own fixtures below: stuck-reveal, blank-viewport.
+// Proven by their own fixtures below: the tidiness rules (spacing-scale,
+// gap-consistency, proximity, radius-scale, section-rhythm, band-padding,
+// gap-seam, composition-repeat, display-measure, hero-card) and the
+// scroll-walk rules (stuck-reveal, blank-viewport, dead-space).
+const TIDY_RULES = [
+  "spacing-scale", "gap-consistency", "proximity", "radius-scale", "section-rhythm", "band-padding",
+  "gap-seam", "composition-repeat", "display-measure", "hero-card", "dead-space",
+];
+const selectorsOf = (report: { violations: { rule: string; selector: string }[] }, rule: string) =>
+  [...new Set(report.violations.filter((v) => v.rule === rule).map((v) => v.selector))].sort();
 
 describe("runAudit", () => {
   test(
@@ -282,6 +291,153 @@ describe("runAudit", () => {
     30000,
   );
 
+  test(
+    "a dense kit SpecTable at 1280 is not a blank viewport (samples in cell padding count as content)",
+    async () => {
+      const report = await runAudit(`${baseUrl}/spec-table.html`, { widths: [1280] });
+      expect(report.status).not.toBe("SKIPPED");
+      expect(report.violations.map((v) => v.rule)).not.toContain("blank-viewport");
+    },
+    30000,
+  );
+
+  test(
+    "spacing-scale flags off-scale gap and padding on layout containers, not hairlines, auto margins, text, controls, or decoration",
+    async () => {
+      const report = await runAudit(`${baseUrl}/spacing-scale.html`, { widths: [375, 1280] });
+      expect(selectorsOf(report, "spacing-scale")).toEqual(["#bad-card", "#bad-gap", "#bad-section"]);
+      const gap = report.violations.find((v) => v.rule === "spacing-scale" && v.selector === "#bad-gap");
+      expect(gap?.detail).toContain("column-gap 13px");
+    },
+    30000,
+  );
+
+  test(
+    "gap-consistency flags drifting margins in a list and a row, not a wrapped grid with one row gap",
+    async () => {
+      const report = await runAudit(`${baseUrl}/gap-consistency.html`, { widths: [375, 1280] });
+      expect(selectorsOf(report, "gap-consistency")).toEqual(["#uneven-list", "#uneven-row"]);
+      const list = report.violations.find((v) => v.rule === "gap-consistency" && v.selector === "#uneven-list");
+      expect(list?.detail).toContain("[16, 16, 28]px");
+    },
+    30000,
+  );
+
+  test(
+    "section-rhythm flags a hand-set band and a band short of the rhythm at a tone edge; masthead, attached, collapsed, footer pass",
+    async () => {
+      const report = await runAudit(`${baseUrl}/section-rhythm.html`, { widths: [375, 1280] });
+      expect(selectorsOf(report, "section-rhythm")).toEqual(["#off", "#short"]);
+      expect(report.violations.some((v) => v.rule === "section-rhythm" && v.width === 1280 && v.detail.includes("--kit-gap-section = 96px"))).toBe(true);
+    },
+    30000,
+  );
+
+  test(
+    "composition-repeat flags adjacent same composition and variant and a third use; structure is the fallback without kit markers",
+    async () => {
+      const marked = await runAudit(`${baseUrl}/composition-repeat.html`, { widths: [1280] });
+      expect(selectorsOf(marked, "composition-repeat")).toEqual(["#adjacent", "#third"]);
+      const bare = await runAudit(`${baseUrl}/composition-structure.html`, { widths: [1280] });
+      expect(selectorsOf(bare, "composition-repeat")).toEqual(["#s2"]);
+    },
+    40000,
+  );
+
+  test(
+    "dead-space flags an empty column beside tall media and an unused grid track, not masthead space, a MediaFrame, or StickyStory steps",
+    async () => {
+      const report = await runAudit(`${baseUrl}/dead-space.html`, { widths: [1280] });
+      expect(selectorsOf(report, "dead-space")).toEqual(["#text-col", "#tracks"]);
+      expect(report.violations.find((v) => v.rule === "dead-space" && v.selector === "#tracks")?.detail).toContain("grid track 3 of 3 holds no item");
+    },
+    40000,
+  );
+
+  test(
+    "band-padding flags a tone band with its heading on the edge and a lopsided one; even, merged, and plain bands pass",
+    async () => {
+      const report = await runAudit(`${baseUrl}/band-padding.html`, { widths: [375, 1280] });
+      expect(selectorsOf(report, "band-padding")).toEqual(["#lopsided", "#touch"]);
+      expect(report.violations.find((v) => v.rule === "band-padding" && v.selector === "#touch")?.detail).toContain("first content 0px from the top edge");
+    },
+    30000,
+  );
+
+  test(
+    "display-measure flags a headline over its line budget and display words too big for their measure; a wordmark passes",
+    async () => {
+      const wide = await runAudit(`${baseUrl}/display-measure.html`, { widths: [1280] });
+      expect(selectorsOf(wide, "display-measure")).toEqual(["#long"]);
+      expect(wide.violations.find((v) => v.rule === "display-measure")?.detail).toContain("wraps to 3 lines (at most 2 at 1280px)");
+      const phone = await runAudit(`${baseUrl}/display-measure.html`, { widths: [375] });
+      expect(selectorsOf(phone, "display-measure")).toEqual(["#long", "#wide-display"]);
+    },
+    30000,
+  );
+
+  test(
+    "hero-card flags the page heading boxed in a rounded bordered panel, not a flat hero or a panel over media",
+    async () => {
+      const boxed = await runAudit(`${baseUrl}/hero-card.html`, { widths: [375, 1280] });
+      expect(selectorsOf(boxed, "hero-card")).toEqual(["#card"]);
+      for (const q of ["?flat", "?overlay"]) {
+        const ok = await runAudit(`${baseUrl}/hero-card.html${q}`, { widths: [375, 1280] });
+        expect(ok.status).not.toBe("SKIPPED");
+        expect(ok.violations.map((v) => v.rule)).not.toContain("hero-card");
+      }
+    },
+    40000,
+  );
+
+  test(
+    "gap-seam flags a thin strip of page ground above a tone band, not tones edge to edge or plain bands apart",
+    async () => {
+      const report = await runAudit(`${baseUrl}/gap-seam.html`, { widths: [375, 1280] });
+      expect(selectorsOf(report, "gap-seam")).toEqual(["#cta"]);
+      expect(report.violations.find((v) => v.rule === "gap-seam")?.detail).toContain("12px strip");
+    },
+    30000,
+  );
+
+  test(
+    "proximity and radius-scale flag one-line cards far apart with a pill radius; tight cards, controls, chips, circles, media pass",
+    async () => {
+      const report = await runAudit(`${baseUrl}/proximity-radius.html`, { widths: [375, 1280] });
+      expect(selectorsOf(report, "proximity")).toEqual(["#loose"]);
+      expect(report.violations.find((v) => v.rule === "proximity")?.detail).toContain("64px apart, more than their 16px inner padding");
+      const radius = selectorsOf(report, "radius-scale");
+      expect(radius.length).toBe(4);
+      for (const sel of radius) expect(sel.startsWith("#loose > li.feature")).toBe(true);
+    },
+    30000,
+  );
+
+  test(
+    "a tidy kit-shaped page passes every tidiness rule at every width",
+    async () => {
+      const report = await runAudit(`${baseUrl}/tidy-good.html`, { widths: [320, 375, 414, 768, 1280] });
+      expect(report.status).not.toBe("SKIPPED");
+      const rules = report.violations.map((v) => v.rule);
+      for (const rule of [...TIDY_RULES, "blank-viewport", "light-background"]) expect(rules).not.toContain(rule);
+    },
+    60000,
+  );
+
+  test(
+    "light-background exempts an explicit dark theme on html or the D13 page root, never an unmarked dark page",
+    async () => {
+      for (const q of ["", "?root"]) {
+        const report = await runAudit(`${baseUrl}/dark-theme.html${q}`, { widths: [1280] });
+        expect(report.status).not.toBe("SKIPPED");
+        expect(report.violations.map((v) => v.rule)).not.toContain("light-background");
+      }
+      const unmarked = await runAudit(`${baseUrl}/dark-theme.html?light`, { widths: [1280] });
+      expect(unmarked.violations.map((v) => v.rule)).toContain("light-background");
+    },
+    40000,
+  );
+
   for (const [file, what] of [
     ["walk-notfound.html", "a centred 404 page that does not scroll"],
     ["walk-bg-hero.html", "a full-bleed CSS background-image hero with one headline"],
@@ -370,6 +526,7 @@ describe("runAudit", () => {
       const rules = report.violations.map((v) => v.rule);
       expect(rules).not.toContain("stuck-reveal");
       expect(rules).not.toContain("blank-viewport");
+      expect(rules).not.toContain("dead-space");
     },
     60000,
   );

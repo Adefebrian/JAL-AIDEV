@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Gap consistency</title>
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; background: #ffffff; color: #1f2933; font: 16px/24px sans-serif; }
+  main { padding: 16px; }
+  p, h2, ul { margin: 0; }
+  ul { list-style: none; padding: 0; }
+  .item, .card, .chip, .row { border: 1px solid #e5e7eb; padding: 8px; }
+  section { margin-bottom: 32px; }
+</style>
+</head>
+<body>
+<main>
+  <!-- Hand-placed margins: the third item drifts to 28px. -->
+  <section><ul id="uneven-list">
+    <li class="item" style="margin-bottom: 16px">One</li>
+    <li class="item" style="margin-bottom: 16px">Two</li>
+    <li class="item" style="margin-bottom: 28px">Three</li>
+    <li class="item">Four</li>
+  </ul></section>
+  <!-- A row whose last chip carries an extra 8px margin. -->
+  <section><div id="uneven-row" style="display: flex; gap: 16px">
+    <div class="chip">Alpha</div><div class="chip">Beta</div><div class="chip" style="margin-left: 8px">Gamma</div>
+  </div></section>
+
+  <!-- Lawful: a wrapped grid with one row gap, mixed kinds, an even stack. -->
+  <section><div id="wrap-grid" style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px 24px">
+    <div class="card">Card 1</div><div class="card">Card 2</div><div class="card">Card 3</div>
+    <div class="card">Card 4</div><div class="card">Card 5</div><div class="card">Card 6</div>
+  </div></section>
+  <section><div id="mixed-kinds" style="display: flex; flex-direction: column">
+    <h2>Heading</h2><p class="lead" style="margin-top: 8px">Lead line.</p><div class="body" style="margin-top: 24px">Body block.</div>
+  </div></section>
+  <section><div id="even-stack" style="display: flex; flex-direction: column; gap: 12px">
+    <div class="row">Row 1</div><div class="row">Row 2</div><div class="row">Row 3</div><div class="row">Row 4</div>
+  </div></section>
+</main>
+</body>
+</html>

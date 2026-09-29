@@ -73,7 +73,7 @@ Eight commands. Each one runs the whole crew on the JAL orchestration engine: it
 |---------|----------------|----------------|
 | `/jal-new` | Start a new project | Scaffold from the JAL template, install, first commit, a build and test proof. Optionally builds the first version right away |
 | `/jal-build` | Build or change anything | Features end to end, backend modules and API routes, database migrations, Go or Rust sidecars (asks Brian first), architecture decision records, and any screens the change needs |
-| `/jal-ui` | Anything visual | New screens, redesigns, landing pages, and immersive or 3D websites. JEV picks product UI, marketing, or immersive mode. Built phone first and proven with the 22-rule UI check |
+| `/jal-ui` | Anything visual | New screens, redesigns, landing pages, and immersive or 3D websites. JEV picks product UI, marketing, or immersive mode. Built phone first and proven with the 33-rule UI check |
 | `/jal-fix` | Fix a bug properly | Reproduce, root cause, a failing test, the fix, and proof. Several suspects are checked in parallel |
 | `/jal-check` | One PASS or FAIL | `quick` (rules, tests, UI check), `full` (plus security hardening, boot test, ship call), and `deep` (plus a deep audit and a red team versus blue team pentest). JEV picks the depth if you do not |
 | `/jal-ship` | Get it out | `pr` (pull request), `release` (version, changelog, tag), `deploy` (deploy.jalgroup.id with a health check), and `rollback`. The full check runs first; it never deploys unless you say so |
@@ -127,7 +127,7 @@ Every reference is integrated as knowledge (no extra packages, except the approv
 
 ## Bundled tools (MCP)
 
-- **jal-design**: `jev_decide` (ask JEV), `ui_audit` (the automatic UI check, 22 rules), `ui_shots` (real screenshots of every screen through the page scroller, for the critic gate; WebGL captures get `?scene-tier=full` automatically so the critic sees the live scene), `noyzzi_list` / `noyzzi_get` (the noyzzi catalogue and live prompts or code), `docs_verify` (checks every documentation claim against the source and scans for secrets), and `design_history` (what past builds stacked and how it scored). Runs on Bun, no extra dependencies.
+- **jal-design**: `jev_decide` (ask JEV), `ui_audit` (the automatic UI check, 33 rules, tidiness included), `ui_shots` (real screenshots of every screen through the page scroller, for the critic gate; WebGL captures get `?scene-tier=full` automatically so the critic sees the live scene), `noyzzi_list` / `noyzzi_get` (the noyzzi catalogue and live prompts or code), `docs_verify` (checks every documentation claim against the source and scans for secrets), and `design_history` (what past builds stacked and how it scored). Runs on Bun, no extra dependencies.
 - **designmd**: design references from designmd.ai. Supplementary only, read-only, and every kit is screened by JEV before use.
 - **koboyo-icons**: the icon library. Fallback: https://reicon.dev.
 - **originkit**: OriginKit components on demand (search, list, get, fetch). JEV picks them; they are fetched into client projects only, never into this plugin.

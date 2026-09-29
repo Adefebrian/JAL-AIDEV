@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Section rhythm</title>
+<style>
+  * { box-sizing: border-box; }
+  /* The kit's rhythm tokens (kit.css): one section gap per page, an attached band at the group gap. */
+  :root { --kit-space: 64px; --kit-space-tight: 40px; --kit-space-loose: 80px; --kit-gap-group: 32px; --kit-gap-section: var(--kit-space); }
+  @media (min-width: 1024px) { :root { --kit-space: 96px; --kit-space-tight: 64px; --kit-space-loose: 128px; --kit-gap-group: 48px; } }
+  body { margin: 0; background: #ffffff; color: #1f2933; font: 16px/24px sans-serif; }
+  h1, h2, p { margin: 0; }
+  .kit-grid { max-width: 720px; margin: 0 auto; padding-inline: 16px; }
+  .kit-section > .kit-grid { padding-block: var(--kit-gap-section); }
+  .kit-section[data-attached] > .kit-grid { padding-block: var(--kit-gap-group); }
+  .kit-section[data-tone="layer"] { background: #f4f4f5; }
+  .kit-masthead > .kit-grid { padding-block: 40px 64px; }
+</style>
+</head>
+<body>
+<div class="kit-page" data-rhythm="default">
+<main>
+  <section id="hero" class="kit-masthead kit-section" data-tone="base"><div class="kit-grid"><h1>Masthead keeps its own frame</h1></div></section>
+  <section id="logos" class="kit-section" data-tone="base" data-attached><div class="kit-grid"><p>Attached logo band at the group gap.</p></div></section>
+  <section id="a" class="kit-section" data-tone="base"><div class="kit-grid"><h2>On rhythm</h2><p>One section gap.</p></div></section>
+  <!-- Same ground as #a: the top collapses so one gap separates them. -->
+  <section id="b" class="kit-section" data-tone="base"><div class="kit-grid" style="padding-top: 0"><h2>Collapsed top</h2><p>Still one gap.</p></div></section>
+  <!-- Off rhythm: a hand-set 72px band. -->
+  <section id="off" class="kit-section" data-tone="layer"><div class="kit-grid" style="padding-block: 72px"><h2>Hand-set padding</h2></div></section>
+  <!-- A layer band after a base band with no top padding: its content touches the tone edge. -->
+  <section id="short" class="kit-section" data-tone="base"><div class="kit-grid" style="padding-top: 0"><h2>Short top</h2></div></section>
+  <section id="c" class="kit-section" data-tone="layer"><div class="kit-grid"><h2>On rhythm again</h2></div></section>
+</main>
+<footer><p>Footer keeps its own frame.</p></footer>
+</div>
+</body>
+</html>

@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dark theme</title>
+<script>
+  // ?light drops the explicit theme (an OS-dark page); ?root moves it to the
+  // D13 page root instead of html.
+  if (/[?&](light|root)/.test(location.search)) document.documentElement.removeAttribute("data-theme");
+</script>
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; background: #171412; color: #f5f1ec; font: 16px/24px sans-serif; }
+  main { padding: 24px; background: #171412; }
+  p { margin: 0; }
+</style>
+</head>
+<body>
+<div class="kit-page" data-direction="D13">
+  <main><p>Precision dark, only as an explicit dark theme.</p></main>
+</div>
+<script>
+  if (/[?&]root/.test(location.search)) document.querySelector(".kit-page").setAttribute("data-theme", "dark");
+</script>
+</body>
+</html>

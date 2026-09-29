@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Band padding</title>
+<style>
+  * { box-sizing: border-box; }
+  :root { --kit-space: 64px; --kit-gap-group: 32px; --kit-gap-section: var(--kit-space); }
+  @media (min-width: 1024px) { :root { --kit-space: 96px; --kit-gap-group: 48px; } }
+  body { margin: 0; background: #ffffff; color: #1f2933; font: 16px/24px sans-serif; }
+  h2, p { margin: 0; }
+  section { padding: var(--kit-gap-section) 16px; }
+  .tone { background: #f4f4f5; }
+</style>
+</head>
+<body>
+<main>
+  <section id="ok-base"><h2>Base band</h2><p>No tone of its own.</p></section>
+  <!-- Fail: heading on the top edge, 200px empty below (a tone CTA band). -->
+  <section id="touch" class="tone" style="padding: 0 16px 200px"><h2>Heading on the edge</h2><p>Then a long empty band.</p></section>
+  <section><h2>Base</h2><p>Between tones.</p></section>
+  <!-- Fail: 64px above, 96px below. -->
+  <section id="lopsided" class="tone" style="padding: 64px 16px 96px"><h2>Lopsided</h2><p>More room below than above.</p></section>
+  <section><h2>Base</h2><p>Between tones.</p></section>
+  <!-- Pass: an even tone band on the rhythm. -->
+  <section id="ok-tone" class="tone"><h2>Even band</h2><p>One rhythm above and below.</p></section>
+  <section><h2>Base</h2><p>Between tones.</p></section>
+  <!-- Pass: two bands of one tone merged into one, the follower's top collapsed. -->
+  <section id="ok-merged-a" class="tone"><h2>Merged one</h2><p>Same tone as the next.</p></section>
+  <section id="ok-merged-b" class="tone" style="padding-top: 0"><h2>Merged two</h2><p>One gap between them.</p></section>
+  <section style="padding: 16px 16px 80px"><h2>Base, uneven, no tone</h2><p>Not a tone band.</p></section>
+</main>
+</body>
+</html>

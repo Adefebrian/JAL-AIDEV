@@ -148,9 +148,9 @@ describe("docs site content", () => {
     expect(SECTION_MARKERS.uiCheck as string).toBe(`The ${UI_RULES.length}-rule UI check`);
   });
 
-  test("the UI check lists exactly 22 rules", () => {
-    expect(UI_RULES).toHaveLength(22);
-    expect(new Set(UI_RULES.map((r) => r.rule)).size).toBe(22);
+  test("the UI check lists exactly 33 rules", () => {
+    expect(UI_RULES).toHaveLength(33);
+    expect(new Set(UI_RULES.map((r) => r.rule)).size).toBe(33);
     for (const rule of UI_RULES) expect(html).toContain(rule.rule);
   });
 

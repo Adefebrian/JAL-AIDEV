@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Spacing scale</title>
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; background: #ffffff; color: #1f2933; font: 16px/24px sans-serif; }
+  main { padding: 16px; }
+  p { margin: 0 0 16px; }
+  .card { border: 1px solid #e5e7eb; background: #ffffff; }
+  .row > div { min-width: 0; }
+</style>
+</head>
+<body>
+<main>
+  <!-- Off the scale: section padding 18px, a 13px flex gap, a 22px card padding. -->
+  <section id="bad-section" style="padding: 18px 16px"><p>A section padded 18px, between two tokens.</p></section>
+  <div id="bad-gap" class="row" style="display: flex; gap: 13px"><div>One</div><div>Two</div></div>
+  <div id="bad-card" class="card" style="padding: 22px"><p>A card padded 22px.</p></div>
+
+  <!-- Lawful: tokens, a 1px hairline grid, auto centring, an aspect box, a
+       push-right auto margin, inline text, a control, decorative and canvas
+       layers, a noyzzi section. -->
+  <section id="ok-section" style="padding: 24px 16px"><p>Padded on the scale.</p></section>
+  <div id="ok-hairline" style="display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 1px; background: #e5e7eb">
+    <div style="background: #ffffff; padding: 16px">Cell one</div>
+    <div style="background: #ffffff; padding: 16px">Cell two</div>
+  </div>
+  <div id="ok-center" style="max-width: 240px; margin: 16px auto; padding: 24px"><p>Centred with auto margins.</p></div>
+  <div id="ok-aspect" style="position: relative; padding-top: 56.25%"><div style="position: absolute; inset: 0; border: 1px solid #e5e7eb"></div></div>
+  <div id="ok-push" style="display: flex; gap: 8px"><div>Left</div><div style="margin-left: auto">Right</div></div>
+  <p id="ok-text">Inline <span style="padding: 3px 5px; border: 1px solid #e5e7eb">chip</span> text.</p>
+  <button type="button" style="height: 44px; padding: 0 14px">Go</button>
+  <div id="ok-deco" aria-hidden="true" style="padding: 7px"><div style="height: 8px"></div></div>
+  <div id="ok-canvas"><canvas width="100" height="40" style="margin: 5px"></canvas></div>
+  <section id="ok-noyzzi" data-jal-exempt="noyzzi" style="display: flex; gap: 10px; padding: 14px"><div>Noyzzi one</div><div>Noyzzi two</div></section>
+</main>
+</body>
+</html>

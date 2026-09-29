@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Composition structure</title>
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; background: #ffffff; color: #1f2933; font: 16px/24px sans-serif; }
+  h2, p { margin: 0; }
+  section { padding: 32px 16px; }
+  .two { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; }
+  .three { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px; }
+</style>
+</head>
+<body>
+<main>
+  <section id="s1"><div class="two"><h2 class="t">Two up</h2><p class="b">Heading beside its text.</p></div></section>
+  <section id="s2"><div class="two"><h2 class="t">Two up again</h2><p class="b">The same structure, adjacent.</p></div></section>
+  <section id="s3"><div class="three"><div class="c">One</div><div class="c">Two</div><div class="c">Three</div></div></section>
+  <section id="s4"><h2>Prose</h2><p>A plain text section.</p></section>
+  <section id="s5"><h2>More prose</h2><p>Prose is not a composition.</p></section>
+</main>
+</body>
+</html>

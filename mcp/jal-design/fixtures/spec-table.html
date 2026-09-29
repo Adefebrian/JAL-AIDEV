@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Spec table</title>
+<style>
+  /* The kit SpecTable at 1280: title on columns 1 to 4, rows on 5 to 12, 48px rows of small text. */
+  * { box-sizing: border-box; }
+  body { margin: 0; background: #ffffff; color: #1f2933; font: 16px/24px sans-serif; }
+  h2, h3, p { margin: 0; }
+  .kit-grid { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); column-gap: 24px; row-gap: 48px; inline-size: min(calc(100% - 96px), 1280px); margin-inline: auto; padding-block: 96px; }
+  .kit-head { grid-column: 1 / -1; }
+  .kit-spec-table, .kit-spec-group { grid-column: 1 / -1; display: grid; grid-template-columns: subgrid; column-gap: 24px; row-gap: 48px; }
+  .kit-spec-group { row-gap: 16px; }
+  .kit-spec-group > * { grid-column: 1 / -1; min-width: 0; }
+  .kit-title { font-size: 19px; line-height: 28px; }
+  .kit-spec-grid { inline-size: 100%; border-collapse: separate; border-spacing: 0; table-layout: fixed; }
+  .kit-spec-grid tr > * { border-top: 1px solid #e5e7eb; padding-block: 12px; text-align: start; vertical-align: baseline; }
+  .kit-spec-grid th { inline-size: 40%; padding-inline-end: 16px; font-size: 14px; line-height: 20px; font-weight: 400; color: #52525b; }
+  .kit-spec-grid td { font-size: 16px; line-height: 24px; }
+  @media (min-width: 1024px) {
+    .kit-spec-group > .kit-title { grid-column: 1 / span 4; }
+    .kit-spec-group > .kit-spec-grid { grid-column: 5 / -1; }
+    .kit-spec-grid tr { block-size: 48px; }
+  }
+</style>
+</head>
+<body>
+<main>
+  <section class="kit-section" data-kit-composition="spec-table">
+    <div class="kit-grid">
+      <div class="kit-head"><h2>Specifications</h2></div>
+      <div class="kit-spec-table">
+      <div class="kit-spec-group">
+        <h3 class="kit-title">Body</h3>
+        <table class="kit-spec-grid"><tbody>
+          <tr><th scope="row">Weight</th><td>1.2 kg</td></tr>
+          <tr><th scope="row">Height</th><td>42 cm</td></tr>
+          <tr><th scope="row">Width</th><td>18 cm</td></tr>
+          <tr><th scope="row">Depth</th><td>18 cm</td></tr>
+          <tr><th scope="row">Battery</th><td>12 h</td></tr>
+          <tr><th scope="row">Charge time</th><td>2 h</td></tr>
+          <tr><th scope="row">Light output</th><td>800 lm</td></tr>
+          <tr><th scope="row">Colour range</th><td>2700 to 6500 K</td></tr>
+          <tr><th scope="row">Dimming</th><td>1 to 100%</td></tr>
+          <tr><th scope="row">Materials</th><td>Aluminium</td></tr>
+          <tr><th scope="row">Finish</th><td>Anodised</td></tr>
+          <tr><th scope="row">Warranty</th><td>2 years</td></tr>
+          <tr><th scope="row">Connectivity</th><td>Bluetooth</td></tr>
+          <tr><th scope="row">Sensors</th><td>Ambient light</td></tr>
+          <tr><th scope="row">Mount</th><td>Desk</td></tr>
+          <tr><th scope="row">Cable</th><td>USB-C</td></tr>
+        </tbody></table>
+      </div>
+      <div class="kit-spec-group">
+        <h3 class="kit-title">Light</h3>
+        <table class="kit-spec-grid"><tbody>
+          <tr><th scope="row">Weight</th><td>1.2 kg</td></tr>
+          <tr><th scope="row">Height</th><td>42 cm</td></tr>
+          <tr><th scope="row">Width</th><td>18 cm</td></tr>
+          <tr><th scope="row">Depth</th><td>18 cm</td></tr>
+          <tr><th scope="row">Battery</th><td>12 h</td></tr>
+          <tr><th scope="row">Charge time</th><td>2 h</td></tr>
+          <tr><th scope="row">Light output</th><td>800 lm</td></tr>
+          <tr><th scope="row">Colour range</th><td>2700 to 6500 K</td></tr>
+          <tr><th scope="row">Dimming</th><td>1 to 100%</td></tr>
+          <tr><th scope="row">Materials</th><td>Aluminium</td></tr>
+          <tr><th scope="row">Finish</th><td>Anodised</td></tr>
+          <tr><th scope="row">Warranty</th><td>2 years</td></tr>
+          <tr><th scope="row">Connectivity</th><td>Bluetooth</td></tr>
+          <tr><th scope="row">Sensors</th><td>Ambient light</td></tr>
+          <tr><th scope="row">Mount</th><td>Desk</td></tr>
+          <tr><th scope="row">Cable</th><td>USB-C</td></tr>
+        </tbody></table>
+      </div>
+      <div class="kit-spec-group">
+        <h3 class="kit-title">Power</h3>
+        <table class="kit-spec-grid"><tbody>
+          <tr><th scope="row">Weight</th><td>1.2 kg</td></tr>
+          <tr><th scope="row">Height</th><td>42 cm</td></tr>
+          <tr><th scope="row">Width</th><td>18 cm</td></tr>
+          <tr><th scope="row">Depth</th><td>18 cm</td></tr>
+          <tr><th scope="row">Battery</th><td>12 h</td></tr>
+          <tr><th scope="row">Charge time</th><td>2 h</td></tr>
+          <tr><th scope="row">Light output</th><td>800 lm</td></tr>
+          <tr><th scope="row">Colour range</th><td>2700 to 6500 K</td></tr>
+          <tr><th scope="row">Dimming</th><td>1 to 100%</td></tr>
+          <tr><th scope="row">Materials</th><td>Aluminium</td></tr>
+          <tr><th scope="row">Finish</th><td>Anodised</td></tr>
+          <tr><th scope="row">Warranty</th><td>2 years</td></tr>
+          <tr><th scope="row">Connectivity</th><td>Bluetooth</td></tr>
+          <tr><th scope="row">Sensors</th><td>Ambient light</td></tr>
+          <tr><th scope="row">Mount</th><td>Desk</td></tr>
+          <tr><th scope="row">Cable</th><td>USB-C</td></tr>
+        </tbody></table>
+      </div>
+      </div>
+    </div>
+  </section>
+</main>
+</body>
+</html>

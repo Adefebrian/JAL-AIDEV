@@ -132,6 +132,10 @@ describe("jal-design MCP server (stdio)", () => {
     expect(auditTool.inputSchema.required).toEqual(["url"]);
     expect(auditTool.description).toContain("stuck-reveal");
     expect(auditTool.description).toContain("blank-viewport");
+    expect(auditTool.description).toContain("33 rules");
+    for (const rule of ["spacing-scale", "gap-consistency", "proximity", "radius-scale", "section-rhythm", "band-padding", "gap-seam", "composition-repeat", "display-measure", "hero-card", "dead-space"]) {
+      expect(auditTool.description).toContain(rule);
+    }
     expect(auditTool.inputSchema.properties.webgl.type).toBe("boolean");
     const shotsTool = res.result.tools.find((t: any) => t.name === "ui_shots");
     expect(shotsTool.inputSchema.required).toEqual(["url"]);

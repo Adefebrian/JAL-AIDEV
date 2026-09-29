@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tidy good</title>
+<style>
+  /* A kit-shaped page that keeps every tidiness rule: scale spacing, even
+     gaps, one section rhythm, no repeated composition, no dead space. */
+  * { box-sizing: border-box; }
+  :root { --kit-margin: 16px; --kit-gutter: 16px; --kit-cols: 4; --kit-gap-group: 32px; --kit-space: 64px; --kit-gap-section: var(--kit-space); }
+  @media (min-width: 640px) { :root { --kit-margin: 32px; --kit-gutter: 24px; --kit-cols: 8; --kit-gap-group: 40px; --kit-space: 80px; } }
+  @media (min-width: 1024px) { :root { --kit-margin: 48px; --kit-cols: 12; --kit-gap-group: 48px; --kit-space: 96px; } }
+  body { margin: 0; background: #ffffff; color: #1f2933; font: 16px/24px sans-serif; }
+  h1, h2, h3, p, ul, dl, dd { margin: 0; }
+  ul { list-style: none; padding: 0; }
+  h1 { font-size: 40px; line-height: 48px; }
+  h2 { font-size: 28px; line-height: 36px; }
+  h3 { font-size: 19px; line-height: 28px; }
+  .kit-grid { display: grid; grid-template-columns: repeat(var(--kit-cols), minmax(0, 1fr)); column-gap: var(--kit-gutter); row-gap: var(--kit-gap-group); inline-size: min(calc(100% - 2 * var(--kit-margin)), 1280px); margin-inline: auto; }
+  .kit-grid > * { grid-column: 1 / -1; min-width: 0; }
+  .kit-section > .kit-grid { padding-block: var(--kit-gap-section); }
+  .kit-section[data-attached] > .kit-grid { padding-block: var(--kit-gap-group); }
+  .kit-section[data-tone="layer"] { background: #f4f4f5; }
+  .kit-section[data-tone="base"] + .kit-section[data-tone="base"] > .kit-grid { padding-block-start: 0; }
+  .kit-masthead > .kit-grid { padding-block: 40px 64px; }
+  .logos { display: flex; flex-wrap: wrap; gap: 16px 32px; }
+  .media { aspect-ratio: 4 / 3; background: #e4e4e7; }
+  .cells { display: grid; grid-template-columns: minmax(0, 1fr); gap: 1px; background: #e4e4e7; }
+  .cell { background: #ffffff; padding: 24px; display: grid; gap: 8px; }
+  .rows > div { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 3fr); column-gap: 16px; padding-block: 12px; border-top: 1px solid #e4e4e7; }
+  .faq { display: grid; gap: 16px; }
+  .faq li { display: grid; gap: 8px; }
+  .actions { display: flex; gap: 12px; }
+  .actions a { display: inline-flex; align-items: center; min-height: 44px; padding-inline: 20px; border: 1px solid #1f2933; color: #1f2933; text-decoration: none; }
+  footer .kit-grid { padding-block: 48px; }
+  @media (min-width: 640px) {
+    .cells { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  }
+  @media (min-width: 1024px) {
+    .split-text { grid-column: 1 / span 5; }
+    .split-media { grid-column: 7 / -1; }
+    .rows-title { grid-column: 1 / span 4; }
+    .rows { grid-column: 5 / -1; }
+  }
+</style>
+</head>
+<body>
+<div class="kit-page" data-rhythm="default">
+<main>
+  <section class="kit-masthead kit-section" data-kit-composition="masthead" data-variant="left" data-tone="base">
+    <div class="kit-grid"><h1>A lamp that reads the room</h1><p>Warmth and brightness follow the hour.</p>
+      <div class="actions"><a href="#buy">Buy</a><a href="#specs">Specs</a></div></div>
+  </section>
+  <section class="kit-section" data-kit-composition="logo-row" data-tone="base" data-attached>
+    <div class="kit-grid"><ul class="logos"><li class="logo">Northwind</li><li class="logo">Contoso</li><li class="logo">Fabrikam</li><li class="logo">Litware</li></ul></div>
+  </section>
+  <section class="kit-section" data-kit-composition="split" data-variant="media-end" data-tone="layer">
+    <div class="kit-grid"><div class="split-text"><h2>Light that follows the day</h2><p>Morning light is cool and bright; evening light is warm and low, so long work stays calm on the eyes.</p></div>
+      <div class="split-media media" role="img" aria-label="The lamp on a desk"></div></div>
+  </section>
+  <section class="kit-section" data-kit-composition="feature-grid" data-tone="base">
+    <div class="kit-grid"><h2>What it does</h2>
+      <ul class="cells"><li class="cell"><h3>Reads the room</h3><p>An ambient sensor sets the level.</p></li><li class="cell"><h3>Follows the hour</h3><p>Colour shifts from 6500 K to 2700 K.</p></li><li class="cell"><h3>Stays quiet</h3><p>No fan, no hum, no flicker.</p></li></ul></div>
+  </section>
+  <section id="specs" class="kit-section" data-kit-composition="spec-table" data-tone="layer">
+    <div class="kit-grid"><h2 class="rows-title">Specifications</h2>
+      <dl class="rows"><div><dt>Weight</dt><dd>1.2 kg</dd></div><div><dt>Light output</dt><dd>800 lm</dd></div><div><dt>Colour range</dt><dd>2700 to 6500 K</dd></div><div><dt>Battery</dt><dd>12 h</dd></div></dl></div>
+  </section>
+  <section class="kit-section" data-kit-composition="faq" data-tone="base">
+    <div class="kit-grid"><h2>Questions</h2>
+      <ul class="faq"><li><h3>Does it need an app?</h3><p>No. It works on its own.</p></li><li><h3>Can I set it by hand?</h3><p>Yes, with the dial.</p></li><li><h3>How long is the warranty?</h3><p>Two years.</p></li></ul></div>
+  </section>
+  <section id="buy" class="kit-section" data-kit-composition="cta-band" data-tone="layer">
+    <div class="kit-grid"><h2>Bring it home</h2><div class="actions"><a href="#buy">Buy now</a></div></div>
+  </section>
+</main>
+<footer data-kit-composition="footer"><div class="kit-grid"><p>Halo, a JAL fixture.</p></div></footer>
+</div>
+</body>
+</html>

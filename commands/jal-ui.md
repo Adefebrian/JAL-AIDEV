@@ -27,7 +27,7 @@ Then it:
    - Material components and hallmark craft
    - live product demos
 5. It builds phone first with a real app-shell, then tablet, then desktop, on the one JAL design system: white background, nothing overlapping, and 44px controls. Outside noyzzi sections there are no shadows, gradients, or side lines. 3D objects are properly modeled and lit, never plain primitive shapes. For 3D, a still poster shows first, motion calms down for people who ask for reduced motion, and heavy effects scale down on slower phones. Independent sections are built at the same time.
-6. It proves the result with the automatic UI check at phone, tablet, and desktop widths (22 rules, including blank screens and stuck reveals) and real per-screen screenshots. For 3D it also runs a frame-speed check.
+6. It proves the result with the automatic UI check at phone, tablet, and desktop widths (33 rules, including blank screens, stuck reveals, and tidiness: spacing scale, even gaps, card proximity, radius scale, section rhythm, even tone bands, no stray seams, no repeated composition, headline measure, no boxed hero, no dead space) and real per-screen screenshots. For 3D it also runs a frame-speed check.
 7. A fresh critic that did not build the page looks at every screenshot and scores it on seven points: first-screen impact, signature moment, hierarchy and type, composition and rhythm, craft and detail, how well the mix holds together, and whether it smells like a template. A low score sends back concrete fixes per screen, up to three rounds. The builder never approves its own work.
 8. It reports what it built, each decision with its confidence, where each effect came from, the check results, and the critic's scores.
 
