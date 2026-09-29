@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Render fixture without defects for Rally Padel Depok</title>
+<style>
+  .w { display: inline-block; margin-right: 0.3em; }
+  .marquee { white-space: nowrap; overflow: hidden; }
+  .track::before { content: attr(data-text); }
+  nav { display: flex; gap: 16px; }
+</style>
+</head>
+<body>
+<nav><a href="/">Home</a> <a href="/rates">Rates</a></nav>
+<main>
+  <h1>Play <span class="w">padel</span> today</h1>
+  <h2><span class="w">Book</span> <span class="w">courts</span></h2>
+  <div class="marquee" aria-hidden="true"><span class="track" data-text="Open daily from 06:00"></span></div>
+  <p>Players this month: <span id="players" class="count" data-target="1200">1200</span></p>
+  <p>Rally Padel has 4 courts in Depok.</p>
+</main>
+<script>
+  // Count-ups skip the animation for bots and reduced motion (section 8.2).
+  var el = document.getElementById("players");
+  var skip = navigator.webdriver || matchMedia("(prefers-reduced-motion: reduce)").matches || /bot|crawler|spider/i.test(navigator.userAgent);
+  if (!skip) {
+    var n = 0;
+    el.textContent = "0";
+    var t = setInterval(function () { n = Math.min(1200, n + 7); el.textContent = String(n); if (n === 1200) clearInterval(t); }, 50);
+  }
+</script>
+</body>
+</html>

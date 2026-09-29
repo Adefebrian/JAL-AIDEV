@@ -239,3 +239,23 @@ Tracks what the engines actually did: crawler-log summary, index coverage, searc
 - Rolling deploys serve two builds for about a minute. Probe several times.
 - The PageSpeed API anonymous quota runs out. Use local Lighthouse.
 - A merged PR from another developer can reach production silently, or fail to. After any merge, check the public bundle hash and rerun `audit`.
+
+## Optional config fields read by the scripts (JAL additions)
+
+`.jal/seo-geo-aeo.json` may also carry:
+- `allowHosts`: extra hosts the scripts may fetch, such as press outlets for GEO-12. Every other host is refused.
+- `place`: the city or area name that titles must mention.
+- `adminPaths` and `adminMarkers`: routes and markers that must carry noindex and stay out of the public bundle.
+- `forbiddenPhrases`, `forbiddenClaimsFile`: the rejected claims. The default file is `.jal/forbidden-claims.json` or `.txt`.
+- `pageKinds`, `requiredIntents`, `editorialPaths`: which pages are money, about, programme, guide, or editorial pages, and which intents must have a URL.
+- `retiredPaths`: old URLs that must return 301 to a live page.
+- `separateApp`: true when an installable app exists, so the site manifest uses `display: "browser"`.
+
+In a dry run the scripts make no network call at all. Read commands (`quota`, `inspect`, `performance`, `sitemap list`) run without `--send`.
+
+Exit codes:
+- 0: done
+- 1: error
+- 2: partly done because of quota, or `render.ts` found a FAIL
+
+Items the audit cannot see over HTTP are reported as "not measured" and left out of the score. Those items are F-01, AEO-01, AEO-02, AEO-10, AEO-12, GEO-10, GEO-11, GEO-14, and SEO-10 unless the audit runs with `--lighthouse`.

@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Render fixture with defects for Rally Padel Depok</title>
+<style>
+  .w { display: inline-block; margin-right: 0.3em; }
+  .marquee { white-space: nowrap; overflow: hidden; }
+  .track { display: inline-block; animation: scroll 10s linear infinite; }
+  @keyframes scroll { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+  nav { display: flex; gap: 16px; }
+</style>
+</head>
+<body>
+<nav><a href="/">Home</a><a href="/rates">Rates</a></nav>
+<main>
+  <h1><span class="w">Play</span><span class="w">Padel</span><span class="w">Today</span></h1>
+  <h2><span class="w">Book</span><span class="w">Courts</span></h2>
+  <div class="marquee"><div class="track"><span>Open daily</span> <span>Open daily</span> <span>Open daily</span></div></div>
+  <p>Players this month: <span id="players" class="count" data-target="1200">0</span></p>
+  <p>Rally Padel is the cheapest in Indonesia.</p>
+</main>
+<script>
+  // A count-up that ignores reduced motion and bots: caught mid-animation.
+  var el = document.getElementById("players");
+  var n = 0;
+  setInterval(function () { n = Math.min(1200, n + 7); el.textContent = String(n); }, 50);
+</script>
+</body>
+</html>
