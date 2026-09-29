@@ -743,6 +743,1229 @@ button[data-state="success"],
   }
 }
 
+/* =====================================================================
+ * Material Web port (JAL Core specs "From: Material Web" in
+ * jal-design-system references/components.md): checkbox, radio, switch,
+ * slider, progress, icon button, segmented button, menu.
+ *
+ * Built on native elements (input checkbox, radio, range, progress,
+ * button, a role=menu list) so every control works without JS. JAL tokens
+ * only. Each component resolves its component tokens
+ * (--jal-<component>-<part>-<property>) once at its root, with a system
+ * token fallback, into private --_* properties, so a scoped override
+ * reskins a subtree without JS (foundations.md section 11.1).
+ *
+ * State layers are color-mix tints bounded by the control's own shape: no
+ * ripple, no circle around small controls, no shadow, no gradient, full
+ * four-side borders only, 44px targets (the whole row or box is the
+ * target even where the visual is smaller).
+ * ===================================================================== */
+
+/* Shared row pattern for checkbox, radio, and switch: a 44px label row,
+   control top-aligned to the first text line, optional description. */
+.jal-checkbox,
+.jal-radio,
+.jal-switch {
+  position: relative;
+  display: inline-flex;
+  align-items: flex-start;
+  gap: var(--space-12px);
+  min-height: var(--control-h);
+  min-width: 0;
+  padding-block: calc((var(--control-h) - var(--line-0)) / 2);
+  font-size: var(--text-0);
+  line-height: var(--line-0);
+  color: var(--color-ink);
+  cursor: pointer;
+}
+
+:is(.jal-checkbox, .jal-radio, .jal-switch) [data-slot="description"] {
+  display: block;
+  font-size: var(--text-n1);
+  line-height: var(--line-n1);
+  color: var(--color-ink-muted);
+}
+
+:is(.jal-checkbox, .jal-radio, .jal-switch):has(> input:disabled) {
+  color: var(--state-disabled-content);
+  cursor: default;
+}
+
+:is(.jal-checkbox, .jal-radio, .jal-switch)[aria-busy="true"] {
+  pointer-events: none;
+}
+
+/* Checkbox (base chrome lives in the checkbox and radio section above). */
+.jal-checkbox {
+  --_selected: var(--jal-checkbox-selected-container-color, var(--color-ink));
+  --_outline: var(--jal-checkbox-outline-color, var(--color-border-control));
+}
+
+.jal-radio {
+  --_selected: var(--jal-radio-selected-color, var(--color-ink));
+  --_outline: var(--jal-radio-outline-color, var(--color-border-control));
+}
+
+.jal-checkbox > input[type="checkbox"],
+.jal-radio > input[type="radio"] {
+  margin-block-start: calc((var(--line-0) - var(--space-20px)) / 2);
+}
+
+/* The outline token applies only at rest, so focus (ink), invalid
+   (danger), and disabled (hairline) keep their base boundaries. */
+.jal-checkbox > input[type="checkbox"]:enabled:not(:checked):not(:indeterminate):not(:focus-visible):not([aria-invalid="true"]),
+.jal-radio > input[type="radio"]:enabled:not(:checked):not(:focus-visible):not([aria-invalid="true"]) {
+  border-color: var(--_outline);
+}
+
+.jal-checkbox > input[type="checkbox"]:enabled:is(:checked, :indeterminate),
+.jal-radio > input[type="radio"]:enabled:checked {
+  background-color: var(--_selected);
+  border-color: var(--_selected);
+}
+
+@media (hover: hover) {
+  .jal-checkbox:hover > input[type="checkbox"]:enabled:not(:checked):not(:indeterminate),
+  .jal-radio:hover > input[type="radio"]:enabled:not(:checked) {
+    background-color: color-mix(in oklab, var(--color-ink) 8%, var(--color-surface));
+  }
+
+  .jal-checkbox:hover > input[type="checkbox"]:enabled:is(:checked, :indeterminate),
+  .jal-radio:hover > input[type="radio"]:enabled:checked {
+    background-color: color-mix(in oklab, var(--color-surface) 8%, var(--_selected));
+  }
+}
+
+.jal-checkbox:active > input[type="checkbox"]:enabled:not(:checked):not(:indeterminate),
+.jal-radio:active > input[type="radio"]:enabled:not(:checked) {
+  background-color: color-mix(in oklab, var(--color-ink) 12%, var(--color-surface));
+}
+
+.jal-checkbox:active > input[type="checkbox"]:enabled:is(:checked, :indeterminate),
+.jal-radio:active > input[type="radio"]:enabled:checked {
+  background-color: color-mix(in oklab, var(--color-surface) 12%, var(--_selected));
+}
+
+.jal-checkbox > input[type="checkbox"][aria-invalid="true"],
+.jal-radio > input[type="radio"][aria-invalid="true"] {
+  border-color: var(--color-danger);
+}
+
+.jal-checkbox > input[type="checkbox"][aria-invalid="true"]:enabled:is(:checked, :indeterminate),
+.jal-radio > input[type="radio"][aria-invalid="true"]:enabled:checked {
+  background-color: var(--color-danger);
+  border-color: var(--color-danger);
+}
+
+/* Radio group: a fieldset reset, the legend is the group label. */
+.jal-radio-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4px);
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.jal-radio-group > legend {
+  margin-block-end: var(--space-4px);
+  padding: 0;
+  font-size: var(--text-0);
+  line-height: var(--line-0);
+  font-weight: var(--weight-medium);
+  color: var(--color-ink);
+}
+
+/* Switch: the native checkbox (role="switch") is transparent and covers
+   the whole row, so the row is the target; .jal-switch-track draws the
+   track and its ::after the handle. The handle is one 24px circle scaled
+   (0.667 off = 16px, 1 on = 24px, 1.167 pressed = 28px) and moved by
+   transform only. Track 52 x 32. */
+.jal-switch {
+  --_track: var(--jal-switch-track-color, var(--color-layer-2));
+  --_track-on: var(--jal-switch-selected-track-color, var(--color-ink));
+  --_handle: var(--jal-switch-handle-color, var(--color-ink-muted));
+  --_handle-on: var(--jal-switch-selected-handle-color, var(--color-surface));
+  align-items: center;
+  padding-block: 0;
+}
+
+.jal-switch > input[type="checkbox"] {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  opacity: 0;
+  cursor: inherit;
+}
+
+.jal-switch-track {
+  position: relative;
+  flex: 0 0 auto;
+  inline-size: calc(var(--space-32px) + var(--space-20px));
+  block-size: var(--space-32px);
+  background-color: var(--_track);
+  border: var(--border-weight) solid var(--color-border-control);
+  border-radius: var(--radius-pill);
+  transition:
+    background-color var(--dur-150) var(--ease-standard),
+    border-color var(--dur-150) var(--ease-standard);
+}
+
+.jal-switch-track::after {
+  content: "";
+  position: absolute;
+  inset-block: 0;
+  inset-inline-start: calc(var(--space-4px) - var(--border-weight));
+  margin-block: auto;
+  inline-size: var(--space-24px);
+  block-size: var(--space-24px);
+  background-color: var(--_handle);
+  border-radius: var(--radius-pill);
+  transform: translateX(0) scale(0.667);
+  transition:
+    transform var(--dur-150) var(--ease-standard),
+    background-color var(--dur-150) var(--ease-standard);
+}
+
+.jal-switch > input:checked ~ .jal-switch-track {
+  background-color: var(--_track-on);
+  border-color: var(--_track-on);
+}
+
+.jal-switch > input:checked ~ .jal-switch-track::after {
+  background-color: var(--_handle-on);
+  transform: translateX(var(--space-20px)) scale(1);
+}
+
+[dir="rtl"] .jal-switch > input:checked ~ .jal-switch-track::after {
+  transform: translateX(calc(var(--space-20px) * -1)) scale(1);
+}
+
+.jal-switch:active > input:enabled:not(:checked) ~ .jal-switch-track::after {
+  transform: translateX(0) scale(1.167);
+  transition-duration: var(--dur-100);
+}
+
+.jal-switch:active > input:enabled:checked ~ .jal-switch-track::after {
+  transform: translateX(var(--space-20px)) scale(1.167);
+  transition-duration: var(--dur-100);
+}
+
+[dir="rtl"] .jal-switch:active > input:enabled:checked ~ .jal-switch-track::after {
+  transform: translateX(calc(var(--space-20px) * -1)) scale(1.167);
+}
+
+.jal-switch > input:focus-visible ~ .jal-switch-track {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+@media (hover: hover) {
+  .jal-switch:hover > input:enabled:not(:checked) ~ .jal-switch-track {
+    background-color: color-mix(in oklab, var(--color-ink) 8%, var(--_track));
+  }
+
+  .jal-switch:hover > input:enabled:not(:checked) ~ .jal-switch-track::after {
+    background-color: var(--color-ink);
+  }
+
+  .jal-switch:hover > input:enabled:checked ~ .jal-switch-track {
+    background-color: color-mix(in oklab, var(--color-surface) 8%, var(--_track-on));
+  }
+}
+
+.jal-switch:active > input:enabled:not(:checked) ~ .jal-switch-track {
+  background-color: color-mix(in oklab, var(--color-ink) 12%, var(--_track));
+}
+
+.jal-switch:active > input:enabled:checked ~ .jal-switch-track {
+  background-color: color-mix(in oklab, var(--color-surface) 12%, var(--_track-on));
+}
+
+.jal-switch > input:disabled ~ .jal-switch-track {
+  background-color: var(--state-disabled-container);
+  border-color: var(--color-border);
+}
+
+.jal-switch > input:disabled ~ .jal-switch-track::after {
+  background-color: var(--state-disabled-content);
+}
+
+.jal-switch > input:disabled:checked ~ .jal-switch-track {
+  background-color: var(--state-disabled-content);
+  border-color: var(--state-disabled-content);
+}
+
+.jal-switch > input:disabled:checked ~ .jal-switch-track::after {
+  background-color: var(--color-surface);
+}
+
+.jal-switch > input[aria-invalid="true"] ~ .jal-switch-track {
+  border-color: var(--color-danger);
+}
+
+/* Loading: a pending write. Input is blocked by the shared rule above;
+   the handle reads as pending, the hint row carries the words. */
+.jal-switch[aria-busy="true"] > input ~ .jal-switch-track::after {
+  background-color: var(--state-disabled-content);
+}
+
+/* Slider: label and <output> readout on row one, the control on row two.
+   .jal-slider-track draws the track (::before) and the active fill
+   (::after, from --jal-slider-start to --jal-slider-end, fractions 0 to 1
+   the app sets on input; unset = no fill, the thumb alone carries the
+   value). The native range input is 44px tall and transparent; only its
+   20px thumb paints. data-range holds two inputs, thumbs are the only
+   hit areas. */
+.jal-slider {
+  --_active: var(--jal-slider-active-track-color, var(--color-ink));
+  --_inactive: var(--jal-slider-inactive-track-color, var(--color-layer-2));
+  --_handle: var(--jal-slider-handle-color, var(--color-ink));
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  column-gap: var(--space-12px);
+  min-width: 0;
+  min-inline-size: calc(var(--space-96px) * 2);
+}
+
+.jal-slider > :is(label, [data-slot="label"]) {
+  min-width: 0;
+  font-weight: var(--weight-medium);
+}
+
+.jal-slider > output {
+  font-weight: var(--weight-medium);
+  font-variant-numeric: tabular-nums;
+  text-align: end;
+  white-space: nowrap;
+}
+
+.jal-slider[aria-busy="true"] > output {
+  color: var(--color-ink-muted);
+}
+
+.jal-slider-track {
+  position: relative;
+  grid-column: 1 / -1;
+  block-size: var(--control-h);
+  min-width: 0;
+}
+
+.jal-slider-track::before,
+.jal-slider-track::after {
+  content: "";
+  position: absolute;
+  inset-block: 0;
+  margin-block: auto;
+  block-size: var(--space-6px);
+  border-radius: var(--radius-pill);
+  pointer-events: none;
+}
+
+.jal-slider-track::before {
+  inset-inline: 0;
+  background-color: var(--_inactive);
+  border: var(--border-weight) solid var(--color-border-control);
+}
+
+.jal-slider-track::after {
+  inset-inline-start: 0;
+  inline-size: max(0px, calc(var(--space-20px) / 2 + (100% - var(--space-20px)) * var(--jal-slider-end, -1)));
+  background-color: var(--_active);
+}
+
+.jal-slider-track[data-range]::after {
+  inset-inline-start: calc(var(--space-20px) / 2 + (100% - var(--space-20px)) * var(--jal-slider-start, 0));
+  inline-size: max(0px, calc((100% - var(--space-20px)) * (var(--jal-slider-end, 0) - var(--jal-slider-start, 0))));
+}
+
+.jal-slider-track > input[type="range"] {
+  position: relative;
+  z-index: 1;
+  display: block;
+  width: 100%;
+  height: var(--control-h);
+  margin: 0;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  border-radius: var(--radius-8);
+  -webkit-appearance: none;
+  appearance: none;
+  cursor: pointer;
+}
+
+.jal-slider-track[data-range] > input[type="range"] {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.jal-slider-track[data-range] > input[type="range"] + input[type="range"] {
+  z-index: 2;
+}
+
+.jal-slider-track > input[type="range"]:disabled {
+  background: transparent;
+  cursor: default;
+}
+
+@media (hover: hover) {
+  .jal-slider-track > input[type="range"]:enabled:hover {
+    background-color: transparent;
+  }
+
+  .jal-slider-track > input[type="range"]:enabled:hover::-webkit-slider-thumb {
+    background-color: color-mix(in oklab, var(--color-surface) 8%, var(--_handle));
+  }
+
+  .jal-slider-track > input[type="range"]:enabled:hover::-moz-range-thumb {
+    background-color: color-mix(in oklab, var(--color-surface) 8%, var(--_handle));
+  }
+}
+
+.jal-slider-track > input[type="range"]::-webkit-slider-runnable-track {
+  height: 100%;
+  background: transparent;
+  border: 0;
+}
+
+.jal-slider-track > input[type="range"]::-moz-range-track {
+  height: 100%;
+  background: transparent;
+  border: 0;
+}
+
+.jal-slider-track > input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: var(--space-20px);
+  height: var(--space-20px);
+  margin-top: calc((var(--control-h) - var(--space-20px)) / 2);
+  background-color: var(--_handle);
+  border: 0;
+  border-radius: var(--radius-pill);
+  pointer-events: auto;
+  transition: background-color var(--dur-100) var(--ease-standard);
+}
+
+.jal-slider-track > input[type="range"]::-moz-range-thumb {
+  width: var(--space-20px);
+  height: var(--space-20px);
+  background-color: var(--_handle);
+  border: 0;
+  border-radius: var(--radius-pill);
+  pointer-events: auto;
+  transition: background-color var(--dur-100) var(--ease-standard);
+}
+
+.jal-slider-track > input[type="range"]:enabled:active::-webkit-slider-thumb {
+  background-color: color-mix(in oklab, var(--color-surface) 12%, var(--_handle));
+}
+
+.jal-slider-track > input[type="range"]:enabled:active::-moz-range-thumb {
+  background-color: color-mix(in oklab, var(--color-surface) 12%, var(--_handle));
+}
+
+.jal-slider-track > input[type="range"]:disabled::-webkit-slider-thumb {
+  background-color: var(--state-disabled-content);
+}
+
+.jal-slider-track > input[type="range"]:disabled::-moz-range-thumb {
+  background-color: var(--state-disabled-content);
+}
+
+.jal-slider-track:has(> input:disabled)::before {
+  border-color: var(--color-border);
+}
+
+.jal-slider-track:has(> input:disabled)::after {
+  background-color: var(--state-disabled-content);
+}
+
+.jal-slider-track:has(> input[aria-invalid="true"])::before {
+  border-color: var(--color-danger);
+}
+
+/* Discrete scale: min and max as text at the track ends, never dots. */
+.jal-slider-scale {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  font-size: var(--text-n1);
+  line-height: var(--line-n1);
+  color: var(--color-ink-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.jal-slider-scale > :last-child {
+  grid-column: 3;
+}
+
+/* Progress: .jal-progress wraps a native <progress>. Linear: 4px pill
+   track, one ink indicator. Indeterminate (no value attribute) paints a
+   40% segment on the wrapper's ::after that travels by transform, linear
+   timing (a constant loop). Circular: data-shape="circular" (24px, or
+   48px with data-size="lg"); indeterminate is a quarter arc turning once
+   per --loop-spin, determinate is an aria-hidden .jal-progress-ring SVG
+   (pathLength="100", value in --jal-progress-value) with the native
+   element kept for assistive tech. */
+.jal-progress {
+  --_track: var(--jal-progress-track-color, var(--color-layer-2));
+  --_indicator: var(--jal-progress-indicator-color, var(--color-ink));
+  position: relative;
+  display: block;
+  inline-size: 100%;
+  block-size: var(--space-4px);
+  overflow: hidden;
+  background-color: var(--_track);
+  border-radius: var(--radius-pill);
+}
+
+.jal-progress[data-state="error"] {
+  --_indicator: var(--color-danger);
+}
+
+.jal-progress[data-state="paused"] {
+  --_indicator: var(--state-disabled-content);
+}
+
+.jal-progress > progress {
+  display: block;
+  inline-size: 100%;
+  block-size: 100%;
+  margin: 0;
+  color: var(--_indicator);
+  background-color: transparent;
+  border: 0;
+  border-radius: inherit;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.jal-progress > progress::-webkit-progress-bar {
+  background-color: transparent;
+  border-radius: inherit;
+}
+
+.jal-progress > progress::-webkit-progress-value {
+  background-color: var(--_indicator);
+  border-radius: inherit;
+}
+
+.jal-progress > progress::-moz-progress-bar {
+  background-color: var(--_indicator);
+  border-radius: inherit;
+}
+
+.jal-progress > progress:indeterminate::-moz-progress-bar {
+  background-color: transparent;
+}
+
+.jal-progress:has(> progress:indeterminate)::after {
+  content: "";
+  position: absolute;
+  inset-block: 0;
+  inset-inline-start: 0;
+  inline-size: 40%;
+  background-color: var(--_indicator);
+  border-radius: inherit;
+  animation: jal-progress-travel calc(var(--loop-spin) * 2) linear infinite;
+}
+
+[dir="rtl"] .jal-progress:has(> progress:indeterminate)::after {
+  animation-name: jal-progress-travel-rtl;
+}
+
+@keyframes jal-progress-travel {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(250%);
+  }
+}
+
+@keyframes jal-progress-travel-rtl {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(-250%);
+  }
+}
+
+.jal-progress[data-shape="circular"] {
+  display: inline-block;
+  flex: 0 0 auto;
+  inline-size: var(--space-24px);
+  block-size: var(--space-24px);
+  overflow: visible;
+  vertical-align: middle;
+  background-color: transparent;
+}
+
+.jal-progress[data-shape="circular"][data-size="lg"] {
+  inline-size: var(--space-48px);
+  block-size: var(--space-48px);
+}
+
+/* Visually hidden, still announced. */
+.jal-progress[data-shape="circular"] > progress {
+  position: absolute;
+  inline-size: 1px;
+  block-size: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.jal-progress[data-shape="circular"]:has(> progress:indeterminate)::after {
+  inset: 0;
+  inline-size: auto;
+  background-color: transparent;
+  border: var(--space-2px) solid var(--_track);
+  border-top-color: var(--_indicator);
+  border-radius: var(--radius-pill);
+  animation: jal-progress-spin var(--loop-spin) linear infinite;
+}
+
+.jal-progress[data-shape="circular"][data-size="lg"]:has(> progress:indeterminate)::after {
+  border-width: var(--space-4px);
+}
+
+@keyframes jal-progress-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.jal-progress-ring {
+  display: block;
+  inline-size: 100%;
+  block-size: 100%;
+  transform: rotate(-90deg);
+}
+
+.jal-progress-ring circle {
+  fill: none;
+  stroke-width: var(--space-4px);
+}
+
+.jal-progress-ring [data-part="track"] {
+  stroke: var(--_track);
+}
+
+.jal-progress-ring [data-part="indicator"] {
+  stroke: var(--_indicator);
+  stroke-dasharray: var(--jal-progress-value, 0) 100;
+}
+
+/* Icon button: 44 x 44 pill, 20px icon. data-variant = outlined, tonal,
+   filled; none is standard. aria-pressed makes it a toggle; optional
+   [data-icon="off"] and [data-icon="on"] children swap with the state. */
+.jal-icon-btn {
+  --_container: var(--jal-icon-btn-container-color, transparent);
+  --_content: var(--jal-icon-btn-icon-color, var(--color-ink-muted));
+  --_outline: var(--jal-icon-btn-outline-color, transparent);
+  position: relative;
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  inline-size: var(--control-h);
+  min-inline-size: var(--control-h);
+  block-size: var(--control-h);
+  padding: 0;
+  color: var(--_content);
+  background: var(--_container);
+  border: var(--border-weight) solid var(--_outline);
+  border-radius: var(--radius-pill);
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.jal-icon-btn > svg {
+  flex: 0 0 auto;
+  inline-size: var(--space-20px);
+  block-size: var(--space-20px);
+}
+
+.jal-icon-btn[data-variant="outlined"] {
+  --_container: var(--jal-icon-btn-container-color, var(--color-surface));
+  --_content: var(--jal-icon-btn-icon-color, var(--color-ink));
+  --_outline: var(--jal-icon-btn-outline-color, var(--color-border-control));
+}
+
+.jal-icon-btn[data-variant="tonal"] {
+  --_container: var(--jal-icon-btn-container-color, var(--color-layer-2));
+  --_content: var(--jal-icon-btn-icon-color, var(--color-ink));
+}
+
+.jal-icon-btn[data-variant="filled"] {
+  --_container: var(--jal-icon-btn-container-color, var(--color-ink));
+  --_content: var(--jal-icon-btn-icon-color, var(--color-surface));
+}
+
+/* Toggle states: the on state changes fill and icon, never color alone. */
+.jal-icon-btn[aria-pressed="true"] {
+  --_container: var(--jal-icon-btn-selected-container-color, var(--color-layer-2));
+  --_content: var(--color-ink);
+}
+
+.jal-icon-btn[data-variant="outlined"][aria-pressed="true"] {
+  --_container: var(--jal-icon-btn-selected-container-color, var(--color-ink));
+  --_content: var(--color-surface);
+  --_outline: var(--color-ink);
+}
+
+.jal-icon-btn[data-variant="tonal"][aria-pressed="false"] {
+  --_container: var(--color-layer-1);
+  --_content: var(--color-ink-muted);
+}
+
+.jal-icon-btn[data-variant="filled"][aria-pressed="false"] {
+  --_container: var(--color-layer-2);
+  --_content: var(--color-ink);
+}
+
+.jal-icon-btn[data-variant="filled"][aria-pressed="true"] {
+  --_container: var(--jal-icon-btn-selected-container-color, var(--color-ink));
+  --_content: var(--color-surface);
+}
+
+.jal-icon-btn > [data-icon="on"],
+.jal-icon-btn[aria-pressed="true"] > [data-icon="off"] {
+  display: none;
+}
+
+.jal-icon-btn[aria-pressed="true"] > [data-icon="on"] {
+  display: block;
+}
+
+@media (hover: hover) {
+  .jal-icon-btn:enabled:not([aria-disabled="true"]):hover,
+  a.jal-icon-btn:not([aria-disabled="true"]):hover {
+    background: color-mix(in oklab, var(--_content) 8%, var(--_container));
+    border-color: var(--_outline);
+  }
+}
+
+.jal-icon-btn:enabled:not([aria-disabled="true"]):active,
+a.jal-icon-btn:not([aria-disabled="true"]):active {
+  background: color-mix(in oklab, var(--_content) 12%, var(--_container));
+  border-color: var(--_outline);
+  transform: scale(0.98);
+}
+
+.jal-icon-btn:disabled,
+.jal-icon-btn[aria-disabled="true"] {
+  color: var(--state-disabled-content);
+  background: transparent;
+  border-color: transparent;
+  cursor: default;
+  transform: none;
+}
+
+.jal-icon-btn:is([data-variant="filled"], [data-variant="tonal"]):is(:disabled, [aria-disabled="true"]) {
+  background: var(--state-disabled-container);
+}
+
+.jal-icon-btn[data-variant="outlined"]:is(:disabled, [aria-disabled="true"]) {
+  border-color: var(--color-border);
+}
+
+.jal-icon-btn:is([aria-busy="true"], [data-state="loading"])::after {
+  border-color: var(--_content);
+  border-top-color: transparent;
+}
+
+/* Segmented button: a group of 44px segments, each with a full 1px
+   control border; neighbors overlap by one border so the group reads as
+   one outlined bar, radius on the outer ends only. No JS: <label> segments
+   wrapping a hidden radio (single) or checkbox (multi), the visual lives on
+   the <span> after the input. With app state: <button aria-pressed>. */
+.jal-segmented {
+  --_container: var(--jal-segmented-container-color, var(--color-surface));
+  --_selected: var(--jal-segmented-selected-container-color, var(--color-layer-2));
+  --_outline: var(--jal-segmented-outline-color, var(--color-border-control));
+  --_label: var(--jal-segmented-label-color, var(--color-ink));
+  display: flex;
+  inline-size: 100%;
+  max-inline-size: 100%;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.jal-segmented > legend {
+  position: absolute;
+  inline-size: 1px;
+  block-size: 1px;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.jal-segmented > :is(label, button) {
+  position: relative;
+  display: inline-flex;
+  flex: 1 1 0;
+  min-width: 0;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-8px);
+  height: var(--control-h);
+  margin: 0;
+  padding: 0 var(--space-16px);
+  font: inherit;
+  font-size: var(--text-0);
+  line-height: var(--line-0);
+  font-weight: var(--weight-medium);
+  white-space: nowrap;
+  color: var(--_label);
+  background: var(--_container);
+  border: var(--border-weight) solid var(--_outline);
+  border-radius: 0;
+  cursor: pointer;
+  transform: none;
+}
+
+.jal-segmented > :is(label, button) + :is(label, button) {
+  margin-inline-start: calc(var(--border-weight) * -1);
+}
+
+.jal-segmented > :is(label, button):first-of-type {
+  border-start-start-radius: var(--radius-8);
+  border-end-start-radius: var(--radius-8);
+}
+
+.jal-segmented > :is(label, button):last-of-type {
+  border-start-end-radius: var(--radius-8);
+  border-end-end-radius: var(--radius-8);
+}
+
+.jal-segmented > label {
+  padding: 0;
+  overflow: hidden;
+}
+
+.jal-segmented > label > input {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  opacity: 0;
+  cursor: inherit;
+}
+
+.jal-segmented > label > span {
+  display: inline-flex;
+  flex: 1 1 auto;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-8px);
+  min-width: 0;
+  block-size: 100%;
+  padding: 0 var(--space-16px);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  border-radius: inherit;
+}
+
+.jal-segmented > label > input:checked + span,
+.jal-segmented > button[aria-pressed="true"] {
+  background: var(--_selected);
+  font-weight: var(--weight-semibold);
+}
+
+.jal-segmented [data-icon="check"] {
+  display: none;
+  flex: 0 0 auto;
+  inline-size: var(--space-20px);
+  block-size: var(--space-20px);
+}
+
+.jal-segmented > label > input:checked + span > [data-icon="check"],
+.jal-segmented > button[aria-pressed="true"] > [data-icon="check"] {
+  display: inline-block;
+}
+
+.jal-segmented > label > input:focus-visible + span {
+  position: relative;
+  z-index: 1;
+  outline: 2px solid var(--color-focus);
+  outline-offset: calc(var(--space-2px) * -1);
+}
+
+.jal-segmented > button:focus-visible {
+  z-index: 1;
+}
+
+@media (hover: hover) {
+  .jal-segmented > label:hover > input:enabled:not(:checked) + span,
+  .jal-segmented > button:enabled:hover {
+    background: color-mix(in oklab, var(--_label) 8%, var(--_container));
+    border-color: var(--_outline);
+  }
+
+  .jal-segmented > button[aria-pressed="true"]:enabled:hover {
+    background: var(--_selected);
+  }
+}
+
+.jal-segmented > label:active > input:enabled:not(:checked) + span,
+.jal-segmented > button:enabled:active {
+  background: color-mix(in oklab, var(--_label) 12%, var(--_container));
+  border-color: var(--_outline);
+  transform: none;
+}
+
+.jal-segmented > button[aria-pressed="true"]:enabled:active {
+  background: var(--_selected);
+}
+
+.jal-segmented > label > input:disabled + span,
+.jal-segmented > button:disabled {
+  color: var(--state-disabled-content);
+  cursor: default;
+}
+
+.jal-segmented > button:disabled {
+  background: var(--_container);
+  border-color: var(--color-border);
+}
+
+.jal-segmented > label:has(> input:disabled) {
+  border-color: var(--color-border);
+  cursor: default;
+}
+
+.jal-segmented[data-state="error"] > :is(label, button) {
+  border-color: var(--color-danger);
+}
+
+.jal-segmented[aria-busy="true"] {
+  pointer-events: none;
+}
+
+@media (min-width: 640px) {
+  .jal-segmented {
+    display: inline-flex;
+    inline-size: auto;
+  }
+}
+
+/* Menu: a popover (or any container) with role="menu", items are
+   role="menuitem", "menuitemcheckbox", or "menuitemradio" (buttons or
+   links). Mobile-first: below 640px a popover menu is a bottom sheet;
+   from 640px it is a floating surface, anchored to its trigger when the
+   browser supports anchor positioning and the menu opts in with
+   data-anchor (trigger sets anchor-name, menu sets position-anchor),
+   otherwise centered. Opens with opacity and a 0.98 scale, closes
+   instantly. Native popover gives light dismiss and Escape without JS. */
+.jal-menu {
+  --_container: var(--jal-menu-container-color, var(--color-surface));
+  --_outline: var(--jal-menu-outline-color, var(--color-border-strong));
+  --_selected: var(--jal-menu-item-selected-container-color, var(--color-layer-2));
+  box-sizing: border-box;
+  min-inline-size: calc(var(--space-96px) + var(--space-16px));
+  max-inline-size: min(calc(100vw - var(--space-32px)), calc(var(--space-96px) * 3));
+  max-block-size: min(calc(100dvh - var(--space-32px)), calc(var(--control-h) * 8 + var(--space-16px)));
+  margin: 0;
+  padding: var(--space-8px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  list-style: none;
+  color: var(--color-ink);
+  background-color: var(--_container);
+  border: var(--border-weight) solid var(--_outline);
+  border-radius: var(--radius-16);
+}
+
+.jal-menu[popover] {
+  inset: auto 0 0 0;
+  inline-size: 100%;
+  max-inline-size: none;
+  max-block-size: calc(100dvh - var(--space-64px));
+  padding-block-end: calc(var(--space-8px) + env(safe-area-inset-bottom));
+  border-radius: var(--radius-28) var(--radius-28) 0 0;
+  transform-origin: bottom center;
+}
+
+.jal-menu:popover-open {
+  animation: jal-menu-in var(--dur-200) var(--ease-standard);
+}
+
+@keyframes jal-menu-in {
+  from {
+    opacity: 0;
+    transform: scale(0.98);
+  }
+}
+
+@media (min-width: 640px) {
+  .jal-menu[popover] {
+    inset: 0;
+    margin: auto;
+    inline-size: fit-content;
+    max-inline-size: min(calc(100vw - var(--space-32px)), calc(var(--space-96px) * 3));
+    max-block-size: min(calc(100dvh - var(--space-32px)), calc(var(--control-h) * 8 + var(--space-16px)));
+    padding-block-end: var(--space-8px);
+    border-radius: var(--radius-16);
+    transform-origin: top left;
+  }
+
+  [dir="rtl"] .jal-menu[popover] {
+    transform-origin: top right;
+  }
+}
+
+@supports (position-area: block-end) {
+  @media (min-width: 640px) {
+    .jal-menu[popover][data-anchor] {
+      inset: auto;
+      margin: var(--space-4px) 0;
+      position-area: block-end span-inline-end;
+      position-try-fallbacks: flip-block, flip-inline;
+    }
+  }
+}
+
+.jal-menu > li {
+  margin: 0;
+  padding: 0;
+}
+
+.jal-menu [role^="menuitem"] {
+  --_item: transparent;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: var(--space-12px);
+  width: 100%;
+  height: auto;
+  min-height: var(--control-h);
+  margin: 0;
+  padding: var(--space-8px) var(--space-12px);
+  font: inherit;
+  font-size: var(--text-0);
+  line-height: var(--line-0);
+  font-weight: var(--weight-regular);
+  text-align: start;
+  text-decoration: none;
+  white-space: normal;
+  color: var(--color-ink);
+  background-color: var(--_item);
+  border: 0;
+  border-radius: var(--radius-8);
+  cursor: pointer;
+  transform: none;
+  transition: none;
+}
+
+.jal-menu [role^="menuitem"] > svg,
+.jal-menu [data-slot="check"] {
+  flex: 0 0 auto;
+  inline-size: var(--space-20px);
+  block-size: var(--space-20px);
+}
+
+.jal-menu [data-slot="check"] {
+  visibility: hidden;
+}
+
+.jal-menu [role^="menuitem"][aria-checked="true"] > [data-slot="check"] {
+  visibility: visible;
+}
+
+.jal-menu [data-slot="trailing"] {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  margin-inline-start: auto;
+  padding-inline-start: var(--space-12px);
+  font-size: var(--text-n1);
+  line-height: var(--line-n1);
+  color: var(--color-ink-muted);
+}
+
+[dir="rtl"] .jal-menu [aria-haspopup="menu"] > [data-slot="trailing"] > svg {
+  transform: scaleX(-1);
+}
+
+.jal-menu [role^="menuitem"]:is([aria-checked="true"], [aria-expanded="true"]) {
+  --_item: var(--_selected);
+  font-weight: var(--weight-medium);
+}
+
+@media (hover: hover) {
+  .jal-menu [role^="menuitem"]:not(:disabled):not([aria-disabled="true"]):hover {
+    background-color: color-mix(in oklab, var(--color-ink) 8%, var(--_item));
+  }
+}
+
+.jal-menu [role^="menuitem"]:not(:disabled):not([aria-disabled="true"]):active {
+  background-color: color-mix(in oklab, var(--color-ink) 12%, var(--_item));
+  transform: none;
+}
+
+.jal-menu [role^="menuitem"]:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: calc(var(--space-2px) * -1);
+}
+
+.jal-menu [role^="menuitem"]:is(:disabled, [aria-disabled="true"]) {
+  color: var(--state-disabled-content);
+  background-color: transparent;
+  cursor: default;
+}
+
+.jal-menu [role^="menuitem"][data-tone="danger"]:not(:disabled):not([aria-disabled="true"]) {
+  color: var(--color-danger);
+}
+
+.jal-menu :is([role="separator"], hr) {
+  display: block;
+  block-size: var(--border-weight);
+  margin: var(--space-4px) 0;
+  padding: 0;
+  background-color: var(--color-border);
+  border: 0;
+}
+
+.jal-menu [data-slot="status"] {
+  display: flex;
+  align-items: center;
+  gap: var(--space-12px);
+  min-height: var(--control-h);
+  padding-inline: var(--space-12px);
+  color: var(--color-ink-muted);
+}
+
+/* Forced colors: native checkbox and radio rendering, system colors on
+   the switch, slider, and progress parts (boundaries are real borders and
+   focus is an outline, so both survive). */
+@media (forced-colors: active) {
+  .jal-checkbox > input[type="checkbox"],
+  .jal-radio > input[type="radio"] {
+    -webkit-appearance: auto;
+    appearance: auto;
+    background-image: none;
+  }
+
+  .jal-switch-track,
+  .jal-switch-track::after,
+  .jal-slider-track::before,
+  .jal-slider-track::after,
+  .jal-progress,
+  .jal-progress::after {
+    forced-color-adjust: none;
+  }
+
+  .jal-switch-track {
+    background-color: Canvas;
+    border-color: ButtonText;
+  }
+
+  .jal-switch-track::after {
+    background-color: ButtonText;
+  }
+
+  .jal-switch > input:checked ~ .jal-switch-track {
+    background-color: Highlight;
+    border-color: Highlight;
+  }
+
+  .jal-switch > input:checked ~ .jal-switch-track::after {
+    background-color: HighlightText;
+  }
+
+  .jal-switch > input:disabled ~ .jal-switch-track {
+    border-color: GrayText;
+  }
+
+  .jal-switch > input:disabled ~ .jal-switch-track::after {
+    background-color: GrayText;
+  }
+
+  .jal-switch > input:focus-visible ~ .jal-switch-track {
+    outline-color: CanvasText;
+  }
+
+  .jal-slider-track::before {
+    background-color: Canvas;
+    border-color: ButtonText;
+  }
+
+  .jal-slider-track::after {
+    background-color: Highlight;
+  }
+
+  .jal-progress {
+    background-color: Canvas;
+    border: var(--border-weight) solid CanvasText;
+  }
+
+  .jal-progress > progress::-webkit-progress-value {
+    background-color: Highlight;
+  }
+
+  .jal-progress::after {
+    background-color: Highlight;
+  }
+}
+
+/* Reduced motion for this block: loops stop and read as a static state
+   (the visible busy text carries the meaning), no press scale, the menu
+   appears without its entrance. */
+@media (prefers-reduced-motion: reduce) {
+  .jal-progress:has(> progress:indeterminate)::after {
+    animation: none;
+    inline-size: 100%;
+    opacity: 0.38;
+  }
+
+  .jal-progress[data-shape="circular"]:has(> progress:indeterminate)::after {
+    animation: none;
+    inline-size: auto;
+    opacity: 1;
+  }
+
+  .jal-menu:popover-open {
+    animation: none;
+  }
+
+  .jal-icon-btn:enabled:not([aria-disabled="true"]):active,
+  a.jal-icon-btn:not([aria-disabled="true"]):active {
+    transform: none;
+  }
+
+  .jal-switch:active > input:enabled:not(:checked) ~ .jal-switch-track::after {
+    transform: translateX(0) scale(0.667);
+  }
+
+  .jal-switch:active > input:enabled:checked ~ .jal-switch-track::after {
+    transform: translateX(var(--space-20px)) scale(1);
+  }
+
+  [dir="rtl"] .jal-switch:active > input:enabled:checked ~ .jal-switch-track::after {
+    transform: translateX(calc(var(--space-20px) * -1)) scale(1);
+  }
+}
+/* ===================== end Material Web port ======================== */
+
 /* Honor reduced motion everywhere: collapse to a near-instant change,
    never a slide or scale, transform-based motion included. */
 @media (prefers-reduced-motion: reduce) {

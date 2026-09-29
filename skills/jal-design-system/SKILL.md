@@ -1,6 +1,6 @@
 ---
 name: jal-design-system
-description: JAL Core, the one JAL design system. Meta Astryx is the foundation (generated scales, frame-first layout doctrine, container ladder, hierarchy, state taxonomy, elevation order, agent workflow), IBM Carbon supplies the data and form layer (contextual layers, density, DataTable, TextInput, Select, DatePicker, notifications, modal states), and a few Material 3 contracts are folded in (state-layer percentages, mobile navigation bar, chips, floating action). One component spec per component, rendered in JAL Core tokens under JAL Law. JEV picks the product density, never a design system. Use when building or redesigning any UI, or when you need the layout doctrine, density rules, or the anatomy and state model of buttons, fields, selects, date pickers, tables, lists, tabs, chips, cards, dialogs, notifications, navigation, empty states, or floating actions.
+description: JAL Core, the one JAL design system. Meta Astryx is the foundation (generated scales, frame-first layout doctrine, container ladder, hierarchy, state taxonomy, elevation order, agent workflow), IBM Carbon supplies the data and form layer (contextual layers, density, DataTable, TextInput, Select, DatePicker, notifications, modal states), and Google Material Web owns the theming contract (reference, system, and component tokens with fallbacks; color, type, shape, and motion roles mapped to JAL tokens), the bounded state layer and focus ring, selection controls, and the action, menu, and navigation components. One component spec per component, rendered in JAL Core tokens under JAL Law. JEV picks the product density, never a design system. Use when building or redesigning any UI, or when you need the layout doctrine, density rules, or the anatomy and state model of buttons, icon buttons, segmented and split buttons, toolbars, checkboxes, radios, switches, sliders, progress, fields, selects, comboboxes, date pickers, chips, tables, lists, dividers, cards, dialogs, menus, tooltips, notifications, badges, tabs, the navigation bar, rail, and drawer, empty states, or floating actions.
 ---
 
 # JAL Core: the one JAL design system
@@ -25,17 +25,20 @@ Astryx is the base. It was built to be driven by agents and to stay consistent a
 | Method | Astryx | Generated type, radius, and motion scales; contrast guaranteed by tone spacing and tested |
 | Layout | Astryx | Frame first, region width budgets, fill versus capped, lightest container that still groups, records as rows, one content line per region, per-region breakpoint contracts |
 | Hierarchy | Astryx | One lead per region, rank by weight and ink before size, two content text colors |
+| Theming contract | Material | Reference, system, and component token tiers; component tokens `--jal-<component>-<part>-<property>` read with a system-token fallback so a scoped override reskins a subtree without JS; key color plus on-color pairs; override the key color, never each state; Material color, type, shape, and motion roles mapped onto JAL Core values (`foundations.md` 11) |
 | Depth | Carbon + Astryx | Carbon's contextual layer tokens (a nested container steps one layer automatically), in Astryx's stacking order, rendered as tonal steps plus hairlines |
-| Density | Carbon | One density context drives row height and cell padding together; three modes, desktop tables and lists only |
-| States | Astryx + Material | Astryx taxonomy (user, system, agentic states) with Material's state-layer percentages |
-| Forms | Carbon | Label above, fixed 44 field, reserved trailing icon lane, helper or error row below, read-only as its own state; TextInput, Select, DatePicker |
-| Records | Carbon + Astryx | Carbon DataTable for tables; Astryx List and Item for lists |
-| Feedback | Carbon | Inline, toast, and actionable notifications, re-chromed to the JAL notice pattern |
-| Overlays | Astryx + Carbon | Astryx Dialog anatomy and top-layer rules, Carbon modal states and sizing |
-| Navigation | Astryx + Material | Astryx AppShell and tabs; Material navigation bar anatomy for the below-640 bottom bar |
-| Touch extras | Material | Chips (filter, input, suggestion, assist), the one floating create action, soft-disabled |
-| Motion | Astryx + Carbon | Astryx motion principles and easing, Carbon's productive versus expressive split (product versus showcase in `jal-motion`) |
-| Accessibility | Astryx + Carbon | Astryx rules, Carbon's three-tier verification (automated, keyboard, screen reader) |
+| Density | Carbon | One density context drives row height and cell padding together; three modes, desktop tables and lists only; Material's visual size versus 44 target separation |
+| States | Material + Astryx | Material state-layer model (hover 8, focus 12, pressed 12, dragged 16, disabled 38 and 12; what paints pressed), the bounded state layer that replaces ripple, and the focus ring (outward and inward), inside Astryx's taxonomy (user, system, agentic states) |
+| Forms | Carbon + Material | Carbon anatomy: label above, fixed 44 field, reserved trailing icon lane, helper or error row below, read-only as its own state; TextInput, Select, DatePicker. Material outlined-field rules merged in (input types, prefix and suffix, counter, error text replaces helper, constraint validation first) and the Combobox |
+| Selection controls | Material | Checkbox (with indeterminate), Radio and group, Switch, Slider (continuous, discrete, range) |
+| Records | Carbon + Astryx + Material | Carbon DataTable for tables; Astryx List and Item anatomy with Material item types, line heights, and keyboard model; Material Divider |
+| Feedback | Carbon + Material | Carbon inline, toast, and actionable notifications, re-chromed to the JAL notice pattern; Material Progress (linear and circular, determinate and indeterminate) and toast placement |
+| Overlays | Astryx + Carbon + Material | Astryx Dialog anatomy and top-layer rules, Carbon modal states and sizing, Material dialog return value and alert contract; Material Menu, submenu, and Tooltip |
+| Actions | Material + Astryx | Astryx Button anatomy with Material's emphasis ladder; Material Icon button (standard, filled, tonal, outlined, toggle), Segmented button, Split button, docked Toolbar, the one floating create action |
+| Navigation | Astryx + Material | Astryx AppShell; Material navigation bar, navigation rail, and navigation drawer anatomy; Material tab types and activation model on Astryx tab chrome |
+| Touch extras | Material | Chips (filter, input, suggestion, assist) in toolbar chip sets, soft-disabled, 44 targets that never shrink |
+| Motion | Astryx + Carbon + Material | Astryx motion principles and easing, Carbon's productive versus expressive split (product versus showcase in `jal-motion`), Material duration and easing tokens mapped onto the four JAL durations and the one curve |
+| Accessibility | Astryx + Carbon + Material | Astryx rules, Carbon's three-tier verification (automated, keyboard, screen reader), Material labelling rules (group labels, stable toggle names, tab panels, decorative dividers), soft-disabled focusability, forced-colors support |
 | Agent workflow | Astryx | Discover, skeleton, component spec, rules, mandatory self-check re-read |
 
 **Conflict rule inside the system.** Law decides first, then JAL Core tokens. If Astryx and Carbon still disagree, the owner in the table above wins. Where no row covers it, Astryx wins. A component is never built from two anatomies.
