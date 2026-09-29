@@ -56,6 +56,9 @@ async function runBuild() {
     sourcemap: "linked",
     splitting: true,
     publicPath: "/",
+    // packages/ui/src/fonts/fonts.css points at /fonts/<file>.woff2: keep it
+    // external (never inlined as base64) and copy the files below.
+    external: ["/fonts/*"],
     loader: { ".glb": "file", ".gltf": "file", ".ktx2": "file", ".hdr": "file", ".wasm": "file", ".bin": "file" },
     plugins: await optionalPlugins(),
   });
@@ -71,6 +74,11 @@ async function runBuild() {
     join(outdir, "admin.html"),
     shell.replace('href="/index.css"', 'href="/admin/index.css"').replace('src="/index.js"', 'src="/admin/index.js"'),
   );
+
+  await cp(join(repoRoot, "packages", "ui", "src", "fonts"), join(outdir, "fonts"), {
+    recursive: true,
+    filter: (src) => !/\.(css|txt|ts)$/.test(src),
+  });
 
   const publicDir = join(here, "public");
   if (existsSync(publicDir)) await cp(publicDir, outdir, { recursive: true });

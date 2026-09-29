@@ -149,7 +149,7 @@ From: Material Web (`docs/theming/typography.md`, `_md-sys-typescale.scss`). Mat
 | body-large, medium, small | 16/24, 14/20, 12/16, 400 | body | `--text-0` 16/24 (inputs and all mobile body), `--text-0` 16/24, `--text-n1` 13/20 (supporting, meta) |
 | label-large, medium, small | 14/20, 12/16, 11/16, 500 | label (buttons, chips, tabs, nav) | `--text-0` 16/24 500 on buttons and tabs, `--text-n1` 13/20 500 on chips, table headers, rail labels, `--text-n2` 11/16 500 on tab bar labels only |
 
-- Typefaces: Material's brand and plain faces collapse to the one JAL system stack; a brand face needs Brian's sign-off. Weights 400, 500, 700 become 400, 500, 600.
+- Typefaces: Material's brand and plain faces collapse to the JAL default, Geist Sans and Geist Mono, or one pairing from the curated pool in `typography.md`; only a face outside the pool needs Brian's sign-off. Weights 400, 500, 700 become 400, 500, 600.
 - Component type is assigned by role, never by size: a component token such as `--jal-menu-item-label-font` would resolve to a role, not a px value. Material's `.md-typescale-*` classes have no JAL counterpart; components apply roles in their own CSS.
 
 ### 11.5 Shape scale by role

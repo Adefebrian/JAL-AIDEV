@@ -1,0 +1,11 @@
+<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<style>body{margin:0;font:16px system-ui;background:#fafaf9;color:#1b1b1b}main{padding:24px;max-width:960px;margin:0 auto}
+.bento{display:grid;grid-template-columns:repeat(3,1fr);grid-auto-rows:120px;gap:16px}
+.tile{background:#fff;border:1px solid #e3e3e3;border-radius:12px;padding:16px}
+.big{grid-row:span 2;grid-column:span 2}
+.box{width:300px;padding:16px;border:1px solid #e3e3e3;margin-top:24px}
+.rise{animation:rise 60s linear infinite}@keyframes rise{from{transform:translateX(0)}to{transform:translateX(400px)}}
+</style></head><body><main><h1>Bento</h1>
+<div class="bento"><div class="tile big">Big</div><div class="tile">A</div><div class="tile">B</div><div class="tile">C</div><div class="tile">D</div><div class="tile">E</div></div>
+<div class="box"><p class="rise">Moving in</p></div>
+</main></body></html>

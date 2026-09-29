@@ -228,7 +228,7 @@ Verdict: <ship / fix / rebuild / recapture>, round <1 or 2>, reviewer keep line:
 :root {
   --color-accent: #1d5fa8;                    /* HSL 212, 6.45:1 on surface */
   --color-accent-contrast: var(--color-surface);
-  --color-primary: var(--color-accent);       /* role: filled_primary */
+  --kit-action: var(--color-accent);          /* role: filled_primary: the conversion actions only */
   --color-primary-hover: color-mix(in oklab, white 8%, var(--color-accent) 92%);
   --color-primary-active: color-mix(in oklab, white 12%, var(--color-accent) 88%);
 }
@@ -240,7 +240,7 @@ Verdict: <ship / fix / rebuild / recapture>, round <1 or 2>, reviewer keep line:
 |---|---|---|
 | Accent hue | none (ink) | one hue, HSL outside 235 to 330 (250 to 320 fails `ui_audit`; 225 to 235 cobalt needs a written reason), 4.5:1 on surface for any text use, never within about 30 degrees of a status hue in a status context |
 | Accent role | none | exactly one of `none`, `filled_primary`, `signal_only`, `text_and_icon`; about 3% of any viewport at most |
-| Primary fill | ink | ink, or the accent when the role is `filled_primary` |
+| Primary fill | ink | ink; with `filled_primary` the accent fills only the Masthead's and the CTABand's first action (`--kit-action`), never two in one view |
 | Canvas | neutral `#fafaf9` | white `#ffffff`; cool (for example `#f7f8f8`); warm (for example `#faf8f5`); light beige (for example `#f8f5f0`). Only `--color-page` moves. It must keep `--color-border-control` at 3:1 on it (relative luminance about 0.91 or more, OKLCH chroma 0.008 or less). A deeper beige needs a recomputed control border, a generator change for Brian. |
 | Tracking | display -0.03em, heading -0.02em | display -0.01 to -0.04em; heading 0 to -0.02em; title and body fixed |
 | Display ceiling | `--text-6` (48) | `--text-display-1`, `-2`, or `-3` (57, 69, 83) on Persuade or Experience heroes only, one per page, `--text-display-1` at most below 640px |
@@ -359,12 +359,12 @@ Each direction is one `[data-direction]` block in `packages/ui/src/kit.css`; the
 | D1 research_notebook | neutral | none | Geist 500, -0.035 | display-2 / text-4 (500) | 12 / 8 | 48 / 24 / 96 | off, sans | split or left / inline |
 | D2 single_signal_ledger | cool | green `#0b7a55`, filled_primary | Geist 600, -0.025 | display-2 / text-4 | 12 / 8 | 40 / 24 / 80 | on, sans | split with SpecRail proof / inline |
 | D3 blueprint_hairline | neutral | teal `#0f766e`, signal_only | Geist 500, -0.04 | display-1 (md text-6) / text-4 | 16 / 8 | 40 / 24 / 64 | on strong, mono | split (Workbench) / inline |
-| D4 bone_white_gallery | white | warm `#b4461a`, text_and_icon | Geist 500, -0.03 | text-6 (sm text-5) / text-3 | 16 / pill | 32 / 24 / 80 | off, sans | split or overlay with real media / statement |
+| D4 bone_white_gallery | white | warm `#b4461a`, text_and_icon | Geist 500, -0.03 | text-6 (sm text-5) / text-3 | 16 / pill | 32 / 24 / 80 | off, sans | split with real media / statement |
 | D5 calm_productivity | warm | red-orange `#c2410c`, text_and_icon | Geist 500, -0.01 | display-1 / text-4 | 12 / 8 | 48 / 24 / 80 | off, sans | left / inline |
 | D6 clean_docs | white | green `#15803d`, links | Geist 500, -0.03 | text-6 (sm text-5) / text-3 | 16 / 8 | 40 / 24 / 64 | off, sans | left, Read ceiling / index |
 | D7 warm_paper_editorial (gated) | warm | none | Newsreader 500, -0.015 | display-2 / text-4 (500) | 16 / pill | 64 / 32 / 96 | off, sans | left / letter |
 | D8 quiet_care | warm | sage `#3f6b4f`, signal_only | Geist 500, -0.01 | display-1 / text-4 | 16 / pill | 48 / 32 / 96 | off, sans | left or centered / letter |
-| D9 cinematic_hardware | white | blue `#0a5bd3`, filled_primary | Geist 600, -0.02 | display-3 (sm display-1) / text-5 | 28 / pill | 40 / 24 / 96 | off, sans | overlay (real renders) / statement |
+| D9 cinematic_hardware | white | blue `#0a5bd3`, filled_primary | Geist 600, -0.02 | display-3 (sm display-1) / text-5 | 28 / pill | 40 / 24 / 96 | off, sans | split (real renders or a live view) / statement |
 | D10 industrial_catalogue | cool | none | Geist 500, -0.01 | display-1 / text-4 | 4 / 4 | 32 / 16 / 64 | on strong, mono | split (catalogue) / inline |
 | D11 oversized_masthead | white | none | Geist 500, -0.04 | display-3 / text-4 (500), wordmark headline | 4 / pill | 64 / 32 / 96 | on, sans | left with an SVG wordmark / masthead |
 | D12 friendly_consumer | white | orange `#c2410c`, text_and_icon | Nunito 600, -0.03 | display-2 / text-4 | 28 / pill | 40 / 24 / 80 | off, sans | split / statement |

@@ -1,192 +1,10 @@
-// Preview-only art for the kit preview: a lit 2D canvas render of the sample
-// product (a desk air monitor), a live-looking day readout, a week strip,
-// and an authored SVG wordmark. Canvas drawing follows the jal-immersive
-// canvas zone: lighting and shading on one drawn form, a soft contact
-// shade, transparent over the page white, no bloom or glow.
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+// Preview-only views for the kit preview: live-looking data views of the
+// sample product (a desk air monitor) built from kit roles, and an authored
+// SVG wordmark. No drawn product: a product shot is a real photo or an
+// honest placeholder (blocks.md), so these are the product's data, not its
+// likeness.
+import { useLayoutEffect, useRef, useState } from "react";
 import { Figure } from "../Page";
-
-export interface DeviceProps {
-  reading?: string;
-  unit?: string;
-  line?: string;
-  advice?: string;
-  level?: number;
-  /** Horizontal center of the device, 0 to 1 of the canvas width. */
-  focus?: number;
-  label: string;
-}
-
-function roundRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number) {
-  ctx.beginPath();
-  ctx.moveTo(x + r, y);
-  ctx.arcTo(x + w, y, x + w, y + h, r);
-  ctx.arcTo(x + w, y + h, x, y + h, r);
-  ctx.arcTo(x, y + h, x, y, r);
-  ctx.arcTo(x, y, x + w, y, r);
-  ctx.closePath();
-}
-
-function drawDevice(ctx: CanvasRenderingContext2D, w: number, h: number, p: DeviceProps) {
-  ctx.clearRect(0, 0, w, h);
-  const dh = Math.min(h * 0.66, (w * 0.62) / 0.74);
-  const dw = dh * 0.74;
-  const depth = dw * 0.16;
-  const x = Math.min(Math.max(w * (p.focus ?? 0.5) - (dw + depth) / 2, 0), w - dw - depth);
-  const y = (h - dh) / 2 - h * 0.03;
-  const r = dw * 0.14;
-
-  // Soft contact shade on the desk, lit from the upper left.
-  const sx = x + dw * 0.55 + depth * 0.5;
-  const sy = y + dh + dh * 0.02;
-  ctx.save();
-  ctx.translate(sx, sy);
-  ctx.scale(1, 0.14);
-  const shade = ctx.createRadialGradient(0, 0, 0, 0, 0, dw * 0.78);
-  shade.addColorStop(0, "rgba(34, 30, 26, 0.30)");
-  shade.addColorStop(0.55, "rgba(34, 30, 26, 0.12)");
-  shade.addColorStop(1, "rgba(34, 30, 26, 0)");
-  ctx.fillStyle = shade;
-  ctx.beginPath();
-  ctx.arc(0, 0, dw * 0.78, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.restore();
-
-  // Extruded body: stacked slices from back to front give the side face.
-  const steps = 28;
-  for (let i = steps; i >= 1; i--) {
-    const t = i / steps;
-    const ox = depth * t;
-    const oy = -depth * 0.32 * t;
-    const tone = 176 + Math.round((1 - t) * 18);
-    ctx.fillStyle = `rgb(${tone}, ${tone - 4}, ${tone - 10})`;
-    roundRect(ctx, x + ox, y + oy, dw, dh, r);
-    ctx.fill();
-  }
-
-  // Front face: matte stone, key light from the upper left.
-  const face = ctx.createLinearGradient(x, y, x + dw, y + dh);
-  face.addColorStop(0, "#f4f2ee");
-  face.addColorStop(0.55, "#e6e3dd");
-  face.addColorStop(1, "#d3cfc7");
-  ctx.fillStyle = face;
-  roundRect(ctx, x, y, dw, dh, r);
-  ctx.fill();
-
-  // Rim light along the lit edge.
-  ctx.save();
-  roundRect(ctx, x, y, dw, dh, r);
-  ctx.clip();
-  const rim = ctx.createLinearGradient(x, y, x + dw * 0.4, y + dh * 0.4);
-  rim.addColorStop(0, "rgba(255, 255, 255, 0.85)");
-  rim.addColorStop(1, "rgba(255, 255, 255, 0)");
-  ctx.strokeStyle = rim;
-  ctx.lineWidth = Math.max(1, dw * 0.012);
-  roundRect(ctx, x + 1, y + 1, dw - 2, dh - 2, r);
-  ctx.stroke();
-  ctx.restore();
-
-  // E-paper display, slightly recessed.
-  const mx = dw * 0.1;
-  const px = x + mx;
-  const py = y + mx;
-  const pw = dw - mx * 2;
-  const ph = dh * 0.56;
-  const pr = r * 0.5;
-  ctx.fillStyle = "#c9c5bd";
-  roundRect(ctx, px - 1, py - 1, pw + 2, ph + 2, pr + 1);
-  ctx.fill();
-  const paper = ctx.createLinearGradient(px, py, px, py + ph);
-  paper.addColorStop(0, "#dedbd3");
-  paper.addColorStop(0.18, "#e9e7e0");
-  paper.addColorStop(1, "#eeece6");
-  ctx.fillStyle = paper;
-  roundRect(ctx, px, py, pw, ph, pr);
-  ctx.fill();
-
-  const ink = "#2b2a27";
-  const mono = "ui-monospace, Menlo, Consolas, monospace";
-  const sans = "system-ui, -apple-system, sans-serif";
-  ctx.fillStyle = ink;
-  ctx.textBaseline = "alphabetic";
-  if (p.advice) {
-    const fs = pw * 0.13;
-    ctx.font = `600 ${fs}px ${sans}`;
-    const lines = p.advice.split("\n");
-    lines.forEach((l, i) => ctx.fillText(l, px + pw * 0.09, py + ph * 0.36 + i * fs * 1.15));
-    ctx.font = `400 ${pw * 0.075}px ${mono}`;
-    ctx.fillStyle = "#55534e";
-    ctx.fillText(p.line ?? "", px + pw * 0.09, py + ph * 0.86);
-  } else {
-    const fs = pw * 0.32;
-    ctx.font = `500 ${fs}px ${mono}`;
-    ctx.fillText(p.reading ?? "", px + pw * 0.08, py + ph * 0.56);
-    ctx.font = `500 ${pw * 0.08}px ${sans}`;
-    ctx.fillStyle = "#55534e";
-    ctx.fillText(p.unit ?? "", px + pw * 0.09, py + ph * 0.72);
-    ctx.fillText(p.line ?? "", px + pw * 0.09, py + ph * 0.86);
-  }
-
-  // Level segments under the display.
-  const segs = 5;
-  const gy = py + ph + dh * 0.07;
-  const gw = (pw - (segs - 1) * pw * 0.035) / segs;
-  for (let i = 0; i < segs; i++) {
-    ctx.fillStyle = i < (p.level ?? 2) ? "#3a3935" : "#c4c0b8";
-    roundRect(ctx, px + i * (gw + pw * 0.035), gy, gw, dh * 0.018, dh * 0.009);
-    ctx.fill();
-  }
-
-  // Perforated grille, each hole shaded on its upper edge.
-  const cols = 9;
-  const rows = 3;
-  const hx = px + pw * 0.06;
-  const hy = gy + dh * 0.08;
-  const step = (pw * 0.88) / (cols - 1);
-  const hr = Math.max(1, dw * 0.011);
-  for (let row = 0; row < rows; row++) {
-    for (let c = 0; c < cols; c++) {
-      const cx = hx + c * step;
-      const cy = hy + row * step * 0.75;
-      ctx.fillStyle = "rgba(60, 56, 50, 0.55)";
-      ctx.beginPath();
-      ctx.arc(cx, cy, hr, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.fillStyle = "rgba(255, 255, 255, 0.5)";
-      ctx.beginPath();
-      ctx.arc(cx, cy + hr * 0.6, hr * 0.5, 0, Math.PI);
-      ctx.fill();
-    }
-  }
-}
-
-/** The sample product, drawn to fill its frame at the device pixel ratio. */
-export function Device(props: DeviceProps) {
-  const ref = useRef<HTMLCanvasElement | null>(null);
-  const { reading, unit, line, advice, level, focus } = props;
-  useEffect(() => {
-    const canvas = ref.current;
-    const box = canvas?.parentElement;
-    if (!canvas || !box) return;
-    const paint = () => {
-      const rect = box.getBoundingClientRect();
-      if (rect.width === 0 || rect.height === 0) return;
-      const dpr = Math.min(window.devicePixelRatio || 1, 2);
-      canvas.width = Math.round(rect.width * dpr);
-      canvas.height = Math.round(rect.height * dpr);
-      const ctx = canvas.getContext("2d");
-      if (!ctx) return;
-      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      drawDevice(ctx, rect.width, rect.height, { reading, unit, line, advice, level, focus, label: "" });
-    };
-    paint();
-    if (typeof ResizeObserver === "undefined") return;
-    const ro = new ResizeObserver(paint);
-    ro.observe(box);
-    return () => ro.disconnect();
-  }, [reading, unit, line, advice, level, focus]);
-  return <canvas ref={ref} className="pv-canvas" role="img" aria-label={props.label} />;
-}
 
 // A workday of CO2 readings, every 30 minutes from 08:00 to 18:00.
 const DAY = [520, 560, 610, 680, 740, 790, 820, 860, 900, 880, 760, 800, 930, 1080, 1240, 980, 820, 760, 700, 650, 612];
@@ -283,5 +101,116 @@ export function Wordmark({ label }: { label: string }) {
         hawa
       </text>
     </svg>
+  );
+}
+
+const ROOMS = [
+  { room: "Meeting room 2", ppm: 1240, state: "Open a window" },
+  { room: "Phone booth", ppm: 1020, state: "Step out soon" },
+  { room: "Kitchen", ppm: 880, state: "Getting stuffy" },
+  { room: "Studio", ppm: 640, state: "Fine for focus" },
+];
+
+/** A live-looking room list for the office view, built from kit roles. */
+export function RoomList() {
+  return (
+    <div className="pv-rooms" role="group" aria-label="Four rooms right now: meeting room 2 at 1240 ppm, phone booth 1020, kitchen 880, studio 640">
+      <p className="kit-meta pv-rooms-head">Rooms right now</p>
+      <ul className="pv-rooms-list">
+        {ROOMS.map((r) => (
+          <li key={r.room} className="pv-room" data-alert={r.ppm >= 1000 ? "" : undefined}>
+            <span className="pv-room-name">{r.room}</span>
+            <span className="pv-room-value">
+              <Figure value={String(r.ppm)} unit="ppm" />
+            </span>
+            <span className="kit-meta pv-room-state">{r.state}</span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+const SENSORS = [
+  { label: "CO2", value: "612", unit: "ppm", state: "Fine for focus" },
+  { label: "Fine dust", value: "4", unit: "µg/m³", state: "Clean" },
+  { label: "Temperature", value: "24.1", unit: "°C", state: "Comfortable" },
+  { label: "Humidity", value: "48", unit: "% RH", state: "In range" },
+];
+
+/** The four live readings, as the device reports them. */
+export function SensorGrid() {
+  return (
+    <div className="pv-sensors" role="group" aria-label="Now: CO2 612 ppm, fine dust 4, 24.1 degrees, 48 percent humidity">
+      <p className="kit-meta pv-sensors-head">Desk by the window, now</p>
+      <dl className="pv-sensor-grid">
+        {SENSORS.map((x) => (
+          <div key={x.label} className="pv-sensor">
+            <dt className="kit-meta">{x.label}</dt>
+            <dd className="pv-sensor-value">
+              <Figure value={x.value} unit={x.unit} />
+            </dd>
+            <dd className="kit-meta">{x.state}</dd>
+          </div>
+        ))}
+      </dl>
+    </div>
+  );
+}
+
+const EVENTS = [
+  { t: "14:00", what: "Eight people, door closed", v: "820 ppm" },
+  { t: "15:00", what: "Advice on the display: open a window", v: "1240 ppm", alert: true },
+  { t: "15:05", what: "Window opened", v: "1180 ppm" },
+  { t: "15:40", what: "Back under 800, the display goes quiet", v: "790 ppm" },
+];
+
+/** One afternoon of one room, as the hub logs it. */
+export function EventLog() {
+  return (
+    <div className="pv-log" role="group" aria-label="Meeting room 2, one afternoon: 820 ppm at 14:00, advice at 1240 ppm at 15:00, window opened 15:05, under 800 by 15:40">
+      <p className="kit-meta pv-log-head">Meeting room 2, Tuesday</p>
+      <ol className="pv-log-list">
+        {EVENTS.map((e) => (
+          <li key={e.t} className="pv-log-row" data-alert={e.alert ? "" : undefined}>
+            <span className="kit-num pv-log-time">{e.t}</span>
+            <span className="pv-log-what">{e.what}</span>
+            <span className="kit-num kit-meta pv-log-value">{e.v}</span>
+          </li>
+        ))}
+      </ol>
+    </div>
+  );
+}
+
+/** The air outside against the air at the desk, on one scale. */
+export function ContrastView() {
+  const rows = [
+    { label: "Outside, the city report", v: 420 },
+    { label: "At the desk, door closed", v: 1240, here: true },
+    { label: "At the desk, window open", v: 780 },
+  ];
+  return (
+    <div className="pv-contrast" role="img" aria-label="CO2 outside 420 ppm, at the desk with the door closed 1240 ppm, above the 1000 ppm focus line, and 780 ppm with the window open">
+      <p className="kit-meta">CO2 at 15:00, same street</p>
+      <div className="pv-contrast-rows" aria-hidden="true">
+        {rows.map((r) => (
+          <div key={r.label} className="pv-contrast-row" data-here={r.here ? "" : undefined}>
+            <div className="pv-contrast-label">
+              <span className="pv-contrast-name">{r.label}</span>
+              <span className="pv-contrast-value">
+                <Figure value={String(r.v)} unit="ppm" />
+              </span>
+            </div>
+            <svg className="pv-contrast-track" viewBox="0 0 100 10" preserveAspectRatio="none" focusable="false">
+              <rect x="0" y="0" width={(r.v / 1500) * 100} height="10" className="pv-contrast-bar" />
+              <rect x={(r.v / 1500) * 100} y="0" width={100 - (r.v / 1500) * 100} height="10" className="pv-contrast-ground" />
+              <line x1={(1000 / 1500) * 100} x2={(1000 / 1500) * 100} y1="-2" y2="12" className="pv-limit" vectorEffect="non-scaling-stroke" />
+            </svg>
+          </div>
+        ))}
+      </div>
+      <p className="kit-meta">The dashed line is 1000 ppm, where focus starts to drop.</p>
+    </div>
   );
 }

@@ -39,13 +39,28 @@ describe("vendored fonts", () => {
     expect(ofl).toContain("SIL Open Font License, Version 1.1");
   });
 
-  test("webfont faces swap, and every url() points at a vendored file", () => {
+  test("webfont faces swap, and every url() is /fonts/<a vendored file>", () => {
     const web = faces(fontsCss).filter((f) => f.src.includes("url("));
     expect(web.map((f) => f.family).sort()).toEqual(["Geist", "Geist Mono"]);
     for (const f of web) {
       expect(f.display).toBe("swap");
       expect(f.body).toMatch(/font-weight:\s*100 900;/);
-      for (const m of f.src.matchAll(/url\("\.\/([^"]+)"\)/g)) expect(() => statSync(join(dir, m[1]))).not.toThrow();
+      const urls = [...f.src.matchAll(/url\("([^"]+)"\)/g)].map((m) => m[1]);
+      expect(urls.length).toBe(1);
+      // Absolute, so a bundler keeps it external and never inlines it as base64.
+      expect(urls[0]).toMatch(/^\/fonts\/[A-Za-z0-9-]+\.woff2$/);
+      expect(() => statSync(join(dir, urls[0].slice("/fonts/".length)))).not.toThrow();
+    }
+  });
+
+  test("the web build keeps /fonts external, copies the files, and preloads both faces", () => {
+    const web = join(src, "..", "..", "..", "apps", "web");
+    const build = readFileSync(join(web, "build.ts"), "utf8");
+    expect(build).toContain('external: ["/fonts/*"]');
+    expect(build).toMatch(/copyFonts\(\)/);
+    const html = readFileSync(join(web, "src", "index.html"), "utf8");
+    for (const f of ["Geist-Variable.woff2", "GeistMono-Variable.woff2"]) {
+      expect(html).toContain(`<link rel="preload" href="/fonts/${f}" as="font" type="font/woff2" crossorigin />`);
     }
   });
 

@@ -75,7 +75,7 @@ Mobile is not "the desktop site, but narrower." Below 640px ship a dedicated app
 Use the shared `AppShell` component from `packages/ui` (`AppShell.tsx`, styles `.shell*` in `ui.css`); never hand-roll a shell per app.
 
 ```tsx
-<AppShell title="Leave" current={current} destinations={[
+<AppShell title="Leave" current={current} archetype={{ header: "island", bar: "dock" }} destinations={[
   { id: "new", label: "New", href: "#new", icon: <Icon>{/* koboyo glyph */}</Icon> },
   { id: "requests", label: "Requests", href: "#requests", icon: ... },
   { id: "summary", label: "Summary", href: "#summary", icon: ... },
@@ -87,11 +87,16 @@ Use the shared `AppShell` component from `packages/ui` (`AppShell.tsx`, styles `
 - Two scroll modes, set with the `scroll` prop:
   - `scroll="document"` (the default, and required for marketing, landing, and immersive pages): the document scrolls, the header is sticky, the bottom tab bar is fixed, and the shell reserves its height so nothing hides under it. ScrollTrigger and Lenis work with zero wiring.
   - `scroll="contained"` (dense product screens such as admin and dashboards): a `100dvh` grid whose `main` scrolls on its own. Motion code must call `ScrollTrigger.defaults({ scroller: getScroller() })` once before any trigger, after mount inside `useGSAP` or `useLayoutEffect` (never at module top level, where it still returns `window`), or every scroll reveal stays hidden. `ui_audit` rule `stuck-reveal` catches this.
-- Below 640px: bottom tab bar of 3 to 5 destinations, icon (24) in a 64 by 32 pill over a label, 64px tall targets, `safe-area-inset-bottom`. Active = `layer-2` pill + weight 600 `ink` + `aria-current="page"`.
-- From 640px the same destinations move into the header row as top nav (44px items, active `layer-2`). They never disappear.
-- `ui_audit` rule `mobile-app-shell` fails any screen below 640px without a pinned header and a 3 to 5 item bottom tab bar.
+- Below 640px: a bottom bar of 3 to 5 destinations, 62 to 64px tall targets, `safe-area-inset-bottom`, active = `layer-2` + weight 600 `ink` + `aria-current="page"`. From 640px the same destinations move into the header. They never disappear. There is one Primary nav in the DOM for both sizes.
+- The chrome is a JAL signature, never the stock navbar. Pick a pair with `archetype={{ header, bar, labels }}`, or leave it unset and the page direction picks (`jal-design-system` `references/chrome.md` section 3):
+  - header `island` (inset floating bar, segmented track with one sliding thumb), `rail` (full-width bar on the kit grid that starts in the page tone and condenses on scroll, optional `hideOnScroll`), `masthead` (display wordmark row over a nav row, morphing into one compact bar).
+  - bar `dock` (floating inset dock on a page-tone tray, sliding lozenge, compacts on scroll down), `bar` (full-width Material navigation bar, 64 by 32 pill behind the icon), `split` (the dock plus one detached `primaryAction` segment).
+  - JEV picks the header from the contract's `hm.nav_fingerprint` archetype and the bar through `ui.component_recipe` (`shell.bar.dock`, `shell.bar.bar`, `shell.bar.split`).
+- More than 5 destinations: 4 plus More (a popover sheet, never a desktop hamburger) and a development warning; cut the list to 5. Badges are flat ink, a dot or a count up to `9+`. Anchor destinations get scrollspy; a skip link to `main` always ships.
+- Motion runs only under `.shell-motion` (set after mount, never under reduced motion), on `--ease-standard` and the `--dur-*` tokens; reduced motion means no slide, compaction, or hide.
+- `ui_audit` rule `mobile-app-shell` fails any screen below 640px without a pinned header and a 3 to 5 item bottom bar.
 
-- Bottom tab bar (3 to 5 items max) replaces top nav on mobile. Fixed position, `padding-bottom: env(safe-area-inset-bottom)`, icon + label per tab, active state via tonal fill, ink, and weight, never an underline or a side bar.
+- Bottom bar (3 to 5 items max) replaces top nav on mobile. Fixed position, `padding-bottom: env(safe-area-inset-bottom)`, icon + label per tab (label on the active tab only when `labels="active"`), active state via tonal fill, ink, and weight, never an underline or a side bar.
 - Content area scrolls independently of the shell; header and tab bar never scroll away unless the interaction explicitly calls for it (e.g. hide-on-scroll for a feed).
 - Touch targets minimum 44x44px. No hover-only affordances on mobile, every interactive element needs a visible resting state.
 - Use `100dvh` (dynamic viewport height), never bare `100vh`, to avoid mobile browser chrome jump.

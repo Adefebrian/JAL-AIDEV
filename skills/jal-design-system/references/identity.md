@@ -12,23 +12,42 @@ Read with: `SKILL.md` (Kit first), `directions.md` (the knob values per directio
 
 One grid, placed by every composition on its column lines. Defined in `kit.css` (`.kit-grid`).
 
-| Width | Columns | Page margin | Gutter | Stack gap (between blocks in a section) | Section rhythm (default / tight / generous) |
-|---|---|---|---|---|---|
-| 0 to 639 | 4 | 16 | 16 | 32 | 64 / 40 / 80 |
-| 640 to 1023 | 8 | 32 | 24 | 32 | 80 / 48 / 96 |
-| 1024 and up | 12 | knob `--kit-margin-lg` (32 to 64) | knob `--kit-gutter-lg` (16 to 32) | 48 | knob `--kit-space-lg` (64 to 96) / 48 / knob plus 32 |
+| Width | Columns | Page margin | Gutter | Section rhythm (default / tight / generous) |
+|---|---|---|---|---|
+| 0 to 639 | 4 | 16 | 16 | 64 / 40 / 80 |
+| 640 to 1023 | 8 | 32 | 24 | 80 / 48 / 96 |
+| 1024 and up | 12 | knob `--kit-margin-lg` (32 to 64) | knob `--kit-gutter-lg` (16 to 32) | knob `--kit-space-lg` (64 to 96) / 64 / knob plus 32 |
 
 - Content caps at 1280 (`--kit-max`); above it the page centers. Tracks are `minmax(0, 1fr)`; every child has `min-width: 0`.
 - Parts that live on the page columns use `subgrid` (`.kit-sub`, the section head, Split, StatRow, SpecTable, StickyStory, CTABand), so every section shares one content line and one right edge.
 - Every line height sits on the 4px grid (the `--line-*` tokens); spacing is the 4px scale only.
-- One section rhythm per page. `tight` is only for a band attached to its neighbour (LogoRow, a short proof band); `generous` only for the one signature section. Heading rhythm: space above a heading is always at least twice the space below it.
-- Two sections of the same tone are separated by space, or by the structural rule when the direction turns it on (`--kit-section-rule`, 1px, content width, never full bleed, never between two different tones).
+- **One section rhythm per page:** `Page rhythm` (tight, default, generous) writes `data-rhythm` on `.kit-page`, and every section's block padding is `--kit-gap-section` from it. A section never picks its own rhythm. A band that belongs to its neighbour (LogoRow, a short proof band) is `attached`: it takes the group gap, and the section after it tops up to one full section gap.
+- **One gap between two sections, never two.** Two sections on the same ground: the follower's top padding collapses, so content to content is one section gap. When the direction draws the structural rule (`--kit-section-rule` 1px, `--kit-rule-pad` 1), the follower keeps its padding and the rule sits in the middle (content width, never full bleed, never between two tones). A tone change keeps full padding on both sides of the edge. The CTABand `band` is its own tone and never collapses.
+- Heading rhythm: space above a heading is always at least twice the space below it.
+
+### 1.1a The spacing ladder (tidiness)
+
+Every kit composition spaces by relation, only with these five names (`kit.css`, on `:root`, `[data-direction]`, and `.kit-page`), so a page reads as one hand at every width:
+
+| Relation | Variable | 0 to 639 | 640 to 1023 | 1024 and up | Used for |
+|---|---|---|---|---|---|
+| inside one item | `--kit-gap-inside` | 8 | 8 | 12 | a title and its body, a value and its caption, a label and its value, action buttons |
+| between related items | `--kit-gap-related` | 16 | 16 | 20 | a heading and its lead, the rows of a text column, text and its actions, items of one list |
+| inset | `--kit-inset` | 20 | 24 | 32 | the padding inside a tile, cell, panel, or live view |
+| between groups | `--kit-gap-group` | 32 | 40 | 48 | the section head and its body, stacked text and media, two groups of one table |
+| between sections | `--kit-gap-section` | page rhythm | page rhythm | page rhythm | every section's block padding |
+
+- **Proximity law:** inside < related < inset < group < section, at every width (`kit-css.test.ts` checks it). The gap between items of one list is never larger than the padding inside an item, and never a section-sized gap.
+- **Short items share one surface.** Items that are a title and a sentence sit in one grouped surface: the hairline cell grid (`.kit-cells`), which on a phone is a single panel with a hairline between rows (the grouped inset list), never N separate cards. Separate tiles only for items that carry media or substantial content (Bento tiles, FeatureGrid lead tiles, pricing plans).
+- **Radius scales with the element:** the large card radius only on large frames and panels; a list row, tab, or control takes the control tier; a radius never exceeds about a third of its element's height.
+- **No card around section text.** A heading, a lead, and actions sit on the section ground; only media, data views, and grouped items get a frame.
+- **Audit attributes.** Every top-level section writes `data-kit-composition` (the recipe id) and `data-variant` (its structure), and the page root writes `data-rhythm`, so `ui_audit`'s tidiness rules and `readPageLedger` read rhythm and repetition from the markup.
 
 ### 1.2 Type
 
 - **The generator is fixed:** `round(16 x 1.2^n)` from `tokens.css`. A direction picks which steps carry the page; it never changes the ratio.
 - **Five roles per page, no sixth size:** display (the Masthead headline only, one per page), heading (section h2, stat values, prices, quotes), title (19, h3 and item titles), body (16), meta (13, labels, captions, units). `kit.css` sets no other size, and a test enforces it.
-- **Display ramp:** `--kit-display-sm/md/lg-size` step at 768 and 1024 (Carbon's responsive display token, declared once), weight 500 or 600, tracking `--tracking-display` (-0.01 to -0.04em), `font-optical-sizing: auto`, `text-wrap: balance`.
+- **Display ramp:** `--kit-display-sm/md/lg-size` step at 768 and 1024 (Carbon's responsive display token, declared once), weight 500 or 600, tracking `--tracking-display` (-0.01 to -0.04em), `font-optical-sizing: auto`, `text-wrap: balance`. **Capped by measure:** the size is `min(step, fit)`, where the fit comes from the headline's length (`--kit-display-chars`, written by Masthead) and its column (the masthead text is an inline-size container): at most 3 lines below 640, 2 from 640, and 1 from 1024 for a headline of 22 characters or fewer. The line height follows the size on the 4px grid. A headline never grows past the direction's step and never breaks into three awkward lines on a desktop.
 - **Numerals, Carbon style:** every spec value, list value, chart tick, and time is `.kit-num`: tabular mono (`--kit-font-mono`), `tabular-nums slashed-zero` (Geist Mono draws its zero slashed by default). Units are set at the meta size in ink-muted, joined by a no-break space (`<Figure value unit>`). Big figures (StatRow, price, Bento stat) use `--kit-font-figure` (the display face with tabular numerals by default; mono in D3 and D10; the text face in D7 and D12). A face without tabular figures never carries figures.
 - **One heading plus one lead.** Every section head is `SectionHead`: an h2 and one lead line, split across the grid (heading on 1 to 5, lead on 7 to 12) or stacked (1 to 8). Two stacked headings, a kicker, an eyebrow, or a numbered marker ("01") above a heading cannot be expressed with the kit.
 - **Families (full rules in `typography.md`):** Geist Sans and Geist Mono are the default, vendored in `packages/ui/src/fonts` (SIL OFL 1.1) with metric-matched fallbacks and read through `--font-sans`, `--font-display`, `--font-mono`. Typography is not locked to them: each page takes one pairing from the curated OFL pool, a text family plus at most one display family plus one mono, so at most three families. A section may switch only its display role when its content calls for it (an editorial quote, a manifesto line), never the text role, and only while the page stays at three families. The scale, the five roles, the weights, and tabular numbers stay fixed whatever the face. Every stack ends in the Geist stack. Each direction has a default pairing (`typography.md` section 5, set in `kit.css`); JEV `ui.type_pairing` picks among candidates at direction time. Pool faces are fetched into the client project with `scripts/assets/fonts.ts`, never vendored in the plugin.
@@ -60,7 +79,7 @@ The only building blocks of a page. Each renders its own `Section` (except Masth
 | `Page` | root | carries `data-direction` (and `data-theme="dark"` for D13 only); paints the canvas; wrap the AppShell with it, or set `data-direction` on `<html>` |
 | `Section` | a band | `tone` base or layer, `rhythm` tight, default, generous; the 4/8/12 grid inside; for hand-written layout that still lands on the grid |
 | `SectionHead` | one heading plus one lead | `layout` split or stack; the only way a section is titled |
-| `Masthead` | the hero, once, first | variants `left` (type-led, headline on 1 to 10), `centered` (Marquee or wordmark openings, pair with a centered Quote), `split` (text on 5, media on 7, `mediaSide` flips it), `overlay` (full-bleed media as a decorative backdrop band, text on a solid surface panel with a hairline, stacked below 1024, media `aria-hidden`); 70 to 90% of the first viewport; bottom padding 1.3x the top; one primary and at most one secondary action |
+| `Masthead` | the hero, once, first | variants `left` (type-led, headline on 1 to 10, an optional proof strip below), `centered` (Marquee or wordmark openings, pair with a centered Quote), `split` (text on 5, a MediaFrame on 7, `mediaSide` flips it); the headline never sits in a card or panel; the display size is the direction's step capped by measure (at most 2 lines from 640, 3 below, 1 from 1024 for 22 characters or fewer, balanced); 70 to 90% of the first viewport; bottom padding 1.3x the top; one primary and at most one secondary action |
 | `Split` | one statement beside one proof | ratios 5/7, 7/5, 4/8, 8/4 (text/media), `mediaSide`, `mobileMedia` before or after; the extra slot takes a SpecRail or a short list |
 | `BentoGrid` + `BentoTile` | mixed claims, each a real view | a declared `grid-template-areas` map (`lg` 2 to 4 columns, optional `md` 1 or 2), validated: no dead cell, rectangles only, every area has a tile, only media tiles span rows; tile kinds `media`, `stat`, `text`, `list` share one chrome |
 | `SpecRail` / `SpecTable` | the data identity | see 1.5 |
@@ -73,9 +92,43 @@ The only building blocks of a page. Each renders its own `Section` (except Masth
 | `CTABand` | the close | start aligned, heading and lead on 1 to 6, actions and proof from the page's own world (a price, a delivery promise, a SpecRail) on 8 to 12 |
 | `PricingTable` | Carbon-structured pricing | 2 to 4 plans in cells (name, price in tabular figures with unit and period, summary, included list, action on one baseline); the recommended plan has the filled action and a surface cell, never a badge; optional comparison `<table>` with words, not color |
 | `Footer` | the chrome close | one archetype from the `directions.md` chrome table: `inline`, `statement`, `masthead`, `letter`, `index` (hubs and docs only) |
-| `StickyStory` + `useStickyStory` | a scroll story | at 1024 and up a sticky stage (columns 7 to 12) shows the active step's media while the steps (1 to 5) scroll; the step crossing the middle of the real scroller becomes active (IntersectionObserver rooted with `getScroller` from AppShell, so contained shells work); below 1024 each step shows its media in flow; reduced motion swaps frames with no travel or fade; inactive frames are `visibility: hidden`, never stacked visibly |
+| `StickyStory` + `useStickyStory` | a scroll story | at 1024 and up the whole story pins: every step is on screen, distributed along the stage height beside the sticky stage (the text column is never empty), the active step in ink and the others in ink-subtle (muted, never hidden); a hidden track of markers gives each step the same pinned scroll, and the marker crossing the middle of the real scroller makes its step active (IntersectionObserver rooted with `getScroller` from AppShell, so contained shells work); below 1024 each step shows its media in flow; reduced motion swaps frames with no travel or fade; inactive frames are `visibility: hidden`, never stacked visibly |
 
-Helpers: `Figure` (value plus unit), `validateBentoLayout`, `validatePageRecipe`, `PAGE_RECIPES`, `DIRECTIONS`.
+Helpers: `Figure` (value plus unit, `count` for the count-up), `staggerStyle`, `validateBentoLayout`, `BENTO_PRESETS` and `bentoPreset`, `validatePageRecipe`, `validateVarietyLedger`, `readPageLedger`, `PAGE_RECIPES`, `DIRECTIONS`, and the motion layer (`useKitMotion`, `armMotion`, `countUp`, section 7).
+
+Media in every slot is a MediaFrame holding a real image or poster, a live data view built from kit roles (a readout, a list, a chart), or an honest placeholder that names its subject. Never a drawn or CSS-faked product (`blocks.md`).
+
+### 1.7 Structural variants
+
+Each composition has two or three variants that change structure, never colour, all on the grid and inside the law. Fewer, excellent variants over many: a variant ships only when it reads as finished at 375 and 1280. The ledger (section 5.1) keeps neighbours from rhyming. JEV picks among them: `ui.region_gate` maps the region's container to the composition (section 5.3), then `ui.component_recipe` takes `kit.<composition>.<variant>` candidates with the criteria below.
+
+| Composition | Variant | Job | JEV picks it when |
+|---|---|---|---|
+| Masthead | `left` | type-led opening, optional SpecRail strip as proof | the product's proof is a handful of facts, or there is no honest media yet |
+| | `centered` | a wordmark or a Marquee | the name is the composition; pair with a centered Quote |
+| | `split` | the claim beside one live view or real image | there is one real product view that proves the headline |
+| Split | `inset` | text beside a framed media on the ratio | the default for one statement and one proof |
+| | `bleed` | the frame's surface runs to the viewport edge on its side; a live view's content and the caption stay on the grid | the one hero-grade product view below the Masthead; at most once per page |
+| | `over-spec` | text across the top, the media full width, a SpecRail strip under it | a claim whose proof is four measured values |
+| StatRow | `row` | 2 to 4 figures across the grid | figures that stand on their own |
+| | `lead` | a heading and one lead on 1 to 5, the figures as a 2 by 2 block on 7 to 12 | a claim the numbers then prove |
+| | `chart` | the heading and figures on 1 to 6 (figures on the chart's baseline), one short chart on 7 to 12 | numbers that have a shape over time |
+| FeatureGrid | `cells` | equivalent capabilities in the hairline cell grid | three to eight peers with a title and a sentence each |
+| | `rows` | title, body, and a measured value per row between hairlines | capabilities that each carry a number |
+| | `detail` | a selectable list on 1 to 5, the active item's media on 7 to 12 (tabs, arrows, first active without JS) | three to five capabilities that each need a picture |
+| | `lead` | two media tiles, then the other four as one hairline cell group | two headline capabilities and four supporting ones |
+| SpecTable | `grouped` | group name and note on 1 to 4, its table on 5 to 12 | a datasheet read top to bottom |
+| | `rail` | prose or media on 1 to 6 beside a sticky rail of every group on 8 to 12 | a spec a reader checks while reading the story beside it |
+| BentoGrid | preset (three per tile count) | `lead-left`, `lead-right`, `row` (3 tiles); `lead-left`, `lead-right`, `band` (4); `lead-left`, `lead-center`, `columns` (5); `lead-left`, `grid`, `stagger` (6) | the count of real claims; the lead area holds the one media tile; two Bentos on a page never share a preset |
+| Quote | `pull` | a large pull quote and the name | one voice that needs no numbers |
+| | `results` | the quote on 1 to 7, the customer's own figures on 9 to 12 | a case-study voice with numbers behind it |
+| CTABand | `split` | heading and lead on 1 to 6, actions and proof on 8 to 12 | the default close |
+| | `form` | heading on 1 to 5, a one-field form with its submit on one row on 7 to 12 | a close that asks for one field |
+| | `band` | a full-bleed tint band (tone `band`), heading, actions, and a SpecRail strip on the grid | the one close a brand wants remembered |
+| FAQ | `split` | details rows beside the head | more than four questions, or long answers |
+| | `open` | question and answer pairs in two columns, every answer visible | four to six short answers nobody should have to open |
+| StickyStory | `stage-end`, `stage-start` | media on the right or the left | flip it when the page's other stage sits on the same side |
+| LogoRow, PricingTable, Footer | one structure each (Footer has its five archetypes) | | |
 
 ## 2. Dynamic expression: the knobs
 
@@ -129,7 +182,7 @@ A project may define its own identity instead of a preset, when the contract say
 
 White-first page (dark only as an explicit dark mode, D13 needs `data-theme="dark"`); no gradients on page chrome; no shadows, no glow, no blur; no purple, violet, or indigo; no emoji; no em-dash; no eyebrow labels, kickers, or numbered section markers ("01" counts); no side lines, top or bottom accent bars, decorative lines, connectors, or marker dots; no overlap and nothing outside its box; 44px controls; the mobile app-shell below 640; reduced motion keeps meaning with no travel. `kit.css` is tested for gradients, shadows, purple hues, em-dash, side borders, uppercase tracking, fill hacks, raw hex outside the knob layer, and any sixth font size (`kit/kit-css.test.ts`).
 
-The one overlay: `Masthead variant="overlay"` puts text on a solid, opaque surface panel above a decorative, `aria-hidden`, pointer-inert media band at 1024 and up, and stacks the two below 1024. It is the only lawful form of text over media: never a translucent scrim, never text directly on the image, and every fact the media shows is also in the panel (`hm.survives_deletion`).
+No text over media anywhere in the kit: the former `Masthead variant="overlay"` (a text panel over a backdrop band) is removed, and a hero headline never sits in a card or a panel. The accent has one role per direction; with `filled_primary` (D2, D9) it fills only the page's two conversion actions (the Masthead's and the CTABand's first action, `--kit-action`), which never share a view, and every other primary action stays ink.
 
 ## 5. Composition rules and page recipes
 
@@ -142,6 +195,14 @@ The one overlay: `Masthead variant="overlay"` puts text on a solid, opaque surfa
 5. A `StatRow` never directly follows the Masthead (no big-number hero).
 6. The Footer is last.
 
+The variety ledger (`validateVarietyLedger`, run by `validatePageRecipe` when entries carry variants: `"split.bleed"` or `{ composition, variant }`) works one level down:
+
+7. No two adjacent sections share composition and variant.
+8. No composition and variant appears more than twice on a page.
+9. A marketing page uses at least three different compositions (the Footer does not count).
+
+`readPageLedger(root)` builds the entries from rendered markup, so a built page is checked the same way as its plan.
+
 Also, outside the validator: adjacent sections change tone or structure, and a page keeps one text alignment (start by default; a centered Masthead pairs with a centered Quote). The same Masthead variant and footer archetype are not reused across two surfaces of one product without a knob delta (`directions.md` section 4).
 
 ### 5.2 Page recipes
@@ -150,7 +211,7 @@ Each recipe lists compositions in section order (the user's question order). JEV
 
 | Page | Compositions | Notes |
 |---|---|---|
-| Product landing | masthead, logo-row, split, stat-row, sticky-story, bento, spec-table, quote, feature-grid, pricing, faq, cta-band, footer | the kit preview builds exactly this; hardware leans on MediaFrame canvas or real renders, software on `view` frames of the real product |
+| Product landing | masthead, logo-row, split, stat-row, sticky-story, bento, spec-table, quote, feature-grid, pricing, faq, cta-band, footer | the kit preview's page A builds this with its variants (section 6); hardware leans on MediaFrame canvas or real renders, software on `view` frames of the real product |
 | SaaS landing | masthead, logo-row, bento, sticky-story, split, quote, pricing, faq, cta-band, footer | the Masthead proof slot or the Bento carries a live product fragment, never a drawn screenshot of a browser |
 | Company profile | masthead, split, stat-row, feature-grid, quote, split, cta-band, footer | the two Splits flip `mediaSide` and ratio (5/7 then 7/5) so neighbours never rhyme |
 | Portfolio | masthead, bento, split, quote, media, cta-band, footer | Bento tiles are real projects (media tiles), the `media` section is one full MediaFrame band |
@@ -164,8 +225,8 @@ No new catalog IDs; the existing gates carry the kit.
 
 1. Write the section concept lines (`jal-ui-taste` Section concept law), then the candidate stack from the recipe.
 2. `ui.region_gate` per region, as always. Its `container` answer maps to a composition: `bento` to BentoGrid, `rows` to SpecTable, SpecRail, or FAQ, `divided-section` to FeatureGrid or StickyStory, `plain-spacing` to Masthead, Split, Quote, StatRow, or CTABand, `card` to a single MediaFrame or panel inside a Section.
-3. `ui.component_recipe` per surviving section, with the kit composition and variant as candidates (for example `kit.masthead.split`, `kit.masthead.overlay`, `kit.split.7-5`, `kit.bento.2x2-lead`), layered with motion recipes as the section's tier allows. The kit composition is always a candidate, the way the JAL Core component spec is.
-4. Run `validatePageRecipe` on the final order; fix and re-gate before markup.
+3. `ui.component_recipe` per surviving section, with the kit composition and its variants as candidates (`kit.masthead.split`, `kit.split.bleed`, `kit.stat-row.lead`, `kit.feature-grid.detail`, `kit.bento.lead-center`, the criteria in section 1.7), layered with motion recipes as the section's tier allows (section 7). The kit composition is always a candidate, the way the JAL Core component spec is.
+4. Run `validatePageRecipe` on the final ledger (composition plus variant); fix and re-gate before markup.
 5. Record in the direction contract: the preset or derived knob set, the Masthead variant, the Footer archetype, the composition list, and any hand-written section with its reason.
 
 ### 5.4 Hand-written layout (the exception)
@@ -174,14 +235,35 @@ Only when no kit composition carries the section's job, and only on the kit grid
 
 ## 6. Preview and proof
 
-`packages/ui/src/kit/preview/` renders the product landing recipe (a sample desk air monitor, sample content) from the kit only.
+`packages/ui/src/kit/preview/` renders two pages from the kit only (a sample desk air monitor, sample content, every media slot a live data view):
+
+- **Page A** `/landing` (D1 by default): the tidy product landing on the kit's own motion. Ledger: masthead.split, logo-row.row, split.inset, stat-row.lead, sticky-story.stage-start, bento.lead-right, feature-grid.rows, quote.results, spec-table.grouped, pricing.cells-compare, faq.open, cta-band.form, footer.inline.
+- **Page B** `/motion` (D3 by default): the same system in another direction with the motion module on (Lenis on the GSAP clock, `KitMotion tier={3}`). Ledger: masthead.left, split.bleed, stat-row.chart, feature-grid.lead, sticky-story.stage-end, spec-table.rail, quote.pull, feature-grid.detail, bento.lead-left, faq.split, cta-band.band, footer.statement.
 
 ```bash
-bun packages/ui/src/kit/preview/serve.ts 4190      # builds with Bun.build, serves
-# compare board (D1, D9, D11 side by side): http://127.0.0.1:4190/
-# one direction:                            http://127.0.0.1:4190/landing?d=D9
-bun mcp/jal-design/server.ts shots "http://127.0.0.1:4190/landing?d=D9" --widths 1280,375 --out <dir>
-bun mcp/jal-design/server.ts audit "http://127.0.0.1:4190/landing?d=D9"
+# page B needs lenis and gsap from a scratch install, never the repo:
+#   mkdir /tmp/motion-deps && cd /tmp/motion-deps && bun add lenis@1.3.26 gsap@3.15.0 @gsap/react@2.1.2 react@~19.3.0 react-dom@~19.3.0
+KIT_PREVIEW_DEPS=/tmp/motion-deps bun packages/ui/src/kit/preview/serve.ts 4190
+# page A: http://127.0.0.1:4190/landing?d=D1     page B: http://127.0.0.1:4190/motion?d=D3
+# ?reduce=1 answers the reduced motion query as matching, to check the finished page
+bun mcp/jal-design/server.ts shots "http://127.0.0.1:4190/landing?d=D1" --widths 1280,375 --out <dir inside the cwd>
+bun mcp/jal-design/server.ts audit "http://127.0.0.1:4190/motion?d=D3"
 ```
 
-The preview is never the app's starter page and never shipped as one. Tests live in `kit/kit.test.tsx` (markup, landmarks, Bento validation, FeatureGrid headings, recipes, the StickyStory observer on document and contained shells) and `kit/kit-css.test.ts` (law on `kit.css`).
+The preview is never the app's starter page and never shipped as one. Tests: `kit/kit.test.tsx` (markup, landmarks, Bento validation, FeatureGrid headings, recipes, the StickyStory observer on document and contained shells), `kit/variants.test.tsx` (every variant, the presets, the ledger, both preview ledgers, the audit attributes), `kit/motion.test.tsx` (the motion layer and the count-up), `kit/kit-css.test.ts` (law on `kit.css`, the measure cap, the accent role, the proximity law).
+
+## 7. The motion layer
+
+Motion is part of the kit, at two costs.
+
+**The kit default (T0 and T1, zero dependencies, `kit/motion.ts`).** Markup carries intent only: `data-motion="rise"` on a block, `"item"` on each item of a list (with the capped stagger `--kit-i`), `"count"` on a figure. After mount, `useKitMotion` (in `Page`) arms the page: each target it will observe gets `data-motion-state="pending"`, and an IntersectionObserver rooted on the real scroller (`getScroller` after mount) flips it to `"in"` once. `kit.css` hides only the pending state and only without reduced motion: fade plus a 12px rise on `--ease-standard` at `--dur-400`, `--stagger-item` capped at the sixth item. No JavaScript, a failed bundle, no IntersectionObserver, and reduced motion all render the finished page, and a target added after arming is never pending, so nothing can stick (`ui_audit` stuck-reveal stays clean). Figures count up once on the standard curve at `--dur-600`, their box locked to the final width first, digits tabular, so nothing shifts. State layers follow the JAL state recipe (hover and press tints, instant focus rings; the detail tabs carry state in ink).
+
+| Page `motion` | JEV `motion.intensity` | Kit default |
+|---|---|---|
+| `none` | 0 still (forms, pricing-only, docs, legal) | state layers only |
+| `quiet` (default) | 1 | one entrance per block, once |
+| `staged` | 2 | blocks without items plus every item staggered |
+
+Which composition gets which default: Masthead text then media (stagger 1); SectionHead, Split text and media, Quote, CTABand, FAQ list: one rise per block; FeatureGrid items, pricing plans, Bento tiles, FAQ open pairs, stat items: item stagger at `staged`; StatRow, Bento stat, and Quote results figures: count-up; StickyStory: the active step and frame swap (CSS, no travel under reduced motion).
+
+**The motion module (T2 and T3, `templates/modules/motion`).** Lenis is the default smooth scroll for marketing and immersive pages, never ScrollSmoother and never both: `SmoothScroll` wires Lenis to the one GSAP clock (gsap.ticker drives `lenis.raf`, `lagSmoothing(0)`, `lenis.on("scroll", ScrollTrigger.update)`), after mount, on window or a contained shell's scroller, off under reduced motion and on touch-first devices unless the page opts in, with in-page anchors through `lenis.scrollTo` minus the header. `KitMotion tier` takes over the kit's entrances (it claims the page with `data-motion-engine` so there is one owner): tier 2 adds SplitText line reveals on the h1 and section headings, tier 3 (1024 and up) scrubs the StickyStory frames across the kit's pin, drifts bleed image or canvas media, and brings the SpecTable rail rows in order. JEV `motion.choreography` per section picks the pattern (`reveal` is the kit default; `stagger_sequence` is tier 2; `scrub` and `pinned_sequence` are tier 3 and map to the story scrub). The module's README has the file map, the wiring, and the budget.

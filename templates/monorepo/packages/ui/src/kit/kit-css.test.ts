@@ -59,7 +59,7 @@ describe("kit.css law", () => {
 
   test("five type roles only: display, heading, title (19), body (16), meta (13)", () => {
     const sizes = new Set([...components.matchAll(/font-size\s*:\s*var\((--[a-z0-9-]+)\)/g)].map((m) => m[1]));
-    const allowed = new Set(["--kit-display-sm-size", "--kit-display-md-size", "--kit-display-lg-size", "--kit-heading-sm-size", "--kit-heading-lg-size", "--text-1", "--text-0", "--text-n1"]);
+    const allowed = new Set(["--kit-display-size", "--kit-display-sm-size", "--kit-display-md-size", "--kit-display-lg-size", "--kit-heading-sm-size", "--kit-heading-lg-size", "--text-1", "--text-0", "--text-n1"]);
     for (const s of sizes) expect({ s, allowed: allowed.has(s) }).toEqual({ s, allowed: true });
   });
 
@@ -80,6 +80,43 @@ describe("kit.css law", () => {
     for (let i = 1; i <= 13; i++) expect(knobs).toContain(`[data-direction="D${i}"]`);
     expect(knobs).toContain('[data-direction="D13"][data-theme="dark"]');
     expect(knobs).not.toMatch(/prefers-color-scheme/);
+  });
+
+  test("the display size is the direction's step capped by measure, never larger", () => {
+    const display = rules(components).find((r) => r.selector === ".kit-display");
+    expect(display?.body).toMatch(/--kit-display-size:\s*min\(var\(--kit-display-step\), var\(--kit-display-fit\), 100cqi \/ 6\);/);
+    expect(display?.body).toMatch(/font-size:\s*var\(--kit-display-size\);/);
+    expect(css).toMatch(/\.kit-masthead-text \{\s*container-type: inline-size;/);
+  });
+
+  test("the accent fills only the conversion actions, never every primary", () => {
+    for (const d of ["D2", "D9"]) {
+      const at = knobs.indexOf(`[data-direction="${d}"]`);
+      const block = knobs.slice(at, knobs.indexOf("}", at));
+      expect(block).not.toMatch(/--color-primary:/);
+      expect(block).toMatch(/--kit-action: var\(--color-accent\);/);
+    }
+  });
+
+  test("the motion layer hides only a pending state, and only without reduced motion", () => {
+    const hide = components.match(/@media \(prefers-reduced-motion: no-preference\) \{[\s\S]*?\n\}/)?.[0] ?? "";
+    expect(hide).toContain('[data-motion-state="pending"]');
+    // The pending state never moves the box: the rise plays only after reveal.
+    const pending = rules(components).find((r) => r.selector.includes('[data-motion-state="pending"]'));
+    expect(pending?.body).not.toMatch(/transform/);
+    for (const r of rules(components)) {
+      if (/opacity:\s*0\s*;/.test(r.body)) expect({ sel: r.selector, ok: /data-motion-state="pending"|kit-story-frame|^from$/.test(r.selector) }).toEqual({ sel: r.selector, ok: true });
+    }
+  });
+
+  test("proximity: related gaps are smaller than item insets, insets smaller than group gaps", () => {
+    const px = (v: string) => Number(v.match(/--space-(\d+)px/)?.[1] ?? NaN);
+    const blocks = rules(css).filter((r) => r.selector.includes(".kit-page") && r.body.includes("--kit-gap-related"));
+    expect(blocks.length).toBeGreaterThanOrEqual(1);
+    const base = decls(blocks[0].body);
+    expect(px(base["--kit-gap-inside"])).toBeLessThan(px(base["--kit-gap-related"]));
+    expect(px(base["--kit-gap-related"])).toBeLessThan(px(base["--kit-inset"]));
+    expect(px(base["--kit-inset"])).toBeLessThan(px(base["--kit-gap-group"]));
   });
 
   test("reduced motion collapses the story and the chevron", () => {

@@ -64,18 +64,34 @@
   --kit-radius-media: var(--radius-12);
   --kit-radius-control: var(--radius-8);
 
-  /* Hairline and the structural rule between two same-tone sections. */
+  /* Hairline and the structural rule between two same-tone sections.
+     --kit-rule-pad is 1 exactly when --kit-section-rule is 1px: with a rule,
+     a same-tone follower keeps its top padding so the rule sits mid-gap;
+     without one, the follower's top padding collapses and the gap between
+     the two is one section gap, never two. */
   --kit-rule-color: var(--color-border);
   --kit-section-rule: 0px;
+  --kit-rule-pad: 0;
+
+  /* The CTABand band variant's ground: one flat tint of the accent,
+     always light enough for ink text. */
+  --kit-band: color-mix(in oklab, var(--color-accent) 7%, var(--color-surface));
 
   /* Big figures (stat, price, bento stat) use the display face with
      tabular numerals; row values use the mono. A direction may set mono,
      and must when its display face has no tabular figures. */
   --kit-font-figure: var(--kit-font-display);
 
-  /* Accent roles. signal: the one key figure; link: text_and_icon role. */
+  /* Accent roles. signal: the one key figure; link: text_and_icon role;
+     action: filled_primary, which fills only the page's conversion actions
+     (the Masthead's and the CTABand's first action, never in one view),
+     every other primary action stays ink. */
   --kit-signal: var(--color-ink);
   --kit-link: var(--color-ink);
+  --kit-action: var(--color-primary);
+  --kit-action-hover: var(--color-primary-hover);
+  --kit-action-active: var(--color-primary-active);
+  --kit-action-contrast: var(--color-primary-contrast);
 }
 
 /* D1 research_notebook (the JAL Core default). Quiet, type-led, whitespace. */
@@ -111,9 +127,10 @@
   --color-page: #f7f8f8;
   --color-accent: #0b7a55; /* HSL 160, 5.34:1 on surface */
   --color-accent-contrast: var(--color-surface);
-  --color-primary: var(--color-accent);
-  --color-primary-hover: color-mix(in oklab, white 8%, var(--color-accent) 92%);
-  --color-primary-active: color-mix(in oklab, white 12%, var(--color-accent) 88%);
+  --kit-action: var(--color-accent);
+  --kit-action-hover: color-mix(in oklab, white 8%, var(--color-accent) 92%);
+  --kit-action-active: color-mix(in oklab, white 12%, var(--color-accent) 88%);
+  --kit-action-contrast: var(--color-accent-contrast);
   --tracking-display: -0.025em;
   --kit-display-weight: 600;
   --kit-display-lg-size: var(--text-display-2);
@@ -124,6 +141,7 @@
   --kit-radius-media: var(--radius-12);
   --kit-radius-control: var(--radius-8);
   --kit-section-rule: 1px;
+  --kit-rule-pad: 1;
 }
 
 /* D3 blueprint_hairline. Visible structure is the ornament. */
@@ -145,6 +163,7 @@
   --kit-radius-control: var(--radius-8);
   --kit-rule-color: var(--color-border-strong);
   --kit-section-rule: 1px;
+  --kit-rule-pad: 1;
   --kit-signal: var(--color-accent);
   --kit-font-figure: var(--kit-font-mono);
 }
@@ -271,9 +290,10 @@
   --color-page: #ffffff;
   --color-accent: #0a5bd3; /* HSL 216, 6.09:1, filled primary (buy) */
   --color-accent-contrast: var(--color-surface);
-  --color-primary: var(--color-accent);
-  --color-primary-hover: color-mix(in oklab, white 8%, var(--color-accent) 92%);
-  --color-primary-active: color-mix(in oklab, white 12%, var(--color-accent) 88%);
+  --kit-action: var(--color-accent);
+  --kit-action-hover: color-mix(in oklab, white 8%, var(--color-accent) 92%);
+  --kit-action-active: color-mix(in oklab, white 12%, var(--color-accent) 88%);
+  --kit-action-contrast: var(--color-accent-contrast);
   --tracking-display: -0.02em;
   --tracking-heading: -0.02em;
   --kit-display-weight: 600;
@@ -312,6 +332,7 @@
   --kit-radius-control: var(--radius-4);
   --kit-rule-color: var(--color-border-strong);
   --kit-section-rule: 1px;
+  --kit-rule-pad: 1;
   --kit-font-figure: var(--kit-font-mono);
 }
 
@@ -337,6 +358,7 @@
   --kit-radius-media: var(--radius-4);
   --kit-radius-control: var(--radius-pill);
   --kit-section-rule: 1px;
+  --kit-rule-pad: 1;
 }
 
 /* D12 friendly_consumer. Rounded display, big radii, one bright hue. */
@@ -393,20 +415,41 @@
   --kit-radius-media: var(--radius-12);
   --kit-radius-control: var(--radius-8);
   --kit-section-rule: 1px;
+  --kit-rule-pad: 1;
 }
 
 /* Breakpoint resolution. Resolved on the same element as the knobs (or a
    descendant), so a direction on <html> or on .kit-page both work. */
+/* The spacing ladder. Every kit composition spaces by relation, and only
+   with these names, so a page reads as one hand at every width:
+     --kit-gap-inside   inside one item: a title and its body, a value and
+                        its caption, a label and its value
+     --kit-gap-related  between related items: a heading and its lead, the
+                        rows of a text column, text and its actions, items
+                        of a list
+     --kit-gap-group    between groups inside one section: the section head
+                        and its body, stacked text and media, a table and its
+                        caption
+     --kit-gap-section  the block padding of every section, from the page's
+                        one rhythm (Page rhythm, data-rhythm on .kit-page)
+     --kit-inset        the padding inside a tile, cell, or panel edge
+   --kit-stack is the legacy name of --kit-gap-group. */
 :root,
 [data-direction],
 .kit-page {
   --kit-margin: var(--space-16px);
   --kit-gutter: var(--space-16px);
   --kit-cols: 4;
-  --kit-stack: var(--space-32px);
+  --kit-gap-inside: var(--space-8px);
+  --kit-gap-related: var(--space-16px);
+  --kit-gap-group: var(--space-32px);
+  --kit-inset: var(--space-20px);
+  --kit-stack: var(--kit-gap-group);
   --kit-space: var(--space-64px);
   --kit-space-tight: var(--space-40px);
   --kit-space-loose: var(--space-80px);
+  --kit-gap-section: var(--kit-space);
+  --kit-rise: var(--space-12px);
 }
 
 @media (min-width: 640px) {
@@ -416,6 +459,8 @@
     --kit-margin: var(--space-32px);
     --kit-gutter: var(--space-24px);
     --kit-cols: 8;
+    --kit-gap-group: var(--space-40px);
+    --kit-inset: var(--space-24px);
     --kit-space: var(--space-80px);
     --kit-space-tight: var(--space-48px);
     --kit-space-loose: var(--space-96px);
@@ -429,11 +474,24 @@
     --kit-margin: var(--kit-margin-lg);
     --kit-gutter: var(--kit-gutter-lg);
     --kit-cols: 12;
-    --kit-stack: var(--space-48px);
+    --kit-gap-inside: var(--space-12px);
+    --kit-gap-related: var(--space-20px);
+    --kit-gap-group: var(--space-48px);
+    --kit-inset: var(--space-32px);
     --kit-space: var(--kit-space-lg);
-    --kit-space-tight: var(--space-48px);
+    --kit-space-tight: var(--space-64px);
     --kit-space-loose: calc(var(--kit-space-lg) + var(--space-32px));
   }
+}
+
+/* One rhythm per page. Declared after the breakpoint blocks on a more
+   specific selector, so it wins at every width. */
+.kit-page[data-rhythm="tight"] {
+  --kit-gap-section: var(--kit-space-tight);
+}
+
+.kit-page[data-rhythm="generous"] {
+  --kit-gap-section: var(--kit-space-loose);
 }
 
 /* =====================================================================
@@ -476,7 +534,7 @@ html:has(.kit-page) > body {
   display: grid;
   grid-template-columns: repeat(var(--kit-cols), minmax(0, 1fr));
   column-gap: var(--kit-gutter);
-  row-gap: var(--kit-stack);
+  row-gap: var(--kit-gap-group);
   inline-size: min(calc(100% - 2 * var(--kit-margin)), var(--kit-max));
   margin-inline: auto;
   min-width: 0;
@@ -497,10 +555,11 @@ html:has(.kit-page) > body {
   display: grid;
   grid-template-columns: subgrid;
   column-gap: var(--kit-gutter);
-  row-gap: var(--kit-stack);
+  row-gap: var(--kit-gap-group);
 }
 
-/* Section: a band. Tone and rhythm are the only variables. */
+/* Section: a band. Tone is its only variable; the block padding is the
+   page rhythm. */
 .kit-section {
   background: transparent;
   color: var(--color-ink);
@@ -511,23 +570,38 @@ html:has(.kit-page) > body {
   color: var(--color-ink);
 }
 
+.kit-section[data-tone="band"] {
+  background: var(--kit-band);
+  color: var(--color-ink);
+}
+
 .kit-section > .kit-grid {
-  padding-block: var(--kit-space);
+  padding-block: var(--kit-gap-section);
 }
 
-.kit-section[data-rhythm="tight"] > .kit-grid {
-  padding-block: var(--kit-space-tight);
+/* A band attached to its neighbour (LogoRow, a short proof band). */
+.kit-section[data-attached] > .kit-grid {
+  padding-block: var(--kit-gap-group);
 }
 
-.kit-section[data-rhythm="generous"] > .kit-grid {
-  padding-block: var(--kit-space-loose);
-}
-
-/* The structural rule: only between two sections of the same tone, where
-   no tone change already separates them. Content width, never full bleed. */
+/* Two sections on the same ground: the follower's top padding collapses
+   (one section gap between them, never two), unless the direction draws
+   the structural rule, which then sits in the middle of a full gap. The
+   rule is content width, never full bleed, never between two tones. */
 .kit-section[data-tone="base"] + .kit-section[data-tone="base"] > .kit-grid,
 .kit-section[data-tone="layer"] + .kit-section[data-tone="layer"] > .kit-grid {
+  padding-block-start: calc(var(--kit-gap-section) * var(--kit-rule-pad));
   border-top: var(--kit-section-rule) solid var(--kit-rule-color);
+}
+
+.kit-section[data-tone="base"][data-attached] + .kit-section[data-tone="base"]:not([data-attached]) > .kit-grid,
+.kit-section[data-tone="layer"][data-attached] + .kit-section[data-tone="layer"]:not([data-attached]) > .kit-grid {
+  padding-block-start: calc(var(--kit-gap-section) - var(--kit-gap-group) * (1 - var(--kit-rule-pad)));
+}
+
+.kit-section[data-tone="base"] + .kit-section[data-tone="base"][data-attached] > .kit-grid,
+.kit-section[data-tone="layer"] + .kit-section[data-tone="layer"][data-attached] > .kit-grid {
+  padding-block-start: calc(var(--kit-gap-group) * var(--kit-rule-pad));
 }
 
 /* ---------------------------------------------------------------------
@@ -545,10 +619,25 @@ html:has(.kit-page) > body {
   overflow-wrap: anywhere;
 }
 
+/* The display size is the direction's step, capped by measure: the
+   headline's length (--kit-display-chars, written by Masthead) and its
+   column (the masthead text is an inline-size container) set the largest
+   size that still wraps in --kit-display-lines: 3 below 640, 2 from 640,
+   and 1 from 1024 for a short headline (22 characters or fewer, marked
+   data-measure="short"). 0.48em is Geist's average advance at display
+   tracking plus a margin, so the cap errs one step small, never large.
+   A display size never exceeds a sixth of its measure, so a narrow phone
+   column never sets a headline that crowds its own line.
+   Line height follows the size on the 4px grid. */
 .kit-display {
+  --kit-display-step: var(--kit-display-sm-size);
+  --kit-display-lines: 3;
+  --kit-display-fit: calc(100cqi * var(--kit-display-lines) / (var(--kit-display-chars, 24) * 0.48));
+  --kit-display-size: min(var(--kit-display-step), var(--kit-display-fit), 100cqi / 6);
+  --kit-display-leading: round(up, calc(var(--kit-display-size) * 1.08), 4px);
   font-family: var(--kit-font-display);
-  font-size: var(--kit-display-sm-size);
-  line-height: var(--kit-display-sm-line);
+  font-size: var(--kit-display-size);
+  line-height: var(--kit-display-leading);
   font-weight: var(--kit-display-weight);
   letter-spacing: var(--tracking-display);
   font-optical-sizing: auto;
@@ -600,17 +689,24 @@ html:has(.kit-page) > body {
   color: var(--color-ink-muted);
 }
 
+@media (min-width: 640px) {
+  .kit-display {
+    --kit-display-lines: 2;
+  }
+}
+
 @media (min-width: 768px) {
   .kit-display {
-    font-size: var(--kit-display-md-size);
-    line-height: var(--kit-display-md-line);
+    --kit-display-step: var(--kit-display-md-size);
   }
 }
 
 @media (min-width: 1024px) {
   .kit-display {
-    font-size: var(--kit-display-lg-size);
-    line-height: var(--kit-display-lg-line);
+    --kit-display-step: var(--kit-display-lg-size);
+  }
+  .kit-display[data-measure="short"] {
+    --kit-display-lines: 1;
   }
   .kit-heading {
     font-size: var(--kit-heading-lg-size);
@@ -666,13 +762,23 @@ html:has(.kit-page) > body {
   display: flex;
   flex-direction: column;
   align-items: stretch;
-  gap: var(--space-12px);
+  gap: var(--kit-gap-inside);
   min-width: 0;
 }
 
 .kit-actions .btn,
 .kit-actions button {
   border-radius: var(--kit-radius-control);
+}
+
+/* The conversion actions: the direction's action fill (filled_primary role)
+   on the first primary action of the Masthead and the CTABand only. */
+.kit-masthead .kit-actions > :first-child:not(.btn-secondary):not(.btn-ghost),
+.kit-cta .kit-actions > :first-child:not(.btn-secondary):not(.btn-ghost) {
+  --color-primary: var(--kit-action);
+  --color-primary-hover: var(--kit-action-hover);
+  --color-primary-active: var(--kit-action-active);
+  --color-primary-contrast: var(--kit-action-contrast);
 }
 
 @media (min-width: 640px) {
@@ -693,8 +799,9 @@ html:has(.kit-page) > body {
   display: grid;
   grid-template-columns: subgrid;
   column-gap: var(--kit-gutter);
-  row-gap: var(--space-16px);
+  row-gap: var(--kit-gap-related);
   align-items: start;
+  align-content: start;
 }
 
 .kit-head > * {
@@ -737,22 +844,17 @@ html:has(.kit-page) > body {
 }
 
 .kit-masthead > .kit-grid {
-  padding-block: var(--space-40px) var(--space-64px);
+  padding-block: var(--kit-gap-group) var(--kit-gap-section);
   align-content: center;
   min-block-size: calc(76svh - var(--shell-header-h, 57px));
 }
 
-@media (min-width: 1024px) {
-  .kit-masthead > .kit-grid {
-    padding-block: var(--space-64px) var(--space-96px);
-  }
-}
-
 .kit-masthead-text {
+  container-type: inline-size;
   grid-column: 1 / -1;
   display: grid;
   grid-template-columns: minmax(0, 1fr);
-  row-gap: var(--space-24px);
+  row-gap: var(--kit-gap-related);
   align-content: start;
   min-width: 0;
 }
@@ -815,72 +917,6 @@ html:has(.kit-page) > body {
   }
 }
 
-/* Overlay: full-bleed media as a decorative backdrop band, the text on a
-   solid tonal panel (never a translucent scrim). Below 1024 the media and
-   the panel stack, so nothing sits on the image. */
-.kit-masthead[data-variant="overlay"] > .kit-overlay {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  min-width: 0;
-}
-
-.kit-overlay-media {
-  position: relative;
-  aspect-ratio: 4 / 3;
-  min-width: 0;
-  background: var(--color-layer-1);
-  overflow: clip;
-}
-
-.kit-overlay-media > .kit-overlay-backdrop {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-}
-
-.kit-overlay-backdrop > * {
-  inline-size: 100%;
-  block-size: 100%;
-}
-
-.kit-overlay-panel-row {
-  padding-block: var(--space-32px) var(--space-48px);
-}
-
-.kit-overlay-panel {
-  grid-column: 1 / -1;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  row-gap: var(--space-24px);
-  min-width: 0;
-}
-
-@media (min-width: 1024px) {
-  .kit-masthead[data-variant="overlay"] > .kit-overlay {
-    position: relative;
-    min-block-size: calc(84svh - var(--shell-header-h, 57px));
-  }
-  .kit-overlay-media {
-    position: absolute;
-    inset: 0;
-    aspect-ratio: auto;
-    pointer-events: none;
-  }
-  .kit-overlay-panel-row {
-    position: relative;
-    align-self: end;
-    padding-block: var(--space-96px) var(--space-48px);
-  }
-  .kit-overlay-panel {
-    grid-column: 1 / span 6;
-    padding: var(--space-40px);
-    background: var(--color-surface);
-    color: var(--color-ink);
-    border: 1px solid var(--color-border);
-    border-radius: var(--kit-radius-card);
-  }
-}
-
 /* ---------------------------------------------------------------------
  * Split: asymmetric text and media on the 12 columns.
  * ------------------------------------------------------------------- */
@@ -897,13 +933,13 @@ html:has(.kit-page) > body {
   grid-column: 1 / -1;
   display: grid;
   grid-template-columns: minmax(0, 1fr);
-  row-gap: var(--space-16px);
+  row-gap: var(--kit-gap-related);
   align-content: start;
   min-width: 0;
 }
 
 .kit-split-text > .kit-split-extra {
-  margin-block-start: var(--space-16px);
+  margin-block-start: var(--kit-gap-inside);
   min-width: 0;
 }
 
@@ -947,7 +983,7 @@ html:has(.kit-page) > body {
 .kit-media {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
-  row-gap: var(--space-12px);
+  row-gap: var(--kit-gap-inside);
   margin: 0;
   min-width: 0;
 }
@@ -1003,7 +1039,7 @@ html:has(.kit-page) > body {
 .kit-media-placeholder {
   display: grid;
   place-items: center;
-  padding: var(--space-24px);
+  padding: var(--kit-inset);
   background: var(--color-layer-2);
   color: var(--color-ink-muted);
   text-align: center;
@@ -1028,9 +1064,9 @@ html:has(.kit-page) > body {
   display: grid;
   grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
   align-items: baseline;
-  column-gap: var(--space-16px);
+  column-gap: var(--kit-gap-related);
   min-block-size: var(--control-h);
-  padding-block: var(--space-12px);
+  padding-block: var(--kit-gap-inside);
   min-width: 0;
 }
 
@@ -1071,7 +1107,7 @@ html:has(.kit-page) > body {
   display: grid;
   grid-template-columns: subgrid;
   column-gap: var(--kit-gutter);
-  row-gap: var(--space-16px);
+  row-gap: var(--kit-gap-inside);
   min-width: 0;
 }
 
@@ -1101,7 +1137,7 @@ html:has(.kit-page) > body {
 
 .kit-spec-grid th,
 .kit-spec-grid td {
-  padding-block: var(--space-12px);
+  padding-block: var(--kit-gap-inside);
   text-align: start;
   vertical-align: baseline;
   overflow-wrap: anywhere;
@@ -1109,7 +1145,7 @@ html:has(.kit-page) > body {
 
 .kit-spec-grid th {
   inline-size: 40%;
-  padding-inline-end: var(--space-16px);
+  padding-inline-end: var(--kit-gap-related);
   font-size: var(--text-n1);
   line-height: var(--line-n1);
   font-weight: var(--weight-regular);
@@ -1130,7 +1166,7 @@ html:has(.kit-page) > body {
 }
 
 @media (min-width: 1024px) {
-  .kit-spec-group > .kit-title {
+  .kit-spec-group > .kit-spec-group-head {
     grid-column: 1 / span 4;
   }
   .kit-spec-group > .kit-spec-grid {
@@ -1154,7 +1190,7 @@ html:has(.kit-page) > body {
   display: grid;
   grid-template-columns: subgrid;
   column-gap: var(--kit-gutter);
-  row-gap: var(--space-32px);
+  row-gap: var(--kit-gap-related);
   margin: 0;
   padding: 0;
   list-style: none;
@@ -1164,9 +1200,9 @@ html:has(.kit-page) > body {
   grid-column: span 2;
   display: grid;
   grid-template-columns: minmax(0, 1fr);
-  row-gap: var(--space-8px);
+  row-gap: var(--kit-gap-inside);
   align-content: start;
-  padding-block-start: var(--space-16px);
+  padding-block-start: var(--kit-gap-related);
   border-top: 1px solid var(--kit-rule-color);
   min-width: 0;
 }
@@ -1231,8 +1267,8 @@ html:has(.kit-page) > body {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   align-content: start;
-  row-gap: var(--space-12px);
-  padding: var(--space-24px);
+  row-gap: var(--kit-gap-inside);
+  padding: var(--kit-inset);
   background: var(--color-surface);
   color: var(--color-ink);
   min-width: 0;
@@ -1252,16 +1288,13 @@ html:has(.kit-page) > body {
   .kit-cells[data-lg="2"] { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .kit-cells[data-lg="3"] { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .kit-cells[data-lg="4"] { grid-template-columns: repeat(4, minmax(0, 1fr)); }
-  .kit-cell {
-    padding: var(--space-32px);
-  }
 }
 
 /* FeatureGrid item: optional inline icon on the title row, title, body. */
 .kit-feature-title {
   display: flex;
   align-items: center;
-  gap: var(--space-12px);
+  gap: var(--kit-gap-inside);
   min-width: 0;
 }
 
@@ -1284,9 +1317,9 @@ html:has(.kit-page) > body {
 .kit-bento-tile {
   display: flex;
   flex-direction: column;
-  gap: var(--space-12px);
+  gap: var(--kit-gap-inside);
   min-width: 0;
-  padding: var(--space-24px);
+  padding: var(--kit-inset);
   background: var(--color-surface);
   color: var(--color-ink);
   border: 1px solid var(--color-border);
@@ -1315,7 +1348,7 @@ html:has(.kit-page) > body {
 }
 
 .kit-bento-tile[data-kind="media"] > .kit-bento-caption {
-  padding: var(--space-16px) var(--space-24px);
+  padding: var(--kit-gap-related) var(--kit-inset);
   border-top: 1px solid var(--color-border);
 }
 
@@ -1332,7 +1365,7 @@ html:has(.kit-page) > body {
 
 .kit-bento-list {
   display: grid;
-  gap: var(--space-8px);
+  gap: 0;
   align-content: start;
   margin: 0;
   padding: 0;
@@ -1342,8 +1375,8 @@ html:has(.kit-page) > body {
 .kit-bento-list > li {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
-  column-gap: var(--space-16px);
-  padding-block: var(--space-8px);
+  column-gap: var(--kit-gap-related);
+  padding-block: var(--kit-gap-inside);
   min-width: 0;
 }
 
@@ -1371,12 +1404,6 @@ html:has(.kit-page) > body {
   .kit-bento[data-has-md] > .kit-bento-tile {
     grid-area: var(--kit-area);
   }
-  .kit-bento-tile {
-    padding: var(--space-32px);
-  }
-  .kit-bento-tile[data-kind="media"] > .kit-bento-caption {
-    padding: var(--space-16px) var(--space-32px);
-  }
   .kit-bento-stat {
     font-size: var(--kit-heading-lg-size);
     line-height: var(--kit-heading-lg-line);
@@ -1390,7 +1417,7 @@ html:has(.kit-page) > body {
   grid-column: 1 / -1;
   display: grid;
   grid-template-columns: minmax(0, 1fr);
-  row-gap: var(--space-24px);
+  row-gap: var(--kit-gap-related);
   margin: 0;
   min-width: 0;
 }
@@ -1413,7 +1440,7 @@ html:has(.kit-page) > body {
 
 .kit-quote > figcaption {
   display: grid;
-  gap: var(--space-4px);
+  gap: calc(var(--kit-gap-inside) / 2);
   min-width: 0;
 }
 
@@ -1448,7 +1475,7 @@ html:has(.kit-page) > body {
   display: grid;
   grid-template-columns: subgrid;
   column-gap: var(--kit-gutter);
-  row-gap: var(--space-24px);
+  row-gap: var(--kit-gap-related);
   align-items: center;
 }
 
@@ -1460,7 +1487,7 @@ html:has(.kit-page) > body {
   grid-column: 1 / -1;
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: var(--space-24px) var(--kit-gutter);
+  gap: var(--kit-gap-related) var(--kit-gutter);
   align-items: center;
   margin: 0;
   padding: 0;
@@ -1522,9 +1549,9 @@ html:has(.kit-page) > body {
   display: grid;
   grid-template-columns: minmax(0, 1fr) var(--space-20px);
   align-items: center;
-  column-gap: var(--space-16px);
+  column-gap: var(--kit-gap-related);
   min-block-size: var(--control-h);
-  padding: var(--space-16px) var(--space-24px);
+  padding: var(--kit-gap-related) var(--kit-inset);
   cursor: pointer;
   list-style: none;
   transition: background-color var(--dur-100) var(--ease-standard);
@@ -1558,7 +1585,7 @@ html:has(.kit-page) > body {
 }
 
 .kit-faq-answer {
-  padding: 0 var(--space-24px) var(--space-24px);
+  padding: 0 var(--kit-inset) var(--kit-inset);
   min-width: 0;
 }
 
@@ -1612,21 +1639,21 @@ html:has(.kit-page) > body {
   display: grid;
   grid-template-columns: subgrid;
   column-gap: var(--kit-gutter);
-  row-gap: var(--space-32px);
+  row-gap: var(--kit-gap-group);
   align-items: start;
 }
 
 .kit-cta-text {
   grid-column: 1 / -1;
   display: grid;
-  row-gap: var(--space-16px);
+  row-gap: var(--kit-gap-related);
   min-width: 0;
 }
 
 .kit-cta-side {
   grid-column: 1 / -1;
   display: grid;
-  row-gap: var(--space-24px);
+  row-gap: var(--kit-gap-related);
   min-width: 0;
 }
 
@@ -1639,7 +1666,7 @@ html:has(.kit-page) > body {
  * PricingTable: plans in cells, then a structured comparison table.
  * ------------------------------------------------------------------- */
 .kit-plan {
-  row-gap: var(--space-16px);
+  row-gap: var(--kit-gap-related);
 }
 
 .kit-plan[data-recommended] {
@@ -1659,7 +1686,7 @@ html:has(.kit-page) > body {
 
 .kit-plan-features {
   display: grid;
-  gap: var(--space-8px);
+  gap: var(--kit-gap-inside);
   margin: 0;
   padding: 0;
   list-style: none;
@@ -1668,7 +1695,7 @@ html:has(.kit-page) > body {
 .kit-plan-features > li {
   display: grid;
   grid-template-columns: var(--space-20px) minmax(0, 1fr);
-  column-gap: var(--space-12px);
+  column-gap: var(--kit-gap-inside);
   align-items: start;
   font-size: var(--text-0);
   line-height: var(--line-0);
@@ -1685,7 +1712,7 @@ html:has(.kit-page) > body {
 
 .kit-plan-action {
   display: flex;
-  margin-block-start: var(--space-8px);
+  margin-block-start: var(--kit-gap-inside);
 }
 
 .kit-plan-action .btn,
@@ -1724,12 +1751,12 @@ html:has(.kit-page) > body {
 
 .kit-compare-table caption {
   text-align: start;
-  padding-block-end: var(--space-12px);
+  padding-block-end: var(--kit-gap-inside);
 }
 
 .kit-compare-table th,
 .kit-compare-table td {
-  padding: var(--space-12px) var(--space-8px);
+  padding: var(--kit-gap-inside) var(--space-8px);
   text-align: start;
   vertical-align: baseline;
   font-size: var(--text-0);
@@ -1771,7 +1798,7 @@ html:has(.kit-page) > body {
 }
 
 .kit-footer > .kit-grid {
-  padding-block: var(--space-48px) var(--space-64px);
+  padding-block: var(--kit-gap-group) var(--kit-gap-section);
 }
 
 /* A hairline only when the section above shares the footer's ground. */
@@ -1788,7 +1815,7 @@ html:has(.kit-page) > body {
   grid-column: 1 / -1;
   display: flex;
   flex-wrap: wrap;
-  gap: 0 var(--space-24px);
+  gap: 0 var(--kit-gap-related);
   margin: 0;
   padding: 0;
   list-style: none;
@@ -1823,13 +1850,13 @@ html:has(.kit-page) > body {
   grid-column: 1 / -1;
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: var(--space-32px) var(--kit-gutter);
+  gap: var(--kit-gap-group) var(--kit-gutter);
 }
 
 .kit-footer-group {
   display: grid;
   align-content: start;
-  gap: var(--space-8px);
+  gap: var(--kit-gap-inside);
   min-width: 0;
 }
 
@@ -1881,23 +1908,41 @@ html:has(.kit-page) > body {
 }
 
 /* ---------------------------------------------------------------------
- * StickyStory: a sticky media stage beside scrolling steps (1024 and up).
- * Below 1024 each step shows its own media in flow, no pin. Inactive
- * stage frames are visibility hidden, so frames never stack visibly.
+ * StickyStory: at 1024 and up the story pins. A hidden track of markers
+ * gives the scroll length (one step of --kit-story-step each, the first
+ * one offset so step 1 is active the moment the pin sticks, and a tail so
+ * the last step gets the same pinned scroll); the pin holds every step,
+ * distributed along the stage height, beside the stage. The active step
+ * reads in ink, the others stay on screen in ink-subtle. Below 1024 there
+ * is no pin: steps and their media stack in flow.
  * ------------------------------------------------------------------- */
 .kit-story {
   grid-column: 1 / -1;
   display: grid;
   grid-template-columns: subgrid;
   column-gap: var(--kit-gutter);
-  row-gap: var(--kit-stack);
+  --kit-story-top: calc(var(--shell-header-h, 57px) + var(--banner-height, 0px) + var(--kit-gap-group));
+  --kit-story-h: max(calc(var(--space-96px) * 5), calc(100svh - var(--kit-story-top) - var(--kit-gap-group)));
+  --kit-story-step: 64svh;
+}
+
+.kit-story-track {
+  display: none;
+}
+
+.kit-story-pin {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: subgrid;
+  column-gap: var(--kit-gutter);
+  min-width: 0;
 }
 
 .kit-story-steps {
   grid-column: 1 / -1;
   display: grid;
   grid-template-columns: minmax(0, 1fr);
-  row-gap: var(--space-48px);
+  row-gap: var(--kit-gap-group);
   margin: 0;
   padding: 0;
   list-style: none;
@@ -1907,13 +1952,13 @@ html:has(.kit-page) > body {
 .kit-story-step {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
-  row-gap: var(--space-12px);
+  row-gap: var(--kit-gap-inside);
   align-content: start;
   min-width: 0;
 }
 
 .kit-story-step-media {
-  margin-block-start: var(--space-12px);
+  margin-block-start: var(--kit-gap-inside);
   min-width: 0;
 }
 
@@ -1922,15 +1967,40 @@ html:has(.kit-page) > body {
 }
 
 @media (min-width: 1024px) {
+  .kit-story-track {
+    grid-column: 1 / -1;
+    grid-row: 1;
+    display: grid;
+    visibility: hidden;
+    pointer-events: none;
+  }
+  .kit-story-marker {
+    block-size: var(--kit-story-step);
+  }
+  .kit-story-marker:first-child {
+    block-size: calc(50svh - var(--kit-story-top) + var(--kit-story-step));
+  }
+  .kit-story-track::after {
+    content: "";
+    block-size: calc(50svh - var(--kit-gap-group));
+  }
+  .kit-story-pin {
+    grid-row: 1;
+    align-self: start;
+    position: sticky;
+    top: var(--kit-story-top);
+    block-size: var(--kit-story-h);
+    align-items: center;
+  }
   .kit-story-steps {
     grid-column: 1 / span 5;
     grid-row: 1;
-    row-gap: 0;
+    grid-template-rows: repeat(var(--kit-story-count, 3), minmax(0, 1fr));
+    row-gap: var(--kit-gap-related);
+    block-size: 100%;
   }
   .kit-story-step {
-    min-block-size: 56svh;
-    align-content: start;
-    padding-block: var(--space-32px) var(--space-48px);
+    align-content: center;
   }
   .kit-story-step > .kit-title,
   .kit-story-step > .kit-body {
@@ -1946,24 +2016,28 @@ html:has(.kit-page) > body {
   .kit-story-stage {
     grid-column: 7 / -1;
     grid-row: 1;
-    display: block;
-    position: sticky;
-    top: calc(var(--shell-header-h, 57px) + var(--banner-height) + var(--space-32px));
-    align-self: start;
+    display: grid;
+    align-content: center;
+    justify-items: end;
+    block-size: 100%;
     min-width: 0;
   }
-  /* A contained shell scrolls .shell-main, with the header outside the
-     scroller, so the sticky offset starts at the scroller's own top. */
-  .shell[data-scroll="contained"] .kit-story-stage {
-    top: var(--space-32px);
+  .kit-story[data-variant="stage-start"] .kit-story-stage {
+    grid-column: 1 / span 6;
+    justify-items: start;
+  }
+  .kit-story[data-variant="stage-start"] .kit-story-steps {
+    grid-column: 8 / -1;
   }
   .kit-story-frames {
     display: grid;
     grid-template-columns: minmax(0, 1fr);
+    inline-size: min(100%, var(--kit-story-h));
     min-width: 0;
   }
   .kit-story-frame {
     grid-area: 1 / 1;
+    align-self: center;
     min-width: 0;
     opacity: 0;
     visibility: hidden;
@@ -1978,6 +2052,638 @@ html:has(.kit-page) > body {
       opacity var(--dur-300) var(--ease-standard),
       visibility 0s linear 0s;
   }
+  /* The motion module scrubs the frames itself (useStoryScrub): every frame
+     stays laid out and GSAP owns opacity and visibility. */
+  .kit-story[data-scrub] .kit-story-frame {
+    transition: none;
+  }
+}
+
+/* A contained shell scrolls .shell-main, with the header outside the
+   scroller, so the sticky offset starts at the scroller's own top. */
+.shell[data-scroll="contained"] .kit-story {
+  --kit-story-top: var(--kit-gap-group);
+}
+
+.shell[data-scroll="contained"] .kit-story-stage {
+  top: var(--kit-gap-group);
+}
+
+/* =====================================================================
+ * 3. Structural variants (data-variant on the section and the part).
+ *    Each variant changes structure, never colour, and stays on the grid.
+ * ===================================================================== */
+
+/* Split bleed: the section's grid gains one edge track each side, so the
+   media runs to the viewport edge without leaving its parent's box. Text
+   stays on the content columns. */
+.kit-section[data-kit-composition="split"][data-variant="bleed"] > .kit-grid {
+  --kit-col: calc((min(100% - 2 * var(--kit-margin), var(--kit-max)) - (var(--kit-cols) - 1) * var(--kit-gutter)) / var(--kit-cols));
+  inline-size: 100%;
+  grid-template-columns:
+    [full-start] minmax(0, 1fr)
+    [content-start] repeat(var(--kit-cols), minmax(0, var(--kit-col)))
+    [content-end] minmax(0, 1fr)
+    [full-end];
+}
+
+.kit-split[data-variant="bleed"] .kit-split-text {
+  grid-column: content-start / content-end;
+}
+
+.kit-split[data-variant="bleed"] .kit-split-media {
+  grid-column: full-start / full-end;
+}
+
+/* The frame's surface runs to the edge; a live view's content and the
+   caption stay on the grid, so nothing reads cut off. --kit-bleed-edge is
+   the distance from the content line to the viewport edge; a view pads by
+   it less the kit inset its own content already carries. */
+.kit-section[data-kit-composition="split"][data-variant="bleed"] {
+  container-type: inline-size;
+}
+
+.kit-split[data-variant="bleed"] {
+  --kit-bleed-edge: calc((100cqi - min(100cqi - 2 * var(--kit-margin), var(--kit-max))) / 2);
+}
+
+.kit-split[data-variant="bleed"] .kit-media-frame {
+  border-width: 1px 0;
+  border-radius: 0;
+}
+
+.kit-split[data-variant="bleed"] {
+  --kit-bleed-view: max(0px, var(--kit-bleed-edge) - var(--kit-inset));
+}
+
+.kit-split[data-variant="bleed"] .kit-media-view {
+  padding-inline: var(--kit-bleed-view);
+}
+
+.kit-split[data-variant="bleed"] .kit-media > figcaption {
+  padding-inline: var(--kit-bleed-edge);
+}
+
+@media (min-width: 1024px) {
+  .kit-split[data-variant="bleed"][data-media-side="end"] .kit-media-frame {
+    border-width: 1px 0 1px 1px;
+    border-start-start-radius: var(--kit-radius-media);
+    border-end-start-radius: var(--kit-radius-media);
+  }
+  .kit-split[data-variant="bleed"][data-media-side="start"] .kit-media-frame {
+    border-width: 1px 1px 1px 0;
+    border-start-end-radius: var(--kit-radius-media);
+    border-end-end-radius: var(--kit-radius-media);
+  }
+  .kit-split[data-variant="bleed"][data-media-side="end"] .kit-media-view {
+    padding-inline: 0 var(--kit-bleed-view);
+  }
+  .kit-split[data-variant="bleed"][data-media-side="end"] .kit-media > figcaption {
+    padding-inline: 0 var(--kit-bleed-edge);
+  }
+  .kit-split[data-variant="bleed"][data-media-side="start"] .kit-media-view {
+    padding-inline: var(--kit-bleed-view) 0;
+  }
+  .kit-split[data-variant="bleed"][data-media-side="start"] .kit-media > figcaption {
+    padding-inline: var(--kit-bleed-edge) 0;
+  }
+  /* Line numbers count the edge track: content columns are lines 2 to 14. */
+  .kit-split[data-variant="bleed"][data-media-side="end"][data-ratio="5/7"] .kit-split-text { grid-column: 2 / span 5; }
+  .kit-split[data-variant="bleed"][data-media-side="end"][data-ratio="5/7"] .kit-split-media { grid-column: 7 / -1; }
+  .kit-split[data-variant="bleed"][data-media-side="end"][data-ratio="7/5"] .kit-split-text { grid-column: 2 / span 7; }
+  .kit-split[data-variant="bleed"][data-media-side="end"][data-ratio="7/5"] .kit-split-media { grid-column: 9 / -1; }
+  .kit-split[data-variant="bleed"][data-media-side="end"][data-ratio="4/8"] .kit-split-text { grid-column: 2 / span 4; }
+  .kit-split[data-variant="bleed"][data-media-side="end"][data-ratio="4/8"] .kit-split-media { grid-column: 6 / -1; }
+  .kit-split[data-variant="bleed"][data-media-side="end"][data-ratio="8/4"] .kit-split-text { grid-column: 2 / span 8; }
+  .kit-split[data-variant="bleed"][data-media-side="end"][data-ratio="8/4"] .kit-split-media { grid-column: 10 / -1; }
+  .kit-split[data-variant="bleed"][data-media-side="start"][data-ratio="5/7"] .kit-split-media { grid-column: 1 / 9; }
+  .kit-split[data-variant="bleed"][data-media-side="start"][data-ratio="5/7"] .kit-split-text { grid-column: 9 / span 5; }
+  .kit-split[data-variant="bleed"][data-media-side="start"][data-ratio="7/5"] .kit-split-media { grid-column: 1 / 7; }
+  .kit-split[data-variant="bleed"][data-media-side="start"][data-ratio="7/5"] .kit-split-text { grid-column: 7 / span 7; }
+  .kit-split[data-variant="bleed"][data-media-side="start"][data-ratio="4/8"] .kit-split-media { grid-column: 1 / 10; }
+  .kit-split[data-variant="bleed"][data-media-side="start"][data-ratio="4/8"] .kit-split-text { grid-column: 10 / span 4; }
+  .kit-split[data-variant="bleed"][data-media-side="start"][data-ratio="8/4"] .kit-split-media { grid-column: 1 / 6; }
+  .kit-split[data-variant="bleed"][data-media-side="start"][data-ratio="8/4"] .kit-split-text { grid-column: 6 / span 8; }
+}
+
+/* Split over-spec: text across the top, the media full width, the spec
+   strip under it. */
+.kit-split-lead {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  row-gap: var(--kit-gap-related);
+  align-content: start;
+  min-width: 0;
+}
+
+.kit-split-spec {
+  grid-column: 1 / -1;
+  min-width: 0;
+}
+
+@media (min-width: 1024px) {
+  .kit-split[data-variant="over-spec"] {
+    align-items: start;
+  }
+  .kit-split[data-variant="over-spec"] .kit-split-text {
+    grid-column: 1 / -1;
+    grid-template-columns: subgrid;
+    column-gap: var(--kit-gutter);
+  }
+  .kit-split[data-variant="over-spec"] .kit-split-text > .kit-heading {
+    grid-column: 1 / span 5;
+  }
+  .kit-split[data-variant="over-spec"] .kit-split-lead {
+    grid-column: 7 / -1;
+  }
+  .kit-split[data-variant="over-spec"] .kit-split-media {
+    grid-column: 1 / -1;
+    grid-row: 2;
+  }
+  .kit-split[data-variant="over-spec"] .kit-split-spec {
+    grid-row: 3;
+  }
+}
+
+/* SpecRail strip: up to four values side by side, label above value, no
+   line between them (the rail's two structural rules frame the strip). */
+.kit-spec-rail[data-layout="strip"] {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: var(--kit-gutter);
+}
+
+.kit-spec-rail[data-layout="strip"] .kit-spec-row {
+  grid-template-columns: minmax(0, 1fr);
+  row-gap: var(--kit-gap-inside);
+  align-content: start;
+  padding-block: var(--kit-gap-related);
+}
+
+.kit-spec-rail[data-layout="strip"] .kit-spec-row + .kit-spec-row {
+  border-top: 0;
+}
+
+.kit-spec-rail[data-layout="strip"] .kit-spec-row > dd {
+  overflow-wrap: normal;
+}
+
+@media (min-width: 640px) {
+  .kit-spec-rail[data-layout="strip"] .kit-spec-row > dd {
+    font-size: var(--text-1);
+    line-height: var(--line-1);
+  }
+}
+
+@media (min-width: 1024px) {
+  .kit-spec-rail[data-layout="strip"][data-count="3"] { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .kit-spec-rail[data-layout="strip"][data-count="4"] { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+
+/* StatRow lead and chart. */
+.kit-statrow {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: subgrid;
+  column-gap: var(--kit-gutter);
+  row-gap: var(--kit-gap-group);
+  align-items: start;
+}
+
+.kit-statrow-intro {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  row-gap: var(--kit-gap-related);
+  min-width: 0;
+}
+
+.kit-statrow-chart {
+  grid-column: 1 / -1;
+  min-width: 0;
+}
+
+@media (min-width: 1024px) {
+  .kit-statrow[data-variant="lead"] .kit-statrow-intro,
+  .kit-statrow[data-variant="chart"] .kit-statrow-intro {
+    grid-column: 1 / span 5;
+  }
+  .kit-statrow[data-variant="lead"] .kit-stats {
+    grid-column: 7 / -1;
+    grid-row: 1;
+  }
+  .kit-statrow[data-variant="chart"] {
+    grid-template-rows: auto minmax(0, 1fr);
+  }
+  .kit-statrow[data-variant="chart"] .kit-stats {
+    grid-column: 1 / span 6;
+    grid-row: 2;
+    align-self: end;
+  }
+  .kit-statrow[data-variant="lead"] .kit-stats > .kit-stat,
+  .kit-statrow[data-variant="chart"] .kit-stats > .kit-stat {
+    grid-column: span 3;
+  }
+  .kit-statrow[data-variant="lead"] .kit-stats[data-count="3"] > .kit-stat:last-child,
+  .kit-statrow[data-variant="chart"] .kit-stats[data-count="3"] > .kit-stat:last-child {
+    grid-column: 1 / -1;
+  }
+  .kit-statrow[data-variant="chart"] .kit-statrow-chart {
+    grid-column: 7 / -1;
+    grid-row: 1 / span 2;
+    align-self: stretch;
+    display: grid;
+  }
+.kit-statrow-chart {
+  grid-column: 1 / -1;
+  min-width: 0;
+}
+}
+
+/* FeatureGrid lead: two media tiles side by side, then the other four as
+   one hairline cell group (a single grouped panel on a phone). */
+.kit-lead-grid {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--kit-gap-group) var(--kit-gutter);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  min-width: 0;
+}
+
+.kit-tile {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-content: start;
+  row-gap: var(--kit-gap-related);
+  min-width: 0;
+}
+
+.kit-tile-media {
+  min-width: 0;
+}
+
+.kit-tile-text {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  row-gap: var(--kit-gap-inside);
+  min-width: 0;
+}
+
+@media (min-width: 640px) {
+  .kit-lead-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+/* FeatureGrid rows: spec-led rows between structural rules. */
+.kit-rows {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: subgrid;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border-block: 1px solid var(--kit-rule-color);
+}
+
+.kit-row {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: subgrid;
+  column-gap: var(--kit-gutter);
+  row-gap: var(--kit-gap-inside);
+  align-items: baseline;
+  padding-block: var(--kit-gap-related);
+  min-width: 0;
+}
+
+.kit-row + .kit-row {
+  border-top: 1px solid var(--color-border);
+}
+
+.kit-row > * {
+  grid-column: 1 / -1;
+  min-width: 0;
+}
+
+.kit-row-meta {
+  margin: 0;
+  font-size: var(--text-1);
+  line-height: var(--line-1);
+  color: var(--color-ink);
+}
+
+@media (min-width: 1024px) {
+  .kit-row > .kit-title { grid-column: 1 / span 4; }
+  .kit-row > .kit-body { grid-column: 5 / span 5; }
+  .kit-row > .kit-row-meta { grid-column: 10 / -1; justify-self: end; text-align: end; }
+}
+
+/* FeatureGrid detail: a selectable list beside the active item's media. */
+.kit-detail {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: subgrid;
+  column-gap: var(--kit-gutter);
+  row-gap: var(--kit-gap-group);
+  align-items: center;
+}
+
+.kit-detail-list {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  row-gap: var(--kit-gap-inside);
+  min-width: 0;
+}
+
+/* A tab is a bare button on the grid line: no fill, no card, no inline
+   padding. State is carried by ink (the kit's state recipe for text
+   tabs): inactive ink-subtle, hover ink-muted, active and pressed ink, the
+   focus outline instantly. Scoped under .kit-detail-list so ui.css's
+   filled button states never reach it. */
+.kit-detail-list .kit-detail-tab {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  row-gap: var(--kit-gap-inside);
+  inline-size: 100%;
+  min-block-size: var(--control-h);
+  block-size: auto;
+  padding: var(--kit-gap-related) 0;
+  white-space: normal;
+  text-align: start;
+  justify-content: stretch;
+  background: transparent;
+  color: var(--color-ink);
+  border: 0;
+  border-radius: var(--radius-8);
+  transform: none;
+}
+
+.kit-detail-list .kit-detail-tab:enabled:hover,
+.kit-detail-list .kit-detail-tab:enabled:active {
+  background: transparent;
+  border-color: transparent;
+  transform: none;
+}
+
+.kit-detail-tab > .kit-title,
+.kit-detail-tab > .kit-body {
+  transition: color var(--dur-100) var(--ease-standard);
+}
+
+.kit-detail-tab:not([data-active]) > .kit-title,
+.kit-detail-tab:not([data-active]) > .kit-body {
+  color: var(--color-ink-subtle);
+}
+
+@media (hover: hover) {
+  .kit-detail-tab:not([data-active]):hover > .kit-title,
+  .kit-detail-tab:not([data-active]):hover > .kit-body {
+    color: var(--color-ink-muted);
+  }
+}
+
+.kit-detail-tab:not([data-active]):active > .kit-title {
+  color: var(--color-ink);
+}
+
+.kit-detail-tab:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: var(--space-2px);
+}
+
+.kit-detail-stage {
+  grid-column: 1 / -1;
+  display: grid;
+  min-width: 0;
+}
+
+.kit-detail-panel {
+  grid-area: 1 / 1;
+  min-width: 0;
+}
+
+.kit-detail-panel[hidden] {
+  display: none;
+}
+
+@media (min-width: 1024px) {
+  .kit-detail-list { grid-column: 1 / span 5; }
+  .kit-detail-stage { grid-column: 7 / -1; }
+}
+
+/* SpecTable grouped: the group head carries an optional note. */
+.kit-spec-group-head {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  row-gap: var(--kit-gap-inside);
+  align-content: start;
+  min-width: 0;
+}
+
+/* SpecTable rail: prose beside a sticky rail. */
+.kit-spec-railset {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: subgrid;
+  column-gap: var(--kit-gutter);
+  row-gap: var(--kit-gap-group);
+  align-items: start;
+}
+
+.kit-spec-prose {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  row-gap: var(--kit-gap-group);
+  min-width: 0;
+}
+
+.kit-spec-sticky {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  row-gap: var(--kit-gap-group);
+  min-width: 0;
+}
+
+.kit-spec-railgroup {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  row-gap: var(--kit-gap-inside);
+  min-width: 0;
+}
+
+@media (min-width: 1024px) {
+  .kit-spec-prose { grid-column: 1 / span 6; }
+  .kit-spec-sticky {
+    grid-column: 8 / -1;
+    position: sticky;
+    top: calc(var(--shell-header-h, 57px) + var(--banner-height, 0px) + var(--kit-gap-group));
+  }
+  .shell[data-scroll="contained"] .kit-spec-sticky {
+    top: var(--kit-gap-group);
+  }
+}
+
+/* Quote results: the quote beside the customer's own figures, each figure
+   under a structural rule, stacked in one column on 9 to 12. */
+.kit-quote-results {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: subgrid;
+  column-gap: var(--kit-gutter);
+  row-gap: var(--kit-gap-group);
+  align-items: start;
+}
+
+.kit-quote-results > .kit-quote {
+  grid-column: 1 / -1;
+}
+
+.kit-quote-metrics {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--kit-gap-related) var(--kit-gutter);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.kit-quote-metrics > li {
+  display: grid;
+  row-gap: var(--kit-gap-inside);
+  align-content: start;
+  padding-block-start: var(--kit-gap-related);
+  border-top: 1px solid var(--kit-rule-color);
+  min-width: 0;
+}
+
+.kit-quote-metric {
+  margin: 0;
+  font-size: var(--kit-heading-sm-size);
+  line-height: var(--kit-heading-sm-line);
+  color: var(--color-ink);
+}
+
+.kit-quote-metric .kit-num {
+  display: inline-block;
+  font-family: var(--kit-font-figure);
+  font-weight: var(--kit-heading-weight);
+  letter-spacing: var(--tracking-heading);
+}
+
+@media (min-width: 1024px) {
+  .kit-quote-results > .kit-quote { grid-column: 1 / span 7; }
+  .kit-quote-metrics {
+    grid-column: 9 / -1;
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* CTABand form and band. The band's proof strip spans the grid at every
+   width, so its columns are the page's columns. */
+.kit-cta-proof {
+  grid-column: 1 / -1;
+  min-width: 0;
+}
+
+.kit-form {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  row-gap: var(--kit-gap-related);
+  min-width: 0;
+}
+
+.kit-form .kit-actions {
+  align-items: stretch;
+}
+
+/* One field and its submit share a row from 640: the button sits on the
+   input's baseline, the label above both. */
+@media (min-width: 640px) {
+  .kit-form:not(:has(> .field ~ .field)) {
+    grid-template-columns: minmax(0, 1fr) auto;
+    column-gap: var(--kit-gap-inside);
+    align-items: end;
+  }
+}
+
+
+@media (min-width: 1024px) {
+  .kit-cta[data-variant="form"] .kit-cta-text { grid-column: 1 / span 5; }
+  .kit-cta[data-variant="form"] .kit-cta-side { grid-column: 7 / -1; }
+  .kit-cta[data-variant="band"] .kit-cta-text { grid-column: 1 / span 8; }
+  .kit-cta[data-variant="band"] .kit-cta-proof { grid-column: 1 / -1; }
+}
+
+/* FAQ open: every answer visible, pairs in two columns. */
+.kit-faq-open {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--kit-gap-related) var(--kit-gutter);
+  margin: 0;
+  min-width: 0;
+}
+
+.kit-faq-pair {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  row-gap: var(--kit-gap-inside);
+  align-content: start;
+  padding-block-start: var(--kit-gap-related);
+  border-top: 1px solid var(--kit-rule-color);
+  min-width: 0;
+}
+
+.kit-faq-pair > dd {
+  margin: 0;
+}
+
+@media (min-width: 640px) {
+  .kit-faq-open { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+/* =====================================================================
+ * 4. Motion layer (kit/motion.ts). Only a state JS sets can hide content:
+ *    data-motion-state="pending" (opacity only, the box never moves), and
+ *    only while reduced motion is off.
+ *    No JavaScript, a failed bundle, and reduced motion all render the
+ *    finished page. One curve, --dur-400 entrance, a 12px rise, a stagger
+ *    of --stagger-item capped at the sixth item.
+ * ===================================================================== */
+.kit-bento > :nth-child(2) { --kit-i: 1; }
+.kit-bento > :nth-child(3) { --kit-i: 2; }
+.kit-bento > :nth-child(4) { --kit-i: 3; }
+.kit-bento > :nth-child(5) { --kit-i: 4; }
+.kit-bento > :nth-child(6) { --kit-i: 5; }
+.kit-bento > :nth-child(n + 7) { --kit-i: 6; }
+
+/* A pending target is only transparent: it keeps its true box, so nothing
+   is measured off the grid or over a neighbour before it arrives. The rise
+   is an animation that starts at reveal, then holds the finished state. */
+@keyframes kit-rise {
+  from {
+    opacity: 0;
+    transform: translate3d(0, var(--kit-rise), 0);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .kit-page [data-motion-state="pending"]:not([data-motion="count"]) {
+    opacity: 0;
+  }
+  .kit-page [data-motion-state="in"]:not([data-motion="count"]) {
+    animation: kit-rise var(--dur-400) var(--ease-standard) both;
+    animation-delay: calc(var(--kit-i, 0) * var(--stagger-item));
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -1985,6 +2691,7 @@ html:has(.kit-page) > body {
   .kit-story-frame[data-active],
   .kit-story-step > .kit-title,
   .kit-story-step > .kit-body,
+  .kit-detail-tab,
   .kit-faq-chevron {
     transition-duration: 0.01ms;
     transition-delay: 0s;

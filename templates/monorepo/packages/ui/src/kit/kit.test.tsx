@@ -49,9 +49,17 @@ describe.skipIf(staticRenderer === null)("kit markup", () => {
     expect(render(<Page direction="D13" theme="dark"><p>x</p></Page>)).toContain('data-theme="dark"');
   });
 
-  test("Section is a labelled band around the grid", () => {
-    const html = render(<Section label="Proof" tone="layer" rhythm="tight"><p>x</p></Section>);
-    expect(html).toMatch(/<section class="kit-section" data-tone="layer" data-rhythm="tight" aria-label="Proof"><div class="kit-grid">/);
+  test("Section is a labelled band around the grid, with its composition and variant", () => {
+    const html = render(<Section label="Proof" tone="layer" attached composition="custom" variant="proof-band"><p>x</p></Section>);
+    expect(html).toMatch(
+      /<section class="kit-section" data-tone="layer" data-attached="" data-kit-composition="custom" data-variant="proof-band" aria-label="Proof"><div class="kit-grid">/,
+    );
+  });
+
+  test("Page carries the one rhythm and the motion level", () => {
+    const html = render(<Page direction="D1" rhythm="generous" motion="staged"><p>x</p></Page>);
+    expect(html).toContain('data-rhythm="generous" data-motion-level="staged"');
+    expect(render(<Page><p>x</p></Page>)).toContain('data-rhythm="default" data-motion-level="quiet"');
   });
 
   test("SectionHead renders one heading and one lead, no kicker", () => {
@@ -60,26 +68,24 @@ describe.skipIf(staticRenderer === null)("kit markup", () => {
     expect(html).toContain('<h2 id="h" class="kit-heading">Specs</h2><p class="kit-lead">Measured.</p>');
   });
 
-  const variants: MastheadVariant[] = ["left", "centered", "split", "overlay"];
+  const variants: MastheadVariant[] = ["left", "centered", "split"];
   for (const variant of variants) {
     test(`Masthead ${variant} renders exactly one h1 that names its section`, () => {
       const html = render(
         <Masthead variant={variant} title="Air you can read" lead="A desk monitor." actions={<a className="btn" href="#buy">Buy</a>} media={<div className="m" />} />,
       );
       expect(count(html, /<h1 /g)).toBe(1);
-      const id = html.match(/<h1 id="([^"]+)" class="kit-display">/)![1];
+      const id = html.match(/<h1 id="([^"]+)" class="kit-display"/)![1];
       expect(html).toContain(`aria-labelledby="${id}"`);
       expect(html).toContain(`data-variant="${variant}"`);
-      if (variant === "overlay") {
-        expect(html).toContain('<div class="kit-overlay-media" aria-hidden="true">');
-        expect(html).toContain('class="kit-overlay-panel"');
-      }
+      expect(html).not.toContain("kit-overlay");
+      expect(html).toContain('style="--kit-display-chars:16"');
     });
   }
 
-  test("Masthead split and overlay refuse to render without media", () => {
+  test("Masthead split refuses to render without media; a wordmark title writes no measure", () => {
     expect(() => render(<Masthead variant="split" title="x" />)).toThrow(/needs media/);
-    expect(() => render(<Masthead variant="overlay" title="x" />)).toThrow(/needs media/);
+    expect(render(<Masthead title={<svg aria-label="Hawa" />} />)).not.toContain("--kit-display-chars");
   });
 
   test("Split places text and media with the declared ratio", () => {
@@ -94,16 +100,16 @@ describe.skipIf(staticRenderer === null)("kit markup", () => {
     expect(html).toContain("--kit-bento-lg-cols:4");
     expect(html).toContain("data-has-md");
     for (const kind of ["media", "stat", "text", "list"]) expect(html).toContain(`data-kind="${kind}"`);
-    expect(html).toContain('<span class="kit-num">612</span><span class="kit-unit">\u00a0ppm</span>');
+    expect(html).toContain('<span class="kit-num" data-motion="count">612</span><span class="kit-unit">\u00a0ppm</span>');
   });
 
   test("SpecRail and SpecTable set numbers in tabular mono with small units", () => {
     const rail = render(<SpecRail label="Sensors" rows={[{ label: "CO2", value: "400 to 5000", unit: "ppm" }, { label: "Sensor", value: "NDIR" }]} />);
-    expect(rail).toContain('<dl class="kit-spec-rail" aria-label="Sensors">');
+    expect(rail).toContain('<dl class="kit-spec-rail" data-layout="rows" data-count="2" aria-label="Sensors">');
     expect(count(rail, /class="kit-num"/g)).toBe(1);
     const table = render(<SpecTable title="Specifications" groups={[{ name: "Power", rows: [{ label: "Battery", value: 18, unit: "months" }] }]} />);
     expect(table).toContain('<th scope="row">Battery</th>');
-    expect(table).toMatch(/<h3 id="[^"]+" class="kit-title">Power<\/h3><table class="kit-spec-grid" aria-labelledby=/);
+    expect(table).toMatch(/<h3 id="[^"]+" class="kit-title">Power<\/h3><\/div><table class="kit-spec-grid" aria-labelledby=/);
   });
 
   test("StatRow renders 2 to 4 figures and refuses more", () => {
@@ -145,7 +151,8 @@ describe.skipIf(staticRenderer === null)("kit markup", () => {
     expect(render(<Quote quote="It changed our afternoons." name="Rina Kartika" role="Facilities lead" />)).toContain('aria-label="Customer quote"');
     const logos = render(<LogoRow label="Works with" logos={[{ name: "Matter" }, { name: "Home Assistant" }]} />);
     expect(logos).toContain('aria-label="Works with"');
-    expect(logos).toContain('data-rhythm="tight"');
+    expect(logos).toContain("data-attached");
+    expect(logos).toContain('data-kit-composition="logo-row"');
     const cta = render(<CTABand title="Bring one home" actions={<a className="btn" href="#">Buy</a>} proof={<p>Ships in 2 days</p>} />);
     expect(cta).toContain('data-tone="layer"');
     expect(cta).toMatch(/aria-labelledby="([^"]+)"[\s\S]*<h2 id="\1"/);
@@ -186,7 +193,7 @@ describe.skipIf(staticRenderer === null)("kit markup", () => {
           legal="Hawa 2026"
         />,
       );
-      expect(html).toMatch(new RegExp(`^<footer class="kit-footer" data-variant="${variant}">`));
+      expect(html).toMatch(new RegExp(`^<footer class="kit-footer" data-kit-composition="footer" data-variant="${variant}">`));
     });
   }
 

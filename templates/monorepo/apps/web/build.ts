@@ -11,11 +11,17 @@
 // templates/monorepo/src/index.tsx, which does not exist, and Bun.build
 // fails with FileNotFound. See apps/web/server.ts for the same fix applied
 // to hono/bun's serveStatic.
-import { rm } from "node:fs/promises";
+import { copyFile, mkdir, readdir, rm } from "node:fs/promises";
 import { join } from "node:path";
 
 const here = import.meta.dir;
 const outdir = join(here, "dist");
+// The vendored faces (packages/ui/src/fonts). fonts.css references them by
+// absolute URL (/fonts/<file>.woff2) and the build keeps that URL external,
+// so Bun.build never inlines them into index.css as base64 (it inlines any
+// file under about 128 KB). They are copied to dist/fonts as real files,
+// preloaded from index.html, and served with a one-year immutable cache.
+const fontsDir = join(here, "..", "..", "packages", "ui", "src", "fonts");
 
 if (import.meta.main) {
   // Normal path: `bun run build.ts` (turbo's build task, a plain CI/dev
@@ -55,6 +61,7 @@ async function runBuild() {
     sourcemap: "linked",
     splitting: true,
     publicPath: "/",
+    external: ["/fonts/*"],
     loader: { ".glb": "file", ".gltf": "file", ".ktx2": "file", ".hdr": "file", ".wasm": "file", ".bin": "file" },
     plugins: await optionalPlugins(),
   });
@@ -65,8 +72,17 @@ async function runBuild() {
   }
 
   await Bun.write(join(outdir, "index.html"), await Bun.file(join(here, "src/index.html")).text());
+  await copyFonts();
 
   console.log("web build ok");
+}
+
+async function copyFonts() {
+  const out = join(outdir, "fonts");
+  await mkdir(out, { recursive: true });
+  for (const file of await readdir(fontsDir)) {
+    if (file.endsWith(".woff2")) await copyFile(join(fontsDir, file), join(out, file));
+  }
 }
 
 // Tailwind is opt-in: when bun-plugin-tailwind is installed, CSS that

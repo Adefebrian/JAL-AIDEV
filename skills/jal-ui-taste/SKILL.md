@@ -111,7 +111,7 @@ Every LLM defaults to the same look when nobody stops it: a dominant black or ne
 **Type: editorial, not decorative.**
 
 - One generated scale (below), a restrained set of large headings, generous line-height on body copy. Headings tighten as they grow; body stays loose and readable.
-- A clean interface font stack: `system-ui, -apple-system, "Segoe UI", Roboto, sans-serif` or an Inter-like sans by default. A tasteful display or serif face only when it earns its place (an editorial or manifesto-toned product), never added reflexively "to look designed." A new webfont is a dependency decision per `jal-standards`.
+- Type: Geist Sans and Geist Mono are the default, vendored in `packages/ui/src/fonts` (SIL OFL 1.1, metric-matched fallbacks) and served as files from `/fonts`. Each page takes one pairing from the curated OFL pool in `jal-design-system` `references/typography.md` (at most three families, fetched into the client project with `scripts/assets/fonts.ts`, no approval needed); a display or serif face only when it earns its place (an editorial or manifesto-toned product), never added reflexively "to look designed." Only a face outside that pool is a dependency decision that goes to Brian.
 - Weights 400, 500, and 600 only. Two weights per screen, three as a hard ceiling.
 - Hierarchy comes from weight, ink step (ink versus ink-muted), and position before size, and never from the accent color. Exactly two text colors carry content (ink and ink-muted); ink-subtle is for large text and non-essential meta only; the disabled color is never used for content.
 

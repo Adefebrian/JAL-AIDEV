@@ -9,7 +9,7 @@
 // headers; included and not included are words, not color.
 import { useId, type ReactNode } from "react";
 import { CheckGlyph } from "./glyphs";
-import { Figure, Section, SectionHead, type SectionFrame } from "./Page";
+import { Figure, Section, SectionHead, staggerStyle, type SectionFrame } from "./Page";
 
 export interface Plan {
   name: ReactNode;
@@ -52,7 +52,7 @@ function CompareCell({ value, check }: { value: ReactNode | boolean; check: Reac
   return <>{value}</>;
 }
 
-export function PricingTable({ title, lead, plans, compare, check, id, tone, rhythm }: PricingTableProps) {
+export function PricingTable({ title, lead, plans, compare, check, id, tone, attached }: PricingTableProps) {
   const headingId = useId();
   if (plans.length < 2 || plans.length > 4) throw new Error(`PricingTable: ${plans.length} plans; use 2 to 4`);
   if (compare) {
@@ -65,11 +65,11 @@ export function PricingTable({ title, lead, plans, compare, check, id, tone, rhy
   const glyph = check ?? <CheckGlyph />;
   const md = plans.length % 2 === 0 ? 2 : 1;
   return (
-    <Section id={id} tone={tone} rhythm={rhythm} labelledBy={headingId}>
+    <Section id={id} tone={tone} attached={attached} labelledBy={headingId} composition="pricing" variant={compare ? "cells-compare" : "cells"}>
       <SectionHead id={headingId} title={title} lead={lead} />
-      <ul className="kit-cells" data-plans="" data-lg={plans.length} data-md={md}>
+      <ul className="kit-cells" data-plans="" data-lg={plans.length} data-md={md} data-motion="rise">
         {plans.map((p, i) => (
-          <li key={i} className="kit-cell kit-plan" data-recommended={p.recommended ? "" : undefined}>
+          <li key={i} className="kit-cell kit-plan" data-recommended={p.recommended ? "" : undefined} data-motion="item" style={staggerStyle(i)}>
             <h3 className="kit-title">
               {p.name}
               {p.recommended ? <span className="kit-visually-hidden"> (recommended)</span> : null}
@@ -94,7 +94,7 @@ export function PricingTable({ title, lead, plans, compare, check, id, tone, rhy
         ))}
       </ul>
       {compare ? (
-        <div className="kit-compare scroll-x">
+        <div className="kit-compare scroll-x" data-motion="rise">
           <table className="kit-compare-table">
             <caption className="kit-title">{compare.caption}</caption>
             <thead>

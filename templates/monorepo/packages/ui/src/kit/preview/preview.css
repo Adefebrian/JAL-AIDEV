@@ -189,3 +189,202 @@ body {
     padding-inline: var(--space-24px);
   }
 }
+
+/* Tick labels never wrap; below 640 only the first and last are shown. */
+.pv-ticks > span,
+.pv-ticks-last > span {
+  white-space: nowrap;
+}
+
+@media (max-width: 639px) {
+  .pv-ticks-last > :first-child {
+    display: none;
+  }
+}
+
+/* Room list: a live product view for the office page. */
+.pv-rooms {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  row-gap: var(--kit-gap-related);
+  padding: var(--kit-inset);
+  min-width: 0;
+  color: var(--color-ink);
+}
+
+.pv-rooms-list {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border-block: 1px solid var(--color-border);
+}
+
+.pv-room {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas: "name value" "state value";
+  column-gap: var(--kit-gap-related);
+  row-gap: var(--space-2px);
+  align-items: center;
+  padding-block: var(--kit-gap-inside);
+  min-width: 0;
+}
+
+.pv-room + .pv-room {
+  border-top: 1px solid var(--color-border);
+}
+
+.pv-room-name {
+  grid-area: name;
+  font-size: var(--text-0);
+  line-height: var(--line-0);
+  font-weight: var(--weight-medium);
+}
+
+.pv-room-state {
+  grid-area: state;
+}
+
+.pv-room-value {
+  grid-area: value;
+  font-size: var(--text-1);
+  line-height: var(--line-1);
+}
+
+.pv-room[data-alert] .pv-room-value .kit-num {
+  color: var(--kit-signal);
+}
+
+/* Sensor grid: four live readings in one grouped surface. */
+.pv-sensors,
+.pv-log,
+.pv-contrast {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-content: start;
+  row-gap: var(--kit-gap-related);
+  padding: var(--kit-inset);
+  min-width: 0;
+  color: var(--color-ink);
+}
+
+.pv-sensor-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1px;
+  margin: 0;
+  background: var(--color-border);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-8);
+  overflow: clip;
+}
+
+.pv-sensor {
+  display: grid;
+  row-gap: var(--kit-gap-inside);
+  align-content: start;
+  padding: var(--kit-gap-related);
+  background: var(--color-surface);
+  min-width: 0;
+}
+
+.pv-sensor > dd {
+  margin: 0;
+}
+
+.pv-sensor-value {
+  font-size: var(--text-1);
+  line-height: var(--line-1);
+}
+
+/* Event log: one afternoon, time, event, value. */
+.pv-log-list {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border-block: 1px solid var(--color-border);
+}
+
+.pv-log-row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  column-gap: var(--kit-gap-related);
+  align-items: baseline;
+  padding-block: var(--kit-gap-related);
+  min-width: 0;
+}
+
+.pv-log-row + .pv-log-row {
+  border-top: 1px solid var(--color-border);
+}
+
+.pv-log-time {
+  font-size: var(--text-0);
+  line-height: var(--line-0);
+  color: var(--color-ink-muted);
+}
+
+.pv-log-what {
+  font-size: var(--text-0);
+  line-height: var(--line-0);
+  min-width: 0;
+}
+
+.pv-log-row[data-alert] .pv-log-what {
+  font-weight: var(--weight-semibold);
+}
+
+.pv-log-row[data-alert] .pv-log-value {
+  color: var(--kit-signal);
+}
+
+/* Contrast: outside against the desk on one scale. */
+.pv-contrast-rows {
+  display: grid;
+  row-gap: var(--kit-gap-group);
+  padding-block: var(--kit-gap-related);
+}
+
+.pv-contrast-row {
+  display: grid;
+  row-gap: var(--kit-gap-inside);
+}
+
+.pv-contrast-label {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-4px) var(--kit-gap-related);
+}
+
+.pv-contrast-name {
+  font-size: var(--text-0);
+  line-height: var(--line-0);
+}
+
+.pv-contrast-value {
+  margin-inline-start: auto;
+  font-size: var(--text-1);
+  line-height: var(--line-1);
+}
+
+.pv-contrast-track {
+  display: block;
+  inline-size: 100%;
+  block-size: var(--space-24px);
+  overflow: visible;
+}
+
+.pv-contrast-ground {
+  fill: var(--color-layer-1);
+}
+
+.pv-contrast-bar {
+  fill: var(--color-border-strong);
+}
+
+.pv-contrast-row[data-here] .pv-contrast-bar {
+  fill: var(--color-ink);
+}

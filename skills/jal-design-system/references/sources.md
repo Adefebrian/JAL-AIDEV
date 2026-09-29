@@ -40,7 +40,7 @@ Source: Astryx by Meta, `@astryxdesign/core@0.6.3`, MIT, beta. Paths below are r
 | Easing | `cubic-bezier(0.24, 1, 0.4, 1)` | same, the one JAL curve |
 | Breakpoints | 640, 768, 1024, 1280, 1536 (`themeAdaptations.ts:46`) | same; app-shell below 640 |
 | Focus ring | 2px solid accent, 3px offset | `outline` in ink, instant, never animated; offset per `jal-ui-taste` |
-| Fonts | system stack, Figtree (neutral) | JAL system stack; any new font needs Brian's sign-off |
+| Fonts | system stack, Figtree (neutral) | Geist Sans and Geist Mono (vendored) or one pairing from the `typography.md` pool; only a face outside the pool needs Brian's sign-off |
 
 ### Removed by JAL law (with the JAL replacement)
 
@@ -98,7 +98,7 @@ Source: Carbon Design System by IBM, Apache-2.0. Paths below are repo-relative t
 | Grid breakpoints sm, md, lg, xlg, max | 320, 672, 1056, 1312, 1584 | 640, 768, 1024, 1280, 1536 |
 | Grid | 16 columns, gutter 32 | 1 column below 640, 2 columns 640 to 1023, 4-column Bento at 1024 and up; gutter 16, 24 at 768 and up |
 | Focus outline | 1px or 2px solid #0f62fe, offset -2px | `outline` in ink, instant; dotted under `prefers-contrast` |
-| Font | IBM Plex Sans and Mono | JAL system stack; Plex only with Brian's sign-off |
+| Font | IBM Plex Sans and Mono | Geist Sans and Geist Mono by default; IBM Plex Sans and Mono are pool faces (`typography.md` section 3), picked with `ui.type_pairing` |
 
 ### Removed by JAL law (with the JAL replacement)
 
@@ -154,7 +154,7 @@ Source: Material Web (`@material/web` v2.5.0, tokens from Material 3 v0.192), Ap
 | Spacing | none exposed as tokens | JAL 4px scale |
 | Focus ring width | 3px (`--md-focus-ring-width`) | `outline` in ink per `jal-ui-taste`, instant |
 | Icons | Material Symbols ligatures | koboyo first, reicon.dev fallback |
-| Typeface | Roboto | JAL system stack |
+| Typeface | Roboto | Geist Sans and Geist Mono, or a pool pairing (`typography.md`); Roboto is not in the pool |
 | Token tiers | `--md-ref-*`, `--md-sys-*`, `--md-<component>-*` (`docs/theming/README.md`) | reference primitives, system role tokens in `tokens.css`, component tokens `--jal-<component>-<part>-<property>` read with a fallback, never on `:root` (`foundations.md` 11.1) |
 | Key color plus on-color pairs | every `--md-sys-color-X` has `on-X` (`docs/theming/color.md`) | every JAL fill has one content pair: primary / primary-contrast, layer-2 / ink, status-surface / status (`foundations.md` 11.3) |
 | secondary | #625b71 (focus ring color) | `ink-muted` for secondary content; the focus ring is `--color-focus` (ink) |

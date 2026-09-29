@@ -43,7 +43,7 @@ export function Footer({ variant = "inline", brand, statement, links = [], group
   if (variant === "index" && groups.length === 0) throw new Error("Footer: the index variant needs groups");
   const style = { "--kit-footer-groups": String(Math.max(groups.length, 1)) } as CSSProperties;
   return (
-    <footer className="kit-footer" data-variant={variant}>
+    <footer className="kit-footer" data-kit-composition="footer" data-variant={variant}>
       <div className="kit-grid">
         {variant === "statement" ? (
           <div className="kit-footer-brand">

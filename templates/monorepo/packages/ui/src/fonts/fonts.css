@@ -30,11 +30,20 @@
  * The family stacks that use these names live in ../tokens.css
  * (--font-sans, --font-display, --font-mono). Pool faces are never vendored
  * here: scripts/assets/fonts.ts fetches them into the client project.
+ *
+ * Served as real files, never inlined: the faces are referenced by the
+ * absolute URL /fonts/<file>.woff2, which apps/web/build.ts marks external
+ * (Bun.build would otherwise inline each file under about 128 KB into the
+ * CSS as base64, so every page paid for both faces inside index.css and
+ * nothing could be cached apart). The build copies this folder's woff2 files
+ * to dist/fonts, index.html preloads the two faces, and the server sends
+ * /fonts with a one-year immutable cache. Any other host of these styles
+ * (the kit preview) serves /fonts the same way.
  */
 
 @font-face {
   font-family: "Geist";
-  src: url("./Geist-Variable.woff2") format("woff2");
+  src: url("/fonts/Geist-Variable.woff2") format("woff2");
   font-weight: 100 900;
   font-style: normal;
   font-display: swap;
@@ -42,7 +51,7 @@
 
 @font-face {
   font-family: "Geist Mono";
-  src: url("./GeistMono-Variable.woff2") format("woff2");
+  src: url("/fonts/GeistMono-Variable.woff2") format("woff2");
   font-weight: 100 900;
   font-style: normal;
   font-display: swap;

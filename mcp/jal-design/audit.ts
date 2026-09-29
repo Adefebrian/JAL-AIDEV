@@ -553,14 +553,29 @@ const AUDIT_SCRIPT = `
       var key = cssPath(el);
       if (seen[key]) return;
       seen[key] = true;
+      // A row is a set of controls that sit side by side. A flex column, a
+      // one-column grid, or a stacked mobile form has no row, so only
+      // controls whose boxes share a band of the vertical axis are compared.
       var rects = controls.map(function (c) { return c.getBoundingClientRect(); });
-      var heights = rects.map(function (r) { return r.height; });
-      var tops = rects.map(function (r) { return r.top; });
-      var maxH = Math.max.apply(null, heights), minH = Math.min.apply(null, heights);
-      var maxT = Math.max.apply(null, tops), minT = Math.min.apply(null, tops);
-      if (maxH - minH > 0.5 || maxT - minT > 0.5) {
-        pushV("form-row-mismatch", key, "heights=[" + heights.map(function (h) { return h.toFixed(1); }).join(",") + "] tops=[" + tops.map(function (t) { return t.toFixed(1); }).join(",") + "]");
-      }
+      var rows = [];
+      rects.forEach(function (r) {
+        var row = rows.find(function (g) {
+          var o = Math.min(g.bottom, r.bottom) - Math.max(g.top, r.top);
+          return o > 0.5 * Math.min(g.bottom - g.top, r.height);
+        });
+        if (row) { row.rects.push(r); row.top = Math.min(row.top, r.top); row.bottom = Math.max(row.bottom, r.bottom); }
+        else rows.push({ top: r.top, bottom: r.bottom, rects: [r] });
+      });
+      rows.forEach(function (row) {
+        if (row.rects.length < 2) return;
+        var heights = row.rects.map(function (r) { return r.height; });
+        var tops = row.rects.map(function (r) { return r.top; });
+        var maxH = Math.max.apply(null, heights), minH = Math.min.apply(null, heights);
+        var maxT = Math.max.apply(null, tops), minT = Math.min.apply(null, tops);
+        if (maxH - minH > 0.5 || maxT - minT > 0.5) {
+          pushV("form-row-mismatch", key, "heights=[" + heights.map(function (h) { return h.toFixed(1); }).join(",") + "] tops=[" + tops.map(function (t) { return t.toFixed(1); }).join(",") + "]");
+        }
+      });
     });
   })();
 
@@ -729,6 +744,9 @@ const AUDIT_SCRIPT = `
         if (isOverlayExcluded(child)) return;
         var ccs = getComputedStyle(child);
         if (ccs.position === "fixed") return;
+        // An element mid-entrance (a running animation or transition) is not
+        // at its resting box yet; measure it once it settles.
+        if (child.getAnimations && child.getAnimations().some(function (an) { return an.playState === "running"; })) return;
         var crect = child.getBoundingClientRect();
         if (!skipX && (crect.left < contentLeft - 0.5 || crect.right > contentRight + 0.5)) {
           pushV("overflow-parent", cssPath(child), "child x[" + crect.left.toFixed(1) + "," + crect.right.toFixed(1) + "] exceeds parent content x[" + contentLeft.toFixed(1) + "," + contentRight.toFixed(1) + "]");
@@ -1051,6 +1069,12 @@ const AUDIT_SCRIPT = `
       if (parent.closest(TIDY_SKIP) || isOverlayExcluded(parent) || !isVisible(parent)) return;
       var pd = getComputedStyle(parent).display;
       if (pd === "inline" || pd === "contents") return;
+      // A grid whose items span different tracks (a bento) keeps one gap by
+      // construction; the space between spanned tiles is not a gap to compare.
+      if (pd === "grid" || pd === "inline-grid") {
+        var sizes = Array.prototype.map.call(parent.children, function (c) { var r = c.getBoundingClientRect(); return [r.width, r.height]; });
+        if (sizes.some(function (s) { return Math.abs(s[0] - sizes[0][0]) > 1 || Math.abs(s[1] - sizes[0][1]) > 1; })) return;
+      }
       var seq = Array.prototype.filter.call(parent.children, function (c) {
         return !NON_LAYOUT_TAGS[c.tagName] || c.tagName === "BUTTON" || c.tagName === "IMG" || c.tagName === "INPUT" || c.tagName === "SELECT";
       }).filter(function (c) { return getComputedStyle(c).display !== "none"; });

@@ -10,6 +10,11 @@
 // lg applies at 1024 and up (2 to 4 columns), md at 640 to 1023 (1 or 2
 // columns, optional); without md the tiles stack in source order below 1024.
 //
+// Variants: three declared layout maps per tile count (BENTO_PRESETS), so a
+// page never hand-draws the same lead-left map twice. A preset names the
+// structure (lead-left, lead-right, band, row, lead-center, columns, grid,
+// stagger); `layout` still takes a hand-declared map (variant "custom").
+//
 // Tile kinds share one chrome (surface, full hairline, the direction's card
 // radius) and differ only in anatomy:
 //   media  a visual that fills the tile, then a title and caption below it
@@ -115,16 +120,55 @@ function areasValue(rows: string[]): string {
     .join(" ");
 }
 
+/** Three declared maps per tile count. `media` names the areas that span
+ *  rows, which must hold media tiles. Areas are named a, b, c, ... in
+ *  reading order (the first cell of each area, row by row), so the tiles'
+ *  source order is the order a sighted reader meets them at every width. */
+export const BENTO_PRESETS: Record<number, Record<string, BentoLayout & { media: string[] }>> = {
+  3: {
+    "lead-left": { lg: ["a a b", "a a c"], md: ["a a", "b c"], media: ["a"] },
+    "lead-right": { lg: ["a b b", "c b b"], md: ["a a", "b b", "c c"], media: ["b"] },
+    row: { lg: ["a b c"], md: ["a a", "b c"], media: [] },
+  },
+  4: {
+    "lead-left": { lg: ["a a b c", "a a d d"], md: ["a a", "b c", "d d"], media: ["a"] },
+    "lead-right": { lg: ["a b c c", "d d c c"], md: ["a b", "c c", "d d"], media: ["c"] },
+    band: { lg: ["a a a b", "c d d d"], md: ["a a", "b c", "d d"], media: [] },
+  },
+  5: {
+    "lead-left": { lg: ["a a b c", "a a d e"], md: ["a a", "b c", "d e"], media: ["a"] },
+    "lead-center": { lg: ["a b b c", "d b b e"], md: ["a a", "b b", "c d", "e e"], media: ["b"] },
+    columns: { lg: ["a b b c", "a d e c"], md: ["a a", "b b", "c d", "e e"], media: ["a", "c"] },
+  },
+  6: {
+    "lead-left": { lg: ["a a b c", "a a d e", "f f f f"], md: ["a a", "b c", "d e", "f f"], media: ["a"] },
+    grid: { lg: ["a b c", "d e f"], md: ["a b", "c d", "e f"], media: [] },
+    stagger: { lg: ["a a b c", "d e f f"], md: ["a a", "b c", "d e", "f f"], media: [] },
+  },
+};
+
+/** The preset map for a tile count, or an error naming the choices. */
+export function bentoPreset(count: number, name: string): BentoLayout {
+  const byCount = BENTO_PRESETS[count];
+  if (!byCount) throw new Error(`BentoGrid: no presets for ${count} tiles; use 3 to 6 or declare a layout`);
+  const p = byCount[name];
+  if (!p) throw new Error(`BentoGrid: no "${name}" preset for ${count} tiles; use ${Object.keys(byCount).join(", ")}`);
+  return { lg: p.lg, md: p.md };
+}
+
 export interface BentoGridProps extends SectionFrame {
   title?: ReactNode;
   lead?: ReactNode;
   /** Accessible name when there is no title. */
   label?: string;
-  layout: BentoLayout;
+  /** A named preset for the tile count (BENTO_PRESETS). */
+  preset?: string;
+  /** A hand-declared map, when no preset carries the content. */
+  layout?: BentoLayout;
   children: ReactNode;
 }
 
-export function BentoGrid({ title, lead, label, layout, children, id, tone, rhythm }: BentoGridProps) {
+export function BentoGrid({ title, lead, label, preset, layout: declared, children, id, tone, attached }: BentoGridProps) {
   const headingId = useId();
   const tiles: TileRef[] = [];
   for (const child of flatten(children)) {
@@ -132,6 +176,8 @@ export function BentoGrid({ title, lead, label, layout, children, id, tone, rhyt
       tiles.push({ area: child.props.area, kind: child.props.kind });
     }
   }
+  if (!preset && !declared) throw new Error("BentoGrid: pass a preset or a layout");
+  const layout = declared ?? bentoPreset(tiles.length, preset!);
   const errors = validateBentoLayout(layout.lg, tiles, 4);
   if (layout.md) {
     for (const e of validateBentoLayout(layout.md, tiles, 2)) errors.push(`md: ${e}`);
@@ -147,9 +193,17 @@ export function BentoGrid({ title, lead, label, layout, children, id, tone, rhyt
   } as CSSProperties;
 
   return (
-    <Section id={id} tone={tone} rhythm={rhythm} labelledBy={title ? headingId : undefined} label={title ? undefined : label}>
+    <Section
+      id={id}
+      tone={tone}
+      attached={attached}
+      labelledBy={title ? headingId : undefined}
+      label={title ? undefined : label}
+      composition="bento"
+      variant={declared ? "custom" : preset}
+    >
       {title ? <SectionHead id={headingId} title={title} lead={lead} /> : null}
-      <div className="kit-bento" data-has-md={layout.md ? "" : undefined} style={style}>
+      <div className="kit-bento" data-has-md={layout.md ? "" : undefined} data-motion="rise" style={style}>
         {children}
       </div>
     </Section>
@@ -159,7 +213,7 @@ export function BentoGrid({ title, lead, label, layout, children, id, tone, rhyt
 export function BentoTile({ area, kind, title, body, value, unit, items, media, signal }: BentoTileProps) {
   const style = { "--kit-area": area } as CSSProperties;
   return (
-    <div className="kit-bento-tile" data-kind={kind} data-signal={signal ? "" : undefined} style={style}>
+    <div className="kit-bento-tile" data-kind={kind} data-signal={signal ? "" : undefined} data-motion="item" style={style}>
       {kind === "media" ? (
         <>
           <div className="kit-bento-visual">{media}</div>
@@ -174,7 +228,7 @@ export function BentoTile({ area, kind, title, body, value, unit, items, media, 
       {kind === "stat" ? (
         <>
           <p className="kit-bento-stat">
-            <Figure value={value} unit={unit} />
+            <Figure value={value} unit={unit} count />
           </p>
           {body ? <p className="kit-body">{body}</p> : null}
         </>

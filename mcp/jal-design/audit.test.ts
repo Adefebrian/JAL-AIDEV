@@ -742,3 +742,32 @@ describe("shotUrl", () => {
     expect(shotUrl("http://localhost:4000/", false)).toBe("http://localhost:4000/");
   });
 });
+
+describe("form-row-mismatch axis", () => {
+  test("a stacked form is not a row; a side-by-side row with unequal heights still fails", async () => {
+    const { runAudit } = await import("./audit");
+    const server = Bun.serve({ port: 0, fetch: () => new Response(Bun.file(`${import.meta.dir}/fixtures/form-stack.html`)) });
+    try {
+      const r = await runAudit(`http://localhost:${server.port}/`, { widths: [1280] });
+      const hits = r.violations.filter((v) => v.rule === "form-row-mismatch");
+      expect(hits.length).toBe(1);
+      expect(hits[0].selector).toContain("form.row");
+    } finally {
+      server.stop(true);
+    }
+  }, 60000);
+});
+
+describe("bento and mid-animation", () => {
+  test("a spanned bento has no gap-consistency hit and a running animation is not overflow-parent", async () => {
+    const { runAudit } = await import("./audit");
+    const server = Bun.serve({ port: 0, fetch: () => new Response(Bun.file(`${import.meta.dir}/fixtures/bento-anim.html`)) });
+    try {
+      const r = await runAudit(`http://localhost:${server.port}/`, { widths: [1280] });
+      expect(r.violations.filter((v) => v.rule === "gap-consistency")).toHaveLength(0);
+      expect(r.violations.filter((v) => v.rule === "overflow-parent" && v.selector.includes("rise"))).toHaveLength(0);
+    } finally {
+      server.stop(true);
+    }
+  }, 60000);
+});

@@ -34,7 +34,7 @@ Do not load outside design or animation skills.
   - self-hosted decoders (never the drei CDN defaults)
 - Approved: Three.js (WebGL, WebGPU, TSL), React Three Fiber, drei, GSAP with all its plugins, Lenis, Framer Motion, Tailwind wired to JAL tokens, CSS/WAAPI, OriginKit patterns, and, whenever JEV picks them, nixie-fx and Rapier (rules in `jal-immersive` SKILL section 2, stack law).
 - Approved by Brian (2026-09-29): CC0 models, HDRIs, and textures from Poly Haven (polyhaven.com, all assets CC0), downloaded straight into the client project at build time with `scripts/assets/polyhaven.ts`; and `@react-three/postprocessing` with `postprocessing`, through the scene module's tier-gated `PostFX`.
-- Everything else (gltf-transform, cobe, fonts) is an approval candidate: propose it and wait for Brian's yes.
+- Everything else (gltf-transform, cobe) is an approval candidate: propose it and wait for Brian's yes. Fonts are not: Geist Sans and Geist Mono are vendored, and a face from the curated pool in `jal-design-system` `references/typography.md` needs no approval (only a face outside it does).
 
 ## The pipeline (build from zero or redesign; skip nothing)
 

@@ -12,7 +12,7 @@ Before writing any animation: name what state it communicates in one sentence. I
 
 ## 1. Approved stack, nothing else
 
-- **Lenis** for smooth scroll.
+- **Lenis** for smooth scroll, the default on marketing and immersive pages, through `templates/modules/motion` (section 4a).
 - **GSAP** for orchestrated timelines and scroll-linked motion (official skills plus the JAL layer: `skills/jal-immersive/references/gsap/gsap.md`). Every GSAP plugin is free (since the 2024 Webflow licensing change) and allowed: ScrollTrigger, SplitText, Flip, MorphSVG, CustomEase, and the rest. JAL law still decides what each is used for (no DrawSVG ornaments, no ScrollSmoother next to Lenis, no bounce or elastic eases); the per-plugin filter is in `skills/jal-immersive/references/scroll-choreography.md`.
 - **Framer Motion** for React component, gesture, layout (FLIP), and exit animation (`AnimatePresence`).
 - **CSS transitions and WAAPI** (`element.animate()`) for simple, single-property, non-orchestrated motion. Prefer this over a library whenever a plain transition does the job, it costs nothing over the wire.
@@ -108,6 +108,17 @@ Richer choreography is allowed here: asymmetric in/out at the showcase durations
 For scroll and time choreography (ScrollTrigger pin, scrub, snap, batch, SplitText, Flip, Lenis synced with ScrollTrigger and the R3F frame loop, scroll camera paths, intensity tiers 0 to 3, and the JEV `motion.intensity`, `motion.choreography`, `motion.pin` calls) read `skills/jal-immersive/references/scroll-choreography.md`. For a frame-driven demo piece with play, pause, scrub, and a reduced-motion poster, read `skills/jal-immersive/references/frames.md`.
 
 The short version: one continuous world, never a slideshow of crossfading `<section>` blocks; the camera (a parent transform) does the moving, not every element animating itself independently; entrances slower and eased-out, exits faster and eased-in, at roughly the same 70% ratio as product UI; every showcase piece still opens on a white or off-white base and still obeys every rule in section 7.
+
+## 4a. The kit motion layer and the motion module
+
+Every JAL page gets motion from the kit first (`jal-design-system` `references/identity.md` section 7), at two costs:
+
+- **Kit default (T0 and T1, zero dependencies, `packages/ui/src/kit/motion.ts`).** Compositions carry `data-motion` (`rise`, `item`, `count`); `Page motion` arms the page after mount with one IntersectionObserver rooted on the real scroller (`getScroller`). Entrances are opacity plus a 12px rise on `--ease-standard` at `--dur-400`, played once, with `--stagger-item` capped at the sixth item; the pending state is opacity only (the box never moves), and the rise is an animation that starts at reveal. StatRow, Bento stat, and Quote results figures count up once at `--dur-600` with their width locked. No JavaScript, a failed bundle, no IntersectionObserver, and reduced motion all render the finished page.
+- **Motion module (T2 and T3, `templates/modules/motion`, opt-in).** `SmoothScroll` is Lenis on the one GSAP clock (gsap.ticker drives `lenis.raf`, `lagSmoothing(0)`, `lenis.on("scroll", ScrollTrigger.update)`), started after mount on window or a contained shell's scroller, destroyed on unmount, off under reduced motion and on touch-first devices unless the page opts in, with in-page anchors through `lenis.scrollTo` minus the header. `KitMotion tier` takes over the kit's entrances (one owner, `data-motion-engine`) and adds SplitText line reveals (tier 2), a scrubbed StickyStory, a drift on bleed image or canvas media, and the SpecTable rail rows in order (tier 3, 1024 and up). Budget: about 61 KB gzip with its dependencies, lazy per route.
+
+**Lenis is the default smooth scroll for marketing and immersive pages.** Never GSAP ScrollSmoother, never both, never a second smoother or `scrollerProxy`. Product UI keeps native scroll.
+
+**How JEV picks per section.** `motion.intensity` (0 to 3) sets the page's `Page motion` level (`none` for 0, `quiet` for 1, `staged` for 2) and, when any section reaches 2 or 3, the module and its `KitMotion tier`. `motion.choreography` names the pattern: `reveal` is the kit default; `stagger_sequence` is tier 2 (items and split lines); `scrub` and `pinned_sequence` are tier 3 and map to the StickyStory scrub over the kit's own pin (`motion.pin` still gates any other pin). Which composition gets which default is the table in the motion module's README.
 
 ## 5. Accessibility
 

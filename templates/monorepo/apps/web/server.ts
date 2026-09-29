@@ -53,7 +53,18 @@ app.use(
 // image's WORKDIR.
 const distDir = `${import.meta.dir}/dist`;
 
+// The vendored fonts (dist/fonts, copied by build.ts) never change under a
+// name, so they cache for a year; everything else keeps the default.
+app.use("/fonts/*", async (c, next) => {
+  await next();
+  if (c.res.status === 200 && c.res.headers.get("content-type")?.startsWith("font/")) {
+    c.header("Cache-Control", "public, max-age=31536000, immutable");
+  }
+});
+
 app.use("/*", serveStatic({ root: distDir }));
+// A missing font is a 404, never the SPA's index.html.
+app.get("/fonts/*", (c) => c.notFound());
 // SPA fallback: any route not matched by a static file (client-side routes)
 // resolves to index.html instead of a 404.
 //
