@@ -135,7 +135,7 @@ No gradients of any kind, animated or static. No glow, no neon. No shadows (JAL 
 - Every animation states, in one sentence, what state change it communicates. None left that cannot answer this.
 - Only `transform` and `opacity` animate in product UI, with the one named disclosure exception in section 3.
 - Every duration and easing value traces to a named token in section 2, no inline magic numbers (`0.37s`, `ease-in-out`, a hand-typed cubic-bezier). Linear appears only under the linear exception in section 2.
-- Every entrance/exit pair is asymmetric, exit at roughly 70% of entrance, exit eased in.
+- Every entrance/exit pair is asymmetric: exit at roughly 70% of the entrance duration, on the same one curve (`--ease-standard`).
 - `prefers-reduced-motion` is implemented and actually tested (toggle it, confirm every motion collapses), not just referenced in a comment.
 - Nothing autoplays longer than 5s without a pause control; nothing flashes past the WCAG limit.
 - `will-change` is scoped to the active animation window only, verified in devtools, not left standing.
