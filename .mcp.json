@@ -10,7 +10,7 @@
     "jal-design": {
       "command": "bun",
       "args": [
-        "${CLAUDE_PLUGIN_ROOT}/mcp/jal-design/server.ts"
+        "${CLAUDE_PLUGIN_ROOT:-.}/mcp/jal-design/server.ts"
       ],
       "env": {
         "JEV_API_KEY": "${JEV_API_KEY}"
