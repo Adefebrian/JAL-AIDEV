@@ -1,4 +1,5 @@
 ---
+user-invocable: false
 name: jal-scaffold
 description: How /jal-new builds a JAL monorepo, the no-Vite Bun.build() React recipe, Hono static serving, bun --watch dev loop, and the post-scaffold checklist. Use when scaffolding a new JAL project, setting up Bun.build() for React, or wiring a Hono static server.
 ---

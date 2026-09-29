@@ -1,4 +1,5 @@
 ---
+user-invocable: false
 name: jal-standards
 description: JAL engineering constitution: approved stack, forbidden tech, frontend law (no overlap, white-first, no gradients, no shadows, no side lines, section concept law, mobile-first, JEV and ui_audit gates), security hardening, AI default. Read before building or reviewing any JAL project.
 ---

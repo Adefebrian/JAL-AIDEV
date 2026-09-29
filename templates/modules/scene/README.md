@@ -55,7 +55,9 @@ Approved by Brian (2026-09-29): `@react-three/postprocessing` and `postprocessin
 | `src/PostFX.tsx`, `src/PostFXImpl.tsx` | N8AO, DepthOfField (no bloom), ToneMapping, SMAA; the implementation is a lazy chunk loaded only on the desktop full tier |
 | `src/CameraRig.tsx`, `src/shots.ts` | Named shots, ScrollTrigger on `getScroller()`, damped moves, portrait poses, `progressRef` for light beats |
 | `src/assets.tsx` | `Product` (useGLTF with Draco, Meshopt, KTX2 from local decoders, shadow flags, presets, anisotropy), `preloadProduct`, `disposeProduct`, `disposeAllProducts` |
-| `src/helpers.test.ts` | Tests for kelvin, photometry, shot interpolation, and tier selection |
+| `src/lifecycle.ts` | Pure helpers: the poster layer style (hidden under a ready live scene), CameraRig's content key, the per-instance Product registry |
+| `src/helpers.test.ts` | Tests for kelvin, photometry, shot interpolation, tier selection, and the lifecycle helpers |
+| `src/components.test.tsx` | Component tests on a stub renderer (no workspace install): poster visibility, reduced motion into CameraRig, trigger keying, sweep disposal |
 
 ## Tiers and cost
 
@@ -66,7 +68,9 @@ Approved by Brian (2026-09-29): `@react-three/postprocessing` and `postprocessin
 | reduced | coarse pointer with 4 GB or less, or 4 cores or fewer | DPR 1, one caster at 1024, no post, no contact shadows |
 | static | reduced motion, save-data, no WebGL2, a software GPU, max texture under 4096 | the poster and the DOM, no WebGL |
 
-`?scene-tier=full|reduced|static` forces a tier. The critic's `ui_shots` captures run on SwiftShader, which the probe sends to the poster, so `ui_shots` with `webgl: true` appends `?scene-tier=full` on its own (unless the URL already sets a tier); the lead captures the poster once with `?scene-tier=static` (it must match the scene's framing).
+Once the live scene reports ready, the poster wrapper gets `visibility: hidden` (the canvas is transparent, so a visible poster would show its product through the scene); it stays mounted and shows again on context loss or a scene error.
+
+`?scene-tier=full|reduced|static` forces a tier over the capability checks only (software GPU, texture limit, memory, cores): reduced motion, save-data, and a missing WebGL2 still get the poster. Headless Chrome for `ui_shots` does not emulate reduced motion, so captures still get the forced full tier. The critic's `ui_shots` captures run on SwiftShader, which the probe sends to the poster, so `ui_shots` with `webgl: true` appends `?scene-tier=full` on its own (unless the URL already sets a tier); the lead captures the poster once with `?scene-tier=static` (it must match the scene's framing).
 
 Grounding cost: shadow maps cost one depth pass per casting light per rendered frame; `ContactShadows` with `frames={1}` is a one-time cost (Infinity re-renders the scene every frame, about 0.3 to 0.8 ms on a desktop GPU); `AccumulativeShadows` renders N shadow frames once at load and then nothing, but bakes the light position, so it suits a sweep under a static key only.
 
@@ -86,8 +90,8 @@ three alone is about 190 KB gzip, and R3F imports the whole three namespace, so 
 ## Example
 
 ```tsx
-import { useRef } from "react";
-import { CameraRig, EnvironmentRig, Ground, LightRig, PostFX, Product, Stage, preloadProduct, type Shot } from "@<project>/scene";
+import { useRef, type MutableRefObject } from "react";
+import { CameraRig, EnvironmentRig, Ground, LightRig, PostFX, Product, Stage, preloadProduct, useStage, type Shot } from "@<project>/scene";
 
 const A = "/assets/polyhaven";
 const LAMP = `${A}/desk_lamp_arm_01/desk_lamp_arm_01_1k.gltf`;
@@ -96,6 +100,15 @@ const shots: Shot[] = [
   { name: "hero", position: [0.8, 0.62, 1.5], target: [-0.16, 0.3, -0.1], lens: 40, portrait: { position: [0.74, 0.7, 0.97], target: [0.12, 0.47, -0.1] } },
   { name: "pool", position: [0.55, 0.3, 0.62], target: [0.08, 0.06, -0.04], lens: 50 },
 ];
+
+function Rig({ progress }: { progress: MutableRefObject<number> }) {
+  // The Stage's prefers-reduced-motion. It is true on a live scene only behind
+  // a "View in 3D" opt-in (<Stage tier="full">); the rig then cuts between
+  // shots with no damping. CameraRig reads it from the Stage on its own; it
+  // is passed here to show the wiring.
+  const { reducedMotion } = useStage();
+  return <CameraRig shots={shots} sections={["#hero", "#pool"]} progressRef={progress} reducedMotion={reducedMotion} />;
+}
 
 export default function Scene() {
   const progress = useRef(0);
@@ -106,7 +119,7 @@ export default function Scene() {
       <Ground variant="desk" size={[3.6, 1.6]} position={[0, 0, 0.43]} textures={{ map: `${A}/ash_veneer/ash_veneer_diff_1k.jpg`, normalMap: `${A}/ash_veneer/ash_veneer_nor_gl_1k.jpg`, armMap: `${A}/ash_veneer/ash_veneer_arm_1k.jpg` }} tileMetres={0.9} />
       <Ground variant="sweep" size={[10, 0.6]} position={[0, -0.76, -0.75]} coveRadius={0.3} color="#fafaf9" shadows="shadowmap" />
       <Product src={LAMP} position={[-0.12, -0.02, -0.37]} rotation={[0, Math.PI, 0]} />
-      <CameraRig shots={shots} sections={["#hero", "#pool"]} progressRef={progress} />
+      <Rig progress={progress} />
       <PostFX focus={[0.05, 0.2, -0.05]} bokehScale={0.5} aoRadius={0.05} />
     </Stage>
   );

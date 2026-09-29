@@ -14,7 +14,7 @@ Index:
 | Domain | IDs |
 |--------|-----|
 | Orchestration | `orch.route`, `orch.playbooks`, `orch.parallel`, `orch.model`, `orch.escalate`, `orch.loop_exit` |
-| UI/UX | `ui.experience`, `ui.direction_screen`, `ui.density`, `ui.region_gate`, `ui.designmd_screen`, `ui.final_taste`, `ui.heuristics`, `ui.finish_disposition`, `ui.component_recipe`, `ui.text_reveal_granularity`, `ui.number_motion`, `ui.geo_visual` |
+| UI/UX | `ui.experience`, `ui.direction_screen`, `ui.type_pairing`, `ui.density`, `ui.region_gate`, `ui.designmd_screen`, `ui.final_taste`, `ui.heuristics`, `ui.finish_disposition`, `ui.component_recipe`, `ui.text_reveal_granularity`, `ui.number_motion`, `ui.geo_visual` |
 | Motion | `motion.intensity`, `motion.choreography`, `motion.pin`, `motion.demo_medium` |
 | Immersive | `imm.concept`, `imm.gate`, `imm.recipe`, `imm.tech`, `imm.tier`, `imm.taste` |
 | Backend | `be.placement`, `be.api_quality`, `be.migration_risk`, `be.new_tech` |
@@ -486,6 +486,48 @@ Index:
 - If fewer than 4 survive, or none ranked 3 or lower survives, refill the dropped slots once and re-screen. If the pool is still empty, build the best-ranked survivor and log `fallback: empty pool`.
 - A rank 1 or 2 survivor whose fit beats the drawn candidate by 1.0 or more may be shown once as an alternate in attended runs. It never leads.
 - Low confidence on a key: treat it as a drop only when slop is 0.4 or more.
+
+### `ui.type_pairing`
+
+**Purpose:** pick the page's type pairing (text, display, mono) from the curated font pool, and decide whether an editorial section switches its display face, so the type fits the context, the section, and the content instead of a habit.
+
+**Caller:** jal-ux at the `/jal-ui` direction step (pipeline step 2), after the direction is drawn and before the contract is written; again only when the brief or the content changes.
+
+**Precheck (decides without JEV):**
+- Pool fonts only (`jal-design-system` `references/typography.md` section 3, the same list as `POOL` in `scripts/assets/fonts.ts`), SIL OFL 1.1 only. A face outside the pool is never a candidate; it goes to Brian.
+- Each candidate has at most 3 families: one text, at most one display (or the text family again), one mono. The text face has the text role, the mono the mono role, and the figure face has tabular figures (`tnum` or tabular by default).
+- The direction's default pairing (`typography.md` section 5) is always a candidate, and so is Geist plus Geist Mono. When the direction default is Geist, add a third pool candidate so the choice is real.
+- A candidate that needs a costume the law strips (italic display, a one-word serif swap inside a sans headline, the warm-paper reflex trio in `craft.md` section 14, mono as label costume) is dropped before asking.
+- `display_switch` is asked only for sections flagged editorial (a quote, a manifesto line, a pull statement), only when the page display is the text family (so the page stays at 3 families), and never for two adjacent sections.
+
+**State fields:** `proposal.brief` (product, audience, the experience level from `ui.experience`), `proposal.direction` (the drawn direction, its default pairing, and its character line), `proposal.candidates` (3 to 5, each with `key`, `text`, `display`, `mono`, `figures`, and one line of why), `evidence.samples` (real content per section: section name, kind, the headline, one body line, and any figures or code as they will ship), `evidence.editorial_sections` (section names flagged editorial, with the proposed switch face), `evidence.budget` (woff2 bytes each candidate adds over the vendored Geist).
+
+**Questions** (`display_switch_1` repeats as `display_switch_2` and on, one per flagged section, in the same call):
+```json
+{
+  "pairing": {
+    "type": "choice",
+    "instructions": "Pick the pairing that best fits this product's audience, the direction in state.proposal.direction, and the real content in state.evidence.samples, read at JAL's fixed type scale. Judge each candidate on the headlines and body lines as they will ship: legibility at 16px, the voice at display size, figures lining up in columns, and whether the faces sit together without competing. Prefer the calmer candidate when two fit equally. Ignore novelty.",
+    "criteria": {
+      "<candidate_key_1>": "<text / display / mono: where this pairing fits, for example Geist / Geist / Geist Mono: neutral, exact, dense-friendly, the JAL Core default>",
+      "<candidate_key_2>": "<text / display / mono: one line on the content and context it serves>",
+      "<candidate_key_3>": "<text / display / mono: one line>"
+    }
+  },
+  "display_switch_1": {
+    "type": "noul",
+    "instructions": "Yes means the first section in state.evidence.editorial_sections reads better with its display role set in the proposed switch face than in the page pairing: the section is a quote, a manifesto line, or a pull statement whose words carry the voice, and the switch makes that voice clearer without breaking the page's rhythm. No means keep the page display face. Judge the section's real text in state.evidence.samples, not the mood of the product."
+  }
+}
+```
+
+The agent fills `criteria` with the real candidate keys and one line per candidate written for this brief. Keys must match `proposal.candidates`.
+
+**Thresholds and actions:**
+- Confidence 0.5 or above: write the chosen pairing in the direction contract's Type pairing knob, set the `--kit-font-*` variables (a preset direction already names its default), and fetch any pool face with `scripts/assets/fonts.ts get` into the client project.
+- Low confidence: take the direction default when it is among the top two, otherwise Geist plus Geist Mono (the calm default is always lawful).
+- `display_switch_n` at 0.6 or above: redeclare `--kit-font-display` on that section's root (and set 400 weights for a single-weight face) and log it in the decision ledger. Under 0.6, or low confidence: no switch.
+- Unverified: apply the same criteria yourself, prefer the direction default, and stamp the contract.
 
 ### `ui.heuristics`
 

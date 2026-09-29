@@ -113,12 +113,13 @@ export interface FigureProps {
   unit?: string;
 }
 
-/** A value and its unit. The unit is optional; the value is always tabular mono. */
+/** A value and its unit. The unit is optional; the value is always tabular mono.
+ *  A no-break space (U+00A0) joins them so a unit never wraps from its value. */
 export function Figure({ value, unit }: FigureProps) {
   return (
     <>
       <span className="kit-num">{value}</span>
-      {unit ? <span className="kit-unit">{" " + unit}</span> : null}
+      {unit ? <span className="kit-unit">{"\u00a0" + unit}</span> : null}
     </>
   );
 }

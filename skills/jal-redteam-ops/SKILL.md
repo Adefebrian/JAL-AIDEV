@@ -1,4 +1,5 @@
 ---
+user-invocable: false
 name: jal-redteam-ops
 description: Offensive security workflow for JAL projects, defining scope, recon, mapping findings to the installed hunt-* and bug-bounty skills, exploit-or-disprove discipline, evidence capture, and responsible reporting back into the project. Use when running an offensive security pass, red-teaming a JAL app before ship, or triaging a suspected vulnerability class.
 ---

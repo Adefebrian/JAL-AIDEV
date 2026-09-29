@@ -29,9 +29,9 @@ One grid, placed by every composition on its column lines. Defined in `kit.css` 
 - **The generator is fixed:** `round(16 x 1.2^n)` from `tokens.css`. A direction picks which steps carry the page; it never changes the ratio.
 - **Five roles per page, no sixth size:** display (the Masthead headline only, one per page), heading (section h2, stat values, prices, quotes), title (19, h3 and item titles), body (16), meta (13, labels, captions, units). `kit.css` sets no other size, and a test enforces it.
 - **Display ramp:** `--kit-display-sm/md/lg-size` step at 768 and 1024 (Carbon's responsive display token, declared once), weight 500 or 600, tracking `--tracking-display` (-0.01 to -0.04em), `font-optical-sizing: auto`, `text-wrap: balance`.
-- **Numerals, Carbon style:** every spec value, list value, chart tick, and time is `.kit-num`: tabular mono (`--kit-font-mono`), `tabular-nums slashed-zero`. Units are set at the meta size in ink-muted, joined by a no-break space (`<Figure value unit>`). Big figures (StatRow, price, Bento stat) use `--kit-font-figure` (the display face with tabular numerals by default; mono in D3 and D10).
+- **Numerals, Carbon style:** every spec value, list value, chart tick, and time is `.kit-num`: tabular mono (`--kit-font-mono`), `tabular-nums slashed-zero` (Geist Mono draws its zero slashed by default). Units are set at the meta size in ink-muted, joined by a no-break space (`<Figure value unit>`). Big figures (StatRow, price, Bento stat) use `--kit-font-figure` (the display face with tabular numerals by default; mono in D3 and D10; the text face in D7 and D12). A face without tabular figures never carries figures.
 - **One heading plus one lead.** Every section head is `SectionHead`: an h2 and one lead line, split across the grid (heading on 1 to 5, lead on 7 to 12) or stacked (1 to 8). Two stacked headings, a kicker, an eyebrow, or a numbered marker ("01") above a heading cannot be expressed with the kit.
-- System stacks only (`system-ui` sans, `ui-monospace` mono, `ui-serif` for D7 with Brian's yes, `ui-rounded` for D12). A webfont is a dependency decision for Brian.
+- **Families (full rules in `typography.md`):** Geist Sans and Geist Mono are the default, vendored in `packages/ui/src/fonts` (SIL OFL 1.1) with metric-matched fallbacks and read through `--font-sans`, `--font-display`, `--font-mono`. Typography is not locked to them: each page takes one pairing from the curated OFL pool, a text family plus at most one display family plus one mono, so at most three families. A section may switch only its display role when its content calls for it (an editorial quote, a manifesto line), never the text role, and only while the page stays at three families. The scale, the five roles, the weights, and tabular numbers stay fixed whatever the face. Every stack ends in the Geist stack. Each direction has a default pairing (`typography.md` section 5, set in `kit.css`); JEV `ui.type_pairing` picks among candidates at direction time. Pool faces are fetched into the client project with `scripts/assets/fonts.ts`, never vendored in the plugin.
 
 ### 1.3 Depth and surface
 
@@ -85,11 +85,11 @@ Every knob is a CSS custom property set in one block keyed on `[data-direction="
 |---|---|---|
 | Canvas | `--color-page` | white, neutral `#fafaf9`, cool `#f7f8f8`, warm `#faf8f5`, light beige `#f8f5f0` (the canvas floor in `directions.md` section 6) |
 | Accent and role | `--color-accent`, `--color-accent-contrast`, `--color-primary` (+ hover, active), `--kit-signal`, `--kit-link` | one hue outside HSL 235 to 330, 4.5:1 for text use; exactly one role: none, `filled_primary` (primary fill), `signal_only` (`--kit-signal`), `text_and_icon` (`--kit-link`) |
-| Display face | `--kit-font-display` | system sans (default), `ui-rounded` (D12), `ui-serif` (D7, with Brian's yes) |
-| Figure face | `--kit-font-figure` | display face (default) or `--kit-font-mono` |
+| Type pairing | `--kit-font-sans`, `--kit-font-display`, `--kit-font-mono` | one pairing from the pool in `typography.md` section 3, at most three families, every stack ending in the Geist stack; default Geist plus Geist Mono, Newsreader display in D7, Nunito display in D12; a section may redeclare `--kit-font-display` only |
+| Figure face | `--kit-font-figure` | display face (default), the text face, or `--kit-font-mono`; always a face with tabular figures |
 | Display steps | `--kit-display-{sm,md,lg}-{size,line}` | sm at most `--text-display-1`; lg from `--text-6` to `--text-display-3`; Persuade and Experience only above `--text-6` |
 | Heading steps | `--kit-heading-{sm,lg}-{size,line}` | `--text-3` to `--text-5`, at least two steps above body |
-| Weights | `--kit-display-weight`, `--kit-heading-weight` | 500 or 600 |
+| Weights | `--kit-display-weight`, `--kit-heading-weight` | 500 or 600; 400 only inside a section switched to a single-weight face (`typography.md` rule 2.5) |
 | Tracking | `--tracking-display`, `--tracking-heading` | display -0.01 to -0.04em, heading 0 to -0.02em |
 | Grid | `--kit-margin-lg`, `--kit-gutter-lg` | margin 32 to 64, gutter 16 to 32 (spacing tokens) |
 | Rhythm | `--kit-space-lg` | 64, 80, or 96 |

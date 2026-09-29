@@ -10,10 +10,10 @@
 // runShots (ui_shots) reuses the same walk to save one JPEG per screen.
 // Pages render with software WebGL (SwiftShader) unless webgl: false.
 
-import { existsSync } from "node:fs";
+import { existsSync, realpathSync } from "node:fs";
 import { mkdir, mkdtemp, readdir, rm, unlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { isAbsolute, join, relative, resolve } from "node:path";
+import { dirname, isAbsolute, join, relative, resolve } from "node:path";
 
 export type Violation = { rule: string; width: number; selector: string; detail: string };
 export type AuditReport = {
@@ -640,12 +640,24 @@ const AUDIT_SCRIPT = `
       if (kids.length < 2) return;
       // A bar pinned to the top or bottom edge of the viewport (the app-shell
       // header or bottom tab bar in document-scroll mode) sits over the
-      // scrolling content by design; the shell reserves its height.
+      // scrolling content by design; the shell reserves its height. Only a
+      // real edge bar qualifies: a short strip glued to the top edge, or one
+      // glued to the bottom edge within the bottom quarter. A sticky element
+      // must also be pinned at 0px on that edge, so a tall sticky stage in
+      // the content flow that merely reaches past the fold is not exempt.
       var pinnedBar = function (el) {
-        var p = getComputedStyle(el).position;
+        var cs = getComputedStyle(el);
+        var p = cs.position;
         if (p !== "fixed" && p !== "sticky") return false;
         var r = el.getBoundingClientRect();
-        return r.top <= 1 || r.bottom >= window.innerHeight - 1;
+        var vh = window.innerHeight;
+        var topBar = r.top <= 1 && r.height <= 0.25 * vh;
+        var bottomBar = Math.abs(r.bottom - vh) <= 1 && r.top >= 0.75 * vh;
+        if (p === "sticky") {
+          topBar = topBar && cs.top === "0px";
+          bottomBar = bottomBar && cs.bottom === "0px";
+        }
+        return topBar || bottomBar;
       };
       for (var i = 0; i < kids.length; i++) {
         for (var j = i + 1; j < kids.length; j++) {
@@ -1496,15 +1508,34 @@ export function normalizeMaxScreens(value: unknown): number | undefined {
 }
 
 // ui_shots writes and deletes files, so its output directory must resolve
-// inside the working directory: no absolute paths elsewhere, no ../ escapes.
-export function resolveOutDir(outDir: string | undefined, cwd: string = process.cwd()): string {
-  const base = resolve(cwd);
-  const target = resolve(base, outDir ?? join(".jal", "shots"));
-  const rel = relative(base, target);
-  if (rel === "" || rel.startsWith("..") || isAbsolute(rel)) {
-    throw new Error(`out_dir must be a directory inside the working directory ${base}; got ${outDir}`);
+// inside the working directory: no absolute paths elsewhere, no ../ escapes,
+// and no symlink (on the deepest existing ancestor, e.g. a linked .jal/shots)
+// that points outside it. The returned path is the real one, so the later
+// unlink and writes act on the checked location.
+function realPathOfDeepestAncestor(p: string): string {
+  let probe = p;
+  while (!existsSync(probe)) {
+    const up = dirname(probe);
+    if (up === probe) break;
+    probe = up;
   }
-  return target;
+  const realProbe = existsSync(probe) ? realpathSync(probe) : probe;
+  return join(realProbe, relative(probe, p));
+}
+
+export function resolveOutDir(outDir: string | undefined, cwd: string = process.cwd()): string {
+  const base = realPathOfDeepestAncestor(resolve(cwd));
+  const target = resolve(base, outDir ?? join(".jal", "shots"));
+  const fail = () => new Error(`out_dir must be a directory inside the working directory ${base}; got ${outDir}`);
+  const inside = (p: string) => {
+    const rel = relative(base, p);
+    return rel !== "" && !rel.startsWith("..") && !isAbsolute(rel);
+  };
+  // Compare real paths only: an absolute out_dir spelled through an
+  // unresolved cwd (macOS /var vs /private/var) still matches.
+  const real = realPathOfDeepestAncestor(target);
+  if (!inside(real)) throw fail();
+  return real;
 }
 
 // One headless Chrome with one page. close() is idempotent and also cleans up

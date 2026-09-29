@@ -16,8 +16,14 @@
 //     damping={0} so the camera follows Lenis exactly; without Lenis the
 //     damping is the smoother. Never add ScrollTrigger scrub on top.
 //   - reducedMotion: the Stage shows the poster on reduced motion; if a page
-//     opts a visitor in to the live scene anyway, pass reducedMotion and the
-//     rig cuts between shots with no in-between move.
+//     opts a visitor in to the live scene anyway (Stage tier="full" behind a
+//     "View in 3D" button), the Stage passes its reducedMotion down through
+//     useStage() and the rig cuts between shots with no damping and no
+//     in-between move. The reducedMotion prop overrides the Stage's value.
+//   - shots and sections may be written inline: the ScrollTriggers are keyed
+//     on their content (contentKey: shots by JSON, selectors by text,
+//     elements by identity), not on array identity, so a re-render with the
+//     same content keeps the triggers instead of recreating them.
 //   - Lenis sync, pins, and the shared ticker live in
 //     skills/jal-immersive/references/scroll-choreography.md; the rig adds no
 //     pins of its own.
@@ -28,6 +34,8 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { Vector3, type PerspectiveCamera } from "three";
 import { getScroller } from "@__APP_NAME__/ui";
 import { damp, progressToShotIndex, sampleShots, type Shot } from "./shots";
+import { contentKey } from "./lifecycle";
+import { useMaybeStage } from "./Stage";
 
 export interface CameraRigProps {
   shots: Shot[];
@@ -36,6 +44,7 @@ export interface CameraRigProps {
   /** Exponential damping rate (1/s). 0 follows the scroll exactly (use with Lenis). */
   damping?: number;
   scroller?: Element | Window;
+  /** Cut between shots with no damping. Defaults to the Stage's prefers-reduced-motion. */
   reducedMotion?: boolean;
   /** Receives the float shot index, for other scene parts (a light's kelvin) to follow. */
   progressRef?: MutableRefObject<number>;
@@ -46,7 +55,10 @@ const EPS = 1e-4;
 const wantPos = new Vector3();
 const wantLook = new Vector3();
 
-export function CameraRig({ shots, sections, damping = 4, scroller, reducedMotion = false, progressRef }: CameraRigProps) {
+export function CameraRig({ shots, sections, damping = 4, scroller, reducedMotion: reducedProp, progressRef }: CameraRigProps) {
+  const stage = useMaybeStage();
+  const reducedMotion = reducedProp ?? stage?.reducedMotion ?? false;
+  const key = contentKey(shots, sections);
   const camera = useThree((s) => s.camera) as PerspectiveCamera;
   const invalidate = useThree((s) => s.invalidate);
   const size = useThree((s) => s.size);
@@ -76,7 +88,9 @@ export function CameraRig({ shots, sections, damping = 4, scroller, reducedMotio
     return () => {
       for (const t of triggers) t.kill();
     };
-  }, [shots, sections, scroller, invalidate, progressRef]);
+    // Keyed on content, not array identity (see the header): the closure's
+    // shots and sections always match `key`.
+  }, [key, scroller, invalidate, progressRef]);
 
   useFrame((_, delta) => {
     const aspect = size.width / Math.max(1, size.height);

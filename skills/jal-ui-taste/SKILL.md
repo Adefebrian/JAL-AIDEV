@@ -1,4 +1,5 @@
 ---
+user-invocable: false
 name: jal-ui-taste
 description: JAL Design Intelligence core. The hard frontend law (no overlap and nothing outside its box, white-first, no gradients, no shadows, no side line on any card or panel, no emoji, no em-dash, no eyebrow, no purple), the section concept law, the Astryx layout doctrine used to pick a container per region, the generated core tokens (type, spacing, radius, controls, color, tonal depth, state layers, motion, breakpoints), form-control and card-grid consistency, UX heuristics, the JEV decision layer (`jev_decide`), and the mechanical proof gate (`ui_audit`), plus the audit checklist. Use when building any new JAL UI from zero, redesigning or fine-tuning a screen, reviewing a frontend PR for taste, or auditing a product for visual and UX debt.
 ---

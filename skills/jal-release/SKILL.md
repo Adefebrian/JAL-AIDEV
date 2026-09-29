@@ -1,4 +1,5 @@
 ---
+user-invocable: false
 name: jal-release
 description: Changesets release flow for the JAL monorepo, add a changeset per change, bun x changeset version, changelog generation, git tagging, and semver bump guidance for major, minor, and patch. Use when finishing a feature branch, cutting a release, or deciding whether a change is a major, minor, or patch bump.
 ---

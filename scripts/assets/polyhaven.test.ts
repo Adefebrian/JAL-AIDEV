@@ -1,9 +1,9 @@
 import { afterEach, beforeEach, describe, expect, test } from "bun:test";
-import { existsSync, mkdtempSync, realpathSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, realpathSync, writeFileSync } from "node:fs";
 import { readFile, readdir, rm, symlink } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { checkLicense, filterAssets, gltfReferences, main, resolveOutDir, safeRelative, type Deps } from "./polyhaven.ts";
+import { checkLicense, cleanupOnSignal, filterAssets, gltfReferences, main, MAX_REDIRECTS, resolveOutDir, safeRelative, type Deps } from "./polyhaven.ts";
 
 // No network in these tests: every request goes through a mocked fetch.
 
@@ -302,5 +302,179 @@ describe("path helpers", () => {
 
   test("gltfReferences lists buffers and images, skipping data URIs", () => {
     expect(gltfReferences(JSON.parse(GLTF))).toEqual(["lamp.bin", "textures/lamp_diff_1k.jpg", "textures/lamp_nor_gl_1k.jpg"]);
+  });
+});
+
+describe("redirects", () => {
+  const HDR_URL = `${DL}/HDRIs/hdr/1k/studio_1k.hdr`;
+
+  test("a redirect to a host off the allowlist is refused before it is contacted", async () => {
+    const inits: any[] = [];
+    const { fetchImpl: base, calls } = mockFetch((url) =>
+      url === HDR_URL ? new Response("", { status: 302, headers: { location: "https://evil.example/studio.hdr" } }) : new Response("", { status: 599 }),
+    );
+    const fetchImpl = (async (u: any, init: any) => {
+      inits.push(init);
+      return base(u, init);
+    }) as unknown as typeof fetch;
+    const r = run(["get", "studio", "--type", "hdris"], { fetchImpl });
+    expect(await r.code).toBe(2);
+    expect(r.err[0]).toContain("refused host evil.example");
+    expect(calls.some((c) => c.includes("evil.example"))).toBe(false);
+    expect(inits.every((i) => i.redirect === "manual")).toBe(true);
+    expect(existsSync(join(dir, "assets/polyhaven/studio"))).toBe(false);
+  });
+
+  test("an allowed redirect is followed; more than the hop limit is refused", async () => {
+    const moved = `${DL}/moved/studio_1k.hdr`;
+    const ok = mockFetch((url) => {
+      if (url === HDR_URL) return new Response("", { status: 301, headers: { location: "/file/ph-assets/moved/studio_1k.hdr" } });
+      if (url === moved) return new Response(HDR);
+      return new Response("", { status: 599 });
+    });
+    const r = run(["get", "studio", "--type", "hdris"], { fetchImpl: ok.fetchImpl });
+    expect(await r.code).toBe(0);
+    expect(ok.calls).toContain(moved);
+    expect(await readFile(join(dir, "assets/polyhaven/studio/studio_1k.hdr"), "utf8")).toBe(HDR);
+
+    let hops = 0;
+    const loop = mockFetch((url) => (url.startsWith(`${DL}/`) ? (hops++, new Response("", { status: 302, headers: { location: `${DL}/hop-${hops}` } })) : new Response("", { status: 599 })));
+    const r2 = run(["get", "studio", "--type", "hdris"], { fetchImpl: loop.fetchImpl });
+    expect(await r2.code).toBe(2);
+    expect(r2.err[0]).toContain(`more than ${MAX_REDIRECTS} redirects`);
+    expect(hops).toBe(MAX_REDIRECTS + 1);
+  });
+});
+
+describe("byte cap", () => {
+  const undeclared = () => {
+    const files = filesFor("studio");
+    delete files.hdri["1k"].hdr.size;
+    delete files.hdri["1k"].hdr.md5;
+    return files;
+  };
+  const big = new Uint8Array(3 * 1024 * 1024);
+
+  test("a file with no declared size is cut off at --max-mb while streaming", async () => {
+    const files = undeclared();
+    let pulled = 0;
+    const { fetchImpl } = mockFetch((url) => {
+      if (url.endsWith("/files/studio")) return Response.json(files);
+      if (url.endsWith("studio_1k.hdr")) {
+        // No Content-Length: an endless stream that must be cut off.
+        const stream = new ReadableStream<Uint8Array>({
+          pull(c) {
+            pulled++;
+            c.enqueue(new Uint8Array(256 * 1024));
+          },
+        });
+        return new Response(stream);
+      }
+      return new Response("", { status: 599 });
+    });
+    const r = run(["get", "studio", "--type", "hdris", "--max-mb", "1"], { fetchImpl });
+    expect(await r.code).toBe(2);
+    expect(r.err[0]).toContain("exceeds --max-mb 1");
+    expect(pulled).toBeLessThan(10);
+    expect(existsSync(join(dir, "assets/polyhaven/studio"))).toBe(false);
+    expect((await readdir(join(dir, "assets/polyhaven"))).filter((n) => n.includes("partial"))).toEqual([]);
+  });
+
+  test("a Content-Length over the cap is refused before the body is read", async () => {
+    const files = undeclared();
+    const { fetchImpl } = mockFetch((url) => {
+      if (url.endsWith("/files/studio")) return Response.json(files);
+      if (url.endsWith("studio_1k.hdr")) return new Response(big, { headers: { "content-length": String(big.byteLength) } });
+      return new Response("", { status: 599 });
+    });
+    const r = run(["get", "studio", "--type", "hdris", "--max-mb", "2"], { fetchImpl });
+    expect(await r.code).toBe(2);
+    expect(r.err[0]).toContain("exceeds --max-mb 2");
+  });
+
+  test("an undeclared file under the cap still downloads", async () => {
+    const files = undeclared();
+    const { fetchImpl } = mockFetch((url) => (url.endsWith("/files/studio") ? Response.json(files) : new Response("", { status: 599 })));
+    const r = run(["get", "studio", "--type", "hdris", "--max-mb", "1"], { fetchImpl });
+    expect(await r.code).toBe(0);
+    expect(await readFile(join(dir, "assets/polyhaven/studio/studio_1k.hdr"), "utf8")).toBe(HDR);
+  });
+});
+
+describe("placement", () => {
+  const out = () => join(dir, "assets/polyhaven");
+  const partials = async () => (await readdir(out())).filter((n) => n.includes("partial"));
+
+  test("a symlinked asset directory is refused and nothing lands outside", async () => {
+    const outside = realpathSync(mkdtempSync(join(tmpdir(), "ph-outside-")));
+    try {
+      mkdirSync(out(), { recursive: true });
+      await symlink(outside, join(out(), "lamp"));
+      const r = run(["get", "lamp", "--type", "models"]);
+      expect(await r.code).toBe(2);
+      expect(r.err[0]).toContain("symlink");
+      expect(await readdir(outside)).toEqual([]);
+      expect(await partials()).toEqual([]);
+    } finally {
+      await rm(outside, { recursive: true, force: true });
+    }
+  });
+
+  test("a symlink nested in an existing asset directory is refused and nothing lands outside", async () => {
+    const outside = realpathSync(mkdtempSync(join(tmpdir(), "ph-outside-")));
+    try {
+      mkdirSync(join(out(), "lamp"), { recursive: true });
+      await symlink(outside, join(out(), "lamp", "textures"));
+      const r = run(["get", "lamp", "--type", "models"]);
+      expect(await r.code).toBe(2);
+      expect(r.err[0]).toContain("symlink");
+      expect(await readdir(outside)).toEqual([]);
+      expect(await partials()).toEqual([]);
+    } finally {
+      await rm(outside, { recursive: true, force: true });
+    }
+  });
+
+  test("a symlinked ledger is refused", async () => {
+    const outside = realpathSync(mkdtempSync(join(tmpdir(), "ph-outside-")));
+    try {
+      mkdirSync(out(), { recursive: true });
+      writeFileSync(join(outside, "ASSETS.md"), "untouched");
+      await symlink(join(outside, "ASSETS.md"), join(out(), "ASSETS.md"));
+      const r = run(["get", "studio", "--type", "hdris"]);
+      expect(await r.code).toBe(2);
+      expect(r.err[0]).toContain("ledger is a symlink");
+      expect(await readFile(join(outside, "ASSETS.md"), "utf8")).toBe("untouched");
+    } finally {
+      await rm(outside, { recursive: true, force: true });
+    }
+  });
+
+  test("a re-download into an existing asset directory keeps its other files", async () => {
+    mkdirSync(join(out(), "lamp", "textures"), { recursive: true });
+    writeFileSync(join(out(), "lamp", "lamp_2k.gltf"), "earlier");
+    writeFileSync(join(out(), "lamp", "textures", "lamp_diff_1k.jpg"), "stale");
+    const r = run(["get", "lamp", "--type", "models"]);
+    expect(await r.code).toBe(0);
+    expect(await readFile(join(out(), "lamp", "lamp_2k.gltf"), "utf8")).toBe("earlier");
+    expect(await readFile(join(out(), "lamp", "textures", "lamp_diff_1k.jpg"), "utf8")).toBe(DIFF);
+    expect(await readFile(join(out(), "lamp", "lamp_1k.gltf"), "utf8")).toBe(GLTF);
+    expect(await partials()).toEqual([]);
+  });
+
+  test("SIGINT and SIGTERM remove the staging dir and exit with the signal code", () => {
+    for (const [sig, code] of [["SIGINT", 130], ["SIGTERM", 143]] as const) {
+      const stage = join(dir, `.lamp.partial-${sig}`);
+      mkdirSync(join(stage, "asset"), { recursive: true });
+      const exits: number[] = [];
+      const before = process.listenerCount(sig);
+      const disarm = cleanupOnSignal([stage], (c) => exits.push(c));
+      expect(process.listenerCount(sig)).toBe(before + 1);
+      process.emit(sig);
+      expect(existsSync(stage)).toBe(false);
+      expect(exits).toEqual([code]);
+      disarm();
+      expect(process.listenerCount(sig)).toBe(before);
+    }
   });
 });

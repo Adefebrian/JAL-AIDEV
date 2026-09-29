@@ -3,7 +3,8 @@
 // tabular mono with its unit and period, one summary line, the included
 // list, then the action pinned to one baseline across the row. The
 // recommended plan is marked by its filled primary action and a surface
-// cell (the others sit on layer-1), never by a colored edge or a badge.
+// cell (the others sit on layer-1), never by a colored edge or a badge;
+// assistive tech hears it as visually hidden text in the plan heading.
 // An optional comparison follows as a real table with row and column
 // headers; included and not included are words, not color.
 import { useId, type ReactNode } from "react";
@@ -69,10 +70,13 @@ export function PricingTable({ title, lead, plans, compare, check, id, tone, rhy
       <ul className="kit-cells" data-plans="" data-lg={plans.length} data-md={md}>
         {plans.map((p, i) => (
           <li key={i} className="kit-cell kit-plan" data-recommended={p.recommended ? "" : undefined}>
-            <h3 className="kit-title">{p.name}</h3>
+            <h3 className="kit-title">
+              {p.name}
+              {p.recommended ? <span className="kit-visually-hidden"> (recommended)</span> : null}
+            </h3>
             <p className="kit-plan-price">
               <Figure value={p.price} unit={p.unit} />
-              {p.period ? <span className="kit-unit">{" "}{p.period}</span> : null}
+              {p.period ? <span className="kit-unit">{"\u00a0"}{p.period}</span> : null}
             </p>
             <p className="kit-body">{p.summary}</p>
             <ul className="kit-plan-features">

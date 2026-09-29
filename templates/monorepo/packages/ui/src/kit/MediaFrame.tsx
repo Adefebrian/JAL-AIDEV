@@ -13,7 +13,7 @@
 //                list, a real input): in flow, the ratio is its minimum
 //   placeholder  an honest fixed-ratio placeholder naming the intended
 //                subject, swapped for real media in one line
-import type { CSSProperties, ReactNode } from "react";
+import { useEffect, useRef, type CSSProperties, type ReactNode } from "react";
 import { usePrefersReducedMotion } from "../frames/Player";
 
 export type MediaRatio = "21/9" | "16/9" | "3/2" | "4/3" | "1/1" | "4/5" | "3/4";
@@ -38,8 +38,23 @@ export interface MediaFrameProps {
 
 function Video({ src, poster, alt }: { src?: string; poster?: string; alt?: string }) {
   const reduced = usePrefersReducedMotion();
+  const ref = useRef<HTMLVideoElement>(null);
+  // The server snapshot reports reduced motion, so autoPlay is false in the
+  // HTML and only flips on after hydration; some browsers never start a
+  // video whose autoplay attribute arrived late. Start it explicitly.
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    if (reduced) {
+      el.pause();
+      return;
+    }
+    const started = el.play();
+    if (started && typeof started.catch === "function") started.catch(() => {});
+  }, [reduced]);
   return (
     <video
+      ref={ref}
       src={src}
       poster={poster}
       muted

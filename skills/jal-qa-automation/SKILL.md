@@ -1,4 +1,5 @@
 ---
+user-invocable: false
 name: jal-qa-automation
 description: bun test patterns, happy-dom global registrator for component tests, Hono API E2E via app.request, puppeteer-core browser smoke tests, JUnit/TAP reporting and pass/fail summary format. Use when writing tests, running QA, or setting up CI test reporting for a JAL project. Playwright is banned.
 ---

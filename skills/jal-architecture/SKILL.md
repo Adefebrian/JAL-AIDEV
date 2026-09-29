@@ -1,4 +1,5 @@
 ---
+user-invocable: false
 name: jal-architecture
 description: Modular-monolith bible for JAL projects, module anatomy (routes/service/repo/ports/index.ts/tests), the single-public-index rule, ports and adapters (hexagonal-lite), allowed dependency directions, folder-by-feature layout, splitting a module that has outgrown itself, and how the boundary checker enforces all of it. Use when scaffolding a new domain module, reviewing cross-module imports, or a module is turning into spaghetti.
 ---

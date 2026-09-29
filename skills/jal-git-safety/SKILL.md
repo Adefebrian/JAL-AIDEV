@@ -1,4 +1,5 @@
 ---
+user-invocable: false
 name: jal-git-safety
 description: Feature-branch flow, git worktrees for parallel agents, tagged Docker image rollback, conventional commits, never force-push shared branches. Use when starting new work, running parallel agents on one repo, tagging a release, or rolling back a bad deploy.
 ---

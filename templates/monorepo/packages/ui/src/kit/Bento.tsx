@@ -4,7 +4,7 @@
 //   - every row has the same number of cells,
 //   - no dead cell ("." or an area with no tile),
 //   - every area is one rectangle,
-//   - every tile has an area in the map,
+//   - every tile has an area in the map, and no two tiles share one,
 //   - only media tiles may span more than one row (a text, stat, or list
 //     tile stretched over two rows opens a void inside the card).
 // lg applies at 1024 and up (2 to 4 columns), md at 640 to 1023 (1 or 2
@@ -16,7 +16,7 @@
 //   stat   a Figure at the heading step, then one caption line
 //   text   a title, then one or two sentences
 //   list   a title, then label and value rows
-import { Children, isValidElement, useId, type CSSProperties, type ReactNode } from "react";
+import { Children, Fragment, isValidElement, useId, type CSSProperties, type ReactNode } from "react";
 import { Figure, Section, SectionHead, type SectionFrame } from "./Page";
 
 export type BentoKind = "media" | "stat" | "text" | "list";
@@ -89,10 +89,24 @@ export function validateBentoLayout(rows: string[], tiles: TileRef[], maxCols = 
       errors.push(`area "${name}" spans ${b.r1 - b.r0 + 1} rows but is a ${tile.kind} tile; only media tiles may span rows`);
     }
   }
+  const seen = new Set<string>();
   for (const t of tiles) {
+    if (seen.has(t.area)) errors.push(`area "${t.area}" is used by more than one tile`);
+    seen.add(t.area);
     if (!boxes.has(t.area)) errors.push(`tile "${t.area}" is not in the layout map`);
   }
   return errors;
+}
+
+/** Children with every Fragment opened, at any depth. Children.toArray does
+ *  not descend into a Fragment, so a tile wrapped in <></> would be missed. */
+function flatten(children: ReactNode): ReactNode[] {
+  const out: ReactNode[] = [];
+  Children.forEach(children, (child) => {
+    if (isValidElement<{ children?: ReactNode }>(child) && child.type === Fragment) out.push(...flatten(child.props.children));
+    else out.push(child);
+  });
+  return out;
 }
 
 function areasValue(rows: string[]): string {
@@ -113,11 +127,11 @@ export interface BentoGridProps extends SectionFrame {
 export function BentoGrid({ title, lead, label, layout, children, id, tone, rhythm }: BentoGridProps) {
   const headingId = useId();
   const tiles: TileRef[] = [];
-  Children.forEach(children, (child) => {
+  for (const child of flatten(children)) {
     if (isValidElement<BentoTileProps>(child) && typeof child.props.area === "string") {
       tiles.push({ area: child.props.area, kind: child.props.kind });
     }
-  });
+  }
   const errors = validateBentoLayout(layout.lg, tiles, 4);
   if (layout.md) {
     for (const e of validateBentoLayout(layout.md, tiles, 2)) errors.push(`md: ${e}`);

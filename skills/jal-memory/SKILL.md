@@ -1,4 +1,5 @@
 ---
+user-invocable: false
 name: jal-memory
 description: The .jal/memory/*.md convention for durable project learnings, one file per learning plus an index, committed so the whole team shares it. Use when an agent discovers a gotcha worth remembering, when starting a task to check prior learnings, or when asked about project memory. Distinct from Claude's personal ~/.claude memory.
 ---

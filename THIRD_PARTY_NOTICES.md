@@ -47,6 +47,13 @@ JAL-AIDEV's skills distill knowledge from the projects below. Unless noted, the 
 
 Clean-room effects (window rain, wet puddles, deformable sand, wind grass, ocean) in `skills/jal-immersive/references/effects-cleanroom.md` were written only from the permissive sources above and published papers and talks. No GPL, non-commercial (for example CC BY-NC-SA Shadertoy work, LYGIA, The Book of Shaders), or unlicensed code was copied.
 
+## Fonts
+
+| Font | License | Used for |
+|---|---|---|
+| [Geist and Geist Mono](https://github.com/vercel/geist-font), Copyright (c) 2023 Vercel, in collaboration with basement.studio | SIL OFL 1.1 | The JAL Core default faces, approved by Brian (2026-09-29). The only fonts vendored here: `templates/monorepo/packages/ui/src/fonts/Geist-Variable.woff2` and `GeistMono-Variable.woff2`, unmodified from the official `geist` npm package 1.7.2, with the license text beside them as `OFL.txt` |
+| Curated pool: IBM Plex Sans, IBM Plex Mono, IBM Plex Serif, Inter, Inter Tight, JetBrains Mono, Instrument Sans, Instrument Serif, Newsreader, Fraunces, Source Serif 4, Space Grotesk, Manrope, DM Sans, Figtree, Onest, Bricolage Grotesque, Nunito (each by its own authors, named in its license) | SIL OFL 1.1 (each checked on npm 2026-09-29) | Listed in `skills/jal-design-system/references/typography.md`. Never vendored in this plugin or its template: `scripts/assets/fonts.ts` fetches the Fontsource build from the npm registry into the client project only, refuses anything that is not OFL 1.1, and writes each family's license as `OFL.txt` plus a row in `FONTS.md` (family, version, license, source) |
+
 ## Poly Haven
 
 [Poly Haven](https://polyhaven.com) models, HDRIs, and textures are CC0 (public domain dedication), approved by Brian (2026-09-29). `scripts/assets/polyhaven.ts` fetches them into client projects only, at build time, checks the license before writing anything, and writes an `ASSETS.md` beside them (id, type, resolution, source URL, CC0, authors, date). No Poly Haven asset is mirrored into this plugin or its template, and the client app serves its own copy (never a runtime fetch from Poly Haven).

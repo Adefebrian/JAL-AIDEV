@@ -1,4 +1,5 @@
 ---
+user-invocable: false
 name: jal-adr
 description: Architecture Decision Record discipline, when a change needs an ADR before code, the Context/Decision/Consequences/Status template, and numbering under docs/adr/NNNN-title.md. Use when proposing a non-trivial technical decision, introducing new tech outside the approved stack, or reviewing whether a PR should have shipped with an ADR.
 ---

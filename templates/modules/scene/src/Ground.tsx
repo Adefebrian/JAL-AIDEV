@@ -36,7 +36,7 @@
 //   pcss            drei SoftShadows (PCSS, contact-hardening shadows). It
 //                   switches the renderer to BasicShadowMap and adds a blocker
 //                   search per shadowed fragment: desktop full tier only.
-import { useLayoutEffect, useMemo } from "react";
+import { useEffect, useLayoutEffect, useMemo } from "react";
 import { AccumulativeShadows, ContactShadows, RandomizedLight, RoundedBox, SoftShadows, useTexture } from "@react-three/drei";
 import { BufferGeometry, Float32BufferAttribute, NoColorSpace, RepeatWrapping, SRGBColorSpace, type Texture } from "three";
 import { useStage } from "./Stage";
@@ -169,6 +169,9 @@ export function cycloramaGeometry(width: number, depth: number, height: number, 
 
 function Sweep({ size, wallHeight, coveRadius, color, roughness, backdrop }: { size: [number, number]; wallHeight: number; coveRadius: number; color: string; roughness: number; backdrop: number }) {
   const geometry = useMemo(() => cycloramaGeometry(size[0], size[1], wallHeight, coveRadius), [size[0], size[1], wallHeight, coveRadius]);
+  // A geometry passed as a prop is not disposed by R3F: free the old sweep
+  // when a size prop builds a new one, and the last one on unmount.
+  useEffect(() => () => geometry.dispose(), [geometry]);
   return (
     <mesh geometry={geometry} receiveShadow>
       <meshStandardMaterial color={color} roughness={roughness} metalness={0} emissive={color} emissiveIntensity={backdrop} />

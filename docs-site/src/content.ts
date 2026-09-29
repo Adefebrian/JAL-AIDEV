@@ -74,7 +74,7 @@ export const HERO = {
   stats: [
     { value: "17", label: "specialist agents" },
     { value: "8", label: "commands" },
-    { value: "52", label: "JEV decisions" },
+    { value: "53", label: "JEV decisions" },
     { value: "22", label: "UI check rules" },
   ],
 };
@@ -245,7 +245,7 @@ export const AGENTS: Agent[] = [
     slug: "jal-ux",
     tier: "specialist",
     line: "Owns JAL Core and cross-screen taste. Builds new screens or redesigns old ones through one ordered pipeline that ends in a passing UI check.",
-    jev: "ui.experience, ui.density, ui.region_gate, ui.final_taste, motion.*",
+    jev: "ui.experience, ui.type_pairing, ui.density, ui.region_gate, ui.final_taste, motion.*",
   },
   {
     slug: "jal-frontend",
@@ -443,7 +443,7 @@ export const COMMANDS_INTRO = {
   ],
   mapTitle: "Old command, new command",
   mapLead:
-    "Version 0.4.0 folds the old commands into these seven. The old ones live on as internal playbooks in `skills/jal-orchestration/references/`, so nothing they did is lost.",
+    "Version 0.4.0 folded the old commands into seven of these eight; /jal-seo-geo-aeo came after, as a new command. The old ones live on as internal playbooks in `skills/jal-orchestration/references/`, so nothing they did is lost.",
   mapNote:
     "Careful with /jal-ship: it used to mean build a feature. Now it means get finished work out. Building a feature is /jal-build.",
 };
@@ -495,14 +495,14 @@ export const JEV = {
       body: "New tech outside the approved stack, a change of the default LLM, and scope changes that move a deadline go to Brian. JEV can help frame the tradeoff; it never approves them.",
     },
   ],
-  catalogTitle: "The 52 catalog decisions",
+  catalogTitle: "The 53 catalog decisions",
   catalogLead:
     "The standard decisions live in the `jal-jev` skill, each with its exact question, the check that runs before it, and the threshold that turns the answer into an action.",
 };
 
 export const JEV_CATALOG: { area: string; count: number; covers: string }[] = [
   { area: "Orchestration", count: 6, covers: "Which playbooks a request needs, who owns each piece, which model tier, what runs in parallel, when to escalate, and when the loop may stop." },
-  { area: "UI and UX", count: 12, covers: "Product UI, marketing, or immersive; table and list density; whether a region earns its place; the direction screen; which components and motion recipes to layer from every source; heuristics; the final taste call." },
+  { area: "UI and UX", count: 13, covers: "Product UI, marketing, or immersive; table and list density; whether a region earns its place; the direction screen; the type pairing from the font pool; which components and motion recipes to layer from every source; heuristics; the final taste call." },
   { area: "Motion", count: 4, covers: "How much motion a section gets, the choreography, whether to pin a scroll section, and the medium for a live demo." },
   { area: "Immersive", count: 6, covers: "The signature concept, whether 3D earns its place, which recipe, which technique, the device tier, and the final taste of the built scene." },
   { area: "Backend", count: 4, covers: "Where code belongs, API quality, migration risk, and whether a new technology is worth raising with Brian." },

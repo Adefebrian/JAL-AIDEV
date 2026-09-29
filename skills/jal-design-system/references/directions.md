@@ -65,7 +65,7 @@ Named whole-page shapes, used as inputs when writing structure candidates (and t
 | Narrative Workflow | the page walks a real process stage by stage | ADAPT: a real process only, numbers inline, no thick numbered rules or connectors |
 | Manifesto | a sequence of short declarations | ADAPT: sentence case, no tilt, tonal bands instead of bleed-color blocks, accent at 3% or less |
 | Map / Diagram | a structural diagram of the system is the page's spine | ADAPT: the diagram is structural content with static edges, never decoration |
-| Type Specimen | the page shows a typeface as the product | ADAPT: needs a display face, and Brian approves the dependency |
+| Type Specimen | the page shows a typeface as the product | ADAPT: the face comes from the pool in `typography.md`; one outside it needs Brian's yes |
 | Stat-Led | giant numbers carry the page | DROP (big-number hero, `craft.md` section 3) |
 | Specimen | numbered specimen plates with margin labels | DROP (numbered section labels) |
 
@@ -140,7 +140,7 @@ Candidates, structures, and any "give me options" variants each commit to a diff
 
 1. **Hierarchy**: what commands the eye first.
 2. **Layout topology**: stacked, side by side, grid, asymmetric spans, full-bleed media band (never overlap).
-3. **Type system**: which steps of the one scale carry the page, weight contrast, the display role, tracking within the knob range, mono for data or none.
+3. **Type system**: the page pairing from the font pool (`typography.md`), which steps of the one scale carry the page, weight contrast, the display role, tracking within the knob range, mono for data or none.
 4. **Color role**: which single role the accent plays (none, filled primary, signal only, text and icon) and the canvas temperature.
 5. **Density**: minimal, comfortable, dense (desktop rows through `ui.density`; section rhythm everywhere).
 6. **Structural decomposition**: merge, split, progressive disclosure, rows versus bento versus divided sections.
@@ -183,7 +183,7 @@ Media role evidence: <hm.image_need result; does the hero pass hm.survives_delet
 ## Knobs (the only values this file may set)
 | Knob | Value | Token or mechanism | Reason |
 |---|---|---|---|
-| Type personality | <system sans / approved sans + mono / display face pending Brian> | --font-* | |
+| Type pairing | <text / display / mono from typography.md, plus any section display switch> | --kit-font-sans, --kit-font-display, --kit-font-mono, --kit-font-figure | <ui.type_pairing answer and confidence> |
 | Accent | <none, or hex + HSL hue> | --color-accent, --color-accent-contrast | |
 | Accent role | <none / filled_primary / signal_only / text_and_icon> | role rule, audited | |
 | Primary fill | <ink / accent> | --color-primary (+ hover, active re-derived) | |
@@ -221,7 +221,7 @@ Rejected: <averaging traps and clone-risk items for this product>
 Verdict: <ship / fix / rebuild / recapture>, round <1 or 2>, reviewer keep line: <...>
 ```
 
-**Where knob values land.** A preset is applied by one attribute: `data-direction="D1"` to `"D13"` on `<html>` (or `<Page direction>` from the kit), and `packages/ui/src/kit.css` already holds every preset's knob block (section 7a). A derived identity (`identity.md` section 3) adds one `[data-direction="<name>"]` block to the app's own stylesheet. Either way only these names may be set: `--color-accent`, `--color-accent-contrast`, `--color-primary`, `--color-primary-contrast`, `--color-primary-hover`, `--color-primary-active`, `--color-focus`, `--color-page`, `--tracking-display`, `--tracking-heading`, and the kit knobs (`--kit-font-display`, `--kit-font-figure`, `--kit-display-*`, `--kit-heading-*`, `--kit-display-weight`, `--kit-heading-weight`, `--kit-margin-lg`, `--kit-gutter-lg`, `--kit-space-lg`, `--kit-radius-card`, `--kit-radius-media`, `--kit-radius-control`, `--kit-rule-color`, `--kit-section-rule`, `--kit-signal`, `--kit-link`). Every line carries a comment pointing to the contract. A knob always takes an existing token (a radius, a space, a type step), never a new value; only the canvas and the accent take a hex, inside section 6.
+**Where knob values land.** A preset is applied by one attribute: `data-direction="D1"` to `"D13"` on `<html>` (or `<Page direction>` from the kit), and `packages/ui/src/kit.css` already holds every preset's knob block (section 7a). A derived identity (`identity.md` section 3) adds one `[data-direction="<name>"]` block to the app's own stylesheet. Either way only these names may be set: `--color-accent`, `--color-accent-contrast`, `--color-primary`, `--color-primary-contrast`, `--color-primary-hover`, `--color-primary-active`, `--color-focus`, `--color-page`, `--tracking-display`, `--tracking-heading`, and the kit knobs (`--kit-font-sans`, `--kit-font-display`, `--kit-font-mono`, `--kit-font-figure`, `--kit-display-*`, `--kit-heading-*`, `--kit-display-weight`, `--kit-heading-weight`, `--kit-margin-lg`, `--kit-gutter-lg`, `--kit-space-lg`, `--kit-radius-card`, `--kit-radius-media`, `--kit-radius-control`, `--kit-rule-color`, `--kit-section-rule`, `--kit-signal`, `--kit-link`). Every line carries a comment pointing to the contract. A knob always takes an existing token (a radius, a space, a type step), never a new value; only the canvas and the accent take a hex, inside section 6.
 
 ```css
 /* direction: single_signal_ledger, see docs/design/direction.md */
@@ -247,7 +247,7 @@ Verdict: <ship / fix / rebuild / recapture>, round <1 or 2>, reviewer keep line:
 | Display weight | 500 | 500 or 600 (weights are 400, 500, 600 only) |
 | Radius tier | cards 12, controls 8 | cards 4, 12, 16, or 28; controls 4, 8, or pill; media matches cards; nested radius smaller than its parent; one choice product-wide per tier |
 | Hairline | `--color-border` | `--color-border`, or `--color-border-strong` for structure-heavy directions; structural only, never decoration |
-| Type personality | JAL system stack | one approved sans; mono only for code, data, measurement; a display face only with a written reason and Brian's yes |
+| Type pairing | Geist plus Geist Mono | one pairing from the OFL pool (`typography.md` section 3): a text family, at most one display family, one mono, so at most three families; a section switches only its display role; mono only for code, data, measurement; every stack ends in the Geist stack; a face outside the pool needs Brian's yes |
 | Density | `ui.density` | compact, default, comfortable (desktop rows only) |
 | Motion intensity | `motion.intensity` | per `jal-motion` |
 | Media role | none | supporting or leading, only with real assets or honest fixed-ratio placeholders |
@@ -296,7 +296,7 @@ A white reading surface built for scanning: sidebar, tight heading ladder, code 
 
 ### D7 `warm_paper_editorial` (content-led products only)
 A literary, warm-neutral reading page with an optional serif display. The newest AI autopilot, so it is gated hard.
-- Knobs: canvas warm (inside the canvas floor); serif display only with a written reason and Brian's yes on the font; display `--text-display-1` to `-2`, tracking -0.01 to -0.02; body sans; accent none or one muted warm hue as `signal_only`; radius cards 16, controls pill.
+- Knobs: canvas warm (inside the canvas floor); serif display Newsreader (the pool default, `typography.md` section 5) with a written reason in the contract, another pool serif only through `ui.type_pairing`, text stays Geist; display `--text-display-1` to `-2`, tracking -0.01 to -0.02; body sans; accent none or one muted warm hue as `signal_only`; radius cards 16, controls pill.
 - Law filter: cream grounds below the canvas floor; a one-word italic or serif swap inside a sans headline; the beige plus italic serif plus terracotta trio (`craft.md` section 14); multi-color illustration palettes.
 - Gate: the product publishes content (journal, research, culture) and the brief says so. Never picked for a bookish mood alone.
 - Note (From: hallmark): hallmark's editorial genre default (warm paper, italic serif display, hairlines, mono labels) is exactly the reflex look in `craft.md` section 14, so it never lowers this gate.
@@ -327,7 +327,7 @@ One huge letterform or wordmark becomes the layout, against a white wall. Everyt
 
 ### D12 `friendly_consumer` (broad-audience consumer apps)
 Bold, rounded, cheerful but disciplined: one saturated hue owns headlines or icons, body stays ink-muted, big radii soften everything.
-- Knobs: accent one saturated hue (green, coral, orange) as `text_and_icon`, allowed on one display headline, counted inside the 3%; never body text; canvas white or a tinted near-white inside the canvas floor; display `--text-display-1` to `-2`, weight 600, tracking -0.02 to -0.04; radius containers 28, controls pill; density comfortable.
+- Knobs: display face Nunito (the pool's rounded face), text Geist; accent one saturated hue (green, coral, orange) as `text_and_icon`, allowed on one display headline, counted inside the 3%; never body text; canvas white or a tinted near-white inside the canvas floor; display `--text-display-1` to `-2`, weight 600, tracking -0.02 to -0.04; radius containers 28, controls pill; density comfortable.
 - Law filter: weight 700 becomes 600; violet "night ink" text accents; multi-hue surfaces.
 - Gate: none.
 
@@ -356,21 +356,21 @@ Each direction is one `[data-direction]` block in `packages/ui/src/kit.css`; the
 
 | Dir | Canvas | Accent, role | Display face, weight, tracking | Display lg / heading lg | Radius | Margin / gutter / rhythm | Rule, figures | Masthead / Footer |
 |---|---|---|---|---|---|---|---|---|
-| D1 research_notebook | neutral | none | sans 500, -0.035 | display-2 / text-4 (500) | 12 / 8 | 48 / 24 / 96 | off, sans | split or left / inline |
-| D2 single_signal_ledger | cool | green `#0b7a55`, filled_primary | sans 600, -0.025 | display-2 / text-4 | 12 / 8 | 40 / 24 / 80 | on, sans | split with SpecRail proof / inline |
-| D3 blueprint_hairline | neutral | teal `#0f766e`, signal_only | sans 500, -0.04 | display-1 (md text-6) / text-4 | 16 / 8 | 40 / 24 / 64 | on strong, mono | split (Workbench) / inline |
-| D4 bone_white_gallery | white | warm `#b4461a`, text_and_icon | sans 500, -0.03 | text-6 (sm text-5) / text-3 | 16 / pill | 32 / 24 / 80 | off, sans | split or overlay with real media / statement |
-| D5 calm_productivity | warm | red-orange `#c2410c`, text_and_icon | sans 500, -0.01 | display-1 / text-4 | 12 / 8 | 48 / 24 / 80 | off, sans | left / inline |
-| D6 clean_docs | white | green `#15803d`, links | sans 500, -0.03 | text-6 (sm text-5) / text-3 | 16 / 8 | 40 / 24 / 64 | off, sans | left, Read ceiling / index |
-| D7 warm_paper_editorial (gated) | warm | none | serif 500 (Brian's yes), -0.015 | display-2 / text-4 (500) | 16 / pill | 64 / 32 / 96 | off, sans | left / letter |
-| D8 quiet_care | warm | sage `#3f6b4f`, signal_only | sans 500, -0.01 | display-1 / text-4 | 16 / pill | 48 / 32 / 96 | off, sans | left or centered / letter |
-| D9 cinematic_hardware | white | blue `#0a5bd3`, filled_primary | sans 600, -0.02 | display-3 (sm display-1) / text-5 | 28 / pill | 40 / 24 / 96 | off, sans | overlay (real renders) / statement |
-| D10 industrial_catalogue | cool | none | sans 500, -0.01 | display-1 / text-4 | 4 / 4 | 32 / 16 / 64 | on strong, mono | split (catalogue) / inline |
-| D11 oversized_masthead | white | none | sans 500, -0.04 | display-3 / text-4 (500), wordmark headline | 4 / pill | 64 / 32 / 96 | on, sans | left with an SVG wordmark / masthead |
-| D12 friendly_consumer | white | orange `#c2410c`, text_and_icon | rounded 600, -0.03 | display-2 / text-4 | 28 / pill | 40 / 24 / 80 | off, sans | split / statement |
-| D13 precision_dark (dark only) | `#171412` | chartreuse `#b5d333`, signal_only | sans 500, -0.03 | display-2 / text-4 (500) | 12 / 8 | 40 / 24 / 64 | on, sans | split / inline |
+| D1 research_notebook | neutral | none | Geist 500, -0.035 | display-2 / text-4 (500) | 12 / 8 | 48 / 24 / 96 | off, sans | split or left / inline |
+| D2 single_signal_ledger | cool | green `#0b7a55`, filled_primary | Geist 600, -0.025 | display-2 / text-4 | 12 / 8 | 40 / 24 / 80 | on, sans | split with SpecRail proof / inline |
+| D3 blueprint_hairline | neutral | teal `#0f766e`, signal_only | Geist 500, -0.04 | display-1 (md text-6) / text-4 | 16 / 8 | 40 / 24 / 64 | on strong, mono | split (Workbench) / inline |
+| D4 bone_white_gallery | white | warm `#b4461a`, text_and_icon | Geist 500, -0.03 | text-6 (sm text-5) / text-3 | 16 / pill | 32 / 24 / 80 | off, sans | split or overlay with real media / statement |
+| D5 calm_productivity | warm | red-orange `#c2410c`, text_and_icon | Geist 500, -0.01 | display-1 / text-4 | 12 / 8 | 48 / 24 / 80 | off, sans | left / inline |
+| D6 clean_docs | white | green `#15803d`, links | Geist 500, -0.03 | text-6 (sm text-5) / text-3 | 16 / 8 | 40 / 24 / 64 | off, sans | left, Read ceiling / index |
+| D7 warm_paper_editorial (gated) | warm | none | Newsreader 500, -0.015 | display-2 / text-4 (500) | 16 / pill | 64 / 32 / 96 | off, sans | left / letter |
+| D8 quiet_care | warm | sage `#3f6b4f`, signal_only | Geist 500, -0.01 | display-1 / text-4 | 16 / pill | 48 / 32 / 96 | off, sans | left or centered / letter |
+| D9 cinematic_hardware | white | blue `#0a5bd3`, filled_primary | Geist 600, -0.02 | display-3 (sm display-1) / text-5 | 28 / pill | 40 / 24 / 96 | off, sans | overlay (real renders) / statement |
+| D10 industrial_catalogue | cool | none | Geist 500, -0.01 | display-1 / text-4 | 4 / 4 | 32 / 16 / 64 | on strong, mono | split (catalogue) / inline |
+| D11 oversized_masthead | white | none | Geist 500, -0.04 | display-3 / text-4 (500), wordmark headline | 4 / pill | 64 / 32 / 96 | on, sans | left with an SVG wordmark / masthead |
+| D12 friendly_consumer | white | orange `#c2410c`, text_and_icon | Nunito 600, -0.03 | display-2 / text-4 | 28 / pill | 40 / 24 / 80 | off, sans | split / statement |
+| D13 precision_dark (dark only) | `#171412` | chartreuse `#b5d333`, signal_only | Geist 500, -0.03 | display-2 / text-4 (500) | 12 / 8 | 40 / 24 / 64 | on, sans | split / inline |
 
-D13 applies only as `[data-direction="D13"][data-theme="dark"]`, so it can never become a light default or follow the OS. D7 and D11 keep their gates from section 7 (content-led product, a real wordmark asset).
+Every direction's text face is Geist and its mono Geist Mono; the display column names the display face, and a pool face falls back to the Geist stack until the project fetches it (`typography.md` section 5). D13 applies only as `[data-direction="D13"][data-theme="dark"]`, so it can never become a light default or follow the OS. D7 and D11 keep their gates from section 7 (content-led product, a real wordmark asset).
 
 ## 8. References: take the structure, never the surface or the brand
 
@@ -406,4 +406,4 @@ Indicative only; the ranges matter more than exact shares. They confirm the JAL 
 | Shadows | none or at most 2 recipes in most | none |
 | Gradients | 17%, almost all decorative or media | none |
 | Accent | zero or one hue family in 69% | one at most |
-| Families | one family in about half; serif only as display or long-form body | one family default |
+| Families | one family in about half; serif only as display or long-form body | one family default (Geist), at most three per page (`typography.md`) |

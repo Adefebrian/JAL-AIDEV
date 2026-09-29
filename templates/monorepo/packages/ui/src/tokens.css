@@ -9,6 +9,10 @@
  * font-size, or an arbitrary spacing value in component CSS.
  */
 
+/* The default faces (Geist Sans, Geist Mono, OFL 1.1) and their
+   metric-matched fallbacks. Must stay the first rule in this file. */
+@import "./fonts/fonts.css";
+
 :root {
   /* ---------------------------------------------------------------------
    * Type scale: round(16 * 1.2^step), steps -2..6.
@@ -64,6 +68,18 @@
   --weight-regular: 400;
   --weight-medium: 500;
   --weight-semibold: 600;
+
+  /* Type families: three roles, at most three families per page (text,
+   * display, mono). Geist Sans and Geist Mono are the default, vendored in
+   * ./fonts with metric-matched fallbacks so the swap does not shift
+   * layout. A page pairing may swap in pool faces (fetched into the client
+   * project by scripts/assets/fonts.ts), always ending in these Geist
+   * stacks. Numbers are always tabular (--font-numeric). Rules and pool:
+   * skills/jal-design-system/references/typography.md. */
+  --font-sans: "Geist", "Geist Fallback", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-display: var(--font-sans);
+  --font-mono: "Geist Mono", "Geist Mono Fallback", ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+  --font-numeric: tabular-nums slashed-zero;
 
   /* Legacy step aliases (pre-v0.3.0 names, kept working for consumers that
      already reference them; the primitives above are the source of truth). */

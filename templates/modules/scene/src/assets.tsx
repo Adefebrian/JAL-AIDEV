@@ -26,6 +26,7 @@ import { useGLTF } from "@react-three/drei";
 import { Mesh, type Material, type Object3D, type Texture, type WebGLRenderer } from "three";
 import { KTX2Loader } from "three/examples/jsm/loaders/KTX2Loader.js";
 import { applyPreset, type PresetName } from "./materials";
+import { InstanceRegistry } from "./lifecycle";
 
 export const DECODERS = {
   draco: "/vendor/r186/draco/",
@@ -50,7 +51,12 @@ export interface LoadOptions {
   ktx2?: boolean;
 }
 
-const loaded = new Map<string, Object3D>();
+// The cached glTF scene per file (its geometry and textures are shared by
+// every clone), and every mounted clone per <Product> instance (its
+// materials are its own). Keyed per instance, so a second <Product> of the
+// same file never hides the first clone from disposal.
+const originals = new Map<string, Object3D>();
+const instances = new InstanceRegistry<Object3D>();
 
 function extendFor(opts: LoadOptions, gl?: WebGLRenderer) {
   return opts.ktx2 && gl ? (loader: any) => loader.setKTX2Loader(ktx2For(gl)) : undefined;
@@ -93,6 +99,17 @@ export function Product({ src, load = {}, presets, unitScale = 1, castShadow = t
     return clone;
   }, [gltf.scene]);
 
+  // Register this instance's clone; on unmount (or a new file) free the
+  // clone's own materials. Geometry and textures belong to the cache and go
+  // with disposeProduct.
+  useLayoutEffect(() => {
+    originals.set(src, gltf.scene);
+    const id = instances.add(src, scene);
+    return () => {
+      if (instances.remove(id)) disposeMaterials(scene, false);
+    };
+  }, [scene, src, gltf.scene]);
+
   useLayoutEffect(() => {
     const aniso = Math.min(8, gl.capabilities.getMaxAnisotropy());
     scene.traverse((o) => {
@@ -108,9 +125,8 @@ export function Product({ src, load = {}, presets, unitScale = 1, castShadow = t
       });
       o.material = Array.isArray(o.material) ? next : next[0];
     });
-    loaded.set(src, scene);
     onScene?.(scene);
-  }, [scene, castShadow, receiveShadow, presets, gl, onScene, src]);
+  }, [scene, castShadow, receiveShadow, presets, gl, onScene]);
 
   return (
     <group {...group}>
@@ -120,29 +136,36 @@ export function Product({ src, load = {}, presets, unitScale = 1, castShadow = t
   );
 }
 
-function disposeObject(root: Object3D) {
+function disposeMaterials(root: Object3D, textures: boolean) {
   root.traverse((o) => {
     if (!(o instanceof Mesh)) return;
-    o.geometry?.dispose();
     const mats: Material[] = Array.isArray(o.material) ? o.material : [o.material];
     for (const m of mats) {
-      for (const v of Object.values(m as any)) if ((v as Texture)?.isTexture) (v as Texture).dispose();
+      if (textures) for (const v of Object.values(m as any)) if ((v as Texture)?.isTexture) (v as Texture).dispose();
       m.dispose();
     }
   });
 }
 
-/** Free one product's GPU memory and drop it from the loader cache. */
+function disposeObject(root: Object3D) {
+  root.traverse((o) => {
+    if (o instanceof Mesh) o.geometry?.dispose();
+  });
+  disposeMaterials(root, true);
+}
+
+/** Free one product's GPU memory (every mounted clone and the cached original) and drop it from the loader cache. */
 export function disposeProduct(src: string) {
-  const scene = loaded.get(src);
-  if (scene) disposeObject(scene);
-  loaded.delete(src);
+  for (const clone of instances.removeSrc(src)) disposeObject(clone);
+  const original = originals.get(src);
+  if (original) disposeObject(original);
+  originals.delete(src);
   useGLTF.clear(src);
 }
 
 /** Called by Stage on unmount: every product, then the KTX2 transcoder workers. */
 export function disposeAllProducts() {
-  for (const src of [...loaded.keys()]) disposeProduct(src);
+  for (const src of new Set([...originals.keys(), ...instances.srcs()])) disposeProduct(src);
   ktx2?.dispose();
   ktx2 = null;
 }

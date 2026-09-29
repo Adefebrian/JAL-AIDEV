@@ -17,6 +17,13 @@
 //     resolution, keeping relative paths, into <out>/<id>/. Each file's size
 //     and md5 are checked against the API before it is kept.
 //   - Every download appends one row to <out>/ASSETS.md.
+//   - Redirects are followed by hand (at most 3 hops): each Location is
+//     checked against the allowlist before it is contacted.
+//   - --max-mb caps the declared sizes up front and the bytes actually read,
+//     so a file with no declared size cannot grow without bound.
+//   - Files land in a fresh staging dir inside <out>, then move into
+//     <out>/<id>/ with one rename. A symlinked <id>, nested path, or ledger is
+//     refused; the staging dir is removed on failure, SIGINT, and SIGTERM.
 //   - Timeouts on every request; at most one retry on 429, 5xx, or a network
 //     error, never a retry storm.
 //
@@ -24,8 +31,8 @@
 // the client project that uses them.
 
 import { parseArgs } from "node:util";
-import { existsSync, realpathSync } from "node:fs";
-import { mkdir, readFile, rename, rm, writeFile, appendFile } from "node:fs/promises";
+import { existsSync, lstatSync, realpathSync, rmSync } from "node:fs";
+import { link, lstat, mkdir, mkdtemp, readdir, readFile, rename, rm, writeFile, appendFile } from "node:fs/promises";
 import { basename, dirname, isAbsolute, join, normalize, relative, resolve, sep } from "node:path";
 
 export const API = "https://api.polyhaven.com";
@@ -38,6 +45,7 @@ export const FILE_TIMEOUT_MS = 120_000;
 export const RETRY_DELAY_MS = 1_000;
 export const MAX_RETRY_AFTER_MS = 5_000;
 export const PARALLEL = 4;
+export const MAX_REDIRECTS = 3;
 
 export type AssetType = "hdris" | "models" | "textures";
 export const TYPES: AssetType[] = ["hdris", "models", "textures"];
@@ -96,6 +104,34 @@ function isRetryable(status: number): boolean {
   return status === 429 || status >= 500;
 }
 
+function isRedirect(status: number): boolean {
+  return status === 301 || status === 302 || status === 303 || status === 307 || status === 308;
+}
+
+// Follows redirects by hand: fetch's "follow" would contact the next host
+// before we could check it. Every Location is resolved against the current
+// URL and must pass assertHost before the next hop; at most MAX_REDIRECTS.
+async function fetchChecked(url: string, deps: Resolved, timeoutMs: number): Promise<Response> {
+  let current = url;
+  for (let hop = 0; ; hop++) {
+    const res = await deps.fetchImpl(current, { headers: { "user-agent": USER_AGENT }, signal: AbortSignal.timeout(timeoutMs), redirect: "manual" });
+    if (res.type === "opaqueredirect") throw new PolyHavenError(`${current}: redirect target not readable, refused`);
+    if (!isRedirect(res.status)) return res;
+    await res.body?.cancel().catch(() => {});
+    const location = res.headers.get("location");
+    if (!location) throw new PolyHavenError(`${current}: redirect ${res.status} without a Location`);
+    if (hop >= MAX_REDIRECTS) throw new PolyHavenError(`${url}: more than ${MAX_REDIRECTS} redirects`);
+    let next: string;
+    try {
+      next = new URL(location, current).toString();
+    } catch {
+      throw new PolyHavenError(`${current}: bad redirect Location ${JSON.stringify(location)}`);
+    }
+    assertHost(next);
+    current = next;
+  }
+}
+
 // One attempt plus at most one retry. The retry waits Retry-After (capped at
 // 5 s) or 1 s. Returns the Response; the caller reads the body.
 export async function request(url: string, deps: Resolved, timeoutMs: number): Promise<Response> {
@@ -104,8 +140,9 @@ export async function request(url: string, deps: Resolved, timeoutMs: number): P
   for (let attempt = 0; attempt < 2; attempt++) {
     let res: Response | undefined;
     try {
-      res = await deps.fetchImpl(url, { headers: { "user-agent": USER_AGENT }, signal: AbortSignal.timeout(timeoutMs), redirect: "follow" });
+      res = await fetchChecked(url, deps, timeoutMs);
     } catch (e: any) {
+      if (e instanceof PolyHavenError) throw e;
       const name = e?.name ?? "";
       lastError = name === "TimeoutError" || name === "AbortError" ? `timed out after ${timeoutMs} ms` : `network error: ${e?.message ?? e}`;
       if (attempt === 0) {
@@ -336,9 +373,57 @@ function md5(bytes: Uint8Array): string {
   return h.digest("hex");
 }
 
-async function download(f: PlannedFile, stageDir: string, deps: Resolved): Promise<number> {
+/** Bytes left under --max-mb, shared by every download of one get. */
+export interface ByteBudget {
+  left: number;
+  capMb: number;
+}
+
+function overCap(f: PlannedFile, budget: ByteBudget): PolyHavenError {
+  return new PolyHavenError(`${f.rel}: download exceeds --max-mb ${budget.capMb}; pick a lower --res or raise the cap`);
+}
+
+// Reads a body under the byte budget: refused up front on a Content-Length
+// over what is left, and cut off mid-stream once the budget runs out (or the
+// file outgrows its declared size), so an undeclared size cannot buffer
+// without bound.
+export async function readCapped(res: Response, f: PlannedFile, budget: ByteBudget): Promise<Uint8Array> {
+  const declared = Number(res.headers.get("content-length"));
+  if (Number.isFinite(declared) && declared > budget.left) {
+    await res.body?.cancel().catch(() => {});
+    throw overCap(f, budget);
+  }
+  if (!res.body) return new Uint8Array(0);
+  const reader = res.body.getReader();
+  const chunks: Uint8Array[] = [];
+  let total = 0;
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    total += value.byteLength;
+    budget.left -= value.byteLength;
+    if (budget.left < 0) {
+      await reader.cancel().catch(() => {});
+      throw overCap(f, budget);
+    }
+    if (f.size !== undefined && total > f.size) {
+      await reader.cancel().catch(() => {});
+      throw new PolyHavenError(`${f.rel}: size over the API's ${f.size}`);
+    }
+    chunks.push(value);
+  }
+  const out = new Uint8Array(total);
+  let at = 0;
+  for (const c of chunks) {
+    out.set(c, at);
+    at += c.byteLength;
+  }
+  return out;
+}
+
+async function download(f: PlannedFile, stageDir: string, deps: Resolved, budget: ByteBudget): Promise<number> {
   const res = await request(f.url, deps, FILE_TIMEOUT_MS);
-  const bytes = new Uint8Array(await res.arrayBuffer());
+  const bytes = await readCapped(res, f, budget);
   if (f.size !== undefined && bytes.byteLength !== f.size) {
     throw new PolyHavenError(`${f.rel}: size ${bytes.byteLength} does not match the API's ${f.size}`);
   }
@@ -378,9 +463,87 @@ const LEDGER_HEADER = [
 
 export async function appendLedger(outDir: string, row: { id: string; type: AssetType; res: string; format: string; source: string; authors: string; date: string }) {
   const path = join(outDir, "ASSETS.md");
+  if (isSymlink(path)) throw new PolyHavenError(`refused ${path}: the ledger is a symlink`);
   if (!existsSync(path)) await writeFile(path, LEDGER_HEADER);
   const cell = (s: string) => s.replace(/\|/g, "/").replace(/\n/g, " ");
   await appendFile(path, `| ${cell(row.id)} | ${row.type} | ${row.res} | ${row.format} | ${cell(row.source)} | CC0 | ${cell(row.authors)} | ${row.date} |\n`);
+}
+
+// ---------- safe placement ----------
+
+function isSymlink(p: string): boolean {
+  try {
+    return lstatSync(p).isSymbolicLink();
+  } catch {
+    return false;
+  }
+}
+
+/** p must be a real path inside root (no symlink anywhere below root). */
+export function assertRealInside(root: string, p: string): void {
+  const realRoot = realpathSync(root);
+  const real = realpathSync(p);
+  const rel = relative(realRoot, real);
+  if (real !== p || rel.startsWith("..") || isAbsolute(rel)) {
+    throw new PolyHavenError(`refused ${p}: it resolves through a symlink to ${real}`);
+  }
+}
+
+// Hard-links every file of an existing asset dir into the staged tree
+// (planned files win), so the swap keeps earlier downloads of the same id
+// without ever moving the originals before the new tree is complete. Any
+// symlink in the existing tree is refused.
+async function mergeExisting(existing: string, staged: string, planned: Set<string>, prefix = ""): Promise<void> {
+  for (const name of await readdir(existing)) {
+    const from = join(existing, name);
+    const rel = prefix ? `${prefix}/${name}` : name;
+    const st = await lstat(from);
+    if (st.isSymbolicLink()) throw new PolyHavenError(`refused ${from}: a symlink inside the asset directory`);
+    if (st.isDirectory()) {
+      await mkdir(join(staged, name), { recursive: true });
+      await mergeExisting(from, join(staged, name), planned, rel);
+    } else if (st.isFile() && !planned.has(rel)) {
+      await link(from, join(staged, name));
+    }
+  }
+}
+
+// Moves the staged asset tree into finalDir with one rename. An existing
+// finalDir (a real directory, never a symlink) is merged into the staged tree
+// first, then swapped out and removed.
+export async function placeAsset(staged: string, finalDir: string, stageDir: string, planned: Set<string>): Promise<void> {
+  if (isSymlink(finalDir)) throw new PolyHavenError(`refused ${finalDir}: the asset directory is a symlink`);
+  if (!existsSync(finalDir)) {
+    await rename(staged, finalDir);
+    return;
+  }
+  if (!lstatSync(finalDir).isDirectory()) throw new PolyHavenError(`refused ${finalDir}: exists and is not a directory`);
+  assertRealInside(dirname(finalDir), finalDir);
+  await mergeExisting(finalDir, staged, planned);
+  const old = join(stageDir, "previous");
+  await rename(finalDir, old);
+  try {
+    await rename(staged, finalDir);
+  } catch (e) {
+    await rename(old, finalDir).catch(() => {});
+    throw e;
+  }
+}
+
+// Removes the staging dirs if the process is interrupted mid-download.
+// Returns the disposer; the normal and failure paths clean up in finally.
+export function cleanupOnSignal(paths: string[], exit: (code: number) => void = (c) => process.exit(c)): () => void {
+  const handlers: ["SIGINT" | "SIGTERM", () => void][] = (["SIGINT", "SIGTERM"] as const).map((sig) => [
+    sig,
+    () => {
+      for (const p of paths) rmSync(p, { recursive: true, force: true });
+      exit(sig === "SIGINT" ? 130 : 143);
+    },
+  ]);
+  for (const [sig, fn] of handlers) process.once(sig, fn);
+  return () => {
+    for (const [sig, fn] of handlers) process.removeListener(sig, fn);
+  };
 }
 
 export async function get(
@@ -407,18 +570,26 @@ export async function get(
   }
 
   const finalDir = join(outDir, id);
-  const stageDir = join(outDir, `.${id}.partial-${process.pid}-${deps.now().getTime()}`);
-  await mkdir(stageDir, { recursive: true });
+  await mkdir(outDir, { recursive: true });
+  // The out dir was resolved through realpath; make sure nothing on the way
+  // became a symlink since, before any write lands under it.
+  assertRealInside(realpathSync(deps.cwd), outDir);
+  if (isSymlink(finalDir)) throw new PolyHavenError(`refused ${finalDir}: the asset directory is a symlink`);
+  const stageDir = await mkdtemp(join(outDir, `.${id}.partial-`));
+  const staged = join(stageDir, "asset");
+  const disarm = cleanupOnSignal([stageDir]);
+  const budget: ByteBudget = { left: opts.maxMb * 1024 * 1024, capMb: opts.maxMb };
   let bytes = 0;
   try {
+    await mkdir(staged);
     await pool(plan, PARALLEL, async (f) => {
-      bytes += await download(f, stageDir, deps);
+      bytes += await download(f, staged, deps, budget);
     });
     if (opts.type === "models") {
       const gltfRel = plan[0].rel;
       let gltf: any;
       try {
-        gltf = JSON.parse(await readFile(join(stageDir, gltfRel), "utf8"));
+        gltf = JSON.parse(await readFile(join(staged, gltfRel), "utf8"));
       } catch {
         throw new PolyHavenError(`${gltfRel} is not valid glTF JSON`);
       }
@@ -426,13 +597,9 @@ export async function get(
       const missing = gltfReferences(gltf).filter((u) => !have.has(u));
       if (missing.length) throw new PolyHavenError(`${gltfRel} references files the API did not list: ${missing.join(", ")}`);
     }
-    await mkdir(finalDir, { recursive: true });
-    for (const f of plan) {
-      const dest = join(finalDir, f.rel);
-      await mkdir(dirname(dest), { recursive: true });
-      await rename(join(stageDir, f.rel), dest);
-    }
+    await placeAsset(staged, finalDir, stageDir, new Set(plan.map((f) => f.rel)));
   } finally {
+    disarm();
     await rm(stageDir, { recursive: true, force: true });
   }
 

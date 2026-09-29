@@ -2,6 +2,7 @@ import { describe, expect, test } from "bun:test";
 import { kelvinToHex, kelvinToLinearRGB, mixKelvin, pointCandela, spotCandela } from "./light-math";
 import { damp, lensToFov, progressToShotIndex, responsiveFov, sampleShots, type Shot } from "./shots";
 import { budgetFor, parseForced, selectTier, type TierSignals } from "./tier";
+import { contentKey, InstanceRegistry, posterLayerStyle } from "./lifecycle";
 
 describe("kelvinToLinearRGB", () => {
   test("normalised: the largest channel is 1, none negative", () => {
@@ -152,6 +153,56 @@ describe("tier", () => {
   test("a forced tier wins, parsed only from known values", () => {
     expect(parseForced("?scene-tier=full")).toBe("full");
     expect(parseForced("?scene-tier=ultra")).toBeUndefined();
-    expect(selectTier({ ...desktop, webgl2: false, forced: "full" })).toBe("full");
+    expect(selectTier({ ...desktop, renderer: "SwiftShader", forced: "full" })).toBe("full");
+  });
+
+  test("a forced tier overrides the capability checks but never reduced motion, save-data, or a missing WebGL2", () => {
+    const weak = { ...desktop, coarsePointer: true, viewportWidth: 390, deviceMemory: 2, cores: 2, maxTextureSize: 2048, renderer: "Google SwiftShader" };
+    expect(selectTier(weak)).toBe("static");
+    expect(selectTier({ ...weak, forced: "full" })).toBe("full");
+    expect(selectTier({ ...desktop, deviceMemory: 2, cores: 2, coarsePointer: true, forced: "full" })).toBe("full");
+    expect(selectTier({ ...desktop, reducedMotion: true, forced: "full" })).toBe("static");
+    expect(selectTier({ ...desktop, saveData: true, forced: "full" })).toBe("static");
+    expect(selectTier({ ...desktop, webgl2: false, forced: "full" })).toBe("static");
+    expect(selectTier({ ...desktop, webgl2: false, forced: "reduced" })).toBe("static");
+  });
+});
+
+describe("lifecycle helpers", () => {
+  test("the poster is hidden, not removed, only while the live scene is ready", () => {
+    expect(posterLayerStyle(true, true).visibility).toBe("hidden");
+    expect(posterLayerStyle(true, false).visibility).toBeUndefined();
+    expect(posterLayerStyle(false, true).visibility).toBeUndefined();
+    expect(posterLayerStyle(false, false)).toEqual({ position: "absolute", inset: 0 });
+  });
+
+  test("contentKey is equal for equal content, different for changed content or a different element", () => {
+    const a = [{ name: "hero", position: [0, 1, 2], target: [0, 0, 0], lens: 40 }];
+    const b = JSON.parse(JSON.stringify(a));
+    expect(contentKey(a, ["#hero"])).toBe(contentKey(b, ["#hero"]));
+    expect(contentKey(a, ["#hero"])).not.toBe(contentKey(a, ["#pool"]));
+    b[0].lens = 50;
+    expect(contentKey(a, ["#hero"])).not.toBe(contentKey(b, ["#hero"]));
+    const el1 = {};
+    const el2 = {};
+    expect(contentKey(a, [el1])).toBe(contentKey(a, [el1]));
+    expect(contentKey(a, [el1])).not.toBe(contentKey(a, [el2]));
+    // A selector string never collides with an element key.
+    expect(contentKey(a, ["e:1"])).not.toBe(contentKey(a, [el1]));
+  });
+
+  test("InstanceRegistry keeps two instances of one file apart", () => {
+    const r = new InstanceRegistry<string>();
+    const one = r.add("/lamp.gltf", "clone-1");
+    const two = r.add("/lamp.gltf", "clone-2");
+    r.add("/desk.gltf", "clone-3");
+    expect(r.forSrc("/lamp.gltf")).toEqual(["clone-1", "clone-2"]);
+    expect(r.remove(two)).toBe("clone-2");
+    expect(r.remove(two)).toBeUndefined();
+    expect(r.forSrc("/lamp.gltf")).toEqual(["clone-1"]);
+    expect(r.srcs().sort()).toEqual(["/desk.gltf", "/lamp.gltf"]);
+    expect(r.removeSrc("/lamp.gltf")).toEqual(["clone-1"]);
+    expect(r.remove(one)).toBeUndefined();
+    expect(r.size).toBe(1);
   });
 });

@@ -1,4 +1,5 @@
 ---
+user-invocable: false
 name: jal-polyglot
 description: Decision rubric and workflow for Go or Rust gRPC sidecars in a JAL project, only for a CPU-bound or latency-critical hot path Bun cannot serve, proto-first contract, the services/<name>/ layout (proto, server, Dockerfile), gRPC wiring to the Bun client, the Coolify service, and reporting the sidecar to Brian. Use when a performance problem is suspected to need a compiled sidecar, or when adding or reviewing a Go or Rust service.
 ---

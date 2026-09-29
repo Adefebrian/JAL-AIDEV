@@ -1,4 +1,5 @@
 ---
+user-invocable: false
 name: jal-orchestration
 description: The one JAL run engine behind every JAL command (/jal-new, /jal-build, /jal-ui, /jal-fix, /jal-check, /jal-ship, /jal-docs). It covers intake, the JEV-picked playbooks, the owned-workstream plan, waves of truly parallel agents dispatched in one message (worktree isolation when paths collide), JEV as every agent's decision helper, lead-side verification and commits, a parallel review gate, owner-routed fixes, loop exit, and memory. It also holds the internal playbooks (feature, module, service, migrate, adr, scaffold, review-gate, audit, pentest, debug, pr, release, deploy). Use whenever a JAL command runs, a task needs several agents, or you need the exact steps of any former JAL command.
 ---
@@ -29,7 +30,7 @@ Every agent that runs under this engine follows this contract, and the lead past
 |---|---|
 | jal-lead | `sec.input_screen`, `orch.playbooks`, `orch.route`, `orch.model`, `orch.parallel`, `orch.loop_exit`, `orch.escalate`, `mem.promote`, `mem.reference_screen`, `seo.next_mode`, `seo.backlog_order` |
 | jal-principal | `orch.route`, `orch.escalate`, `rev.ship`, `sec.ship_block` |
-| jal-ux | `ui.experience`, `ui.direction_screen`, `imm.concept`, `ui.density`, `ui.region_gate`, `ui.component_recipe`, `ui.designmd_screen`, `ui.final_taste`, `ui.heuristics`, `ui.finish_disposition`, `motion.*` |
+| jal-ux | `ui.experience`, `ui.direction_screen`, `ui.type_pairing`, `imm.concept`, `ui.density`, `ui.region_gate`, `ui.component_recipe`, `ui.designmd_screen`, `ui.final_taste`, `ui.heuristics`, `ui.finish_disposition`, `motion.*` |
 | jal-immersive | `ui.direction_screen`, `imm.concept`, `imm.gate`, `imm.recipe`, `imm.tech`, `imm.tier`, `imm.taste`, `motion.*`, `ui.heuristics`, `ui.finish_disposition` |
 | jal-frontend | `seo.intent_page`, `seo.copy_screen`, `ui.region_gate`, `ui.component_recipe`, `ui.final_taste`, `ui.text_reveal_granularity`, `ui.number_motion`, `ui.geo_visual`, `motion.intensity` |
 | jal-architect, jal-backend, jal-systems | `be.placement`, `be.api_quality`, `be.migration_risk`, `be.new_tech` |

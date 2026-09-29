@@ -89,8 +89,9 @@ function Hero({ direction }: { direction: DirectionId }) {
 }
 
 export function Landing({ direction }: { direction: DirectionId }) {
+  // D13 precision_dark only exists as an explicit dark theme.
   return (
-    <Page direction={direction}>
+    <Page direction={direction} theme={direction === "D13" ? "dark" : undefined}>
       <AppShell title="Hawa" destinations={destinations} current="top" actions={<a className="btn" href="#pricing">Buy</a>}>
         <Hero direction={direction} />
 

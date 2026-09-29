@@ -1,4 +1,5 @@
 ---
+user-invocable: false
 name: jal-rpc
 description: Hono end-to-end type safety, export AppType from the Hono app, consume it with a typed hono/client on the frontend, keep the backend route as the single source of the API contract, and never hand-write fetch response types. Use when wiring frontend-to-backend calls, adding a new API route, or reviewing a fetch call for type drift.
 ---

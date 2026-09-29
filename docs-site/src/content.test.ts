@@ -205,6 +205,24 @@ describe("site facts match the plugin sources", () => {
     expect(PLUGIN_VERSION).toBe(`v${version}`);
   });
 
+  test("the index.html meta description states the plugin version and the real counts", () => {
+    const shell = readFileSync(join(import.meta.dir, "index.html"), "utf-8");
+    const description = shell.match(/<meta\s+name="description"\s+content="([^"]*)"/)?.[1] ?? "";
+    expect(description).not.toBe("");
+    const versions = [...description.matchAll(/\bv\d+\.\d+\.\d+\b/g)].map((m) => m[0]);
+    expect(versions).toEqual([PLUGIN_VERSION]);
+    const WORDS = ["zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", "eleven", "twelve", "thirteen", "fourteen", "fifteen", "sixteen", "seventeen", "eighteen", "nineteen", "twenty"];
+    const countOf = (noun: string) => {
+      const m = description.match(new RegExp(`\\b(${WORDS.join("|")}|\\d+)\\s+(?:[a-z]+\\s+){0,2}${noun}\\b`));
+      if (!m) return -1;
+      return /^\d+$/.test(m[1]) ? Number(m[1]) : WORDS.indexOf(m[1]);
+    };
+    const commandCount = existsSync(commandsDir) ? readdirSync(commandsDir).filter((f) => f.endsWith(".md")).length : COMMANDS.length;
+    const agentCount = existsSync(agentsDir) ? readdirSync(agentsDir).filter((f) => f.endsWith(".md")).length : AGENTS.length;
+    expect(countOf("commands")).toBe(commandCount);
+    expect(countOf("agents")).toBe(agentCount);
+  });
+
   test.if(existsSync(auditTs))("every rule the UI audit can report is listed", () => {
     const source = readFileSync(auditTs, "utf-8");
     const found = new Set<string>();

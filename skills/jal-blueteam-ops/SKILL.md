@@ -1,4 +1,5 @@
 ---
+user-invocable: false
 name: jal-blueteam-ops
 description: Defensive security workflow for JAL projects, hardening beyond the v0.1.0 baseline, detection and logging, triaging red-team findings from jal-redteam-ops, and verifying fixes actually close the gap. Use when responding to a security finding, adding logging or detection, or confirming a patch before it ships.
 ---

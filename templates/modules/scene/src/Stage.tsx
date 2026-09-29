@@ -45,6 +45,7 @@ import { Preload } from "@react-three/drei";
 import { ACESFilmicToneMapping, AgXToneMapping, NeutralToneMapping, SRGBColorSpace, type ToneMapping } from "three";
 import { budgetFor, probeTier, type Tier, type TierBudget } from "./tier";
 import { disposeAllProducts } from "./assets";
+import { posterLayerStyle } from "./lifecycle";
 
 export type ToneMappingName = "agx" | "aces" | "neutral";
 
@@ -59,6 +60,12 @@ export interface StageState {
   budget: TierBudget;
   toneMapping: ToneMappingName;
   exposure: number;
+  /**
+   * prefers-reduced-motion: reduce. The probe sends it to the poster; it is
+   * true on a live scene only when the page forced a tier (a "View in 3D"
+   * opt-in). CameraRig reads it and cuts between shots with no damping.
+   */
+  reducedMotion: boolean;
 }
 
 const StageContext = createContext<StageState | null>(null);
@@ -68,6 +75,27 @@ export function useStage(): StageState {
   const s = useContext(StageContext);
   if (!s) throw new Error("useStage must be used inside <Stage>");
   return s;
+}
+
+/** The Stage state, or null outside a Stage (for components that also work standalone). */
+export function useMaybeStage(): StageState | null {
+  return useContext(StageContext);
+}
+
+const REDUCED_MOTION = "(prefers-reduced-motion: reduce)";
+
+/** prefers-reduced-motion, kept current if the visitor changes it. */
+export function useReducedMotion(): boolean {
+  const [reduced, setReduced] = useState(() => typeof window !== "undefined" && typeof window.matchMedia === "function" && window.matchMedia(REDUCED_MOTION).matches);
+  useEffect(() => {
+    if (typeof window === "undefined" || typeof window.matchMedia !== "function") return;
+    const mq = window.matchMedia(REDUCED_MOTION);
+    const sync = () => setReduced(mq.matches);
+    sync();
+    mq.addEventListener?.("change", sync);
+    return () => mq.removeEventListener?.("change", sync);
+  }, []);
+  return reduced;
 }
 
 /** Probe once on mount; null until the probe ran (render the poster meanwhile). */
@@ -174,11 +202,15 @@ export function Stage({
   const tier = forcedTier ?? probed;
   const [failed, setFailed] = useState<string | null>(null);
   const [ready, setReady] = useState(false);
+  const reducedMotion = useReducedMotion();
 
   const coarse = typeof window !== "undefined" && typeof window.matchMedia === "function" && window.matchMedia("(pointer: coarse)").matches;
   const width = typeof window !== "undefined" ? window.innerWidth : 1280;
   const budget = useMemo(() => (tier ? budgetFor(tier, width, coarse) : null), [tier, width, coarse]);
-  const state = useMemo<StageState | null>(() => (tier && budget ? { tier, budget, toneMapping, exposure } : null), [tier, budget, toneMapping, exposure]);
+  const state = useMemo<StageState | null>(
+    () => (tier && budget ? { tier, budget, toneMapping, exposure, reducedMotion } : null),
+    [tier, budget, toneMapping, exposure, reducedMotion],
+  );
 
   const fallback = useCallback(
     (reason: string) => {
@@ -217,8 +249,11 @@ export function Stage({
 
   return (
     <div className={className} style={{ ...box, ...style }} data-scene-tier={state?.tier ?? "pending"} data-scene-ready={ready && live ? "true" : "false"}>
-      {/* The poster stays mounted underneath: it is the LCP element and every fallback. */}
-      <div aria-hidden={live && ready ? true : undefined} style={{ position: "absolute", inset: 0 }}>
+      {/* The poster stays mounted underneath: it is the LCP element and every
+          fallback. Hidden (not removed) once the live scene is on screen, since
+          the alpha canvas would otherwise let the static product show through
+          after the camera leaves the first shot. */}
+      <div aria-hidden={live && ready ? true : undefined} data-scene-poster="" style={posterLayerStyle(live, ready)}>
         {posterEl}
       </div>
       {live && state && (

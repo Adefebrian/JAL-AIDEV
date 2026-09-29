@@ -25,6 +25,8 @@ const server = Bun.serve({
     if (pathname === "/") return new Response(Bun.file(join(here, "compare.html")));
     if (pathname === "/landing") return new Response(Bun.file(join(here, "index.html")));
     if (css[pathname]) return new Response(Bun.file(css[pathname]));
+    // tokens.css imports ./fonts/fonts.css, which loads the vendored woff2 files.
+    if (/^\/css\/fonts\/[A-Za-z0-9-]+\.(css|woff2)$/.test(pathname)) return new Response(Bun.file(join(src, pathname.slice("/css/".length))));
     if (pathname.startsWith("/dist/") && !pathname.includes("..")) return new Response(Bun.file(join(here, pathname)));
     return new Response("not found", { status: 404 });
   },

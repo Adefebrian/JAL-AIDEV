@@ -1,4 +1,5 @@
 ---
+user-invocable: false
 name: jal-motion
 description: JAL's motion system, restrained product UI motion and richer showcase choreography, the duration/easing token scale, Framer Motion and GSAP mappings, accessibility and performance rules. Use when building or reviewing any animation, transition, micro-interaction, state change, page transition, landing hero motion, scroll effect, or product demo motion piece.
 ---

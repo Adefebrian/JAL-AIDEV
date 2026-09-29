@@ -1,4 +1,5 @@
 ---
+user-invocable: false
 name: jal-jev
 description: How every JAL agent asks JEV (TypeSafe AI System One) to judge a bounded decision through the jev_decide tool, with the authority model, state framing, question design, batching, confidence handling, outage stamping, and the decision catalog. Use for any routing, gating, go/no-go, severity, prioritization, triage, model pick, container pick, or "should we" decision in a JAL project, before acting on the decision.
 ---
@@ -112,5 +113,5 @@ A call is about 400ms and costs fractions of a cent. Gate generously: any soft c
 
 ## References
 
-- `references/catalog.md`: the 52 catalog decisions with purpose, caller, precheck, state fields, question JSON, thresholds, and actions.
+- `references/catalog.md`: the 53 catalog decisions with purpose, caller, precheck, state fields, question JSON, thresholds, and actions.
 - Agent `jal-jev`: dispatch for a novel decision with no catalog entry, careful state framing, or an impartial verdict.

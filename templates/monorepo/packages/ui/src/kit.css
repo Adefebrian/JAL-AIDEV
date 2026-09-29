@@ -24,11 +24,16 @@
  * 1. Knob layer
  * ===================================================================== */
 :root {
-  /* Type personality. System stacks only: a webfont is a dependency that
-     needs Brian's yes. The display stack may change per direction. */
-  --kit-font-sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-  --kit-font-display: var(--kit-font-sans);
-  --kit-font-mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+  /* Type pairing: one text family, at most one display family, one mono.
+     Geist Sans and Geist Mono (vendored, tokens.css) are the default. Each
+     direction below names its default pairing; a pool face is listed first
+     and always falls back to the Geist stack when the client project has
+     not fetched it (scripts/assets/fonts.ts). Only the display role may
+     change per section, never the text role. Rules and pool:
+     skills/jal-design-system/references/typography.md. */
+  --kit-font-sans: var(--font-sans);
+  --kit-font-display: var(--font-display);
+  --kit-font-mono: var(--font-mono);
   --kit-display-weight: 500;
   --kit-heading-weight: 600;
 
@@ -64,7 +69,8 @@
   --kit-section-rule: 0px;
 
   /* Big figures (stat, price, bento stat) use the display face with
-     tabular numerals; row values use the mono. A direction may set mono. */
+     tabular numerals; row values use the mono. A direction may set mono,
+     and must when its display face has no tabular figures. */
   --kit-font-figure: var(--kit-font-display);
 
   /* Accent roles. signal: the one key figure; link: text_and_icon role. */
@@ -74,6 +80,10 @@
 
 /* D1 research_notebook (the JAL Core default). Quiet, type-led, whitespace. */
 [data-direction="D1"] {
+  /* Type: Geist + Geist Mono, the default pairing (typography.md section 5). */
+  --kit-font-sans: var(--font-sans);
+  --kit-font-display: var(--font-sans);
+  --kit-font-mono: var(--font-mono);
   --color-page: #fafaf9;
   --tracking-display: -0.035em;
   --tracking-heading: -0.02em;
@@ -94,6 +104,10 @@
 
 /* D2 single_signal_ledger. Near monochrome, one green means action. */
 [data-direction="D2"] {
+  /* Type: Geist + Geist Mono, the default pairing (typography.md section 5). */
+  --kit-font-sans: var(--font-sans);
+  --kit-font-display: var(--font-sans);
+  --kit-font-mono: var(--font-mono);
   --color-page: #f7f8f8;
   --color-accent: #0b7a55; /* HSL 160, 5.34:1 on surface */
   --color-accent-contrast: var(--color-surface);
@@ -114,6 +128,10 @@
 
 /* D3 blueprint_hairline. Visible structure is the ornament. */
 [data-direction="D3"] {
+  /* Type: Geist + Geist Mono, the default pairing (typography.md section 5). */
+  --kit-font-sans: var(--font-sans);
+  --kit-font-display: var(--font-sans);
+  --kit-font-mono: var(--font-mono);
   --color-accent: #0f766e; /* HSL 175, signal only */
   --tracking-display: -0.04em;
   --kit-display-lg-size: var(--text-display-1);
@@ -133,6 +151,10 @@
 
 /* D4 bone_white_gallery. Media carries the page, type stays modest. */
 [data-direction="D4"] {
+  /* Type: Geist + Geist Mono, the default pairing (typography.md section 5). */
+  --kit-font-sans: var(--font-sans);
+  --kit-font-display: var(--font-sans);
+  --kit-font-mono: var(--font-mono);
   --color-page: #ffffff;
   --color-accent: #b4461a; /* HSL 17, text and icon only */
   --tracking-heading: -0.02em;
@@ -154,6 +176,10 @@
 
 /* D5 calm_productivity. Near white, soft geometry, one small punctuation. */
 [data-direction="D5"] {
+  /* Type: Geist + Geist Mono, the default pairing (typography.md section 5). */
+  --kit-font-sans: var(--font-sans);
+  --kit-font-display: var(--font-sans);
+  --kit-font-mono: var(--font-mono);
   --color-page: #faf8f5;
   --color-accent: #c2410c; /* HSL 17, text and icon */
   --tracking-display: -0.01em;
@@ -169,6 +195,10 @@
 
 /* D6 clean_docs. A white reading surface, one hue for links. */
 [data-direction="D6"] {
+  /* Type: Geist + Geist Mono, the default pairing (typography.md section 5). */
+  --kit-font-sans: var(--font-sans);
+  --kit-font-display: var(--font-sans);
+  --kit-font-mono: var(--font-mono);
   --color-page: #ffffff;
   --color-accent: #15803d; /* HSL 142, links only */
   --kit-display-sm-size: var(--text-5);
@@ -187,11 +217,16 @@
   --kit-link: var(--color-accent);
 }
 
-/* D7 warm_paper_editorial. Gated: content-led products only, and the
-   serif display needs a written reason plus Brian's yes on the face. */
+/* D7 warm_paper_editorial. Gated: content-led products only. The serif
+   display is the pool face Newsreader with a written reason in the
+   contract; a face outside the pool needs Brian's yes. */
 [data-direction="D7"] {
+  /* Type: Geist text, Newsreader display (pool, opsz axis), Geist Mono (typography.md section 5). */
+  --kit-font-sans: var(--font-sans);
+  --kit-font-display: "Newsreader", var(--font-sans);
+  --kit-font-mono: var(--font-mono);
+  --kit-font-figure: var(--kit-font-sans);
   --color-page: #faf8f5;
-  --kit-font-display: ui-serif, "New York", "Iowan Old Style", Georgia, serif;
   --tracking-display: -0.015em;
   --tracking-heading: -0.01em;
   --kit-display-weight: 500;
@@ -208,6 +243,10 @@
 
 /* D8 quiet_care. Generous air, one gentle color. */
 [data-direction="D8"] {
+  /* Type: Geist + Geist Mono, the default pairing (typography.md section 5). */
+  --kit-font-sans: var(--font-sans);
+  --kit-font-display: var(--font-sans);
+  --kit-font-mono: var(--font-mono);
   --color-page: #faf8f5;
   --color-accent: #3f6b4f; /* HSL 142 sage, signal only */
   --tracking-display: -0.01em;
@@ -225,6 +264,10 @@
 
 /* D9 cinematic_hardware. One lit product per section, big rounded tiles. */
 [data-direction="D9"] {
+  /* Type: Geist + Geist Mono, the default pairing (typography.md section 5). */
+  --kit-font-sans: var(--font-sans);
+  --kit-font-display: var(--font-sans);
+  --kit-font-mono: var(--font-mono);
   --color-page: #ffffff;
   --color-accent: #0a5bd3; /* HSL 216, 6.09:1, filled primary (buy) */
   --color-accent-contrast: var(--color-surface);
@@ -252,6 +295,10 @@
 
 /* D10 industrial_catalogue. Straight cuts, ink on a faint mist canvas. */
 [data-direction="D10"] {
+  /* Type: Geist + Geist Mono, the default pairing (typography.md section 5). */
+  --kit-font-sans: var(--font-sans);
+  --kit-font-display: var(--font-sans);
+  --kit-font-mono: var(--font-mono);
   --color-page: #f7f8f8;
   --tracking-display: -0.01em;
   --kit-display-weight: 500;
@@ -270,6 +317,10 @@
 
 /* D11 oversized_masthead. One huge wordmark, everything else small. */
 [data-direction="D11"] {
+  /* Type: Geist + Geist Mono, the default pairing (typography.md section 5). */
+  --kit-font-sans: var(--font-sans);
+  --kit-font-display: var(--font-sans);
+  --kit-font-mono: var(--font-mono);
   --color-page: #ffffff;
   --tracking-display: -0.04em;
   --tracking-heading: -0.02em;
@@ -290,9 +341,13 @@
 
 /* D12 friendly_consumer. Rounded display, big radii, one bright hue. */
 [data-direction="D12"] {
+  /* Type: Geist text, Nunito display (pool, rounded), Geist Mono (typography.md section 5). */
+  --kit-font-sans: var(--font-sans);
+  --kit-font-display: "Nunito", var(--font-sans);
+  --kit-font-mono: var(--font-mono);
+  --kit-font-figure: var(--kit-font-sans);
   --color-page: #ffffff;
   --color-accent: #c2410c; /* HSL 17, text and icon, one display headline */
-  --kit-font-display: ui-rounded, "SF Pro Rounded", var(--kit-font-sans);
   --tracking-display: -0.03em;
   --kit-display-weight: 600;
   --kit-display-lg-size: var(--text-display-2);
@@ -309,6 +364,10 @@
    ships a dark theme and the root carries data-theme="dark". Never
    OS-triggered, never the light default. */
 [data-direction="D13"][data-theme="dark"] {
+  /* Type: Geist + Geist Mono, the default pairing (typography.md section 5). */
+  --kit-font-sans: var(--font-sans);
+  --kit-font-display: var(--font-sans);
+  --kit-font-mono: var(--font-mono);
   --color-page: #171412;
   --color-surface: #1e1b19;
   --color-layer-1: #25221f;
@@ -318,6 +377,7 @@
   --color-border-control: #8a8781;
   --color-ink: #ecebe8;
   --color-ink-muted: #b8b6b1;
+  --color-ink-subtle: #949089; /* 5.77:1 on page, 4.98:1 on layer-1 */
   --color-primary: #ecebe8;
   --color-primary-contrast: #171412;
   --color-primary-hover: color-mix(in oklab, black 8%, #ecebe8 92%);
@@ -400,7 +460,11 @@ html:has(.kit-page) > body {
   color: var(--color-ink);
 }
 
-.kit-page a:not(.btn) {
+/* Links inside prose only, at zero class specificity (0,0,1), so nav tabs,
+   footer links, and buttons keep their own muted and active states. */
+:where(.kit-page)
+  :where(.kit-lead, .kit-body, .kit-meta, .kit-faq-answer, .kit-quote-text, .kit-spec-note, .kit-bento-caption)
+  a:where(:not(.btn, .shell-nav-item)) {
   color: var(--kit-link);
   text-decoration-thickness: 1px;
   text-underline-offset: var(--space-4px);
@@ -571,6 +635,15 @@ html:has(.kit-page) > body {
   letter-spacing: var(--tracking-heading);
 }
 
+/* A big figure's inline box is the face's full ascent plus descent, which a
+   webfont can make taller than the line it sits on. As an inline-block its
+   box is its line height, so it never pokes out of the figure's paragraph. */
+.kit-stat-value .kit-num,
+.kit-plan-price .kit-num,
+.kit-bento-stat .kit-num {
+  display: inline-block;
+}
+
 .kit-unit {
   font-family: var(--kit-font-sans);
   font-size: var(--text-n1);
@@ -706,12 +779,7 @@ html:has(.kit-page) > body {
   .kit-masthead[data-variant="left"] .kit-masthead-text > .kit-lead {
     max-inline-size: 52ch;
   }
-  .kit-masthead[data-variant="left"] /* A wordmark headline takes the full width: it is the layout. */
-.kit-masthead[data-variant] .kit-masthead-text:has(.kit-wordmark) {
-  grid-column: 1 / -1;
-}
-
-.kit-masthead-proof {
+  .kit-masthead[data-variant="left"] .kit-masthead-proof {
     grid-column: 1 / -1;
   }
   .kit-masthead[data-variant="centered"] .kit-masthead-text {
@@ -719,12 +787,7 @@ html:has(.kit-page) > body {
     justify-items: center;
     text-align: center;
   }
-  .kit-masthead[data-variant="centered"] /* A wordmark headline takes the full width: it is the layout. */
-.kit-masthead[data-variant] .kit-masthead-text:has(.kit-wordmark) {
-  grid-column: 1 / -1;
-}
-
-.kit-masthead-proof {
+  .kit-masthead[data-variant="centered"] .kit-masthead-proof {
     grid-column: 3 / span 8;
   }
   .kit-masthead[data-variant="split"] .kit-masthead-text {
@@ -741,12 +804,7 @@ html:has(.kit-page) > body {
   .kit-masthead[data-variant="split"][data-media-side="start"] .kit-masthead-media {
     grid-column: 1 / span 7;
   }
-  .kit-masthead[data-variant="split"] /* A wordmark headline takes the full width: it is the layout. */
-.kit-masthead[data-variant] .kit-masthead-text:has(.kit-wordmark) {
-  grid-column: 1 / -1;
-}
-
-.kit-masthead-proof {
+  .kit-masthead[data-variant="split"] .kit-masthead-proof {
     grid-column: 1 / -1;
   }
 }
@@ -1641,8 +1699,24 @@ html:has(.kit-page) > body {
   min-width: 0;
 }
 
+/* Text for assistive tech only (the recommended plan's announcement).
+   clip-path alone hides the paint, so there is no clipping overflow box
+   and no negative margin pushing the 1px box outside its parent. */
+.kit-visually-hidden {
+  position: absolute;
+  inline-size: 1px;
+  block-size: 1px;
+  padding: 0;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* The table keeps a readable floor so .scroll-x scrolls it at 320px
+   instead of crushing columns until words split mid-word. */
 .kit-compare-table {
   inline-size: 100%;
+  min-inline-size: 36rem;
   border-collapse: separate;
   border-spacing: 0;
   table-layout: fixed;
@@ -1660,7 +1734,9 @@ html:has(.kit-page) > body {
   vertical-align: baseline;
   font-size: var(--text-0);
   line-height: var(--line-0);
-  overflow-wrap: anywhere;
+  overflow-wrap: normal;
+  word-break: normal;
+  hyphens: manual;
   border-bottom: 1px solid var(--color-border);
 }
 
@@ -1875,6 +1951,11 @@ html:has(.kit-page) > body {
     top: calc(var(--shell-header-h, 57px) + var(--banner-height) + var(--space-32px));
     align-self: start;
     min-width: 0;
+  }
+  /* A contained shell scrolls .shell-main, with the header outside the
+     scroller, so the sticky offset starts at the scroller's own top. */
+  .shell[data-scroll="contained"] .kit-story-stage {
+    top: var(--space-32px);
   }
   .kit-story-frames {
     display: grid;

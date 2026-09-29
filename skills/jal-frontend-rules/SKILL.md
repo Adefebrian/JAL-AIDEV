@@ -1,4 +1,5 @@
 ---
+user-invocable: false
 name: jal-frontend-rules
 description: Concrete JAL frontend recipes on the v0.3.0 core tokens. No overlap law and its prevention CSS, mobile-first app-shell, Bento Grid, rows-vs-bento, card, form-control, button, and status/notification (no side stripe) recipes, banned visual patterns (overlap, em-dash, eyebrow, glow, neon, gradients, shadows, side lines, emoji, decorative lines, dark default backgrounds), white-first palette, koboyo/reicon icon sourcing, spacing checklist. Use when building or reviewing any JAL frontend, React UI, or Bento layout.
 ---

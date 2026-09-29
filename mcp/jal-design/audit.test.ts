@@ -1,6 +1,6 @@
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import path from "node:path";
-import { existsSync, mkdirSync, readFileSync, writeFileSync, mkdtempSync, readdirSync, rmSync, realpathSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, writeFileSync, mkdtempSync, readdirSync, rmSync, realpathSync, symlinkSync } from "node:fs";
 import { tmpdir } from "node:os";
 import {
   CdpClient,
@@ -188,6 +188,25 @@ describe("runAudit", () => {
       const overlaps = report.violations.filter((v) => v.rule === "overlap");
       expect(overlaps.some((v) => v.selector.includes("ok-stage"))).toBe(false);
       expect(overlaps.some((v) => v.selector.includes("bad-stage"))).toBe(true);
+    },
+    60000,
+  );
+
+  test(
+    "a tall sticky stage below the fold covering copy is an overlap, not an exempt edge bar",
+    async () => {
+      const report = await runAudit(`${baseUrl}/sticky-stage-overlap.html`, { widths: [375, 1280] });
+      const overlaps = report.violations.filter((v) => v.rule === "overlap");
+      expect(overlaps.some((v) => v.detail.includes("sticky-stage") && v.detail.includes("covered-copy"))).toBe(true);
+    },
+    60000,
+  );
+
+  test(
+    "the document-mode app-shell (sticky header, fixed bottom tab bar over main) is not an overlap",
+    async () => {
+      const report = await runAudit(`${baseUrl}/shell-document-mode.html`, { widths: [375, 1280] });
+      expect(report.violations.filter((v) => v.rule === "overlap")).toEqual([]);
     },
     60000,
   );
@@ -474,13 +493,32 @@ describe("input normalisation", () => {
   });
 
   test("resolveOutDir confines output to the working directory", () => {
-    const cwd = path.join(tmpdir(), "jal-cwd");
+    const cwd = path.join(realpathSync(tmpdir()), "jal-cwd");
     expect(resolveOutDir(undefined, cwd)).toBe(path.join(cwd, ".jal", "shots"));
     expect(resolveOutDir("out/a", cwd)).toBe(path.join(cwd, "out", "a"));
     expect(resolveOutDir(path.join(cwd, "abs"), cwd)).toBe(path.join(cwd, "abs"));
     expect(() => resolveOutDir("../x", cwd)).toThrow("out_dir must be");
     expect(() => resolveOutDir("/etc", cwd)).toThrow("out_dir must be");
     expect(() => resolveOutDir(".", cwd)).toThrow("out_dir must be");
+  });
+
+  test("resolveOutDir refuses a symlinked .jal/shots that points outside the working directory", () => {
+    const root = realpathSync(mkdtempSync(path.join(tmpdir(), "jal-outdir-")));
+    try {
+      const cwd = path.join(root, "project");
+      const outside = path.join(root, "outside");
+      mkdirSync(path.join(cwd, ".jal"), { recursive: true });
+      mkdirSync(outside, { recursive: true });
+      symlinkSync(outside, path.join(cwd, ".jal", "shots"));
+      expect(() => resolveOutDir(undefined, cwd)).toThrow("out_dir must be");
+      expect(() => resolveOutDir(".jal/shots/nested", cwd)).toThrow("out_dir must be");
+      // A link that stays inside the project resolves to its real target.
+      mkdirSync(path.join(cwd, "real-shots"));
+      symlinkSync(path.join(cwd, "real-shots"), path.join(cwd, "linked"));
+      expect(resolveOutDir("linked", cwd)).toBe(path.join(cwd, "real-shots"));
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
   });
 });
 

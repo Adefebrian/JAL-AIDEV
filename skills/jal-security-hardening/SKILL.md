@@ -1,4 +1,5 @@
 ---
+user-invocable: false
 name: jal-security-hardening
 description: Default security checklist for every JAL project (secure headers, Redis rate limiting, CORS allowlist, input validation, env-only secrets, dependency audit) plus pointer to installed hunt-* skills for deep scans. Use before shipping any JAL backend, reviewing a PR for security, or hardening an API.
 ---

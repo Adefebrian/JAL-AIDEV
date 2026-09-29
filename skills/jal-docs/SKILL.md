@@ -1,4 +1,5 @@
 ---
+user-invocable: false
 name: jal-docs
 description: How the jal-docs agent writes and updates JAL project documentation in the JAL Docs portal (github.com/JAL-Group/malasbaca, live at malasbaca.jalgroup.id), for developers (technical sections plus a memory handover file for Claude Code) and for non-technical readers (what it is, who uses it, current condition). It covers the malasbaca content model, detecting existing docs and updating only what changed since the last analysed commit, evidence-cited claims checked mechanically by docs_verify and judged by JEV (docs.plan, docs.claim, docs.publish) so nothing is invented, names-only env files, secret scanning, and publishing as a branch plus a pull request. Use when documenting a project, updating stale docs, writing a handover, or anything aimed at malasbaca.
 ---

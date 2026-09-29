@@ -94,7 +94,7 @@ describe.skipIf(staticRenderer === null)("kit markup", () => {
     expect(html).toContain("--kit-bento-lg-cols:4");
     expect(html).toContain("data-has-md");
     for (const kind of ["media", "stat", "text", "list"]) expect(html).toContain(`data-kind="${kind}"`);
-    expect(html).toContain('<span class="kit-num">612</span><span class="kit-unit"> ppm</span>');
+    expect(html).toContain('<span class="kit-num">612</span><span class="kit-unit">\u00a0ppm</span>');
   });
 
   test("SpecRail and SpecTable set numbers in tabular mono with small units", () => {
@@ -164,6 +164,9 @@ describe.skipIf(staticRenderer === null)("kit markup", () => {
     ];
     const html = render(<PricingTable title="Pricing" plans={plans} compare={{ caption: "Compare", rows: [{ label: "PM2.5", values: [false, true] }] }} />);
     expect(html).toContain("data-recommended");
+    expect(count(html, /class="kit-visually-hidden"> \(recommended\)<\/span>/g)).toBe(1);
+    expect(html).toContain('<span class="kit-unit">\u00a0IDR</span>');
+    expect(html).not.toMatch(/class="kit-unit"> /);
     expect(html).toContain('<th scope="row">PM2.5</th>');
     expect(html).toContain('role="img" aria-label="Included"');
     expect(html).toContain("Not included");
@@ -218,6 +221,11 @@ describe("Bento layout validation", () => {
     expect(validateBentoLayout(["a a", "a a"], tiles).join()).toMatch(/tile "b" is not in the layout map/);
   });
 
+  test("rejects two tiles on one area", () => {
+    const dup = [...tiles, { area: "b", kind: "text" as const }];
+    expect(validateBentoLayout(["a a b", "a a c"], dup).join()).toMatch(/area "b" is used by more than one tile/);
+  });
+
   test("only media tiles may span rows", () => {
     expect(validateBentoLayout(["a b c", "a b c"], tiles).join()).toMatch(/"b" spans 2 rows but is a stat tile/);
   });
@@ -231,6 +239,34 @@ describe("Bento layout validation", () => {
         </BentoGrid>,
       ),
     ).toThrow(/BentoGrid layout: dead cell/);
+  });
+
+  test.skipIf(staticRenderer === null)("BentoGrid sees tiles wrapped in fragments", () => {
+    const html = staticRenderer!.renderToStaticMarkup(
+      <BentoGrid label="x" layout={{ lg: ["a a b", "a a c"] }}>
+        <>
+          <BentoTile area="a" kind="media" media={<div />} />
+          <>
+            <BentoTile area="b" kind="text" title="t" body="b" />
+          </>
+        </>
+        <BentoTile area="c" kind="text" title="t" body="c" />
+      </BentoGrid>,
+    );
+    expect(count(html, /class="kit-bento-tile/g)).toBe(3);
+  });
+
+  test.skipIf(staticRenderer === null)("BentoGrid throws on a duplicate area", () => {
+    expect(() =>
+      staticRenderer!.renderToStaticMarkup(
+        <BentoGrid label="x" layout={{ lg: ["a a b", "a a c"] }}>
+          <BentoTile area="a" kind="media" media={<div />} />
+          <BentoTile area="b" kind="text" title="t" body="b" />
+          <BentoTile area="c" kind="text" title="t" body="c" />
+          <BentoTile area="c" kind="text" title="t" body="again" />
+        </BentoGrid>,
+      ),
+    ).toThrow(/used by more than one tile/);
   });
 });
 
@@ -321,6 +357,27 @@ describe.skipIf(clientRenderer === null)("StickyStory in a DOM", () => {
       expect(container.querySelectorAll(".kit-story-frame[data-active]").length).toBe(1);
     } finally {
       cleanup();
+    }
+  });
+
+  test("a video starts playing after hydration when motion is allowed", async () => {
+    const proto = HTMLMediaElement.prototype as { play: () => Promise<void> };
+    const original = proto.play;
+    let calls = 0;
+    proto.play = function () {
+      calls += 1;
+      return Promise.reject(new Error("NotAllowedError"));
+    };
+    try {
+      const { container, cleanup } = await mount(<MediaFrame kind="video" src="/v.mp4" poster="/p.jpg" alt="" />);
+      try {
+        expect(container.querySelector("video")).not.toBeNull();
+        expect(calls).toBe(1);
+      } finally {
+        cleanup();
+      }
+    } finally {
+      proto.play = original;
     }
   });
 

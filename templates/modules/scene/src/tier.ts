@@ -22,16 +22,20 @@ export interface TierSignals {
   /** UNMASKED_RENDERER_WEBGL, when the browser exposes it. */
   renderer?: string;
   maxTextureSize?: number;
-  /** A forced tier from `?scene-tier=` (captures and debugging only). */
+  /** A forced tier from `?scene-tier=` (captures and debugging only). Never overrides reducedMotion, saveData, or a missing WebGL2. */
   forced?: Tier;
 }
 
 /** Software rasterisers: a visitor on one of these gets the poster. */
 export const SOFTWARE_RENDERER = /swiftshader|llvmpipe|softpipe|software|basic render|microsoft basic/i;
 
+// A forced tier (captures, debugging) overrides only the capability guesses:
+// the software-renderer, texture-size, memory, and core checks. The visitor's
+// own choices (reduced motion, save-data) and a missing WebGL2 still give the
+// poster, whatever the URL says.
 export function selectTier(s: TierSignals): Tier {
-  if (s.forced) return s.forced;
   if (s.reducedMotion || s.saveData || !s.webgl2) return "static";
+  if (s.forced) return s.forced;
   if (s.renderer && SOFTWARE_RENDERER.test(s.renderer)) return "static";
   if (s.maxTextureSize !== undefined && s.maxTextureSize < 4096) return "static";
   const lowMemory = s.deviceMemory !== undefined && s.deviceMemory <= 4;
