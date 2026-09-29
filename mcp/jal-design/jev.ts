@@ -206,6 +206,28 @@ async function appendDecisionLog(entry: DecisionLogEntry, logPath: string): Prom
   }
 }
 
+// JEV explains a rejected request (400, 422) in its body. Surface that
+// explanation, redacted and capped, so the calling agent can fix the question
+// shape in one retry instead of guessing.
+async function errorDetail(res: Response): Promise<string> {
+  try {
+    const raw = (await res.text()).trim();
+    if (!raw) return "";
+    let msg = raw;
+    try {
+      const j = JSON.parse(raw);
+      msg = typeof j === "string" ? j : j.detail ?? j.error ?? j.message ?? raw;
+      if (typeof msg !== "string") msg = JSON.stringify(msg);
+    } catch {
+      // plain text body
+    }
+    const clean = redact(msg) as string;
+    return ` (${clean.replace(/\s+/g, " ").slice(0, 400)})`;
+  } catch {
+    return "";
+  }
+}
+
 export async function decide(
   req: { state: unknown; questions: Record<string, JevQuestion> },
   opts: JevOpts = {},
@@ -303,7 +325,7 @@ export async function decide(
     }
 
     if (NO_RETRY_STATUS.has(res.status)) {
-      return finish(unverified(`JEV request failed: ${res.status}`));
+      return finish(unverified(`JEV request failed: ${res.status}${await errorDetail(res)}`));
     }
 
     if (RETRY_STATUS.has(res.status)) {
@@ -316,7 +338,7 @@ export async function decide(
     }
 
     // Any other non-2xx status: do not retry.
-    return finish(unverified(`JEV request failed: ${res.status}`));
+    return finish(unverified(`JEV request failed: ${res.status}${await errorDetail(res)}`));
   }
 
   return finish(unverified(lastError));

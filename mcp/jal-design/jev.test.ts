@@ -388,3 +388,17 @@ describe("decide() redaction + decision log", () => {
     }
   });
 });
+
+describe("decide() error detail", () => {
+  test("a 422 surfaces JEV's explanation, redacted, so the agent can fix the question", async () => {
+    const fetchImpl = (async () =>
+      new Response(JSON.stringify({ detail: "questions.q1.criteria: at least 2 levels required; key sk-test-abcdefghijklmnopqrstuvwxyz0123" }), { status: 422 })) as unknown as typeof fetch;
+    const r = await decide(baseReq, { apiKey: "apikey_test_secret_value_12345", fetchImpl, log: false });
+    expect(r.verified).toBe(false);
+    if (!r.verified) {
+      expect(r.error).toContain("422");
+      expect(r.error).toContain("at least 2 levels required");
+      expect(r.error).not.toContain("sk-test-abcdefghijklmnopqrstuvwxyz0123");
+    }
+  });
+});
