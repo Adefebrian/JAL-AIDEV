@@ -83,7 +83,7 @@ export function collectSecrets(mcpJsonVersions: string[]): Map<string, string> {
  * stays deterministic.
  */
 export const MIRROR_NAME = "Adefebrian";
-export const MIRROR_EMAIL = "brian@jalgroup.id";
+export const MIRROR_EMAIL = "59857124+Adefebrian@users.noreply.github.com";
 export const ENV_FILTER =
   'export GIT_AUTHOR_NAME="$JAL_NAME" GIT_AUTHOR_EMAIL="$JAL_EMAIL" GIT_COMMITTER_NAME="$JAL_NAME" GIT_COMMITTER_EMAIL="$JAL_EMAIL"';
 /** Drops Co-Authored-By, Signed-off-by, and "Generated with ... Claude" lines, then trailing blank lines. */
