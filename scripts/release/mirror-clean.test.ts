@@ -192,3 +192,13 @@ describe("buildMirror", () => {
     expect(readFileSync(join(out, "keep.txt"), "utf8")).toBe("mine");
   });
 });
+
+describe("single identity", () => {
+  test("foreignIdentities flags other people and co-author trailers only", async () => {
+    const { foreignIdentities, MIRROR_NAME, MIRROR_EMAIL } = await import("./mirror-clean");
+    const self = `${MIRROR_NAME} <${MIRROR_EMAIL}>`;
+    expect(foreignIdentities(`${self}\n${self}`, "feat: x\n\nbody")).toEqual([]);
+    expect(foreignIdentities(`${self}\nSomeone <a@b.c>`, "")).toEqual(["Someone <a@b.c>"]);
+    expect(foreignIdentities(self, "fix\n\nCo-Authored-By: Claude <noreply@anthropic.com>")).toHaveLength(1);
+  });
+});

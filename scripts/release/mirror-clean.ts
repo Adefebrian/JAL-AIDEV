@@ -76,6 +76,31 @@ export function collectSecrets(mcpJsonVersions: string[]): Map<string, string> {
  * The filter-branch tree filter. NUL-separated paths (grep --null, xargs -0)
  * so a file name with spaces, quotes, or newlines is still rewritten.
  */
+/**
+ * The personal mirror carries one identity only: every author and committer
+ * becomes Adefebrian, and message trailers that name anyone else (a
+ * co-author, a tool) are dropped. Dates stay as they were, so the rewrite
+ * stays deterministic.
+ */
+export const MIRROR_NAME = "Adefebrian";
+export const MIRROR_EMAIL = "brian@jalgroup.id";
+export const ENV_FILTER =
+  'export GIT_AUTHOR_NAME="$JAL_NAME" GIT_AUTHOR_EMAIL="$JAL_EMAIL" GIT_COMMITTER_NAME="$JAL_NAME" GIT_COMMITTER_EMAIL="$JAL_EMAIL"';
+/** Drops Co-Authored-By, Signed-off-by, and "Generated with ... Claude" lines, then trailing blank lines. */
+export const MSG_FILTER = `perl -0pe 's/^(?:co-authored-by|signed-off-by):.*\\n?//gim; s/^.*generated with .*claude.*\\n?//gim; s/\\s+\\z/\\n/'`;
+
+/** Identities or trailers in the mirror that still name anyone other than Adefebrian. */
+export function foreignIdentities(identities: string, messages: string): string[] {
+  const self = `${MIRROR_NAME} <${MIRROR_EMAIL}>`;
+  const out = new Set<string>();
+  for (const line of identities.split("\n").map((l) => l.trim()).filter(Boolean)) {
+    if (line !== self) out.add(line);
+  }
+  for (const m of messages.match(/^(?:co-authored-by|signed-off-by):.*$/gim) ?? []) out.add(m.trim());
+  for (const m of messages.match(/^.*generated with .*claude.*$/gim) ?? []) out.add(m.trim());
+  return [...out];
+}
+
 export const TREE_FILTER = `grep -rlF --null -f "$JAL_LIST" . --exclude-dir=.git | xargs -0 -r perl "$JAL_PERL"`;
 
 /** git grep exits 0 on a match, 1 on none, and above 1 on an error, which must fail the run. */
@@ -199,9 +224,38 @@ for my $p (@ARGV) { local $/; open(my $h, '<', $p) or next; my $t = <$h>; close 
     // Rewrite main and every tag. grep -rlF finds only files that hold a key.
     git(
       out,
-      ["filter-branch", "--force", "--tree-filter", TREE_FILTER, "--tag-name-filter", "cat", "--", "main", ...tags.map((t) => `refs/tags/${t}`)],
-      { env: { FILTER_BRANCH_SQUELCH_WARNING: "1", JAL_MAP: mapFile, JAL_LIST: listFile, JAL_PERL: perlFile } },
+      [
+        "filter-branch", "--force",
+        "--env-filter", ENV_FILTER,
+        "--msg-filter", MSG_FILTER,
+        "--tree-filter", TREE_FILTER,
+        "--tag-name-filter", "cat",
+        "--", "main", ...tags.map((t) => `refs/tags/${t}`),
+      ],
+      {
+        env: {
+          FILTER_BRANCH_SQUELCH_WARNING: "1",
+          JAL_MAP: mapFile, JAL_LIST: listFile, JAL_PERL: perlFile,
+          JAL_NAME: MIRROR_NAME, JAL_EMAIL: MIRROR_EMAIL,
+        },
+      },
     );
+
+    // filter-branch keeps each annotated tag's tagger; re-create every tag as
+    // Adefebrian with its original message and date, so the result is the
+    // same on every run.
+    for (const tag of tags) {
+      const type = git(out, ["cat-file", "-t", `refs/tags/${tag}`]).trim();
+      if (type !== "tag") continue;
+      const target = git(out, ["rev-parse", `refs/tags/${tag}^{}`]).trim();
+      const date = git(out, ["for-each-ref", `refs/tags/${tag}`, "--format=%(taggerdate:raw)"]).trim();
+      const message = git(out, ["for-each-ref", `refs/tags/${tag}`, "--format=%(contents)"]);
+      const msgFile = join(work, `tag-${tag.replace(/[^A-Za-z0-9._-]/g, "_")}.txt`);
+      writeFileSync(msgFile, message);
+      git(out, ["tag", "-f", "-a", tag, target, "-F", msgFile], {
+        env: { GIT_COMMITTER_NAME: MIRROR_NAME, GIT_COMMITTER_EMAIL: MIRROR_EMAIL, GIT_COMMITTER_DATE: date },
+      });
+    }
 
     // Drop everything that could still hold an old object.
     git(out, ["remote", "remove", "origin"], { allowFail: true });
@@ -222,6 +276,13 @@ for my $p (@ARGV) { local $/; open(my $h, '<', $p) or next; my $t = <$h>; close 
     hits += countKeysIn(git(out, ["log", "--all", "--format=%B"]), secrets.keys());
     hits += countKeysIn(git(out, ["for-each-ref", "refs/tags", "--format=%(contents)"]), secrets.keys());
     if (hits > 0) throw new Error(`verification failed: ${hits} commits or messages still hold a key; do not push`);
+    const foreign = foreignIdentities(
+      git(out, ["log", "--all", "--format=%an <%ae>%n%cn <%ce>"]) +
+        "\n" +
+        git(out, ["for-each-ref", "refs/tags", "--format=%(taggername) %(taggeremail)"]),
+      git(out, ["log", "--all", "--format=%B"]) + "\n" + git(out, ["for-each-ref", "refs/tags", "--format=%(contents)"]),
+    );
+    if (foreign.length > 0) throw new Error(`verification failed: ${foreign.length} other identities or trailers remain; do not push`);
 
     const result = { out, main: git(out, ["rev-parse", "main"]).trim(), keys: secrets.size, commits: all.length, tags: tags.length };
     ok = true;
