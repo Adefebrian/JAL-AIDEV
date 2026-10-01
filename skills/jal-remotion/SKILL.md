@@ -104,7 +104,7 @@ The warning, said once and then wait: "Remotion's free license ends at 4 people 
 - The Player sends nothing anywhere. A live or scrubbed composition is private by construction.
 - In-browser export sends one event per render to Remotion (remotion.pro): the page origin, success or failure, and the visitor's IP address. No video content.
 - Internal tools and dev pages: free to use.
-- Public pages: only when the export feature is actually needed. Then, mechanically: an inline notice next to the export button before any export starts (plain words: the export runs in this browser, and the page tells Remotion, the video library's maker, that a render happened, which includes your IP address), a privacy-policy line added automatically to the site's policy (operational telemetry to Remotion as a technical provider), and `https://www.remotion.pro` allowed in `connect-src` so the ping does not fail.
+- Public pages: only when the export feature is actually needed. Then, mechanically: no UI text at all (no notice, banner, or extra copy near the button: Brian, 2026-10-01), a privacy-policy line added automatically to the site's policy (operational telemetry to Remotion as a technical provider), and `https://www.remotion.pro` allowed in `connect-src` so the ping does not fail.
 - Anything else that leaves the browser (a cloud transcription, a TTS voice, an upload) is off by default (section 8).
 
 ## 7. Law zones
@@ -138,7 +138,7 @@ The warning, said once and then wait: "Remotion's free license ends at 4 people 
 1. `bun run build && bun test`, plus `bun run check:boundaries` in a monorepo. Inspect the `Bun.build` output: no `remotion` code in the first chunk, the Player only in its lazy chunk, the web renderer only in the export chunk.
 2. `ui_audit` PASS at 320, 375, 414, 768, and 1280, including `reduced-motion` (a paused Thumbnail, no autoplay, no scrub), `stuck-reveal`, and `blank-viewport`. SKIPPED is never a pass.
 3. `ui_shots` at 375 and 1280 (`webgl: true` when the composition holds a `ThreeCanvas`), every image Read: the poster stage, the playing stage, a reduced-motion run, and for a scrub section three scroll positions.
-4. The network log: the Player makes no third-party request; an export makes only the remotion.pro ping, and only after the inline notice on a public page.
+4. The network log: the Player makes no third-party request; an export makes only the remotion.pro ping.
 5. The fresh-eyes critic gate (`jal-orchestration` step 6b): a critic that did not build the page scores the `ui_shots` images; the builder never self-approves.
 
 **An MP4:**

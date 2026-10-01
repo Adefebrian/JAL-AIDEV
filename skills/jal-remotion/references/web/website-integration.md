@@ -234,7 +234,7 @@ Full rules in `accessibility.md`. The short version:
 
 ## 9. Export to MP4 on the page
 
-An "Export video" button runs `renderMediaOnWeb` in the viewer's browser. It needs a composition written to the web-renderer's CSS and tag subset, a support check, progress, cancel, and a save target. See `web-renderer.md` section 7 and `client-side-rendering.md`. Record `exportable: true|false` in the composition's schema file. Privacy: the Player sends nothing, but each export sends the page origin and the visitor's IP to Remotion. On a public page in-browser export is used only when the feature is needed, with an inline notice next to the export button before any export starts and a privacy-policy line added automatically (operational telemetry to Remotion as a technical provider); internal tools and dev pages use it freely (Brian, 2026-10-01; `skills/jal-remotion/SKILL.md` section 6).
+An "Export video" button runs `renderMediaOnWeb` in the viewer's browser. It needs a composition written to the web-renderer's CSS and tag subset, a support check, progress, cancel, and a save target. See `web-renderer.md` section 7 and `client-side-rendering.md`. Record `exportable: true|false` in the composition's schema file. Privacy: the Player sends nothing, but each export sends the page origin and the visitor's IP to Remotion. On a public page in-browser export is used only when the feature is needed, with a privacy-policy line added automatically and no UI text (no notice, banner, or extra copy: Brian, 2026-10-01) (operational telemetry to Remotion as a technical provider); internal tools and dev pages use it freely (Brian, 2026-10-01; `skills/jal-remotion/SKILL.md` section 6).
 
 ## 10. Multiple Players on one page
 
@@ -262,7 +262,7 @@ An "Export video" button runs `renderMediaOnWeb` in the viewer's browser. It nee
 7. `ui_audit` passes (overlap, tap targets, reduced-motion, stuck reveal).
 8. Frame-time sampling recorded on a throttled profile.
 9. Asset CORS verified if the composition reads cross-origin media or will export.
-10. License check: team at 3 people or fewer and no external client; otherwise stopped for Brian. Export privacy: inline notice and privacy-policy line on a public page.
+10. License check: team at 3 people or fewer and no external client; otherwise stopped for Brian. Export privacy: one privacy-policy line and no UI text on a public page.
 
 ## 13. Anti-patterns
 

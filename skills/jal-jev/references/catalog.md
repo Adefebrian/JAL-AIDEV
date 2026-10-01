@@ -972,7 +972,7 @@ The agent fills `criteria` with the real candidate IDs and lines. Keys must matc
 - `web_renderer` (`@remotion/web-renderer` `renderMediaOnWeb` with WebCodecs, no headless Chrome) is the default when a person is at a screen, the composition passes the fit check (`jal-remotion` `references/rendering/render-paths.md`), and `canRenderMediaOnWeb()` returns true. Not asked.
 - Every other path needs Brian's confirmation per project: JEV may advise, Brian decides. `cloud_run` and `vercel` are offered only when Brian named them for this project.
 - A rendering service that runs user-supplied Remotion code is never built. Not asked.
-- On a public page, in-browser export needs the inline notice before export, the privacy-policy line, and the remotion.pro `connect-src` entry. Mechanical, not asked.
+- On a public page, in-browser export needs one privacy-policy line and no UI text, and the remotion.pro `connect-src` entry. Mechanical, not asked.
 
 **State fields:** `evidence.deliverable` (format, length in seconds, resolution, fps, how many, on what schedule), `evidence.fit` (the fit-check result: which CSS or elements fail in-browser rendering), `evidence.person_present` (bool), `evidence.volume` (renders per day), `constraints.infra` (what exists: Coolify, Redis queue, S3).
 

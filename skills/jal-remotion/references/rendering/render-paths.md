@@ -65,7 +65,7 @@ Use in-browser rendering when all of these are true. Otherwise first try to chan
 - No server-only features are needed: no `chromiumOptions` or `--gl` flags, no FFmpeg-only codecs. Rendering is single-threaded (no concurrency option) but has less overhead and can use the viewer's GPU.
 - Output formats are among the browser encoders: MP4, WebM, MKV, MOV video; WAV, MP3, AAC, OGG, FLAC audio; H.264, H.265, VP8, VP9, AV1 depending on the browser. Check with `canRenderMediaOnWeb()` before offering a button.
 - A person is present at a screen. In-browser rendering cannot run from a scheduler or an API call without a browser, and putting a headless browser behind it brings Chrome back.
-- The page passes `licenseKey: 'free-license'` (JAL is 3 people, every project internal) and follows the privacy rule for the telemetry event (origin and the user's IP): free in internal tools and dev pages; on a public page only when the feature is needed, with an inline notice before export and a privacy-policy line.
+- The page passes `licenseKey: 'free-license'` (JAL is 3 people, every project internal) and follows the privacy rule for the telemetry event (origin and the user's IP): free in internal tools and dev pages; on a public page only when the feature is needed, with one privacy-policy line and no UI text.
 
 Three.js and Skia scenes render in the browser through `<ThreeCanvas>` and `<SkiaCanvas>`. The server paths need `--gl=angle` for WebGL (see troubleshooting.md), and a GPU only helps with Chrome for Testing. Test a heavy scene on a phone before promising an in-browser export.
 
