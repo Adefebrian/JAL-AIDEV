@@ -2,7 +2,7 @@
 
 A frame-driven composition model, played live in the browser. The idea comes from Remotion (a picture is a pure function of a frame number); the code is JAL's own, in `templates/monorepo/packages/ui/src/frames/`, with zero dependencies beyond React.
 
-Never install Remotion or `@remotion/*`. Its renderer needs webpack (or Rspack), Node, and a downloaded Chromium, and it carries a company license. The guard hook bans it. Nothing here needs it. Remotion is source-available, not open source: JAL takes ideas only, never its code or API. Anything below marked **proposed** is a contract the JAL core should follow but does not export yet; the code change sits outside the reference docs.
+Since 2026-10-01 Remotion itself is JAL's core motion engine (Brian's ruling, skill `jal-remotion`), installed only through the opt-in video module when a section needs composed motion or a video file. The frame core stays as the zero-dependency supplement: `motion.engine` `frame_core` picks it for a small inline demo with no export need, where a Remotion chunk would weigh more than it earns. Nothing here needs Remotion, and the frame core holds no Remotion code or API: it is JAL's own implementation of the idea. Anything below marked **proposed** is a contract the JAL core should follow but does not export yet; the code change sits outside the reference docs.
 
 ## 1. When to use it
 
@@ -221,7 +221,7 @@ The pin rules in `scroll-choreography.md` section 2.2 apply (JEV `motion.pin`, n
 From: remotion (ideas only; its renderer is what JAL does not adopt), JAL-authored.
 
 - **No MP4 export.** The frame core plays in the browser. There is no encoder, no headless render, no server-side step, and none will be added.
-- **If a real file is ever needed** (social, email, store listing), and only for a composition that draws to a `<canvas>`: record that canvas in the browser, on a dev machine, never in production code:
+- **If a real file is needed** (social, email, store listing), build the piece as a Remotion composition instead and export it in the browser (`jal-remotion` SKILL sections 4 and 5). The canvas recording below stays only as a stopgap for an existing frame-core piece that draws to a `<canvas>`, on a dev machine, never in production code:
 
   ```ts
   const stream = canvas.captureStream(30);

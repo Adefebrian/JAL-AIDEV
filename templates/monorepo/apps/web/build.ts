@@ -58,6 +58,9 @@ async function runBuild() {
     outdir,
     target: "browser",
     minify: true,
+    // React ships its production build only when NODE_ENV is production at
+    // bundle time; a dev build doubles react-dom. `NODE_ENV=development` opts out.
+    define: { "process.env.NODE_ENV": JSON.stringify(process.env.NODE_ENV === "development" ? "development" : "production") },
     sourcemap: "linked",
     splitting: true,
     publicPath: "/",

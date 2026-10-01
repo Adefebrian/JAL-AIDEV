@@ -30,7 +30,7 @@ or a virtual DOM to earn a framework's weight.
 - `src/app.ts`: the progressive-enhancement layer, bundled by `build.ts`.
 - `src/content.test.ts`: asserts the 12 section markers, the study cases
   (every step uses a current command), the install snippet, all 17 agents,
-  the 8 commands, the old-to-new map, the 53 JEV decisions, the 33 UI check
+  the 8 commands, the old-to-new map, the 56 JEV decisions, the 33 UI check
   rules, the hero stats against the catalog and the rule list, and that no em dash or emoji appears anywhere. When the plugin
   sources sit next to this directory it also cross-checks the agents,
   commands, plugin version, and audit rule names against them.

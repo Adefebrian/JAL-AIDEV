@@ -543,4 +543,4 @@ Before returning motion work, grep and check:
 - [ ] Two smoothers stacked on one camera (Lenis plus a damp, or a scrub number plus a damp).
 - [ ] GSAP executed during server render.
 - [ ] Reduced motion leaves any trigger, pin, split, parallax, or camera drift alive.
-- [ ] Any `remotion` or `@remotion/*` import.
+- [ ] A `remotion` or `@remotion/*` import outside the video module (`packages/video`), the Player in the first bundle, or a scrubbed Remotion Player with a second scroll smoother next to Lenis (`jal-remotion` `references/web/scroll-scrub.md`).

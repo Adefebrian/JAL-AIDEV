@@ -1,5 +1,5 @@
 ---
-description: Design and build any screen or website, a new screen, a redesign, or an immersive 3D site, beautiful, tidy, mobile-first, and checked automatically.
+description: Design and build any screen, website, or video, a new screen, a redesign, an immersive 3D site, or an MP4 made with Remotion, beautiful, tidy, mobile-first, and checked automatically.
 argument-hint: <what to build, or which screen or site to redesign>
 ---
 
@@ -7,13 +7,15 @@ What to work on: $ARGUMENTS
 
 ## What this does
 
-One command for everything visual, across the whole range. The JEV judge places your brief on the spectrum:
+One command for everything visual, across the whole range. Remotion is the core motion: when a part of the page needs composed motion (a product intro, a hero motion piece, a data story, a product demo, an explainer), JEV picks Remotion first and combines it with the supplements that fit (kit motion for small interactions, Lenis and GSAP for smooth scroll and pins, Three.js for 3D, noyzzi, Magic UI, Animata, and OriginKit for signature effects). A page with no motion installs nothing extra. The JEV judge places your brief on the spectrum:
 - **modern**: a clean, calm site or app screen.
-- **modern with motion**: the same, plus accents such as Lenis smooth scroll, GSAP or Framer Motion reveals, and text motion.
+- **modern with motion**: the same, plus accents such as Lenis smooth scroll, GSAP or Framer Motion reveals, text motion, and Remotion motion pieces played live or scrubbed by scroll.
 - **modern with immersive moments**: a mostly calm site with one to three immersive sections, such as a 3D hero, a pinned scroll story, or a noyzzi piece.
 - **fully immersive**: the whole story told through 3D, WebGL, shaders, and scroll storytelling.
 
-Then JEV decides section by section how much motion each part gets, so one page can mix levels.
+Then JEV decides section by section how much motion each part gets and which engine moves it, so one page can mix levels.
+
+**Video requests** (an MP4, a social cut, a captioned clip, an explainer video) use Remotion directly, with no question. The video is rendered in your browser by default, with no server and no headless Chrome; any other way of rendering it asks Brian first. Its frames are sampled and checked before it is handed over.
 
 Then it:
 1. On a redesign, it checks the current screen first and lists what is wrong before changing anything.
@@ -24,6 +26,7 @@ Then it:
    - three.js scenes, shaders, and particles, nixie-fx and Rapier
    - Magic UI, Animata, and OriginKit motion
    - GSAP scroll stories
+   - Remotion compositions (transitions, text, data, captions, effects)
    - Material components and hallmark craft
    - live product demos
 5. It builds phone first with a real app-shell, then tablet, then desktop, on the one JAL design system: white background, nothing overlapping, and 44px controls. Outside noyzzi sections there are no shadows, gradients, or side lines. 3D objects are properly modeled and lit, never plain primitive shapes. For 3D, a still poster shows first, motion calms down for people who ask for reduced motion, and heavy effects scale down on slower phones. Independent sections are built at the same time.
@@ -35,11 +38,14 @@ Examples:
 - `/jal-ui a settings screen for team members and roles`
 - `/jal-ui redesign the pricing page`
 - `/jal-ui an immersive landing page for Halo, a smart desk lamp, with a 3D lamp hero`
+- `/jal-ui a 20 second product intro video for Halo, 9:16, with captions`
 
 ## Run it
 
 1. JEV `ui.experience` places the brief on the spectrum: `modern`, `modern_motion`, `modern_immersive`, or `immersive`.
+1b. A video request skips the spectrum for its file part: run the `video` playbook (`jal-orchestration` `references/video.md`, skill `jal-remotion`), with `motion.engine` `remotion` by precheck and `video.render_path` before any render (`web_renderer` by default; any other path asks Brian). A page that also needs a section continues below.
 2. Dispatch `jal-ux` for `modern`, `modern_motion`, and `modern_immersive`, or `jal-immersive` for `immersive`. Each runs its pipeline from `agents/jal-ux.md` or `agents/jal-immersive.md` with no step skipped. jal-ux hands any single section that earns immersion (`imm.gate`) to jal-immersive.
+2b. Motion per section: `motion.intensity`, then `motion.engine` (Remotion first for composed timeline motion, `kit_css` for micro-interactions by precheck), then `motion.remotion_recipe` for a Remotion section (`rm.*` candidates from at least 3 families). Builders read skill `jal-remotion` whenever a section needs motion.
 3. For a multi-section page, once the section concepts are written, the lead agent splits the sections into owned files and builds them in parallel per the `jal-orchestration` engine.
 4. It then integrates the sections and runs `ui_audit` at 320, 375, 414, 768, and 1280 until PASS (`SKIPPED` is never a pass).
 5. **Ambition floor** (`modern_immersive` and `immersive`, binding from step 2 on, full text in `jal-immersive` SKILL section 3): before any section is built, a one-paragraph concept with one required signature moment passes JEV `imm.concept`; every section's candidates come from at least 4 source families, never only the three safest; 3D uses real modeled forms, PBR with environment lighting, contact shadows or AO, color management and tone mapping, and lighting that tells the product story (a raw primitive hero is a FAIL); a deliberate display scale and one bold compositional idea per screen, no screen that is only a heading plus a paragraph plus cards.
@@ -57,5 +63,6 @@ Report back, tersely:
 - the recipe and source for each immersive section, and the source families offered
 - the files changed
 - the `ui_audit` result per width, and the frame-time sample for 3D
+- for a video: the render path, the MP4 probe line, and the sampled frames
 - the critic's rubric scores and total for every round, the final `ui.finish_disposition`, and any fixes still open
 - build and test status

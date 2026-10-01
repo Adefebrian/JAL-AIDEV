@@ -1,7 +1,7 @@
 ---
 user-invocable: false
 name: jal-motion
-description: JAL's motion system, restrained product UI motion and richer showcase choreography, the duration/easing token scale, Framer Motion and GSAP mappings, accessibility and performance rules. Use when building or reviewing any animation, transition, micro-interaction, state change, page transition, landing hero motion, scroll effect, or product demo motion piece.
+description: JAL's motion system, with Remotion as the core motion engine and the supplements that layer with it (kit CSS motion, Lenis plus GSAP, Framer Motion, Three.js and R3F, the frame core, noyzzi and component libraries), restrained product UI motion and richer showcase choreography, the duration/easing token scale, Framer Motion and GSAP mappings, accessibility and performance rules. Use when building or reviewing any animation, transition, micro-interaction, state change, page transition, landing hero motion, scroll effect, or product demo motion piece.
 ---
 
 # JAL Motion
@@ -12,6 +12,7 @@ Before writing any animation: name what state it communicates in one sentence. I
 
 ## 1. Approved stack, nothing else
 
+- **Remotion is the core motion engine** (Brian, 2026-10-01; skill `jal-remotion`). Remotion is never installed in a project that needs no motion. When a section needs motion, JEV `motion.engine` decides after `motion.intensity`. Remotion is the first choice for timeline or composed motion (product intros, hero motion pieces, data stories, product demos, explainers) and is used directly for every video or MP4 request. It ships through the opt-in video module (`templates/modules/video`, copied to `packages/video`): the Player in a lazy chunk on the page, in-browser MP4 export by default. The tools below are its supplements and stay in use.
 - **Lenis** for smooth scroll, the default on marketing and immersive pages, through `templates/modules/motion` (section 4a).
 - **GSAP** for orchestrated timelines and scroll-linked motion (official skills plus the JAL layer: `skills/jal-immersive/references/gsap/gsap.md`). Every GSAP plugin is free (since the 2024 Webflow licensing change) and allowed: ScrollTrigger, SplitText, Flip, MorphSVG, CustomEase, and the rest. JAL law still decides what each is used for (no DrawSVG ornaments, no ScrollSmoother next to Lenis, no bounce or elastic eases); the per-plugin filter is in `skills/jal-immersive/references/scroll-choreography.md`.
 - **Framer Motion** for React component, gesture, layout (FLIP), and exit animation (`AnimatePresence`).
@@ -21,7 +22,20 @@ Before writing any animation: name what state it communicates in one sentence. I
 - **Tailwind**, approved in v0.4.0, wired to JAL tokens through `bun-plugin-tailwind`. It styles; it never becomes a second token set.
 - **The JAL frame core** (`packages/ui/src/frames/`) for frame-driven compositions and product demo "videos" played live in the browser. See `skills/jal-immersive/references/frames.md`.
 
-Lottie, any ffmpeg/Node/Python export pipeline, and AE-bridge style tooling are **not approved**. Remotion and `@remotion/*` are banned (webpack, Node, Chromium, company license); the frame core replaces them. Bang-motion's own workflow (fixed-stage HTML export, Puppeteer/ffmpeg frame dumps, nebula/bloom backgrounds) is explicitly not ported, per its source digest. Anything outside this list needs Brian's explicit yes before adoption, name what it replaces and why.
+Lottie on a page, any ffmpeg/Node/Python export pipeline, and AE-bridge style tooling are **not approved**. Inside a Remotion composition, `@remotion/lottie` follows `jal-remotion` `references/ai-media/lottie-gif.md`. Video files come from Remotion's in-browser export; its CLI or Chrome Headless Shell render needs Brian's yes per project (`video.render_path`). Bang-motion's own workflow (fixed-stage HTML export, Puppeteer/ffmpeg frame dumps, nebula/bloom backgrounds) is explicitly not ported, per its source digest. Anything outside this list needs Brian's explicit yes before adoption, name what it replaces and why.
+
+## 1a. Remotion and the supplements, layered
+
+`motion.engine` picks one engine per section (`remotion`, `kit_css`, `gsap_lenis`, `r3f`, `frame_core`, `noyzzi_or_library`, `none`); a video request is `remotion` and a micro-interaction is `kit_css` by precheck. Then supplements layer onto the section through the layering protocol (`jal-design-system` `references/recipe-index.md` section 4), each with one job:
+
+| Layer | Engine | Job beside a Remotion composition |
+|---|---|---|
+| Micro-interactions and the kit | Kit CSS motion, CSS transitions, WAAPI, Framer Motion | State layers, the heading rise, the CTA press around the section; never inside the composition |
+| Smooth scroll, pins, parallax | Lenis plus GSAP ScrollTrigger (section 4a) | Lenis stays the one smoother. A Remotion composition may be scroll-scrubbed with Lenis or ScrollTrigger as the scroll source (`jal-remotion` `references/web/scroll-scrub.md`) |
+| 3D scenes | Three.js and R3F (`jal-immersive`) | A timeline 3D scene goes inside the composition through `@remotion/three`; a scene the visitor drives stays a page canvas |
+| Signature effects | noyzzi, magicui, animata, OriginKit, the JAL frame core | Beside the composition in their own section or region, each in its law zone |
+
+Inside a composition every motion is a function of the frame (`interpolate`, `spring`, `@remotion/gsap`); the tokens below still apply, converted at 30 fps (200ms is 6 frames, 400ms is 12, 600ms is 18). JEV may pick another library when it fits; any complex extra stack needs Brian's confirmation.
 
 ## 2. Token scale (canonical, source of truth is `packages/ui/src/tokens.css`)
 
@@ -105,7 +119,7 @@ If `CustomEase` is unavailable in a given build, the nearest core-only substitut
 
 Richer choreography is allowed here: asymmetric in/out at the showcase durations, staged reveals, scroll-linked camera language, and the choreography bang-motion proved out (camera-follows-click, shot-size staging, deterministic timelines), rebuilt in Lenis/GSAP/Framer Motion/CSS/WAAPI only. Full recipe, stagger values, the shot-size vocabulary, the anti-slide mechanical checks, and worked GSAP timeline examples live in `references/showcase.md`, read it before building any hero or demo reel.
 
-For scroll and time choreography (ScrollTrigger pin, scrub, snap, batch, SplitText, Flip, Lenis synced with ScrollTrigger and the R3F frame loop, scroll camera paths, intensity tiers 0 to 3, and the JEV `motion.intensity`, `motion.choreography`, `motion.pin` calls) read `skills/jal-immersive/references/scroll-choreography.md`. For a frame-driven demo piece with play, pause, scrub, and a reduced-motion poster, read `skills/jal-immersive/references/frames.md`.
+For scroll and time choreography (ScrollTrigger pin, scrub, snap, batch, SplitText, Flip, Lenis synced with ScrollTrigger and the R3F frame loop, scroll camera paths, intensity tiers 0 to 3, and the JEV `motion.intensity`, `motion.choreography`, `motion.pin` calls) read `skills/jal-immersive/references/scroll-choreography.md`. For a composed showcase piece (product intro, hero motion piece, data story, product demo, explainer) read `skills/jal-remotion/SKILL.md` first: Remotion is the first choice. For a small zero-dependency demo with play, pause, scrub, and a reduced-motion poster, read `skills/jal-immersive/references/frames.md`.
 
 The short version: one continuous world, never a slideshow of crossfading `<section>` blocks; the camera (a parent transform) does the moving, not every element animating itself independently; entrances slower and eased-out, exits faster and eased-in, at roughly the same 70% ratio as product UI; every showcase piece still opens on a white or off-white base and still obeys every rule in section 7.
 
@@ -190,5 +204,5 @@ No gradients of any kind, animated or static. No glow, no neon. No shadows (JAL 
 - Nothing autoplays longer than 5s without a pause control; nothing flashes past the WCAG limit.
 - `will-change` is scoped to the active animation window only, verified in devtools, not left standing.
 - No gradient, glow, neon, shadow, decorative ornament, emoji, or em dash appears anywhere in the motion work, including showcase copy and labels.
-- Showcase pieces open on white or off-white, read as one continuous world (no crossfading section slideshow), and use the approved stack only.
+- Showcase pieces open on white or off-white, read as one continuous world (no crossfading section slideshow), and use the approved stack only. A Remotion section records its `motion.engine` and `motion.remotion_recipe` answers, keeps the Player out of the first bundle, and stops at a paused Thumbnail under reduced motion.
 - Grepped the diff for `Math.random()` and `Date.now()` inside any render/animation loop, none found (ambient motion must be a pure function of elapsed time).

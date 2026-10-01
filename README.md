@@ -73,7 +73,7 @@ Eight commands. Each one runs the whole crew on the JAL orchestration engine: it
 |---------|----------------|----------------|
 | `/jal-new` | Start a new project | Scaffold from the JAL template, install, first commit, a build and test proof. Optionally builds the first version right away |
 | `/jal-build` | Build or change anything | Features end to end, backend modules and API routes, database migrations, Go or Rust sidecars (asks Brian first), architecture decision records, and any screens the change needs |
-| `/jal-ui` | Anything visual | New screens, redesigns, landing pages, and immersive or 3D websites. JEV picks product UI, marketing, or immersive mode. Built phone first and proven with the 33-rule UI check |
+| `/jal-ui` | Anything visual | New screens, redesigns, landing pages, immersive or 3D websites, and videos made with Remotion. JEV picks product UI, marketing, or immersive mode. Built phone first and proven with the 33-rule UI check |
 | `/jal-fix` | Fix a bug properly | Reproduce, root cause, a failing test, the fix, and proof. Several suspects are checked in parallel |
 | `/jal-check` | One PASS or FAIL | `quick` (rules, tests, UI check), `full` (plus security hardening, boot test, ship call), and `deep` (plus a deep audit and a red team versus blue team pentest). JEV picks the depth if you do not |
 | `/jal-ship` | Get it out | `pr` (pull request), `release` (version, changelog, tag), `deploy` (deploy.jalgroup.id with a health check), and `rollback`. The full check runs first; it never deploys unless you say so |
@@ -93,21 +93,32 @@ The old commands still exist as internal playbooks inside `skills/jal-orchestrat
 
 ## Skills
 
-21 skills back the agents and commands. The main ones:
+22 skills back the agents and commands. The main ones:
 
 - `jal-standards`: the JAL engineering constitution. Read before building or reviewing anything.
 - `jal-ui-taste`: the design core. Generated type, spacing, radius, and color scales, the no-overlap rule, section concept, and the JEV decision points for UI.
 - `jal-design-system`: JAL Core, the one JAL design system. Meta Astryx is the foundation, IBM Carbon supplies tables, forms, and notifications, and a few Google Material pieces cover mobile touch. One spec per component, so every product looks like the same team built it. JEV only sets how dense tables and lists are. Knowledge only, no extra packages. The identity ships as code in the template: the JAL Core kit (`packages/ui/src/kit` and `kit.css`: Masthead, Split, Bento, spec rails and tables, stat rows, feature grids, media frames, quotes, logos, FAQ, CTA band, pricing, footers, sticky stories, plus page-recipe and Bento validators). Every page is composed from it, and one `data-direction` attribute (D1 to D13) sets the look (`references/identity.md`).
 - `jal-design-system` also holds the craft floor (`references/craft.md`, from impeccable) and the visual directions with the seeded direction pick (`references/directions.md`, from impeccable and refero), so every product gets a fresh, deliberate look instead of the obvious first idea.
 - `jal-immersive`: all motion and 3D in one place: GreenSock's eight official GSAP skills (MIT) with the JAL layer, Lenis, the JAL frame core, and the immersive and 3D core. Three.js (WebGL and WebGPU/TSL), React Three Fiber and drei, shaders, particles, clean-room effects (rain, puddles, sand, grass, ocean), performance tiers, poster-first loading, GSAP and Lenis scroll choreography, the JAL frame core for live product demos, and the noyzzi catalogue. JEV picks and combines recipes per section. Premium 3D (`references/premium-3d.md`) sets the bar for product scenes: real CC0 Poly Haven assets fetched into the client project (`scripts/assets/polyhaven.ts`), motivated light, one persistent scene with a moving camera. It builds on the opt-in scene module (`templates/modules/scene`, copied to `packages/scene` only for an immersive page) with a tier-gated post stack and never bloom.
-- `jal-motion`: restrained product motion plus richer showcase choreography, and 167 component motion recipes from Magic UI and Animata (plain CSS and Tailwind), always with reduced-motion support.
-- `jal-jev`: the decision catalog, 53 standard decisions (orchestration, UI, motion, immersive, backend, security, QA, review, memory, docs, search) with their exact questions and thresholds.
+- `jal-remotion`: Remotion, the core motion engine: when JEV picks it and when a supplement fits better, the video module, scroll-scrub, in-browser MP4 export, the render paths, license and privacy, and 261 `rm.*` recipes, backed by references that cover 1301 Remotion docs pages.
+- `jal-motion`: restrained product motion plus richer showcase choreography, with Remotion as the core engine and the supplements layered on it, and 167 component motion recipes from Magic UI and Animata (plain CSS and Tailwind), always with reduced-motion support.
+- `jal-jev`: the decision catalog, 56 standard decisions (orchestration, UI, motion, video, immersive, backend, security, QA, review, memory, docs, search) with their exact questions and thresholds.
 - `jal-frontend-rules`: the CSS recipes that keep UI tidy.
 
 - `jal-orchestration`: the one engine behind every command: waves of truly parallel agents, JEV as every agent's decision helper, verification and commits by the lead, and the playbooks the old commands became.
 - `jal-docs`: how documentation is written for JAL Docs from evidence only.
 
 Also: `jal-scaffold`, `jal-architecture`, `jal-rpc`, `jal-polyglot`, `jal-security-hardening`, `jal-redteam-ops`, `jal-blueteam-ops`, `jal-qa-automation`, `jal-git-safety`, `jal-memory`, `jal-adr`, `jal-release`.
+
+## Remotion: the core motion
+
+Remotion is JAL's main motion engine (Brian, 2026-10-01). A composition is React where every frame is a pure function of the frame number, so the same code plays live on a page, scrubs with scroll, and exports to an MP4.
+
+- **Zero cost when unused.** Nothing Remotion-related is installed in a project that needs no motion. When a build needs motion, JEV decides per section (`motion.engine`): Remotion is the first choice for product intros, hero motion pieces, data stories, product demos, and explainers, and every video or MP4 request uses it directly. The supplements stay and are combined when they fit: kit CSS motion for micro-interactions, Lenis and GSAP for smooth scroll, pins, and parallax, Three.js and R3F for 3D scenes, and noyzzi, Magic UI, Animata, OriginKit, and the JAL frame core for signature effects. A composition can be scroll-scrubbed with Lenis or ScrollTrigger as the scroll source.
+- **On a website.** The opt-in video module (`templates/modules/video`, copied to `packages/video`) adds `RemotionSection`: poster first, the Player in a lazy `Bun.build` chunk that loads only near the viewport, a paused still under reduced motion. Websites stay on `Bun.build`; Remotion Studio and its bundler live only inside a separate video workspace.
+- **Render default.** MP4 files are rendered in the browser with `@remotion/web-renderer` (`renderMediaOnWeb`, WebCodecs): no headless Chrome, no server. A local CLI or Chrome Headless Shell render, a Coolify render service, Lambda, Cloud Run, or Vercel needs Brian's confirmation per project (`video.render_path`). Every MP4 is checked with `scripts/video/probe-mp4.ts` and a frame-sample check.
+- **License.** JAL uses Remotion's free license: JAL is 3 people (2 developers and 1 AI specialist) and every project is internal, so Remotion may be used in every project that needs motion, with `licenseKey: 'free-license'` where the API asks. The plugin warns and stops if a 4th team member or an external client appears (from Remotion 5.0, contractors and clients who receive the source count). Details in `THIRD_PARTY_NOTICES.md`.
+- **Privacy.** The Player sends nothing. In-browser export sends the page origin and the visitor's IP to Remotion: fine in internal tools and dev pages; on a public page only when the feature is needed, with an inline notice before export and a privacy-policy line added automatically.
 
 ## It learns
 
@@ -119,10 +130,10 @@ JAL-AIDEV gets better with use:
 
 ## Design references
 
-Every reference is integrated as knowledge (no extra packages, except the approved scene module dependencies below) and is used by a pipeline step, not just stored. JEV picks among them per section, and the build report names the recipe and source for every section. The full map is in `skills/jal-design-system/references/source-map.md`.
+Every reference is integrated as knowledge (no extra packages, except the approved scene module dependencies below and Remotion through the opt-in video module) and is used by a pipeline step, not just stored. JEV picks among them per section, and the build report names the recipe and source for every section. The full map is in `skills/jal-design-system/references/source-map.md`.
 
 - **Design system and UIUX:** Meta Astryx (foundation), IBM Carbon (data and forms), Google Material (state layers, mobile navigation), impeccable (craft floor, critique, seeded direction pick), refero (visual directions, type statistics), designmd.ai (screened supplementary kits).
-- **Components and motion:** Magic UI and Animata (167 recipes), bang-motion (showcase choreography), GSAP skills (scroll choreography), the JAL frame core (Remotion's idea, rebuilt).
+- **Components and motion:** Remotion (the core motion engine, 261 `rm.*` recipes, free license), Magic UI and Animata (167 recipes), bang-motion (showcase choreography), GSAP skills (scroll choreography), the JAL frame core (Remotion's idea, rebuilt with zero dependencies).
 - **Immersive and 3D:** noyzzi (sections, hover effects, 3D elements), Threejs-Awesome-Graphics-Agent-Skills, webgpu-claude-skill, threejs-game-skills, nixie-fx, ai-dev-kit, three.js and pmndrs, plus clean-room rebuilds of the GPL or unlicensed effects. Approved by Brian (2026-09-29): Poly Haven CC0 models, HDRIs, and textures, fetched into client projects at build time and never into this plugin, and `@react-three/postprocessing` with `postprocessing` in the scene module's `PostFX`.
 
 ## Bundled tools (MCP)

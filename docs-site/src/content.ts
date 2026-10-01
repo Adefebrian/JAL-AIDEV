@@ -16,7 +16,7 @@
 // Inline `backticks` in any body text render as inline code (see
 // render.ts richText), so copy can name a file or a command plainly.
 
-export const PLUGIN_VERSION = "v0.5.1";
+export const PLUGIN_VERSION = "v0.6.0";
 
 export type NavItem = {
   id: string;
@@ -74,7 +74,7 @@ export const HERO = {
   stats: [
     { value: "17", label: "specialist agents" },
     { value: "8", label: "commands" },
-    { value: "53", label: "JEV decisions" },
+    { value: "56", label: "JEV decisions" },
     { value: "33", label: "UI check rules" },
   ],
 };
@@ -359,11 +359,12 @@ export const COMMANDS: Command[] = [
     argumentHint: "<what to build, or which screen or site to redesign>",
     purpose: "Anything visual",
     what:
-      "New screens, redesigns, landing pages, and immersive or 3D websites. JEV first decides whether the brief is product UI, a marketing page, or immersive. A redesign lists what is wrong before changing anything. Every section gets a purpose, one message, and one action, then it is built phone first on JAL Core and proven with the 33-rule UI check.",
+      "New screens, redesigns, landing pages, immersive or 3D websites, and videos made with Remotion. JEV first decides whether the brief is product UI, a marketing page, or immersive. A redesign lists what is wrong before changing anything. Every section gets a purpose, one message, and one action, then it is built phone first on JAL Core and proven with the 33-rule UI check.",
     examples: [
       "/jal-ui a settings screen for team members and roles",
       "/jal-ui redesign the pricing page",
       "/jal-ui an immersive landing page for Halo, a smart desk lamp, with a 3D lamp hero",
+      "/jal-ui a 20 second product intro video for Halo, 9:16, with captions",
     ],
     wide: true,
   },
@@ -495,7 +496,7 @@ export const JEV = {
       body: "New tech outside the approved stack, a change of the default LLM, and scope changes that move a deadline go to Brian. JEV can help frame the tradeoff; it never approves them.",
     },
   ],
-  catalogTitle: "The 53 catalog decisions",
+  catalogTitle: "The 56 catalog decisions",
   catalogLead:
     "The standard decisions live in the `jal-jev` skill, each with its exact question, the check that runs before it, and the threshold that turns the answer into an action.",
 };
@@ -503,7 +504,8 @@ export const JEV = {
 export const JEV_CATALOG: { area: string; count: number; covers: string }[] = [
   { area: "Orchestration", count: 6, covers: "Which playbooks a request needs, who owns each piece, which model tier, what runs in parallel, when to escalate, and when the loop may stop." },
   { area: "UI and UX", count: 13, covers: "Product UI, marketing, or immersive; table and list density; whether a region earns its place; the direction screen; the type pairing from the font pool; which components and motion recipes to layer from every source; heuristics; the final taste call." },
-  { area: "Motion", count: 4, covers: "How much motion a section gets, the choreography, whether to pin a scroll section, and the medium for a live demo." },
+  { area: "Motion", count: 6, covers: "How much motion a section gets, which engine moves it (Remotion as the core, or a supplement), which Remotion recipes to layer, the choreography, whether to pin a scroll section, and the medium for a live demo." },
+  { area: "Video", count: 1, covers: "How a composition becomes an MP4: in the browser by default, every other render path only with Brian's yes." },
   { area: "Immersive", count: 6, covers: "The signature concept, whether 3D earns its place, which recipe, which technique, the device tier, and the final taste of the built scene." },
   { area: "Backend", count: 4, covers: "Where code belongs, API quality, migration risk, and whether a new technology is worth raising with Brian." },
   { area: "Security", count: 4, covers: "Severity, false positive or real, whether a finding blocks ship, and screening pasted or fetched input for injection." },
@@ -559,7 +561,7 @@ export const DESIGN_SYSTEM = {
 export const IMMERSIVE = {
   title: SECTION_MARKERS.immersive,
   lead:
-    "/jal-ui covers the whole range, and JEV places each brief on it: a calm modern site, a modern site with motion accents (Lenis smooth scroll, GSAP or Framer Motion reveals), a modern site with a few immersive sections, or a fully immersive site. Sections can sit at different levels on one page. jal-immersive holds all motion and 3D in one place: GreenSock's official GSAP skills, Lenis, the JAL frame core, Three.js, React Three Fiber, shaders, particles, physics, and the noyzzi catalogue. Immersion is a tool for understanding, never decoration.",
+    "/jal-ui covers the whole range, and JEV places each brief on it: a calm modern site, a modern site with motion accents (Lenis smooth scroll, GSAP or Framer Motion reveals), a modern site with a few immersive sections, or a fully immersive site. Sections can sit at different levels on one page. Remotion is the core motion: JEV picks it first for composed motion and for every video, and layers the supplements that fit. jal-immersive holds all motion and 3D in one place: Remotion compositions, GreenSock's official GSAP skills, Lenis, the JAL frame core, Three.js, React Three Fiber, shaders, particles, physics, and the noyzzi catalogue. Immersion is a tool for understanding, never decoration.",
   earnedTitle: "When 3D earns its place",
   earned: [
     "The shape, material, or assembly of a thing is the message, and a still image loses it.",
@@ -608,8 +610,12 @@ export const IMMERSIVE = {
       body: "Product scenes use real models, studio HDRIs, and surfaces: the client's own, or CC0 Poly Haven assets fetched into the client project at build time (approved by Brian), never kept in the plugin. The opt-in scene module adds shadow-casting light, one scene with a moving camera, and a tier-gated post stack on `@react-three/postprocessing` (approved by Brian). Bloom stays banned.",
     },
     {
+      title: "Remotion is the core motion",
+      body: "A product intro, a hero motion piece, a data story, a product demo, or an explainer is a Remotion composition: it plays live on the page, can scrub with scroll through Lenis, and exports to MP4 in the visitor's own browser with no server and no headless Chrome. Nothing is installed on a page that needs no motion, the player loads in its own chunk only when the section comes near, and every other way of rendering asks Brian first. JAL uses Remotion's free license (three people, internal projects), and the plugin stops if a fourth person or an outside client joins.",
+    },
+    {
       title: "JEV picks the recipe",
-      body: "For each section JEV chooses from the whole pool and keeps layering while each layer fits: noyzzi pieces, OriginKit components, shader effects and particles, Magic UI and Animata motion, GSAP scroll stories, and live product demos. There is no fixed limit, only the rules and the budget.",
+      body: "For each section JEV chooses from the whole pool and keeps layering while each layer fits: Remotion compositions, noyzzi pieces, OriginKit components, shader effects and particles, Magic UI and Animata motion, GSAP scroll stories, and live product demos. There is no fixed limit, only the rules and the budget.",
     },
   ],
 };

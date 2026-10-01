@@ -15,7 +15,8 @@ Index:
 |--------|-----|
 | Orchestration | `orch.route`, `orch.playbooks`, `orch.parallel`, `orch.model`, `orch.escalate`, `orch.loop_exit` |
 | UI/UX | `ui.experience`, `ui.direction_screen`, `ui.type_pairing`, `ui.density`, `ui.region_gate`, `ui.designmd_screen`, `ui.final_taste`, `ui.heuristics`, `ui.finish_disposition`, `ui.component_recipe`, `ui.text_reveal_granularity`, `ui.number_motion`, `ui.geo_visual` |
-| Motion | `motion.intensity`, `motion.choreography`, `motion.pin`, `motion.demo_medium` |
+| Motion | `motion.intensity`, `motion.choreography`, `motion.pin`, `motion.demo_medium`, `motion.engine`, `motion.remotion_recipe` |
+| Video | `video.render_path` |
 | Immersive | `imm.concept`, `imm.gate`, `imm.recipe`, `imm.tech`, `imm.tier`, `imm.taste` |
 | Backend | `be.placement`, `be.api_quality`, `be.migration_risk`, `be.new_tech` |
 | Security | `sec.severity`, `sec.false_positive`, `sec.ship_block`, `sec.input_screen` |
@@ -88,6 +89,7 @@ Index:
 - `review-gate` is always on for `/jal-build`, `/jal-check`, and `/jal-ship`. Not asked.
 - `deploy` is on only when the user's own message says deploy or rollback; it is never offered to JEV.
 - `service` (Go or Rust sidecar) always also triggers an escalation to Brian.
+- `video` is on without asking when the request names a video, MP4, WebM, GIF, or Remotion.
 
 **State fields:** `task` (the request), `evidence.repo` (what exists: modules, migrations, UI, services), `evidence.allowed` (the playbooks this command allows).
 
@@ -99,7 +101,8 @@ Index:
   "migrate": { "type": "noul", "instructions": "Yes means state.task changes the database schema (new table, column, index, or constraint) and so needs a migration file." },
   "ui": { "type": "noul", "instructions": "Yes means state.task adds or changes a screen, page, or visible section, so the /jal-ui pipeline runs for that part." },
   "adr": { "type": "noul", "instructions": "Yes means state.task makes a lasting architecture decision (new dependency, new data store, new boundary, a pattern other modules will copy) that should be recorded." },
-  "service": { "type": "noul", "instructions": "Yes means state.task names a CPU-bound or latency-critical hot path that Bun cannot serve and that needs a compiled Go or Rust sidecar. Default no." }
+  "service": { "type": "noul", "instructions": "Yes means state.task names a CPU-bound or latency-critical hot path that Bun cannot serve and that needs a compiled Go or Rust sidecar. Default no." },
+  "video": { "type": "noul", "instructions": "Yes means state.task asks for a video file (MP4, WebM, GIF, a social cut, a captioned clip) or a Remotion composition, so the video playbook runs for that part." }
 }
 ```
 
@@ -626,7 +629,8 @@ The agent fills `criteria` with the real candidate keys and one line per candida
 - Recipes above the section's `motion.intensity` tier are removed from the candidates (the tier table in `jal-motion` `references/components.md` section 7).
 - noyzzi hover effects and sections are candidates on `modern_motion`, `modern_immersive`, and `immersive` pages (never inside a daily-use app screen), with the noyzzi exemption applied to that section. 3D and WebGL recipes are candidates only where the section passed `imm.gate`.
 - Recipes on the DROP list are never candidates.
-- Ambition floor on `modern_immersive` and `immersive` pages (marketing sections): the candidates come from at least 4 different source families (for example `three.*` and `sh.*`, `gsap.*`, `nz.*`, `mu.*`, `an.*`, `ok.*`, `md.*`, `px.*`, `cr.*`, `frame.*`, `rf.*` and `hm.*` craft, `bang.*`, `core.*`), never only the three safest. A shortlist that fails this is rebuilt before asking. If fewer than 4 source families survive the other prechecks (the motion tier, the DROP list, the `imm.gate` limit), take every surviving candidate and log `fallback: narrow pool` in the decision log instead of rebuilding again.
+- An `rm.*` row (Remotion) is a candidate only when the section's `motion.engine` is `remotion`; the base composition and its layers are then picked with `motion.remotion_recipe`, and this call places the Remotion section among the other roles (layout, text, hover) of the screen.
+- Ambition floor on `modern_immersive` and `immersive` pages (marketing sections): the candidates come from at least 4 different source families (for example `three.*` and `sh.*`, `gsap.*`, `nz.*`, `mu.*`, `an.*`, `ok.*`, `md.*`, `px.*`, `cr.*`, `frame.*`, `rm.*` Remotion compositions, `rf.*` and `hm.*` craft, `bang.*`, `core.*`), never only the three safest. A shortlist that fails this is rebuilt before asking. If fewer than 4 source families survive the other prechecks (the motion tier, the DROP list, the `imm.gate` limit), take every surviving candidate and log `fallback: narrow pool` in the decision log instead of rebuilding again.
 
 **State fields:** `evidence.section` (job, message, action, container), `evidence.experience` (the page's `ui.experience` level) and `evidence.surface` (`product_ui` for app screens, `marketing` for persuasive pages, `immersive` for sections that passed `imm.gate`), `evidence.tier` (from `motion.intensity`), `evidence.direction` (the direction contract), `proposal.candidates` (3 to 6 recipe IDs, or 4 to 8 from at least 4 source families on `modern_immersive` and `immersive` marketing sections, each with source and one line: for example `core.table`, `mu.R02` text motion, `mu.R13` sliding indicator, `an.R21` FLIP list, `nz.fx.halftone-print`, `bang.staged_reveal`, `md.nav_bar` (Material navigation bar), `dmd.<kit>.<part>` (a screened designmd kit)). Also `evidence.history`: the `design_history` summary for this section kind (top stacks by mean taste, stacks to avoid), which JEV weighs but which never overrides the current brief.
 
@@ -848,7 +852,8 @@ The agent fills `criteria` with the real candidate IDs and lines. Keys must matc
 **Caller:** jal-ux or jal-immersive for any section whose role is "demo".
 
 **Precheck (decides without JEV):**
-- Remotion is banned. A demo that must also ship outside the site is an escalation to Brian, not an option here.
+- When `motion.engine` already answered `remotion` for this section, the medium is `remotion`. Not asked.
+- A demo that must also ship as a file (MP4, social, email, store listing) is `remotion`. Not asked.
 - Every option ships a pause control if it runs longer than 5 seconds, and a static poster under reduced motion. Not asked.
 
 **State fields:** `evidence.demo_goal` (what the viewer should understand), `evidence.channels` (on-site only, or also social, email, store listings), `evidence.interactivity` (should the viewer scrub or click), `constraints.viewports`.
@@ -862,15 +867,135 @@ The agent fills `criteria` with the real candidate IDs and lines. Keys must matc
     "criteria": {
       "live_dom": "A GSAP timeline animating the real JAL components in the page, scroll-scrubbed or played with a pause control. Best when the demo lives only on the site and should stay crisp and editable.",
       "poster_steps": "A short stepper of static screens that crossfade on scroll or click. Best when the story is a few states and motion adds little.",
-      "frame_core": "A frame-driven composition on the JAL frame core (packages/ui/src/frames) played live by its Player with play, pause, and scrub. Best for a timed, cinematic walkthrough that should feel like a video but stay crisp, light, and editable."
+      "frame_core": "A frame-driven composition on the JAL frame core (packages/ui/src/frames) played live by its Player with play, pause, and scrub. Best for a small inline walkthrough with no export need, where a Remotion chunk would weigh more than it earns.",
+      "remotion": "A Remotion composition in the video module (packages/video) shown by RemotionSection: poster first, the Player in a lazy chunk, played or scroll-scrubbed, with the same code able to export an MP4. Best for a timed, cinematic walkthrough with scenes, captions, transitions, or data, the first choice for composed demo motion."
     }
   }
 }
 ```
 
 **Thresholds and actions:**
-- Confidence 0.5 or above: build the chosen medium.
-- Low confidence: take `live_dom` unless the runner-up is `poster_steps`, in which case take `poster_steps`.
+- Confidence 0.5 or above: build the chosen medium (`remotion` per `jal-remotion` SKILL section 3).
+- Low confidence: take `live_dom` unless the runner-up is `poster_steps`, in which case take `poster_steps`; between `remotion` and `frame_core`, take `remotion` (the core engine).
+
+### `motion.engine`
+
+**Purpose:** pick the motion engine for one section or one deliverable: Remotion (the main core motion) or a supplement. Remotion is the first choice for timeline or composed motion; supplements stay and layer with it when they fit.
+
+**Caller:** jal-ux, jal-immersive, or jal-frontend, once per section right after `motion.intensity` (tier 1 or above); jal-lead at intake for a video request. Batch every section of one page in one call with key prefixes (`hero_engine`, `story_engine`, ...).
+
+**Precheck (decides without JEV):**
+- No section on the page needs motion (every `motion.intensity` is 0 and there is no video request): `none`, and nothing is installed. Not asked.
+- A video, MP4, WebM, GIF, social clip, or captioned clip is requested: `remotion`, used directly. Not asked.
+- The motion is a micro-interaction only (hover, press, focus, toggle, a state change, one entrance on product UI): `kit_css`. Not asked.
+- Product UI surfaces (app screens, forms, tables, settings) are `kit_css`. Not asked.
+- 3D the visitor drives in real time (rotate, drag, configure) is `r3f` through `imm.gate` and `imm.tech`. Not asked.
+- A library or framework outside the approved stack goes to `be.new_tech` first; any complex extra stack needs Brian's confirmation before it is offered.
+
+**State fields:** `product`, `evidence.section` (kind, job, message, and the one sentence the motion communicates), `evidence.tier` (from `motion.intensity`), `evidence.timeline` (is it a composed timeline with beats or scenes: bool), `evidence.interactivity` (none, scroll, pointer, drag), `evidence.export` (must it also exist as a file: bool), `evidence.page_engines` (engines already chosen on this page), `constraints.route_budget` (the route's lazy-chunk budget).
+
+**Questions:**
+```json
+{
+  "engine": {
+    "type": "choice",
+    "instructions": "Pick the motion engine for section state.evidence.section, given state.evidence.tier, state.evidence.timeline, state.evidence.interactivity, and state.evidence.export. Remotion is JAL's core motion and the first choice for composed timeline motion; pick a supplement only when it carries this section's message better or lighter. Motion must communicate something; decoration is never a reason.",
+    "criteria": {
+      "remotion": "A composed timeline with beats or scenes: a product intro, hero motion piece, data story, product demo, or explainer, played live in a Player or scrubbed by scroll, that may also export to MP4.",
+      "kit_css": "Light motion on real page elements: the kit's data-motion entrances and counts, CSS transitions, WAAPI, or Framer Motion for React state, layout, and exit.",
+      "gsap_lenis": "Scroll choreography on real page elements: smooth scroll, pins, parallax, scroll reveals, SplitText, Flip.",
+      "r3f": "A live 3D scene with Three.js and React Three Fiber whose form, viewpoint, or interaction is the message.",
+      "frame_core": "A small zero-dependency frame-driven demo on the JAL frame core with no export need.",
+      "noyzzi_or_library": "A signature effect from noyzzi, magicui, animata, OriginKit, or another approved library that carries the section better than a composition.",
+      "none": "The section reads better still; any motion here would be decoration."
+    }
+  }
+}
+```
+
+**Thresholds and actions:**
+- Confidence 0.5 or above: build with the chosen engine. `remotion` copies the video module (`templates/modules/video` into `packages/video`) if it is not there yet and runs `motion.remotion_recipe`; `gsap_lenis` runs `motion.choreography` and `motion.pin`; `r3f` runs `imm.gate`; `frame_core` builds per `motion.demo_medium`; `noyzzi_or_library` runs `imm.recipe` or `ui.component_recipe`.
+- Supplements then layer onto the section through the layering protocol (`jal-design-system` `references/recipe-index.md` section 4): one owner per element, one scroll owner per page, a Remotion composition may be scroll-scrubbed with Lenis or ScrollTrigger as the scroll source.
+- Low confidence: when `remotion` is one of the top two and `evidence.timeline` is true, take `remotion`; otherwise take the lighter of the top two (none, kit_css, frame_core, gsap_lenis, noyzzi_or_library, remotion, r3f, from lightest).
+- Record the engine and its one-line reason in the build report.
+
+### `motion.remotion_recipe`
+
+**Purpose:** pick the base `rm.*` recipe for one Remotion section or deliverable from its assembled candidates, then grow the composition layer by layer with every further recipe that aligns and fits (no fixed limit), the same way as `imm.recipe`.
+
+**Caller:** the agent building the Remotion section (jal-ux, jal-immersive, or jal-frontend), or the `video` playbook for an MP4, once per section after `motion.engine` answered `remotion`.
+
+**Precheck (decides without JEV):**
+- Candidates come from `jal-remotion` `references/visuals/recipe-index.md` (261 `rm.*` rows) plus the video module's registry compositions as the JAL-native base, and pass the hard filter: the Web column fits the surface (`video` rows never play live in a Player; `pre` rows play live only after a WebGL2 device test, otherwise they ship pre-rendered), the Tier fits the cost ceiling, the Law column fits (`canvas-only` only inside scene content JEV marked; `brief-only` only when the brief asks for that style), and the row has a reduced-motion fallback for a page.
+- Excluded unless Brian asks: paid items (`rm.transition.cube`, the Editor Starter, paid templates, the Timeline). Animated emoji only when the brief explicitly asks. Rows that need ElevenLabs, the OpenAI Whisper API, or transformers.js are dropped until Brian approves them for the project. JAL motion law still drops decorative ornaments (a draw-on underline, a marker, a sparkle) whatever the Law column says.
+- The shortlist has 3 to 8 candidates from at least 3 different `rm` families (for example `rm.transition`, `rm.fx`, `rm.text`, `rm.shape`, `rm.path`, `rm.data`, `rm.caption`, `rm.overlay`, `rm.three`), with at least one T1 control and, in the section that carries the page's signature moment, at least one candidate that delivers it. If fewer than 3 families survive the hard filter, take every survivor and log `fallback: narrow pool`.
+- Each proposed layer must pass the mechanical rules before it is asked about: summed tier within the budget, one transition per scene boundary, one focal moment at a time, captions and text never over busy media without a plain surface, the 30 fps token map for durations.
+
+**State fields:** `product`, `proposal.section` (kind, job, message, beats, duration in seconds, fps, aspect), `proposal.candidates` (for each: `rm` ID, family, tier, web use, motion fallback, law note, what it shows), `evidence.direction` (the direction contract), `evidence.surface` (live Player, scrubbed Player, or file only), `evidence.page_recipes`, `constraints.cost_ceiling`, `evidence.history` (the `design_history` summary for this section kind).
+
+**Questions** (the `recipe` criteria are generated per section: one key per candidate ID, each with a when-right description):
+```json
+{
+  "recipe": {
+    "type": "choice",
+    "instructions": "Pick the one recipe from state.proposal.candidates that best carries the message of state.proposal.section for the direction in state.evidence.direction on the surface in state.evidence.surface, varies from state.evidence.page_recipes, and stays within state.constraints.cost_ceiling. Judge fit to the message and the audience, not novelty.",
+    "criteria": {
+      "rm.data.line-chart": "The message is a trend over time; an animated line with a labelled end value tells the data story.",
+      "rm.transition.slide": "The piece is a sequence of product scenes and a calm directional slide carries the viewer from one to the next.",
+      "rm.text.fit-n-lines": "The headline is the message; it sets at the biggest size that fits in a fixed number of lines and enters on the frame clock."
+    }
+  },
+  "layer_1": {
+    "type": "noul",
+    "instructions": "Yes means the proposed layer in state.proposal.layers[0] (its rm ID and role: layout, text, motion, transition, data, caption, overlay, background, or 3D) aligns with the composition already chosen (state.proposal.stack) and makes it carry its message better, with no competing focal point and no role already filled. No means stop adding layers."
+  }
+}
+```
+
+**Thresholds and actions:**
+- Confidence 0.5 or above: build `recipe` from its family file.
+- Layering has no fixed limit: propose further layers one at a time (`layer_1`, `layer_2`, and so on, each with the updated stack and a new role); keep each at 0.6 or above while the mechanical rules hold; stop at the first no or when the budget would be exceeded.
+- Low confidence on `recipe`: take the lower-tier of primary and runner-up; if equal, the one whose Web column is `live`.
+- Record per section: `section | stack: rm ID (role, JEV confidence), ... | stop reason`.
+
+---
+
+## Video
+
+### `video.render_path`
+
+**Purpose:** pick how a Remotion composition becomes a file (MP4, WebM, GIF, audio, or a still), only when the default in-browser path does not fit.
+
+**Caller:** the agent running the `video` playbook, or jal-backend when a product feature renders, before any render is wired. jal-lead raises the result with Brian.
+
+**Precheck (decides without JEV):**
+- `web_renderer` (`@remotion/web-renderer` `renderMediaOnWeb` with WebCodecs, no headless Chrome) is the default when a person is at a screen, the composition passes the fit check (`jal-remotion` `references/rendering/render-paths.md`), and `canRenderMediaOnWeb()` returns true. Not asked.
+- Every other path needs Brian's confirmation per project: JEV may advise, Brian decides. `cloud_run` and `vercel` are offered only when Brian named them for this project.
+- A rendering service that runs user-supplied Remotion code is never built. Not asked.
+- On a public page, in-browser export needs the inline notice before export, the privacy-policy line, and the remotion.pro `connect-src` entry. Mechanical, not asked.
+
+**State fields:** `evidence.deliverable` (format, length in seconds, resolution, fps, how many, on what schedule), `evidence.fit` (the fit-check result: which CSS or elements fail in-browser rendering), `evidence.person_present` (bool), `evidence.volume` (renders per day), `constraints.infra` (what exists: Coolify, Redis queue, S3).
+
+**Questions** (asked only when the default precheck fails):
+```json
+{
+  "path": {
+    "type": "choice",
+    "instructions": "Pick the render path to propose to Brian for state.evidence.deliverable, given state.evidence.fit, state.evidence.person_present, state.evidence.volume, and state.constraints.infra. Prefer the lightest path that fits the content; changing the composition so the in-browser path fits counts as an option. JEV advises only: Brian confirms every path except web_renderer.",
+    "criteria": {
+      "web_renderer": "The composition can be changed to fit the in-browser renderer at little cost (drop an unsupported CSS property, order layers back to front), and a person is at a screen.",
+      "local_cli": "A one-off or occasional render on a developer machine with Chrome Headless Shell, for content the in-browser renderer cannot draw.",
+      "coolify_service": "Renders with nobody at a screen (scheduled, webhook, or API-triggered) at moderate volume, on a Bun render worker on deploy.jalgroup.id.",
+      "lambda": "High volume or long videos that must finish fast, after a Coolify service was measured and found short."
+    }
+  }
+}
+```
+
+**Thresholds and actions:**
+- `web_renderer` at 0.5 or above: change the composition to fit and render in the browser.
+- Any other answer: build nothing. Run `orch.escalate` and ask Brian with the confirmation wording in `render-paths.md` (which path, why the default does not fit, the cost, the license count). Build only after his yes, and record it in an ADR.
+- Low confidence: propose `web_renderer` with the fit fixes, and name the runner-up to Brian.
 
 ---
 
@@ -979,7 +1104,7 @@ The agent fills `criteria` with the real candidate IDs and lines. Keys must matc
 
 **Precheck (decides without JEV):**
 - Candidates come only from the pool and pass the hard filter: approved tech only, within the cost ceiling, a mobile fallback when mobile is a target, mechanically feasible. Reusing an adjacent section's recipe is allowed only when JEV judges it serves the story.
-- The shortlist has 4 to 8 candidates from at least 4 different source families in the pool (three.js skills `three.*` and `sh.*`, GSAP official `gsap.*`, noyzzi `nz.*`, magicui `mu.*`, animata `an.*`, OriginKit `ok.*`, Material `md.*`, nixie-fx and Rapier `px.*`, clean-room `cr.*`, the frame core `frame.*`, impeccable and hallmark craft `rf.*` and `hm.*`), never only the three safest. It includes at least one JAL-native candidate, one C0 or C1 control, and, in the section that carries the page's signature moment (`imm.concept`), at least one candidate that delivers it, with at most three noyzzi pieces. A shortlist that fails this is rebuilt before asking. If fewer than 4 source families survive the hard filter, take every survivor and log `fallback: narrow pool` in the decision log instead of rebuilding again.
+- The shortlist has 4 to 8 candidates from at least 4 different source families in the pool (three.js skills `three.*` and `sh.*`, GSAP official `gsap.*`, noyzzi `nz.*`, magicui `mu.*`, animata `an.*`, OriginKit `ok.*`, Material `md.*`, nixie-fx and Rapier `px.*`, clean-room `cr.*`, the frame core `frame.*`, Remotion compositions `rm.*`, impeccable and hallmark craft `rf.*` and `hm.*`), never only the three safest. It includes at least one JAL-native candidate, one C0 or C1 control, and, in the section that carries the page's signature moment (`imm.concept`), at least one candidate that delivers it, with at most three noyzzi pieces. A shortlist that fails this is rebuilt before asking. If fewer than 4 source families survive the hard filter, take every survivor and log `fallback: narrow pool` in the decision log instead of rebuilding again.
 - Each proposed layer must pass the mechanical combination rules before it is asked about: summed cost within the tier budget, one scroll owner, one pointer effect per element, a shared surface or the noyzzi boundary, and canvases within the tier's canvas count (usually one per viewport, for GPU cost). Not asked when only one candidate exists.
 
 **State fields:** `product`, `proposal.section` (kind, job, message, beats, surface of neighbouring sections), `proposal.candidates` (for each: pool ID, source, surface, cost tier, mobile fallback, law note, what it shows), `evidence.direction` (the direction contract), `evidence.page_recipes` (recipes already chosen for other sections), `constraints.cost_ceiling`. Also `evidence.history`: the `design_history` summary for this section kind (top stacks by mean taste, stacks to avoid), which JEV weighs but which never overrides the current brief.

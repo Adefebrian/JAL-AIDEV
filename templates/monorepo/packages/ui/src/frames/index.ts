@@ -1,6 +1,8 @@
 // JAL frame core: frame-driven compositions played live in the browser.
 // Remotion's model (a picture is a pure function of the frame), rebuilt
-// natively with zero dependencies. Never install Remotion.
+// natively with zero dependencies. Remotion itself is the core motion
+// engine (skill jal-remotion, the opt-in video module); this core stays the
+// light supplement for small inline demos with no export need.
 // Reference: skills/jal-immersive/references/frames.md
 export { FrameProvider, useCurrentFrame, useVideoConfig, validateVideoConfig } from "./context";
 export type { FrameProviderProps, VideoConfig } from "./context";

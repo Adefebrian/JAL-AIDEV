@@ -27,7 +27,7 @@ This is the single source of truth for how JAL projects are built. Every other s
 
 - Never use Vite. Bun is the build tool and dev server.
 - Never use Next.js or any heavy SSR framework that taxes server CPU or RAM.
-- Never use webpack or Create React App.
+- Never use webpack or Create React App. The one carve-out: Remotion Studio and `@remotion/bundler` bring their own webpack inside a separate video workspace (`packages/video`), never as an app's bundler.
 - Never use node, deno, ts-node, tsx, or nodemon. Bun replaces all of them.
 - Never introduce any technology outside the approved stack without reporting it to Brian for confirmation first. Propose, wait, then use.
 
@@ -52,6 +52,13 @@ This is the single source of truth for how JAL projects are built. Every other s
 ## Animation (Only If Needed)
 
 - Reach for animation only when the interaction genuinely needs it, not by default.
+- Remotion is the main core motion (Brian, 2026-10-01; skill jal-remotion). It is never installed in a project that needs no motion. When a build needs motion, JEV `motion.engine` decides per section: Remotion is the first choice for timeline or composed motion (product intros, hero motion pieces, data stories, product demos, explainers) and is used directly for every video or MP4 request. The supplements below stay and combine with it; JEV may pick another library when it fits, and any complex extra stack needs Brian's confirmation.
+  - Packages: `remotion`, `@remotion/player`, `@remotion/web-renderer`, `@remotion/media`, `@remotion/preload`, and the visual packages a recipe needs (`@remotion/transitions`, `@remotion/shapes`, `@remotion/paths`, `@remotion/layout-utils`, `@remotion/captions`, `@remotion/three`, `@remotion/gsap`, and the rest in `jal-remotion` `references/core/api-remotion.md`), all exact-pinned to one version, through the opt-in video module (`templates/modules/video`, copied to `packages/video`). Mediabunny is pinned to Remotion's paired version; the deprecated `@remotion/media-parser` and `@remotion/webcodecs` are never installed.
+  - Websites stay on `Bun.build` with the Player in a lazy split chunk. Remotion Studio, `@remotion/cli`, and `@remotion/bundler` live only inside a separate video workspace.
+  - MP4 output defaults to in-browser rendering (`renderMediaOnWeb`, WebCodecs, no headless Chrome). A local CLI or Chrome Headless Shell render, a Coolify render service, Lambda, Cloud Run, or Vercel needs Brian's confirmation per project (`video.render_path`).
+  - License: the free Remotion License (JAL is 3 people, every project internal), `licenseKey: 'free-license'` where an API asks. Warn and stop if a 4th team member or an external client appears.
+  - Privacy: the Player sends nothing. In-browser export sends the page origin and the visitor's IP to Remotion: free to use in internal tools and dev pages; on a public page only when the feature is needed, with an inline notice before export and a privacy-policy line added automatically.
+  - Off until Brian says yes: paid items (cube transition, Editor Starter, paid templates, Timeline), ElevenLabs, the OpenAI Whisper API, transformers.js or ONNX, `remotion skills add`, free-form LLM code generation (runtime generation uses gpt-4o-mini with a zod-validated JSON scene spec). CC0-only sound effects; Geist in video, `@remotion/google-fonts` only inside video renders; animated emoji only when a brief asks; compositions follow full page law, with the canvas exemption for scene content only.
 - Use Lenis for smooth scrolling.
 - Use GSAP for complex timeline and scroll-triggered animation.
 - Use Framer Motion for React-native component and gesture animation.

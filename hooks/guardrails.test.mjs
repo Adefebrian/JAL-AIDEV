@@ -144,9 +144,23 @@ test("allows emoji in non-frontend content", () => {
   expect(r.block).toBe(false);
 });
 
-test("blocks remotion and @remotion/* dependencies", () => {
-  expect(evaluate({ file_path: "apps/web/package.json", content: '{"dependencies":{"remotion":"4.0.0"}}' }).block).toBe(true);
-  expect(evaluate({ file_path: "apps/web/package.json", content: '{"dependencies":{"@remotion/player":"4.0.0"}}' }).block).toBe(true);
+test("allows remotion and the website-side @remotion/* packages in an app", () => {
+  const pkg = '{"dependencies":{"remotion":"4.0.532","@remotion/player":"4.0.532","@remotion/web-renderer":"4.0.532","@remotion/media":"4.0.532","mediabunny":"1.0.0"}}';
+  expect(evaluate({ file_path: "apps/web/package.json", content: pkg }).block).toBe(false);
+});
+
+test("blocks the deprecated @remotion/media-parser and @remotion/webcodecs everywhere", () => {
+  expect(evaluate({ file_path: "apps/web/package.json", content: '{"dependencies":{"@remotion/media-parser":"4.0.532"}}' }).block).toBe(true);
+  expect(evaluate({ file_path: "packages/video/package.json", content: '{"dependencies":{"@remotion/webcodecs":"4.0.532"}}' }).block).toBe(true);
+});
+
+test("keeps Studio, the bundler, and the headless renderers inside a video workspace", () => {
+  for (const dep of ["@remotion/cli", "@remotion/bundler", "@remotion/renderer", "@remotion/lambda"]) {
+    const pkg = `{"devDependencies":{"${dep}":"4.0.532"}}`;
+    expect(evaluate({ file_path: "apps/web/package.json", content: pkg }).block).toBe(true);
+    expect(evaluate({ file_path: "packages/video/package.json", content: pkg }).block).toBe(false);
+  }
+  expect(evaluate({ file_path: "packages/video-studio/package.json", content: '{"devDependencies":{"@remotion/cli":"4.0.532"}}' }).block).toBe(false);
 });
 
 test("allows three, R3F, drei, gsap, lenis, tailwind dependencies", () => {

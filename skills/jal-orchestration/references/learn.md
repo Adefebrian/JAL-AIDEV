@@ -19,7 +19,7 @@ Internal playbook, run through the `jal-orchestration` engine. It is triggered w
 4. **Filter through the law.** Every pattern that breaks JAL hard law is translated to its lawful replacement or dropped:
    - gradients, blurred shadows, side stripes, eyebrow labels, the purple family, glow, neon, emoji, em-dash, overlap, and dark defaults
    - the one exception: noyzzi pieces keep their own look inside their section
-   - tooling outside the stack (Vite, Node scripts, webpack, Remotion) is converted to Bun or dropped
+   - tooling outside the stack (Vite, Node scripts, webpack as an app bundler) is converted to Bun or dropped; a Remotion technique is mapped onto the `jal-remotion` skill and the video module (Remotion is the core motion engine), and a reference's headless render pipeline is never adopted without Brian
    - new runtime dependencies become approval candidates for Brian
 5. **Integrate.**
    - Add the knowledge to the owning skill file, with a "From: <reference>" line on each section.

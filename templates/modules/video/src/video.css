@@ -1,0 +1,60 @@
+/* Video module: Remotion compositions as kit media. Import once, after the
+   kit (apps/web/src/styles.css):
+     @import "../../../packages/video/src/video.css";
+   The frame itself is the kit's .kit-media-frame (aspect ratio, hairline,
+   media radius); this adds the size cap, the fill for the Player, and the
+   controls bar below the media. */
+
+.video-body {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  justify-items: center;
+  min-width: 0;
+}
+
+/* A tall cut (9:16) never runs past the screen: the width follows the
+   capped height, so the ratio box is reserved before anything loads. */
+.video-media {
+  inline-size: min(100%, calc(var(--video-max-block, 80svh) * var(--video-ratio, 1.7778)));
+  justify-self: center;
+}
+
+/* The stage holds the poster image, the Thumbnail, or the Player. It is a
+   drawn layer: no pointer events unless Remotion's own controls are on. */
+.video-stage {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.video-stage[data-interactive] {
+  pointer-events: auto;
+}
+
+.video-stage > * {
+  position: absolute;
+  inset: 0;
+  inline-size: 100%;
+  block-size: 100%;
+}
+
+.video-stage > img {
+  object-fit: cover;
+}
+
+.video-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--kit-gap-inside, 12px);
+  min-width: 0;
+}
+
+.video-bar > * {
+  min-width: 0;
+}
+
+.video-progress {
+  inline-size: min(100%, 240px);
+}

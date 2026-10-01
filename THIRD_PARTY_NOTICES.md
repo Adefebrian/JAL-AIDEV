@@ -22,7 +22,7 @@ JAL-AIDEV's skills distill knowledge from the projects below. Unless noted, the 
 | [Animata](https://github.com/codse/animata), Copyright (c) Animata | MIT | Component and text motion recipes |
 | [gsap-skills](https://github.com/greensock/gsap-skills), Copyright (c) 2026 GreenSock | MIT | The eight official skills ship verbatim in `skills/jal-immersive/references/gsap/official/` with their LICENSE; the JAL layer is `skills/jal-immersive/references/gsap/gsap.md`. GSAP itself is used under GreenSock's standard no-charge license; JAL never builds a visual animation editor on it |
 | [Lenis](https://github.com/darkroomengineering/lenis) | MIT | Smooth scroll integration |
-| [Remotion](https://github.com/remotion-dev/remotion) | Remotion License | Concept only (frame-driven compositions). No Remotion code is used, and the package is banned. The JAL frame core is an independent implementation |
+| [Remotion](https://github.com/remotion-dev/remotion) | Remotion License (source-available) | The core motion engine since 2026-10-01, used as a runtime dependency under the free tier: see the Remotion section below. The JAL frame core stays an independent zero-dependency implementation of the frame-driven idea, with no Remotion code |
 | [ai-dev-kit](https://github.com/AftabIbrahimKazi/ai-dev-kit) | MIT | Scroll-camera principles and the performance audit method |
 
 ## 3D, WebGL, WebGPU, shaders
@@ -53,6 +53,22 @@ Clean-room effects (window rain, wet puddles, deformable sand, wind grass, ocean
 |---|---|---|
 | [Geist and Geist Mono](https://github.com/vercel/geist-font), Copyright (c) 2023 Vercel, in collaboration with basement.studio | SIL OFL 1.1 | The JAL Core default faces, approved by Brian (2026-09-29). The only fonts vendored here: `templates/monorepo/packages/ui/src/fonts/Geist-Variable.woff2` and `GeistMono-Variable.woff2`, unmodified from the official `geist` npm package 1.7.2, with the license text beside them as `OFL.txt` |
 | Curated pool: IBM Plex Sans, IBM Plex Mono, IBM Plex Serif, Inter, Inter Tight, JetBrains Mono, Instrument Sans, Instrument Serif, Newsreader, Fraunces, Source Serif 4, Space Grotesk, Manrope, DM Sans, Figtree, Onest, Bricolage Grotesque, Nunito (each by its own authors, named in its license) | SIL OFL 1.1 (each checked on npm 2026-09-29) | Listed in `skills/jal-design-system/references/typography.md`. Never vendored in this plugin or its template: `scripts/assets/fonts.ts` fetches the Fontsource build from the npm registry into the client project only, refuses anything that is not OFL 1.1, and writes each family's license as `OFL.txt` plus a row in `FONTS.md` (family, version, license, source) |
+
+## Remotion
+
+[Remotion](https://www.remotion.dev) is used as the core motion engine (Brian, 2026-10-01), as runtime packages installed into client projects through the opt-in video module (`templates/modules/video`). No Remotion source is copied into this plugin. The knowledge in `skills/jal-remotion/references/` is restated in JAL's own words from the Remotion docs (read 2026-10-01, Remotion 4.0.532); Remotion's official agent skills carry no license file and are distilled, never vendored.
+
+- **License.** `remotion`, `@remotion/player`, `@remotion/web-renderer`, `@remotion/cli`, `@remotion/renderer`, and most other `@remotion/*` packages are under the [Remotion License](https://github.com/remotion-dev/remotion/blob/main/LICENSE.md): source-available, not OSI open source. A few helper packages are MIT (for example `@remotion/paths`, `@remotion/shapes`, `@remotion/noise`, `@remotion/layout-utils`, `@remotion/preload`, `@remotion/media-utils`, `@remotion/gsap`); `interpolate()` and `spring()` from `remotion` stay under the Remotion License.
+- **Free tier conditions.** The Free License covers individuals and organisations of up to 3 people, commercial use and automations included. JAL is 3 people (2 developers and 1 AI specialist) and every project is internal, with no external clients, so the free tier applies, and JAL declares it with `licenseKey: 'free-license'` where an API asks. A Company License is required when the total people who own, control, or directly use the Remotion code of a project reach 4 or more; from Remotion 5.0 contractors count, and a client who receives the source counts too. The plugin warns and stops when a 4th team member or an external client appears. Not allowed under any tier: selling or relicensing Remotion or a derivative, and a rendering service that runs user-supplied Remotion code.
+- **Telemetry.** In-browser rendering sends one event per render to remotion.pro (page origin, success, the visitor's IP address, no video content). JAL uses it freely in internal tools and dev pages, and on a public page only when the feature is needed, with an inline notice before export and a privacy-policy line.
+- **Paid items** (the cube transition, the Editor Starter, paid templates, the Timeline component) are not used unless Brian buys them.
+
+| Component | License | Used for |
+|---|---|---|
+| [Mediabunny](https://github.com/Vanilagy/mediabunny) (Vanilagy) | MPL-2.0 | Media reading, frame extraction, and conversion inside `@remotion/media` and `@remotion/web-renderer`, pinned to the version Remotion pairs with; it replaces the deprecated `@remotion/media-parser` and `@remotion/webcodecs`, which are never installed. MPL-2.0 is file-level copyleft: changes to Mediabunny's own files would be shared under MPL-2.0; JAL uses it unmodified |
+| [FFmpeg](https://ffmpeg.org) as bundled by `@remotion/renderer` and the CLI | GPLv2 or later (with x264 and x265) | Only on the headless render paths (the local CLI, a render service, Lambda), each of which needs Brian's confirmation per project. The default in-browser path uses WebCodecs and ships no FFmpeg. Never redistribute an app or Docker image that contains the bundled FFmpeg without meeting the GPL duties (source offer, license text). H.264, HEVC, and AAC may also need patent licenses depending on use and country |
+| Chrome Headless Shell (Chromium) | BSD-3-Clause and its third-party licenses | Downloaded by the headless render paths only, never in the default path |
+| Remotion SFX (`@remotion/sfx`) and other sound | Per sound | CC0 sounds only by default, each listed with its source |
 
 ## Poly Haven
 

@@ -1,7 +1,7 @@
 ---
 user-invocable: false
 name: jal-orchestration
-description: The one JAL run engine behind every JAL command (/jal-new, /jal-build, /jal-ui, /jal-fix, /jal-check, /jal-ship, /jal-docs). It covers intake, the JEV-picked playbooks, the owned-workstream plan, waves of truly parallel agents dispatched in one message (worktree isolation when paths collide), JEV as every agent's decision helper, lead-side verification and commits, a parallel review gate, owner-routed fixes, loop exit, and memory. It also holds the internal playbooks (feature, module, service, migrate, adr, scaffold, review-gate, audit, pentest, debug, pr, release, deploy). Use whenever a JAL command runs, a task needs several agents, or you need the exact steps of any former JAL command.
+description: The one JAL run engine behind every JAL command (/jal-new, /jal-build, /jal-ui, /jal-fix, /jal-check, /jal-ship, /jal-docs). It covers intake, the JEV-picked playbooks, the owned-workstream plan, waves of truly parallel agents dispatched in one message (worktree isolation when paths collide), JEV as every agent's decision helper, lead-side verification and commits, a parallel review gate, owner-routed fixes, loop exit, and memory. It also holds the internal playbooks (feature, module, service, migrate, adr, scaffold, review-gate, audit, pentest, debug, pr, release, deploy, video). Use whenever a JAL command runs, a task needs several agents, or you need the exact steps of any former JAL command.
 ---
 
 # JAL orchestration: the one engine behind every command
@@ -28,18 +28,20 @@ Every agent that runs under this engine follows this contract, and the lead past
 
 | Role | Catalog IDs it uses |
 |---|---|
-| jal-lead | `sec.input_screen`, `orch.playbooks`, `orch.route`, `orch.model`, `orch.parallel`, `orch.loop_exit`, `orch.escalate`, `mem.promote`, `mem.reference_screen`, `seo.next_mode`, `seo.backlog_order` |
+| jal-lead | `sec.input_screen`, `orch.playbooks`, `orch.route`, `orch.model`, `orch.parallel`, `orch.loop_exit`, `orch.escalate`, `mem.promote`, `mem.reference_screen`, `seo.next_mode`, `seo.backlog_order`, `motion.engine` (intake of a video request), `video.render_path` (the video playbook, before any render) |
 | jal-principal | `orch.route`, `orch.escalate`, `rev.ship`, `sec.ship_block` |
-| jal-ux | `ui.experience`, `ui.direction_screen`, `ui.type_pairing`, `imm.concept`, `ui.density`, `ui.region_gate`, `ui.component_recipe`, `ui.designmd_screen`, `ui.final_taste`, `ui.heuristics`, `ui.finish_disposition`, `motion.*` |
-| jal-immersive | `ui.direction_screen`, `imm.concept`, `imm.gate`, `imm.recipe`, `imm.tech`, `imm.tier`, `imm.taste`, `motion.*`, `ui.heuristics`, `ui.finish_disposition` |
-| jal-frontend | `seo.intent_page`, `seo.copy_screen`, `ui.region_gate`, `ui.component_recipe`, `ui.final_taste`, `ui.text_reveal_granularity`, `ui.number_motion`, `ui.geo_visual`, `motion.intensity` |
-| jal-architect, jal-backend, jal-systems | `be.placement`, `be.api_quality`, `be.migration_risk`, `be.new_tech` |
+| jal-ux | `ui.experience`, `ui.direction_screen`, `ui.type_pairing`, `imm.concept`, `ui.density`, `ui.region_gate`, `ui.component_recipe`, `ui.designmd_screen`, `ui.final_taste`, `ui.heuristics`, `ui.finish_disposition`, `motion.*` (including `motion.engine` per section and `motion.remotion_recipe` for a Remotion section), `video.render_path` (a page with an export) |
+| jal-immersive | `ui.direction_screen`, `imm.concept`, `imm.gate`, `imm.recipe`, `imm.tech`, `imm.tier`, `imm.taste`, `motion.*` (including `motion.engine` and `motion.remotion_recipe`), `video.render_path` (a page with an export), `ui.heuristics`, `ui.finish_disposition` |
+| jal-frontend | `seo.intent_page`, `seo.copy_screen`, `ui.region_gate`, `ui.component_recipe`, `ui.final_taste`, `ui.text_reveal_granularity`, `ui.number_motion`, `ui.geo_visual`, `motion.intensity`, `motion.engine`, `motion.remotion_recipe` (when jal-ux is not on the task) |
+| jal-architect, jal-backend, jal-systems | `be.placement`, `be.api_quality`, `be.migration_risk`, `be.new_tech`, and for jal-backend `video.render_path` (a product feature that renders) |
 | jal-security, jal-redteam, jal-blueteam | `sec.severity`, `sec.false_positive`, `sec.ship_block`, `sec.input_screen` |
 | jal-qa | `qa.check_depth`, `qa.failure_class`, `qa.test_selection`, `qa.coverage`, `qa.release_go` |
 | jal-reviewer | `rev.risk`, `rev.ship`, `be.api_quality`, `qa.coverage`, and in critic mode `ui.heuristics`, `ui.finish_disposition` |
 | jal-devops | `qa.release_go`, `be.migration_risk`, `orch.escalate` |
 | jal-researcher | `sec.input_screen`, `mem.reference_screen` |
 | jal-docs | `docs.plan`, `docs.claim`, `docs.publish` |
+
+Motion runs in a fixed order: `motion.intensity`, then `motion.engine` (Remotion is the core engine; a video request is `remotion` and a micro-interaction is `kit_css` by precheck), then `motion.remotion_recipe` or the supplement's own decision, and `video.render_path` before any file is rendered. Only `web_renderer` is decided without Brian; every other render path goes to Brian through `orch.escalate`. Read skill `jal-remotion` whenever a section or deliverable needs motion.
 
 `ui.finish_disposition` is only ever answered by a fresh critic on a build it did not make (jal-reviewer in critic mode, or a newly spawned jal-ux). The builder of a page never answers it and never self-approves the finish.
 
@@ -166,8 +168,8 @@ JAL-AIDEV gets better with every run:
 | Command | What it is for | Lead agent | Playbooks it may use |
 |---|---|---|---|
 | `/jal-new` | Start a new JAL project | jal-lead | `scaffold`, then optionally the `/jal-build` set |
-| `/jal-build` | Build or change anything: a feature, API, module, database change, sidecar, or architecture decision | jal-principal, then jal-lead | `feature`, `module`, `migrate`, `service`, `adr`, the `/jal-ui` pipeline for any UI part |
-| `/jal-ui` | Screens, redesigns, and immersive or 3D websites | jal-ux, or jal-immersive when `ui.experience` says immersive; the dispatcher (jal-lead role) owns the critic gate | the jal-ux pipeline, the jal-immersive pipeline, per section; then build plus `ui_audit`, then the UI critic gate (6b), then finish |
+| `/jal-build` | Build or change anything: a feature, API, module, database change, sidecar, or architecture decision | jal-principal, then jal-lead | `feature`, `module`, `migrate`, `service`, `adr`, `video`, the `/jal-ui` pipeline for any UI part |
+| `/jal-ui` | Screens, redesigns, immersive or 3D websites, and videos | jal-ux, or jal-immersive when `ui.experience` says immersive; the dispatcher (jal-lead role) owns the critic gate | the jal-ux pipeline, the jal-immersive pipeline, per section; `video` for a video request or a Remotion section; then build plus `ui_audit`, then the UI critic gate (6b), then finish |
 | `/jal-fix` | Find and fix a bug properly | jal-lead | `debug`, then the owner's fix |
 | `/jal-check` | Check the project: review, tests, UI, security, and optionally a deep audit and pentest | jal-lead | `review-gate`, `audit`, `pentest` (depth by `qa.check_depth`) |
 | `/jal-ship` | Get it out: pull request, release, deploy or rollback | jal-lead with jal-devops | `review-gate` (always), `pr`, `release`, `deploy` |
@@ -175,10 +177,21 @@ JAL-AIDEV gets better with every run:
 | `/jal-seo-geo-aeo` | SEO, AEO, and GEO: audit, integrate, boost, submit, monitor | jal-lead | `seo-geo-aeo/` (standard, boost, webmaster, integrate, offsite, templates, scripts) |
 | any command | "Learn this reference: <url>", or a learning proven across builds | jal-lead with jal-researcher | `learn` |
 
+## The video playbook (`references/video.md`)
+
+Runs for every video request and every Remotion section, inside `/jal-build` or `/jal-ui`:
+
+1. **Intake.** Format, length, aspect, fps, captions, audio, where it is used. A video request is `motion.engine` `remotion` without asking. Check the license stop rule (a 4th person or an external client stops the run).
+2. **Engine and recipe.** `motion.intensity` and `motion.engine` per section on a page; `motion.remotion_recipe` for the composition, from at least 3 `rm` families, then layers.
+3. **Module.** Copy `templates/modules/video` into `packages/video` (once per project); compositions in its registry with zod schemas. Studio only inside that workspace.
+4. **Render path.** `video.render_path`: `web_renderer` by default; any other path stops for Brian's yes and an ADR.
+5. **Build.** The owner builds the composition and its page section (`RemotionSection`, poster first, the Player in a lazy chunk) or the export (`exportMp4`), with the privacy rule on public pages.
+6. **Verify.** Pages: `ui_audit`, `ui_shots`, the critic gate (6b). Files: the MP4 probe and the frame-sample check (`jal-remotion` SKILL section 9).
+
 ## Hard lines no playbook or JEV call can cross
 
 - Deploys go only to deploy.jalgroup.id, and only when the user's own message asks to deploy or roll back. JEV never authorizes a deploy, a push, a merge, or a publish. One standing exception, authorized by Brian: `/jal-docs` squash-merges and deploys its own malasbaca docs PR when every check passes (skill `jal-docs` step 9).
 - Tech outside the approved stack and any default-LLM change go to Brian. JEV never approves them.
-- Approved beyond the base stack (so no re-ask): GSAP and every GSAP plugin, Lenis, Framer Motion, OriginKit components (fetched, never vendored), nixie-fx and Rapier when JEV picks them, three.js with R3F and drei on gated immersive sections, and, approved by Brian 2026-09-29, `@react-three/postprocessing` and `postprocessing` (with `n8ao`) through the opt-in scene module's `PostFX` (no bloom outside noyzzi) plus CC0 Poly Haven models, HDRIs, and textures fetched into the client project at build time with `scripts/assets/polyhaven.ts` (never mirrored into JAL-AIDEV). The design system is JAL Core only, shipped as code: every page is composed from the identity kit (`packages/ui/src/kit`), and a hand-written section needs a recorded reason.
+- Approved beyond the base stack (so no re-ask): Remotion as the core motion engine (Brian, 2026-10-01: the Player, `@remotion/web-renderer`, and the website-side packages through the opt-in video module, Studio only inside a separate video workspace, under the free license while JAL is 3 people on internal projects; every headless Chrome or cloud render path still needs Brian per project), GSAP and every GSAP plugin, Lenis, Framer Motion, OriginKit components (fetched, never vendored), nixie-fx and Rapier when JEV picks them, three.js with R3F and drei on gated immersive sections, and, approved by Brian 2026-09-29, `@react-three/postprocessing` and `postprocessing` (with `n8ao`) through the opt-in scene module's `PostFX` (no bloom outside noyzzi) plus CC0 Poly Haven models, HDRIs, and textures fetched into the client project at build time with `scripts/assets/polyhaven.ts` (never mirrored into JAL-AIDEV). The design system is JAL Core only, shipped as code: every page is composed from the identity kit (`packages/ui/src/kit`), and a hand-written section needs a recorded reason.
 - No PR is opened against a failing gate, no force-push, and no force-merge.
 - A UI builder never self-approves its finish. `ui.finish_disposition` comes only from a fresh critic that saw the brief, the direction, and the `ui_shots` images, never the build conversation.

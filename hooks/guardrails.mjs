@@ -127,9 +127,14 @@ function findSideStripeViolation(content) {
   return null;
 }
 
-const BANNED_DEPS = ["vite", "next", "@vitejs", "webpack", "create-react-app", "node", "deno", "ts-node", "tsx", "nodemon", "remotion"];
-// Scoped packages banned as a whole family (Remotion needs webpack, Node, and Chromium; JAL ships its own frame core).
-const BANNED_SCOPES = ["@remotion/"];
+const BANNED_DEPS = ["vite", "next", "@vitejs", "webpack", "create-react-app", "node", "deno", "ts-node", "tsx", "nodemon"];
+// Remotion is the core motion engine (Brian, 2026-10-01). Its deprecated packages are never installed
+// (Mediabunny, pinned to Remotion's paired version, replaces them).
+const BANNED_REMOTION = ["@remotion/media-parser", "@remotion/webcodecs"];
+// Studio, its bundler, and the headless render paths live only in a separate video workspace
+// (a package directory named video or video-*), never in a website or app package.
+const REMOTION_WORKSPACE_ONLY = ["@remotion/cli", "@remotion/studio", "@remotion/bundler", "@remotion/browser-bundler", "@remotion/renderer", "@remotion/lambda", "@remotion/cloudrun", "@remotion/vercel"];
+const VIDEO_WORKSPACE_RE = /(^|\/)video(-[a-z0-9-]+)?\/package\.json$/i;
 // noyzzi-derived files (Brian's ruling): exempt from the visual checks (gradient, shadow,
 // side stripe) because the piece is built as designed. Em-dash and emoji stay banned.
 const NOYZZI_PATH_RE = /(^|\/)noyzzi(\/|[-_.])/i;
@@ -153,9 +158,16 @@ export function evaluate({ file_path = "", content = "" }) {
         return { block: true, reason: `JAL constitution: "${dep}" is banned. Bun-only runtime, no Vite/Next/heavy bundlers. See jal-standards.` };
       }
     }
-    for (const scope of BANNED_SCOPES) {
-      if (content.includes(`"${scope}`)) {
-        return { block: true, reason: `JAL constitution: "${scope}*" packages are banned. Use the JAL frame core in packages/ui/src/frames (see jal-immersive references/frames.md).` };
+    for (const dep of BANNED_REMOTION) {
+      if (content.includes(`"${dep}"`)) {
+        return { block: true, reason: `JAL constitution: "${dep}" is deprecated and never installed. Use Mediabunny pinned to Remotion's paired version (see jal-remotion references/web/mediabunny.md).` };
+      }
+    }
+    if (!VIDEO_WORKSPACE_RE.test(file_path)) {
+      for (const dep of REMOTION_WORKSPACE_ONLY) {
+        if (content.includes(`"${dep}"`)) {
+          return { block: true, reason: `JAL constitution: "${dep}" belongs only in a separate video workspace (for example packages/video). Websites stay on Bun.build with the Remotion Player in a lazy chunk; headless render paths need Brian's confirmation. See skill jal-remotion.` };
+        }
       }
     }
     // Banned runtime commands anywhere in scripts (not just as a declared dependency).
