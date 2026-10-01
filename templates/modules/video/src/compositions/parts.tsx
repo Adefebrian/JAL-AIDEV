@@ -34,11 +34,13 @@ export function MaskLine({ start, children, style }: { start: number; children: 
   );
 }
 
-/** A full-width hairline that draws from the start edge. */
-export function Hairline({ start, color, length = dur.d800, style }: { start: number; color: string; length?: number; style?: CSSProperties }) {
-  const frame = useCurrentFrame();
-  const p = ease(frame, start, length);
-  return <div style={{ height: 2, backgroundColor: color, transform: `scaleX(${p})`, transformOrigin: "0 50%", ...style }} />;
+/**
+ * A full-width separator: a 2px filled div, static from frame 0. A
+ * separator is structure, not content, so it never draws on (the JAL law
+ * bans decorative draw-on lines); the content beside it carries the motion.
+ */
+export function Hairline({ color, style }: { color: string; style?: CSSProperties }) {
+  return <div data-separator="" style={{ height: 2, backgroundColor: color, ...style }} />;
 }
 
 /** Thousands separators, a true minus sign, fixed decimals. */

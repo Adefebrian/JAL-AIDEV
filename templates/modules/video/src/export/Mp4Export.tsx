@@ -5,15 +5,10 @@
 import { useEffect, useRef, useState } from "react";
 import type { VideoEntry } from "../compositions/registry";
 import { exportMp4, type FrameRange, type Mp4ExportResult } from "./mp4";
+import { settleExport, type ExportState } from "./state";
 import { formatBytes, hasWebCodecs, NO_WEBCODECS } from "./support";
 
-export type ExportState =
-  | { kind: "idle" }
-  | { kind: "unsupported"; reason: string }
-  | { kind: "rendering"; progress: number }
-  | { kind: "done"; url: string; fileName: string; bytes: number; seconds: number }
-  | { kind: "failed"; reason: string }
-  | { kind: "cancelled" };
+export type { ExportState } from "./state";
 
 export function useMp4Export<P extends Record<string, unknown>>(
   video: VideoEntry<P>,
@@ -47,14 +42,13 @@ export function useMp4Export<P extends Record<string, unknown>>(
     });
     if (abort.current !== controller) return;
     abort.current = null;
-    if (res.ok) {
-      url.current = URL.createObjectURL(res.blob);
-      setState({ kind: "done", url: url.current, fileName: res.fileName, bytes: res.bytes, seconds: res.seconds });
-    } else if (res.cancelled) {
-      setState({ kind: "cancelled" });
-    } else {
-      setState(hasWebCodecs() ? { kind: "failed", reason: res.reason } : { kind: "unsupported", reason: res.reason });
-    }
+    // Cancelled or unmounted while the render finished: no object URL (settleExport checks the signal).
+    setState(
+      settleExport(res, controller.signal.aborted, {
+        createUrl: (blob) => (url.current = URL.createObjectURL(blob)),
+        webCodecs: hasWebCodecs(),
+      }),
+    );
   };
 
   const cancel = () => abort.current?.abort();
@@ -75,6 +69,7 @@ export function Mp4Export<P extends Record<string, unknown>>({ video, inputProps
   let status = "";
   if (state.kind === "rendering") status = `Rendering in this browser, ${Math.round(state.progress * 100)}%`;
   else if (state.kind === "done") status = `Ready: ${state.seconds.toFixed(1)} s, ${formatBytes(state.bytes)}`;
+  else if (state.kind === "saved") status = `Saved to ${state.fileName}: ${state.seconds.toFixed(1)} s`;
   else if (state.kind === "failed" || state.kind === "unsupported") status = state.reason;
   else if (state.kind === "cancelled") status = "Export cancelled.";
   return (
@@ -88,7 +83,7 @@ export function Mp4Export<P extends Record<string, unknown>>({ video, inputProps
         </>
       ) : (
         <button type="button" className="btn btn-secondary" onClick={start} disabled={state.kind === "unsupported"}>
-          {state.kind === "done" ? "Export again" : label}
+          {state.kind === "done" || state.kind === "saved" ? "Export again" : label}
         </button>
       )}
       {state.kind === "done" ? (

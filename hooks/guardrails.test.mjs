@@ -157,10 +157,80 @@ test("blocks the deprecated @remotion/media-parser and @remotion/webcodecs every
 test("keeps Studio, the bundler, and the headless renderers inside a video workspace", () => {
   for (const dep of ["@remotion/cli", "@remotion/bundler", "@remotion/renderer", "@remotion/lambda"]) {
     const pkg = `{"devDependencies":{"${dep}":"4.0.532"}}`;
-    expect(evaluate({ file_path: "apps/web/package.json", content: pkg }).block).toBe(true);
-    expect(evaluate({ file_path: "packages/video/package.json", content: pkg }).block).toBe(false);
+    expect(evaluate({ file_path: "apps/web/package.json", content: pkg, project_dir: "" }).block).toBe(true);
+    expect(evaluate({ file_path: "packages/video/package.json", content: pkg, project_dir: "" }).block).toBe(false);
   }
-  expect(evaluate({ file_path: "packages/video-studio/package.json", content: '{"devDependencies":{"@remotion/cli":"4.0.532"}}' }).block).toBe(false);
+  expect(evaluate({ file_path: "packages/video-studio/package.json", content: '{"devDependencies":{"@remotion/cli":"4.0.532"}}', project_dir: "" }).block).toBe(false);
+});
+
+const WEBSITE_OK = ["remotion", "@remotion/player", "@remotion/web-renderer", "@remotion/media", "@remotion/transitions", "@remotion/zod-types", "@remotion/paths", "@remotion/shapes", "@remotion/noise", "@remotion/media-utils", "@remotion/licensing", "@remotion/layout-utils", "@remotion/animation-utils", "@remotion/three", "@remotion/lottie", "@remotion/gif", "@remotion/captions", "@remotion/motion-blur", "@remotion/rounded-text-box", "@remotion/fonts"];
+const VIDEO_ONLY = ["@remotion/cli", "@remotion/studio", "@remotion/studio-server", "@remotion/bundler", "@remotion/browser-bundler", "@remotion/renderer", "@remotion/lambda", "@remotion/lambda-client", "@remotion/cloudrun", "@remotion/vercel", "@remotion/serverless", "@remotion/serverless-client", "@remotion/google-fonts", "@remotion/skia", "@remotion/some-future-package"];
+const manifest = (dep) => `{"dependencies":{"${dep}":"4.0.532"}}`;
+
+test("a website may name only the browser-safe Remotion packages (an allowlist)", () => {
+  for (const dep of WEBSITE_OK) {
+    expect([dep, evaluate({ file_path: "apps/web/package.json", content: manifest(dep), project_dir: "" }).block]).toEqual([dep, false]);
+  }
+  for (const dep of VIDEO_ONLY) {
+    const r = evaluate({ file_path: "apps/web/package.json", content: manifest(dep), project_dir: "" });
+    expect([dep, r.block]).toEqual([dep, true]);
+    expect(r.reason).toContain("video workspace");
+    expect(evaluate({ file_path: "packages/ui/package.json", content: manifest(dep), project_dir: "" }).block).toBe(true);
+    expect(evaluate({ file_path: "packages/video/package.json", content: manifest(dep), project_dir: "" }).block).toBe(false);
+  }
+});
+
+test("an Edit fragment naming a video-only package is blocked outside a video workspace", () => {
+  expect(evaluate({ file_path: "apps/web/package.json", content: '    "@remotion/serverless": "4.0.532",', project_dir: "" }).block).toBe(true);
+  expect(evaluate({ file_path: "packages/video/package.json", content: '    "@remotion/serverless": "4.0.532",', project_dir: "" }).block).toBe(false);
+});
+
+test("the deprecated packages stay blocked inside a video workspace too", () => {
+  for (const file of ["packages/video/package.json", "packages/video-promo/package.json", "apps/web/package.json"]) {
+    for (const dep of ["@remotion/media-parser", "@remotion/webcodecs"]) {
+      expect(evaluate({ file_path: file, content: manifest(dep), project_dir: "" }).block).toBe(true);
+    }
+  }
+});
+
+test("only packages/video or packages/video-<name> at the project root is a video workspace", () => {
+  const cli = manifest("@remotion/cli");
+  const yes = ["packages/video/package.json", "packages/video-studio/package.json", "./packages/video/package.json", "packages\\video\\package.json"];
+  const no = ["apps/video/package.json", "apps/web-video/package.json", "video/package.json", "video-site/package.json", "packages/videos/package.json", "packages/my-video/package.json", "packages/video/src/package.json", "apps/web/packages/video/package.json"];
+  for (const f of yes) expect([f, evaluate({ file_path: f, content: cli, project_dir: "" }).block]).toEqual([f, false]);
+  for (const f of no) expect([f, evaluate({ file_path: f, content: cli, project_dir: "" }).block]).toEqual([f, true]);
+});
+
+test("absolute paths resolve against CLAUDE_PROJECT_DIR, then the last packages/ segment", () => {
+  const cli = manifest("@remotion/cli");
+  // A project folder named video-* is not a video workspace.
+  expect(evaluate({ file_path: "/Users/brian/video-site/package.json", content: cli, project_dir: "/Users/brian/video-site" }).block).toBe(true);
+  expect(evaluate({ file_path: "/Users/brian/video-site/apps/web/package.json", content: cli, project_dir: "/Users/brian/video-site" }).block).toBe(true);
+  expect(evaluate({ file_path: "/Users/brian/video-site/apps/video/package.json", content: cli, project_dir: "/Users/brian/video-site" }).block).toBe(true);
+  expect(evaluate({ file_path: "/Users/brian/video-site/packages/video/package.json", content: cli, project_dir: "/Users/brian/video-site/" }).block).toBe(false);
+  // Without a project dir (or outside it): the last packages/ segment.
+  expect(evaluate({ file_path: "/Users/brian/site/packages/video-promo/package.json", content: cli, project_dir: "" }).block).toBe(false);
+  expect(evaluate({ file_path: "/Users/brian/video/package.json", content: cli, project_dir: "" }).block).toBe(true);
+  expect(evaluate({ file_path: "/srv/other/packages/video/package.json", content: cli, project_dir: "/Users/brian/site" }).block).toBe(false);
+  // Windows paths, backslashes and drive letters.
+  expect(evaluate({ file_path: "C:\\work\\site\\packages\\video\\package.json", content: cli, project_dir: "C:\\work\\site" }).block).toBe(false);
+  expect(evaluate({ file_path: "c:\\work\\site\\apps\\web\\package.json", content: cli, project_dir: "C:\\Work\\Site" }).block).toBe(true);
+  expect(evaluate({ file_path: "C:\\work\\video-site\\package.json", content: cli, project_dir: "" }).block).toBe(true);
+});
+
+test("render scripts are blocked outside a video workspace", () => {
+  const scripts = (cmd) => JSON.stringify({ scripts: { make: cmd } });
+  const bad = ["remotion render src/index.ts Intro out.mp4", "bunx remotionb render Intro", "remotionb still Intro", "remotion lambda render", "remotion cloudrun render", "remotion benchmark", "bunx @remotion/cli studio", "bun x @remotion/renderer", "bunx @remotion/lambda sites create", "bunx @remotion/cloudrun services deploy"];
+  for (const cmd of bad) {
+    const r = evaluate({ file_path: "apps/web/package.json", content: scripts(cmd), project_dir: "" });
+    expect([cmd, r.block]).toEqual([cmd, true]);
+    expect(r.reason).toContain("render");
+    expect(evaluate({ file_path: "packages/video/package.json", content: scripts(cmd), project_dir: "" }).block).toBe(false);
+  }
+  // An Edit fragment of the scripts block.
+  expect(evaluate({ file_path: "package.json", content: '"render": "remotion render Intro"', project_dir: "" }).block).toBe(true);
+  // Previewing and a non-render description are fine.
+  expect(evaluate({ file_path: "apps/web/package.json", content: JSON.stringify({ description: "we never remotion render here", scripts: { dev: "bun serve.ts" } }), project_dir: "" }).block).toBe(false);
 });
 
 test("allows three, R3F, drei, gsap, lenis, tailwind dependencies", () => {
@@ -178,4 +248,13 @@ test("noyzzi-derived files may use gradients, glow shadows, and stripes as desig
 test("noyzzi-derived files still ban emoji and em-dash", () => {
   expect(evaluate({ file_path: "apps/web/src/noyzzi/Hero.tsx", content: "<p>Launch \u{1F680}</p>" }).block).toBe(true);
   expect(evaluate({ file_path: "apps/web/src/noyzzi/Hero.tsx", content: "<p>Fast — and calm</p>" }).block).toBe(true);
+});
+
+test("the hook reads CLAUDE_PROJECT_DIR for an absolute file_path", () => {
+  const run = (file_path, dir) => Bun.spawnSync(["bun", `${import.meta.dir}/guardrails.mjs`], {
+    stdin: new TextEncoder().encode(JSON.stringify({ tool_input: { file_path, content: '{"devDependencies":{"@remotion/cli":"4.0.532"}}' } })),
+    env: { ...process.env, CLAUDE_PROJECT_DIR: dir },
+  }).exitCode;
+  expect(run("/work/video-site/packages/video/package.json", "/work/video-site")).toBe(0);
+  expect(run("/work/video-site/apps/web/package.json", "/work/video-site")).toBe(2);
 });

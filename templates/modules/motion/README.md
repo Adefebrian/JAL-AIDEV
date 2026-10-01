@@ -20,6 +20,7 @@ cp -R <jal-aidev>/templates/modules/motion packages/motion
 2. Import the styles once after the kit: `@import "../../../packages/motion/src/motion.css";` in `apps/web/src/styles.css`.
 3. Wrap the page's sections in `<SmoothScroll>` and render `<KitMotion tier={...} />` as its first child (the example below).
 4. Record the ADR: the module, its pinned versions, the tier per section and the JEV answers behind it.
+5. Commit `bun.lock`. The template's `infra/Dockerfile.web` and `infra/Dockerfile.api` copy every `apps/*/package.json` and `packages/*/package.json` in their `manifests` stage, so the image installs `packages/motion` with no Dockerfile edit. A project scaffolded before JAL-AIDEV 0.6.1 lists its manifests by hand in the deps stage: replace that stage with the template's `manifests` and `deps` stages, or `bun install --frozen-lockfile` fails in the image with "lockfile had changes".
 
 ## Pinned versions (verified 2026-09-29 against the npm registry)
 

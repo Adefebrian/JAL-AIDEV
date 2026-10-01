@@ -3,19 +3,34 @@
 # throughout, no Vite, no Nginx.
 #
 # /jal-seo-geo-aeo integrate changes against the scaffold's file:
-#   deps    + packages/facts/package.json (or the frozen-lockfile install fails)
+#   deps    nothing: the manifests stage already copies packages/facts/package.json
 #   build   + .jal/seo-geo-aeo.json (the IndexNow host allowlist and the
 #             default language, baked into dist/seo.json)
 #   runner  + server/ (the lib the server imports) and packages/facts/ (the
 #             facts meta.ts and metaCopy.ts read). Never apps/web/src/.
+
+# Every workspace manifest, and nothing else. bun install --frozen-lockfile
+# validates the whole workspace, not just the packages this image needs: every
+# apps/* and packages/* package.json must be present (packages/video,
+# packages/scene, packages/motion, any module added later) or the install
+# fails with "lockfile had changes" even though the lockfile is fine. This
+# stage copies the two trees and keeps only apps/<name>/package.json and
+# packages/<name>/package.json, so adding a workspace never needs a Dockerfile
+# edit. It works on any Docker builder (no COPY --parents, no labs syntax).
+# A source edit reruns this stage, but its output is the same files, so the
+# deps stage below keeps its cache and bun install does not rerun.
+FROM oven/bun:1-slim AS manifests
+WORKDIR /src
+COPY apps ./apps
+COPY packages ./packages
+RUN for f in apps/*/package.json packages/*/package.json; do \
+      if [ -f "$f" ]; then mkdir -p "/manifests/${f%/package.json}" && cp "$f" "/manifests/$f"; fi; \
+    done
+
 FROM oven/bun:1-slim AS deps
 WORKDIR /repo
 COPY package.json bun.lock ./
-COPY apps/web/package.json apps/web/package.json
-COPY apps/api/package.json apps/api/package.json
-COPY packages/ui/package.json packages/ui/package.json
-COPY packages/config/package.json packages/config/package.json
-COPY packages/facts/package.json packages/facts/package.json
+COPY --from=manifests /manifests/ ./
 RUN bun install --frozen-lockfile
 
 FROM deps AS build

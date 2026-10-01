@@ -27,6 +27,7 @@ Then:
 3. In `apps/web/build.ts`, copy decoders to a versioned path when a model uses them: `node_modules/three/examples/jsm/libs/draco/gltf/` to `dist/vendor/r186/draco/`, and `node_modules/three/examples/jsm/libs/basis/` to `dist/vendor/r186/basis/` for KTX2. Poly Haven glTFs need neither.
 4. Import the scene lazily from the page (`lazy(() => import("./Scene"))`) so three loads only after the poster.
 5. Record the ADR: the module, its pinned versions, and the Poly Haven assets used.
+6. Commit `bun.lock`. The template's `infra/Dockerfile.web` and `infra/Dockerfile.api` copy every `apps/*/package.json` and `packages/*/package.json` in their `manifests` stage, so the image installs `packages/scene` with no Dockerfile edit. A project scaffolded before JAL-AIDEV 0.6.1 lists its manifests by hand in the deps stage: replace that stage with the template's `manifests` and `deps` stages, or `bun install --frozen-lockfile` fails in the image with "lockfile had changes".
 
 ## Pinned versions (verified 2026-09-29 against the npm registry)
 

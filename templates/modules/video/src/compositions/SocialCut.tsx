@@ -54,7 +54,7 @@ function Points({ points }: { points: string[] }) {
         const start = 8 + i * stagger * 3;
         return (
           <div key={i} style={{ display: "flex", flexDirection: "column", gap: 48 }}>
-            {i > 0 ? <Hairline start={start - 4} color={color.borderStrong} /> : null}
+            {i > 0 ? <Hairline color={color.borderStrong} /> : null}
             <div style={{ ...riseStyle(ease(frame, start), 32), display: "flex", gap: 40, alignItems: "baseline" }}>
               <span style={{ fontFamily: font.mono, fontSize: 40, lineHeight: "48px", color: color.inkSubtle, flexShrink: 0 }}>{String(i + 1).padStart(2, "0")}</span>
               <span style={{ fontSize: 60, lineHeight: "72px", fontWeight: 500, letterSpacing: "-0.01em" }}>{text}</span>

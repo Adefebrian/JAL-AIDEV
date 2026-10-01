@@ -87,7 +87,7 @@ export function DataStory({ title, note, unit, series, highlight, delta }: DataS
           );
         })}
       </div>
-      <Hairline start={18} color={color.borderStrong} />
+      <Hairline color={color.borderStrong} />
       <div style={{ display: "flex", gap: 24, marginTop: 16 }}>
         {series.map((s, i) => (
           <div

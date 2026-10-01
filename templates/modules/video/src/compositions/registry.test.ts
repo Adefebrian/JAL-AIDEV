@@ -37,7 +37,25 @@ describe("registry metadata", () => {
   });
 });
 
+describe("separators are static (no decorative draw-on)", () => {
+  test("no composition draws a line on with scaleX or scaleY, and Hairline takes no start frame", async () => {
+    const dir = import.meta.dir;
+    for (const f of ["parts.tsx", "ProductIntro.tsx", "DataStory.tsx", "SocialCut.tsx"]) {
+      const src = await Bun.file(`${dir}/${f}`).text();
+      expect([f, /scale[XY]\(/.test(src)]).toEqual([f, false]);
+      expect([f, /<Hairline[^>]*\bstart=/.test(src)]).toEqual([f, false]);
+    }
+  });
+});
+
 describe.skipIf(!installed)("schemas and compositions", () => {
+  test("Hairline renders a full 2px separator at every frame, outside any composition", async () => {
+    const { createElement } = await import("react");
+    const { renderToStaticMarkup } = await import("react-dom/server");
+    const { Hairline } = await import("./parts");
+    const html = renderToStaticMarkup(createElement(Hairline, { color: "#d4d4d1" }));
+    expect(html).toBe('<div data-separator="" style="height:2px;background-color:#d4d4d1"></div>');
+  });
   test("every composition's defaultProps validate against its schema", async () => {
     for (const v of VIDEOS) {
       const [mod, schema] = await Promise.all([v.load(), v.schema()]);

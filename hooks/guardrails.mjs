@@ -1,4 +1,6 @@
 // Pure evaluator: decides whether a write violates JAL constitution.
+import { REMOTION_NAME_RE, isVideoWorkspaceManifest, remotionPackageReason, renderScriptReason } from "./remotion-rules.mjs";
+
 const FRONTEND_RE = /(^|\/)(apps\/web|packages\/ui|docs-site)\/.*\.(tsx?|jsx?|css|html|md)$/;
 // Any *-gradient( function call (linear-, radial-, conic-, repeating-*).
 const GRADIENT_RE = /(?:linear|radial|conic|repeating-linear|repeating-radial|repeating-conic)-gradient\s*\(/i;
@@ -128,13 +130,9 @@ function findSideStripeViolation(content) {
 }
 
 const BANNED_DEPS = ["vite", "next", "@vitejs", "webpack", "create-react-app", "node", "deno", "ts-node", "tsx", "nodemon"];
-// Remotion is the core motion engine (Brian, 2026-10-01). Its deprecated packages are never installed
-// (Mediabunny, pinned to Remotion's paired version, replaces them).
-const BANNED_REMOTION = ["@remotion/media-parser", "@remotion/webcodecs"];
-// Studio, its bundler, and the headless render paths live only in a separate video workspace
-// (a package directory named video or video-*), never in a website or app package.
-const REMOTION_WORKSPACE_ONLY = ["@remotion/cli", "@remotion/studio", "@remotion/bundler", "@remotion/browser-bundler", "@remotion/renderer", "@remotion/lambda", "@remotion/cloudrun", "@remotion/vercel"];
-const VIDEO_WORKSPACE_RE = /(^|\/)video(-[a-z0-9-]+)?\/package\.json$/i;
+// Remotion is the core motion engine (Brian, 2026-10-01). The package rules
+// (deprecated packages, the website allowlist, the video workspace path, the
+// render scripts) live in remotion-rules.mjs, shared with scripts/video/check.ts.
 // noyzzi-derived files (Brian's ruling): exempt from the visual checks (gradient, shadow,
 // side stripe) because the piece is built as designed. Em-dash and emoji stay banned.
 const NOYZZI_PATH_RE = /(^|\/)noyzzi(\/|[-_.])/i;
@@ -148,7 +146,31 @@ const HOST_TOKEN_RE = /[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-
 const MODULE_FILE_RE = /apps\/[^/]+\/src\/modules\/([^/]+)\//;
 const IMPORT_SPEC_RE = /(?:import|export)[^"'`]*["']([^"'`]+)["']|require\(\s*["']([^"'`]+)["']\s*\)/g;
 
-export function evaluate({ file_path = "", content = "" }) {
+// Remotion packages and render scripts in a package.json write (a whole file or an Edit fragment).
+function findRemotionViolation(filePath, content, projectDir) {
+  const inVideo = isVideoWorkspaceManifest(filePath, projectDir);
+  REMOTION_NAME_RE.lastIndex = 0;
+  let m;
+  while ((m = REMOTION_NAME_RE.exec(content))) {
+    const reason = remotionPackageReason(m[1].toLowerCase(), inVideo);
+    if (reason) return reason;
+  }
+  if (inVideo) return null;
+  // A whole manifest: check only its scripts. A fragment: check all of it.
+  let scripts = [content];
+  try {
+    const json = JSON.parse(content);
+    scripts = json && typeof json === "object" ? Object.values(json.scripts ?? {}) : [];
+  } catch {}
+  for (const script of scripts) {
+    const reason = renderScriptReason(script);
+    if (reason) return reason;
+  }
+  return null;
+}
+
+// project_dir resolves an absolute file_path to the project root (Claude Code sets CLAUDE_PROJECT_DIR).
+export function evaluate({ file_path = "", content = "", project_dir = process.env.CLAUDE_PROJECT_DIR ?? "" }) {
   if (!file_path) return { block: false };
   // Banned heavy deps / runtimes in any package.json
   if (file_path.endsWith("package.json")) {
@@ -158,17 +180,9 @@ export function evaluate({ file_path = "", content = "" }) {
         return { block: true, reason: `JAL constitution: "${dep}" is banned. Bun-only runtime, no Vite/Next/heavy bundlers. See jal-standards.` };
       }
     }
-    for (const dep of BANNED_REMOTION) {
-      if (content.includes(`"${dep}"`)) {
-        return { block: true, reason: `JAL constitution: "${dep}" is deprecated and never installed. Use Mediabunny pinned to Remotion's paired version (see jal-remotion references/web/mediabunny.md).` };
-      }
-    }
-    if (!VIDEO_WORKSPACE_RE.test(file_path)) {
-      for (const dep of REMOTION_WORKSPACE_ONLY) {
-        if (content.includes(`"${dep}"`)) {
-          return { block: true, reason: `JAL constitution: "${dep}" belongs only in a separate video workspace (for example packages/video). Websites stay on Bun.build with the Remotion Player in a lazy chunk; headless render paths need Brian's confirmation. See skill jal-remotion.` };
-        }
-      }
+    const remotionReason = findRemotionViolation(file_path, content, project_dir);
+    if (remotionReason) {
+      return { block: true, reason: `JAL constitution: ${remotionReason}` };
     }
     // Banned runtime commands anywhere in scripts (not just as a declared dependency).
     for (const cmd of BANNED_RUNTIME_CMDS) {

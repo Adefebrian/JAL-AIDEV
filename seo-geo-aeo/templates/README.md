@@ -63,7 +63,7 @@ Action: **new** means the file does not exist in the scaffold. **replace** means
 | `apps/web/src/admin/CrawlerLog.test.tsx` | same | new | WS-D |
 | `apps/api/src/modules/crawl/crawl.test.ts` | same | new | WS-D |
 | `apps/web/src/server.test.ts`, `smoke.test.ts` | same | replace: unknown paths are now a real 404, and the smoke test proves JS-off text equals the hydrated text | WS-D |
-| `infra/Dockerfile.web` | same | replace: deps + `packages/facts/package.json`; build + `.jal/seo-geo-aeo.json`; runner keeps the `/repo` layout and copies `server/` and `packages/facts/`, never `src/` | WS-E (jal-devops) |
+| `infra/Dockerfile.web` | same | replace: the manifests stage already copies `packages/facts/package.json` for deps; build + `.jal/seo-geo-aeo.json`; runner keeps the `/repo` layout and copies `server/` and `packages/facts/`, never `src/` | WS-E (jal-devops) |
 | (none) | `.env.example` | edit: add `INDEXNOW_KEY=`, `CRAWL_INGEST_TOKEN=`, `CRAWL_ADMIN_TOKEN=`, optional `CRAWL_INGEST_URL=` | WS-B |
 
 ## Install order

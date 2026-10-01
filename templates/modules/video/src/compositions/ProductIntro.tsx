@@ -64,7 +64,7 @@ export function ProductIntro({ product, headline, lead, stats }: ProductIntroPro
                   </span>
                   <span style={{ fontSize: 32, lineHeight: "40px", color: color.inkMuted }}>{s.unit}</span>
                 </div>
-                <Hairline start={start} color={color.border} />
+                <Hairline color={color.border} />
                 <div style={{ fontSize: 32, lineHeight: "40px", color: color.inkMuted }}>{s.label}</div>
               </div>
             </div>

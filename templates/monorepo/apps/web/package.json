@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "build": "bun run build.ts",
-    "dev": "bun run build.ts && bun serve.ts",
+    "dev": "NODE_ENV=development bun run build.ts && bun serve.ts",
     "serve": "bun serve.ts",
     "test": "bun test",
     "typecheck": "tsc --noEmit",

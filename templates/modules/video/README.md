@@ -18,53 +18,18 @@ cp -R <jal-aidev>/templates/modules/video packages/video
 
 1. Replace `__APP_NAME__` with the project's name in `packages/video/` (package.json and `src/`), add `"@<project>/video": "workspace:*"` to `apps/web/package.json`, and run `bun install`. `apps/web` never lists a Remotion package itself.
 2. Import the styles once after the kit: `@import "../../../packages/video/src/video.css";` in `apps/web/src/styles.css`.
-3. Build with `NODE_ENV=production bun run build.ts` (see "Bun findings": without it Bun.build bundles React's development build).
+3. Build as usual: `apps/web/build.ts` bundles React's production build unless `NODE_ENV=development` (the template's `dev` script sets that; see "Bun findings").
 4. Record the ADR: the module, the pinned version, the render path (in-browser), the team size against the license.
 5. Run `bun <jal-aidev>/scripts/video/check.ts --team <people>` from the client root.
+6. Commit `bun.lock`. The template's `infra/Dockerfile.web` and `infra/Dockerfile.api` copy every `apps/*/package.json` and `packages/*/package.json` in their `manifests` stage, so the image installs `packages/video` with no Dockerfile edit. A project scaffolded before JAL-AIDEV 0.6.1 lists its manifests by hand in the deps stage: replace that stage with the template's `manifests` and `deps` stages, or `bun install --frozen-lockfile` fails in the image with "lockfile had changes".
 
 ### package.json
 
-The plugin's dependency guardrail (`hooks/guardrails.mjs`) still blocks any manifest that names `remotion` or `@remotion/*`, so this template carries its manifest here until the guardrail allows Remotion in `packages/video`. Write it as `packages/video/package.json`:
-
-```json
-{
-  "name": "@__APP_NAME__/video",
-  "version": "0.1.0",
-  "private": true,
-  "type": "module",
-  "main": "./src/index.ts",
-  "types": "./src/index.ts",
-  "sideEffects": ["./src/video.css"],
-  "scripts": {
-    "typecheck": "tsc --noEmit",
-    "test": "bun test",
-    "lint": "echo 'no lint configured for packages/video' && exit 0",
-    "studio": "remotionb studio"
-  },
-  "dependencies": {
-    "@__APP_NAME__/ui": "workspace:*",
-    "@remotion/player": "4.0.532",
-    "@remotion/transitions": "4.0.532",
-    "@remotion/web-renderer": "4.0.532",
-    "remotion": "4.0.532",
-    "zod": "4.5.4"
-  },
-  "peerDependencies": { "react": ">=19 <19.4", "react-dom": ">=19 <19.4" },
-  "devDependencies": {
-    "@happy-dom/global-registrator": "^15.11.0",
-    "@types/bun": "^1.1.0",
-    "@types/react": "~19.3.0",
-    "@types/react-dom": "~19.3.0",
-    "react": "~19.3.0",
-    "react-dom": "~19.3.0",
-    "typescript": "^5.7.0"
-  }
-}
-```
+The template ships `package.json` (copied with the folder): `remotion`, `@remotion/player`, `@remotion/transitions`, and `@remotion/web-renderer` pinned to one exact version, plus `zod`. The plugin's guardrail (`hooks/guardrails.mjs`, rules in `hooks/remotion-rules.mjs`) allows any Remotion package except the deprecated `@remotion/media-parser` and `@remotion/webcodecs` in `packages/video` or `packages/video-<name>`. Every other manifest, `apps/web` included, may name only the browser-safe packages (`remotion`, `@remotion/player`, `web-renderer`, `media`, `transitions`, `zod-types`, `paths`, `shapes`, `noise`, `media-utils`, `licensing`, `layout-utils`, `animation-utils`, `three`, `lottie`, `gif`, `captions`, `motion-blur`, `rounded-text-box`, `fonts`) and no render script (`remotion render`, `still`, `lambda`, `cloudrun`, `benchmark`). Studio (`@remotion/cli`) goes in `packages/video` as a devDependency only when Studio is wanted.
 
 ## License
 
-Remotion is free for JAL under its Free License while JAL is **3 people** (2 devs and 1 AI specialist). **At 4 people or more a Company License is required** before Remotion is used again: https://remotion.dev/license. `scripts/video/check.ts --team N` (or `"team"` in `.jal/video.json`) warns from 4. The Player is told the license was acknowledged (`acknowledgeRemotionLicense`), and the in-browser renderer gets `licenseKey: "free-license"`; pass the Company License key to `exportMp4` (or `Mp4Export licenseKey`) once JAL holds one.
+Remotion is free for JAL under its Free License while JAL is **3 people** (2 devs and 1 AI specialist). **At 4 people or more a Company License is required** before Remotion is used again: https://remotion.dev/license. `scripts/video/check.ts --team N` (or `"team"` in `.jal/video.json`) stops with exit code 3 and the license text from 4 people, and so does `--external-client` (or `"externalClient": true`); a bad `--team` value exits 2 with the usage line. The Player is told the license was acknowledged (`acknowledgeRemotionLicense`), and the in-browser renderer gets `licenseKey: "free-license"`; pass the Company License key to `exportMp4` (or `Mp4Export licenseKey`) once JAL holds one.
 
 ## Render paths
 
@@ -108,7 +73,8 @@ All `@remotion/*` packages and `remotion` are published together and must share 
 | `src/web/RemotionFrame.tsx` | The media itself: aspect box, poster, lazy chunks, Thumbnail, Player, play and pause policy, scrub, the controls bar |
 | `src/web/policy.ts` | Pure rules: `resolveStage`, `shouldPlay`, `resolveControls`, `scrubProgress`, `progressToFrame`, `viewportBox` |
 | `src/web/scroll.ts` | `watchScroll`: Lenis's clock when given, native scroll on `getScroller()` otherwise, one rAF per burst, no idle loop |
-| `src/export/mp4.ts` | `checkMp4Support`, `exportMp4` (progress, cancel, props validation), `downloadBlob` |
+| `src/export/mp4.ts` | `checkMp4Support`, `exportMp4` (progress, cancel, props validation, Geist and Geist Mono loaded with `document.fonts.load` before the first frame, a console warning above `EXPORT_FRAME_WARN` (1800 frames) and streaming into the file the viewer picks where `showSaveFilePicker` exists), `downloadBlob`. Each render's usage event to remotion.pro carries the page origin, success or failure, and the visitor's IP address |
+| `src/export/state.ts` | `ExportState` and `settleExport` (a cancelled or unmounted export never creates an object URL) |
 | `src/export/support.ts` | `hasWebCodecs`, the MP4 codec order (H.264, VP9, AV1), messages, `framesIn` |
 | `src/export/Mp4Export.tsx` | `useMp4Export` and the `Mp4Export` control (Export, progress, Cancel, Download) |
 | `src/studio/index.ts`, `remotion.config.ts` | Optional Studio entry (`registerRoot`, Geist loaded with `staticFile`) and its config (entry point, public dir = the ui package's fonts) |
@@ -165,12 +131,12 @@ function Story() {
 The template's CSP (`apps/web/server.ts`: `default-src 'self'`, `script-src 'self'`, `connect-src 'self' <api>`) plays and scrubs every composition with no change. Measured on an export page:
 
 - `worker-src blob:` is blocked, so the web renderer's background keepalive worker fails ("Background keepalive worker encountered an error"). The export still finishes in a foreground tab. Allowing `worker-src 'self' blob:` on export pages lets it keep rendering in a background tab.
-- After each render the web renderer posts a usage event (page origin, success, no video data) to `https://www.remotion.pro/api/track/register-usage-point`. `connect-src` blocks it; the export is unaffected, the console logs it, and the renderer retries a few times. Allowing it or keeping it blocked is Brian's call.
+- After each render the web renderer posts a usage event to `https://www.remotion.pro/api/track/register-usage-point`: the page origin, success or failure, and the visitor's IP address (the request itself carries it), no video data. A page that ships the export adds `https://www.remotion.pro` to `connect-src` mechanically (skill `jal-remotion` section 6), with the privacy-policy line and no UI text; without it the ping is blocked, the export is unaffected, the console logs the failure, and the renderer retries a few times.
 
 ## Bun findings (Bun 1.3.14, Remotion 4.0.532)
 
 - `Bun.build` bundles the Player, the Thumbnail, the compositions, `@remotion/transitions`, and `@remotion/web-renderer` with no plugin and no config; each `import()` is its own chunk. `bunx remotionb studio` runs Studio under Bun (Remotion prints its "mostly supported" note).
-- `Bun.build` inlines `process.env.NODE_ENV` from the build process and bundles React's **development** build when it is unset (react-dom 117 KB gzip instead of 65 KB). Build with `NODE_ENV=production`. The template's `infra/Dockerfile.web` sets it only in the runtime stage, after `bun run build.ts`.
+- `Bun.build` inlines `process.env.NODE_ENV` from the build process and, left alone, bundles React's **development** build when it is unset (react-dom 117 KB gzip instead of 65 KB). The template's `apps/web/build.ts` therefore defines it as `production` unless the build runs with `NODE_ENV=development`, which only the `dev` script sets (`NODE_ENV=development bun run build.ts && bun serve.ts`). `infra/Dockerfile.web` also sets `NODE_ENV=production` in the build stage, before `bun run build.ts`, and again in the runtime stage.
 - `import { z } from "zod"` (zod 4 classic) pulls every zod locale into the bundle: an 84 KB gzip chunk. That is why the schemas are their own chunk, loaded only when props need validating.
 - The web renderer's AAC, FLAC, and MP3 encoders (264, 87, and 130 KB gzip) are lazy chunks. A muted export (every JAL composition) never fetches them.
 - Remotion's Bun runtime caveat (`lazyComponent` disabled on Bun) does not apply: the module loads compositions with its own `import()` and passes `component`.
@@ -197,7 +163,7 @@ So a page with one video pays 82 KB at load and about 103 KB more as the video a
 bun test            # policy, scroll, export: fakes only, no install needed
                     # registry and RemotionSection tests need the workspace installed (they skip with a note otherwise)
 bunx tsc --noEmit   # needs the workspace installed
-bun <jal-aidev>/scripts/video/check.ts --team 3      # one exact Remotion version, no bundler in apps, render paths to confirm, license
+bun <jal-aidev>/scripts/video/check.ts --team 3      # one exact Remotion version, browser-safe packages only outside packages/video, render paths to confirm, license stop (exit 3)
 bun <jal-aidev>/scripts/video/probe-mp4.ts out.mp4   # duration, size, codec, frames of an exported file
 ```
 

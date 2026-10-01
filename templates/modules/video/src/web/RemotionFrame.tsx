@@ -20,7 +20,11 @@
 //   - Scrub: the frame follows scroll progress through the scroller that
 //     getScroller() returns after mount; on Lenis's clock when passed.
 //   - Controls by policy (policy.ts): a 44px JAL toggle below the media,
-//     never over it; a pause control whenever autoplay runs past 5 s.
+//     never over it; a pause control whenever autoplay runs past 5 s. An
+//     autoplay piece always reserves the bar's height (reduced motion, known
+//     only after hydration, can add a play control), so nothing shifts.
+//   - A new video (another video.id) drops the loaded module and starts over
+//     from its own poster.
 //   - Audits: the figure is kit media (data-kind="canvas", the slot marked
 //     data-jal-canvas and labelled), and the composition's own DOM sits in an
 //     aria-hidden stage with no pointer events, so ui_audit treats the drawn
@@ -93,6 +97,8 @@ export interface RemotionFrameProps<P extends Record<string, unknown>> {
 }
 
 interface Loaded<P extends Record<string, unknown>> {
+  /** The video.id this module was loaded for. */
+  id: string;
   lib: PlayerLib;
   mod: VideoModule<P>;
   schema: z.ZodType<P> | null;
@@ -119,13 +125,17 @@ export function RemotionFrame<P extends Record<string, unknown>>({
   const frameRef = useRef<HTMLDivElement>(null);
   const playerRef = useRef<PlayerRef>(null);
   const ownPause = useRef(false);
+  const ownPlay = useRef(false);
   const reduced = usePrefersReducedMotion();
   const [near, setNear] = useState(false);
   const [seen, setSeen] = useState(false);
   const [visible, setVisible] = useState(false);
   const [pageVisible, setPageVisible] = useState(true);
-  const [loaded, setLoaded] = useState<Loaded<P> | null>(null);
-  const [failed, setFailed] = useState(false);
+  const [loadedState, setLoaded] = useState<Loaded<P> | null>(null);
+  const [failedId, setFailedId] = useState<string | null>(null);
+  // A module loaded for another video is not this video's: back to the poster until its own loads.
+  const loaded = loadedState && loadedState.id === video.id ? loadedState : null;
+  const failed = failedId === video.id;
   const [userPlay, setUserPlay] = useState(false);
   const [userPaused, setUserPaused] = useState(false);
   const [playing, setPlaying] = useState(false);
@@ -181,6 +191,14 @@ export function RemotionFrame<P extends Record<string, unknown>>({
     };
   }, [nearMargin]);
 
+  // Another video: its own run, from its own poster.
+  useEffect(() => {
+    setEnded(false);
+    setUserPlay(false);
+    setUserPaused(false);
+    figureRef.current?.removeAttribute("data-video-frame");
+  }, [video.id]);
+
   useEffect(() => {
     const sync = () => setPageVisible(document.visibilityState !== "hidden");
     sync();
@@ -194,11 +212,11 @@ export function RemotionFrame<P extends Record<string, unknown>>({
     // The schema chunk (zod) comes along only when there are props to validate.
     Promise.all([loadPlayer(), loadVideo(video, inputProps)]).then(
       ([lib, { mod, schema }]) => {
-        if (live) setLoaded({ lib, mod, schema });
+        if (live) setLoaded({ id: video.id, lib, mod, schema });
       },
       (err) => {
         console.error(`[video] ${video.id}: could not load, keeping the poster`, err);
-        if (live) setFailed(true);
+        if (live) setFailedId(video.id);
       },
     );
     return () => {
@@ -206,13 +224,22 @@ export function RemotionFrame<P extends Record<string, unknown>>({
     };
     // inputProps is read once, on the first load; later changes re-resolve through propsKey.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [near, loaded, failed, video]);
+  }, [near, loaded, failed, video.id]);
 
   // Mirror the Player's own play and pause (its built-in controls, the end of a non-looping run).
   useEffect(() => {
     const p = playerRef.current;
     if (stage !== "player" || !p) return;
-    const onPlay = () => setPlaying(true);
+    const onPlay = () => {
+      setPlaying(true);
+      // A play the viewer started (Remotion's own controls) clears their earlier pause.
+      if (!ownPlay.current) {
+        setUserPaused(false);
+        setUserPlay(true);
+        setEnded(false);
+      }
+      ownPlay.current = false;
+    };
     const onPause = () => {
       setPlaying(false);
       if (!ownPause.current && policy === "remotion") setUserPaused(true);
@@ -241,6 +268,7 @@ export function RemotionFrame<P extends Record<string, unknown>>({
     const want = shouldPlay({ mode, reduced, visible, pageVisible, userPlay, userPaused, ended });
     if (want && !p.isPlaying()) {
       if (!loop && p.getCurrentFrame() >= video.durationInFrames - 1) p.seekTo(0);
+      ownPlay.current = true;
       p.play();
     } else if (!want && p.isPlaying()) {
       ownPause.current = true;
@@ -335,7 +363,9 @@ export function RemotionFrame<P extends Record<string, unknown>>({
     );
   }
 
-  const bar = policy === "jal" || actions;
+  // Autoplay always keeps the bar (empty when it has no control), so the
+  // reduced-motion play control appearing after hydration never shifts the page.
+  const bar = mode === "autoplay" || policy === "jal" || actions;
   return (
     <figure
       ref={figureRef}
@@ -359,7 +389,7 @@ export function RemotionFrame<P extends Record<string, unknown>>({
         </div>
       </div>
       {bar ? (
-        <div className="video-bar">
+        <div className="video-bar" data-empty={policy !== "jal" && !actions ? "" : undefined}>
           {policy === "jal" ? (
             <button
               type="button"

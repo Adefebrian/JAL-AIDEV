@@ -1,6 +1,6 @@
 # JAL-AIDEV docs site
 
-The docs site for the JAL-AIDEV plugin (v0.4.1): what it is, how to install
+The docs site for the JAL-AIDEV plugin (v0.6.1): what it is, how to install
 it, the constitution in plain words, the 17-agent crew, the eight commands
 and the old-to-new command map, JEV as the judge, the one design system
 (JAL Core), the immersive and 3D layer, the 33-rule UI check, JAL Docs

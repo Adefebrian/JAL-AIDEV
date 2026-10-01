@@ -128,6 +128,11 @@ describe.skipIf(!installed)("RemotionSection", () => {
       host,
       figure,
       stage: () => figure().getAttribute("data-video-stage"),
+      rerender: async (next: Record<string, unknown>) => {
+        await act(async () => {
+          root.render(React.createElement(RemotionSection as any, { video: entry, label: "Fake video", ...props, ...next }));
+        });
+      },
       unmount: async () => {
         await act(async () => root.unmount());
         host.remove();
@@ -202,6 +207,71 @@ describe.skipIf(!installed)("RemotionSection", () => {
     await intersect(true);
     expect(long.host.querySelector("button")!.getAttribute("aria-label")).toBe("Pause Fake video");
     await long.unmount();
+  });
+
+  test("an autoplay piece always reserves the controls bar, so reduced motion adds no shift", async () => {
+    const short = { ...entry, durationInFrames: 120 };
+    const still = await mount({ video: short });
+    expect(still.host.querySelector(".video-bar")).not.toBeNull(); // in the server HTML, before any load
+    expect(still.host.querySelector(".video-bar")!.hasAttribute("data-empty")).toBe(true);
+    await intersect(true);
+    expect(still.host.querySelector(".video-bar button")).toBeNull();
+    await still.unmount();
+    reduce = true;
+    const calm = await mount({ video: short });
+    expect(calm.host.querySelector(".video-bar")).not.toBeNull();
+    expect(calm.host.querySelector(".video-bar button")!.textContent).toBe("Play");
+    await calm.unmount();
+    reduce = false;
+    const scrub = await mount({ video: short, mode: "scrub" });
+    expect(scrub.host.querySelector(".video-bar")).toBeNull();
+    await scrub.unmount();
+  });
+
+  test("a play from Remotion's own controls clears the viewer's earlier pause", async () => {
+    const m = await mount({ controls: "remotion" });
+    await intersect(true);
+    expect(log.play).toBe(1);
+    const pl = players[players.length - 1] as any;
+    // The viewer pauses, then plays again, both with Remotion's controls.
+    await act(async () => {
+      pl.playing = false;
+      pl.emit("pause");
+    });
+    await act(async () => {
+      pl.playing = true;
+      pl.emit("play");
+    });
+    expect(log.pause).toBe(0);
+    // Offscreen pauses; back on screen resumes, because the viewer chose to play.
+    await intersect(false, "view");
+    expect(log.pause).toBe(1);
+    await intersect(true, "view");
+    expect(log.play).toBe(2);
+    await m.unmount();
+  });
+
+  test("another video.id drops the loaded module and loads the new one", async () => {
+    function First() {
+      return null;
+    }
+    function Second() {
+      return null;
+    }
+    const a = { ...entry, id: "video-a", load: async () => ({ component: First, defaultProps: { a: 1 } }) };
+    const b = { ...entry, id: "video-b", load: async () => ({ component: Second, defaultProps: { a: 1 } }) };
+    const m = await mount({ video: a });
+    await intersect(true);
+    expect(m.stage()).toBe("player");
+    expect(players[players.length - 1].props.component).toBe(First);
+    await m.rerender({ video: b });
+    await act(async () => {
+      await new Promise((r) => setTimeout(r, 0));
+    });
+    expect(m.figure().getAttribute("data-video-id")).toBe("video-b");
+    expect(m.stage()).toBe("player");
+    expect(players[players.length - 1].props.component).toBe(Second);
+    await m.unmount();
   });
 
   test("a hidden tab pauses", async () => {

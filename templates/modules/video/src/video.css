@@ -43,12 +43,16 @@
   object-fit: cover;
 }
 
+/* The bar always holds one control row of height: an autoplay piece keeps
+   it even while empty, so a play control that appears after hydration
+   (reduced motion) never shifts the page. */
 .video-bar {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: var(--kit-gap-inside, 12px);
   min-width: 0;
+  min-block-size: var(--control-h, 44px);
 }
 
 .video-bar > * {
